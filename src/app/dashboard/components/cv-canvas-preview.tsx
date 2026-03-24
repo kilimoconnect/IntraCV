@@ -41,13 +41,26 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
   }, [recalcScale]);
 
   // ─── Count pages after render ───
+  // Use MutationObserver for reliable page count detection instead of a fixed timer
   useEffect(() => {
     if (!previewRef.current) return;
-    const timer = setTimeout(() => {
+
+    const countPages = () => {
       const sheets = previewRef.current?.querySelectorAll(".cv-page-sheet");
-      if (sheets) setPageCount(sheets.length);
-    }, 100);
-    return () => clearTimeout(timer);
+      if (sheets && sheets.length > 0) setPageCount(sheets.length);
+    };
+
+    // Initial count after a short delay for first render
+    const timer = setTimeout(countPages, 150);
+
+    // Watch for DOM changes (new pages added/removed)
+    const observer = new MutationObserver(countPages);
+    observer.observe(previewRef.current, { childList: true, subtree: true });
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
   }, [children, previewRef]);
 
   const totalVisualHeight = pageCount * A4_H + (pageCount - 1) * PAGE_GAP;
@@ -82,8 +95,7 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
             }
           `}</style>
           {children}
-
-                  </div>
+        </div>
       </div>
 
       {/* Page count badge */}
