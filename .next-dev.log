@@ -1,0 +1,48 @@
+
+> intracv@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.107:3000
+- Environments: .env.local
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1852ms
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+AuthApiError: Invalid Refresh Token: Refresh Token Not Found
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+ GET / 307 in 3.9s (compile: 1404ms, proxy.ts: 2.0s, render: 468ms)
+ GET /dashboard 200 in 1518ms (compile: 1171ms, proxy.ts: 20ms, render: 326ms)
+ GET /login 200 in 195ms (compile: 114ms, proxy.ts: 13ms, render: 68ms)
+ GET /dashboard 200 in 904ms (compile: 12ms, proxy.ts: 849ms, render: 43ms)
+ GET /dashboard?tab=studio 200 in 941ms (compile: 16ms, proxy.ts: 862ms, render: 63ms)
+ POST /api/ai/rewrite-for-template 200 in 15.2s (compile: 368ms, proxy.ts: 862ms, render: 14.0s)
+✓ Compiled in 100ms
+✓ Compiled in 73ms
+✓ Compiled in 114ms
+ POST /api/ai/rewrite-for-template 200 in 16.6s (compile: 205ms, proxy.ts: 6ms, render: 16.4s)
+ POST /api/ai/rewrite-for-template 200 in 14.5s (compile: 53ms, proxy.ts: 6ms, render: 14.4s)
+✓ Compiled in 61ms
+ POST /api/ai/rewrite-for-template 200 in 13.7s (compile: 10ms, proxy.ts: 861ms, render: 12.8s)
+ POST /api/ai/rewrite-for-template 200 in 15.4s (compile: 11ms, proxy.ts: 1773ms, render: 13.6s)
+✓ Compiled in 70ms
+ POST /api/ai/rewrite-for-template 200 in 17.1s (compile: 134ms, proxy.ts: 17ms, render: 16.9s)
+ POST /api/ai/rewrite-for-template 200 in 12.5s (compile: 8ms, proxy.ts: 1452ms, render: 11.0s)
+ GET / 307 in 1941ms (compile: 71ms, proxy.ts: 1548ms, render: 321ms)
+ GET /dashboard 200 in 1473ms (compile: 388ms, proxy.ts: 344ms, render: 742ms)
+ GET /mywindsurf 404 in 1481ms (compile: 418ms, proxy.ts: 602ms, render: 461ms)
+ GET /mywindsurf 404 in 758ms (compile: 20ms, proxy.ts: 636ms, render: 102ms)
+ GET /mywindsurf 404 in 686ms (compile: 21ms, proxy.ts: 555ms, render: 110ms)
+ GET /mywindsurf 404 in 959ms (compile: 20ms, proxy.ts: 839ms, render: 101ms)
+ GET /mywindsurf 404 in 444ms (compile: 21ms, proxy.ts: 272ms, render: 151ms)

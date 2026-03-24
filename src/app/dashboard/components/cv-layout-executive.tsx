@@ -1,0 +1,1029 @@
+// ═══════════════════════════════════════════════════════════
+// EXECUTIVE CV LAYOUT — Premium Centered Header + Right Dark Sidebar
+// ═══════════════════════════════════════════════════════════
+// Design: Elegant centered header with decorative horizontal lines,
+// italic tagline, then two-column: LEFT main body with executive
+// profile & experience, RIGHT dark sidebar with competencies,
+// education, certifications. Board roles in premium card style.
+// Distinctive: centered monogram header, right sidebar, gold accents.
+// ═══════════════════════════════════════════════════════════
+
+import React from "react";
+import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
+import { PRINT_MARGIN } from "./cv-design-system";
+
+interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
+
+const SIDE_W = 230;
+const MAIN_W = A4_W - SIDE_W;
+const SP = 16;
+const HEADER_H = 120;
+
+function RightLabel({ children, C }: { children: string; C: ThemeColors }) {
+  return (
+    <div style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 700, color: C.headerText, textTransform: "uppercase", letterSpacing: "2px", opacity: 0.65, marginBottom: 6 }}>
+      {children}
+    </div>
+  );
+}
+
+function BodySection({ children, C }: { children: string; C: ThemeColors }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+      <div style={{ width: 6, height: 6, borderRadius: 3, border: `2px solid ${C.primary}`, flexShrink: 0 }} />
+      <span style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "1.5px" }}>{children}</span>
+      <div style={{ flex: 1, height: 1, backgroundColor: C.divider }} />
+    </div>
+  );
+}
+
+export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Props) {
+  if (variant === "B") return <ExecutiveVariantB data={d} theme={theme} />;
+  if (variant === "C") return <ExecutiveVariantC data={d} theme={theme} />;
+  const C = themes[theme];
+  const topExps = d.experience?.slice(0, 2) || [];
+  const historyExps = d.history?.length ? d.history : d.experience?.slice(2) || [];
+
+  // ── Engine: page budgets ──
+  const P1_BODY_TOP = HEADER_H + 22 + SP;
+  const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
+  const P1_SIDEBAR_BUDGET = A4_H - HEADER_H - 22 - PRINT_MARGIN.bottom;
+  const CONT_CHROME = 38 + SP;
+  const CONT_BODY_BUDGET = A4_H - CONT_CHROME - PRINT_MARGIN.bottom;
+
+  return (
+    <div>
+      {/* ══════ PAGE 1 ══════ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+
+        {/* ── Elegant Centered Header ── */}
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: HEADER_H, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+          {/* Decorative line above name */}
+          <div style={{ width: 60, height: 2, backgroundColor: C.primary, marginBottom: 10 }} />
+          <div style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.headerText, letterSpacing: "2px", textTransform: "uppercase", lineHeight: "34px" }}>{d.fullName}</div>
+          <div style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 4, letterSpacing: "1px", textTransform: "uppercase", wordWrap: "break-word" }}>{d.title}</div>
+          {d.tagline && (
+            <div style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.55, marginTop: 6, fontStyle: "italic" }}>"{d.tagline}"</div>
+          )}
+          {/* Decorative line below */}
+          <div style={{ width: 60, height: 2, backgroundColor: C.primary, marginTop: 10 }} />
+        </div>
+
+        {/* ── Contact strip ── */}
+        <div style={{ position: "absolute", top: HEADER_H, left: 0, width: A4_W, height: 22, backgroundColor: C.primaryDark, display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
+          {d.email && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>✉ {d.email}</span>}
+          {d.phone && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>☎ {d.phone}</span>}
+          {d.location && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>📍 {d.location}</span>}
+          {d.linkedin && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>in {d.linkedin}</span>}
+          {d.website && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>🌐 {d.website}</span>}
+        </div>
+
+        {/* ── RIGHT Dark Sidebar ── */}
+        <div style={{ position: "absolute", top: HEADER_H + 22, right: 0, width: SIDE_W, height: A4_H - HEADER_H - 22, backgroundColor: C.headerBg, padding: `${SP}px ${SP}px`, display: "flex", flexDirection: "column", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
+
+          {/* Core Leadership Competencies */}
+          {d.skills?.length > 0 && (
+            <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
+              <RightLabel C={C}>Core Competencies</RightLabel>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 8px" }}>
+                {d.skills.map((skill, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <div style={{ width: 3, height: 3, backgroundColor: C.primary, flexShrink: 0 }} />
+                    <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.85 }}>{skill}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Education */}
+          {d.education?.length > 0 && (
+            <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
+              <RightLabel C={C}>Education</RightLabel>
+              {d.education.map((edu, i) => (
+                <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
+                  <div style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 700, color: C.headerText, lineHeight: "11px" }}>{edu.degree}</div>
+                  <div style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.6 }}>{edu.school} · {edu.year}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Certifications */}
+          {d.certifications && d.certifications.length > 0 && (
+            <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
+              <RightLabel C={C}>Certifications</RightLabel>
+              {d.certifications.map((cert, i) => (
+                <div key={i} style={{ marginBottom: 4 }}>
+                  <div style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 600, color: C.headerText, wordWrap: "break-word" }}>{cert.name}</div>
+                  <div style={{ fontFamily: FONT, fontSize: "6.5px", color: C.headerText, opacity: 0.55 }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Languages */}
+          {d.languages && d.languages.length > 0 && (
+            <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
+              <RightLabel C={C}>Languages</RightLabel>
+              {d.languages.map((lang, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "8.5px", padding: "2px 0" }}>
+                  <span style={{ fontWeight: 600, color: C.headerText, wordWrap: "break-word" }}>{lang.name}</span>
+                  <span style={{ color: C.headerText, opacity: 0.5, fontSize: "8px" }}>{lang.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Affiliations */}
+          {d.memberships && d.memberships.length > 0 && (
+            <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
+              <RightLabel C={C}>Professional Affiliations</RightLabel>
+              {d.memberships.map((m, i) => (
+                <div key={i} style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.75, padding: "1.5px 0" }}>• {m}</div>
+              ))}
+            </div>
+          )}
+
+          {/* Tools */}
+          {d.tools && d.tools.length > 0 && (
+            <div>
+              <RightLabel C={C}>Tools & Platforms</RightLabel>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                {d.tools.map((tool, i) => (
+                  <span key={i} style={{ fontFamily: FONT, fontSize: "6.5px", fontWeight: 500, color: C.headerText, padding: "2px 6px", borderRadius: 8, border: `1px solid rgba(255,255,255,0.2)` }}>{tool}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── LEFT Main Body — Page 1 ── */}
+        <div style={{ position: "absolute", top: P1_BODY_TOP, left: 24, width: MAIN_W - 48, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+
+          {/* Executive Profile */}
+          {d.profile && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Executive Profile</BodySection>
+              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+            </div>
+          )}
+
+          {/* Professional Experience — premium cards */}
+          {topExps.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Professional Experience</BodySection>
+              {topExps.map((exp, i) => (
+                <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0, paddingLeft: 14, borderLeft: `3px solid ${C.primary}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8, fontStyle: "italic" }}>{exp.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>
+                    {exp.company}{exp.location ? ` — ${exp.location}` : ""}
+                  </div>
+                  {exp.bullets?.length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                      {exp.bullets.map((b, bi) => (
+                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Career Highlights — star badges */}
+          {d.achievements && d.achievements.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Career Highlights</BodySection>
+              {d.achievements.map((ach, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.primary, fontWeight: 700 }}>★</span>
+                  </div>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, paddingTop: 2, wordWrap: "break-word" }}>{ach}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══════ PAGE 2 ══════ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+
+        {/* Thin top bar with decorative lines */}
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 36, backgroundColor: C.headerBg, display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+          <div style={{ width: 30, height: 1, backgroundColor: C.primary }} />
+          <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.headerText, letterSpacing: "2px", textTransform: "uppercase" }}>{d.fullName}</span>
+          <div style={{ width: 30, height: 1, backgroundColor: C.primary }} />
+          <span style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.5 }}>Page 2</span>
+        </div>
+        <div style={{ position: "absolute", top: 36, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
+
+        {/* Right accent stripe — page 2 continuity */}
+        <div style={{ position: "absolute", top: 38, right: 0, width: 6, height: A4_H - 38, backgroundColor: C.headerBg }} />
+
+        {/* Page 2 body — full width */}
+        <div style={{ position: "absolute", top: CONT_CHROME, left: 24, width: A4_W - 54, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+
+          {/* Career History */}
+          {historyExps.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Career History</BodySection>
+              {historyExps.map((exp, i) => (
+                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0, paddingLeft: 14, borderLeft: `2px solid ${C.divider}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8, fontStyle: "italic" }}>{exp.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>
+                    {exp.company}{exp.location ? ` — ${exp.location}` : ""}
+                  </div>
+                  {exp.bullets?.length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                      {exp.bullets.map((b, bi) => (
+                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1 }}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Board & Advisory Roles — premium cards */}
+          {d.boardRoles && d.boardRoles.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Board & Advisory Roles</BodySection>
+              {d.boardRoles.map((role, i) => (
+                <div key={i} style={{ marginBottom: i < d.boardRoles!.length - 1 ? 8 : 0, padding: "7px 12px", backgroundColor: C.cardBg, borderRadius: 4, borderLeft: `3px solid ${C.primary}`, borderBottom: `1px solid ${C.divider}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{role.title}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.muted, fontStyle: "italic" }}>{role.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 500 }}>{role.organization}</div>
+                  {role.description && <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.muted, margin: "2px 0 0" }}>{role.description}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Executive Training */}
+          {d.executiveTraining && d.executiveTraining.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Executive Training</BodySection>
+              {d.executiveTraining.map((tr, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div>
+                    <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{tr.name}</span>
+                    {tr.institution && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> — {tr.institution}</span>}
+                  </div>
+                  {tr.year && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{tr.year}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Publications */}
+          {d.publications && d.publications.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Publications & Speaking</BodySection>
+              {d.publications.map((pub, i) => (
+                <div key={i} style={{ marginBottom: 4 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{pub.title}</span>
+                  {pub.publisher && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> — {pub.publisher}</span>}
+                  {pub.year && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> ({pub.year})</span>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Awards */}
+          {d.awards && d.awards.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Awards & Recognition</BodySection>
+              {d.awards.map((award, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
+                  <div>
+                    <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
+                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Projects */}
+          {d.projects && d.projects.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Key Projects</BodySection>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {d.projects.map((proj, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{proj.name}</div>
+                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0", wordWrap: "break-word" }}>{proj.description}</p>
+                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500, wordWrap: "break-word" }}>{proj.tech}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* ══════ PAGE 3 ══════ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        {/* Thin top bar */}
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 36, backgroundColor: C.headerBg, display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+          <div style={{ width: 30, height: 1, backgroundColor: C.primary }} />
+          <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.headerText, letterSpacing: "2px", textTransform: "uppercase" }}>{d.fullName}</span>
+          <div style={{ width: 30, height: 1, backgroundColor: C.primary }} />
+          <span style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.5 }}>Page 3</span>
+        </div>
+        <div style={{ position: "absolute", top: 36, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 38, right: 0, width: 6, height: A4_H - 38, backgroundColor: C.headerBg }} />
+
+        <div style={{ position: "absolute", top: CONT_CHROME, left: 24, width: A4_W - 54, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {/* References */}
+          {d.references?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>References</BodySection>
+              <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 3 ? "1fr 1fr 1fr" : d.references.length === 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
+                {d.references.map((ref, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{ref.name}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.title}</div>
+                    {ref.company && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
+                    {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
+                    {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Projects */}
+          {d.projects && d.projects.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Strategic Projects</BodySection>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {d.projects.map((proj, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{proj.name}</div>
+                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0", wordWrap: "break-word" }}>{proj.description}</p>
+                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500, wordWrap: "break-word" }}>{proj.tech}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Volunteer */}
+          {d.volunteer && d.volunteer.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Community & Volunteer</BodySection>
+              {d.volunteer.map((vol, i) => (
+                <div key={i} style={{ marginBottom: i < d.volunteer!.length - 1 ? 6 : 0 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{vol}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Declaration */}
+          {d.declaration?.declaration && (
+            <div>
+              <BodySection C={C}>Declaration</BodySection>
+              <p style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+              <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "9px", color: C.muted }}>
+                {d.declaration.place && <span>Place: {d.declaration.place}</span>}
+                {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// VARIANT B — Classic Columns: wide dark LEFT sidebar with monogram, right body with gold rules
+// ═══════════════════════════════════════════════════════════
+
+function ExecSideLabel({ children, C }: { children: string; C: ThemeColors }) {
+  return (
+    <div style={{ fontFamily: FONT, fontSize: "8px", fontWeight: 700, color: C.headerText, textTransform: "uppercase", letterSpacing: "2px", opacity: 0.6, marginBottom: 5, paddingBottom: 3, borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
+      {children}
+    </div>
+  );
+}
+
+function ExecBodyH({ children, C }: { children: string; C: ThemeColors }) {
+  return (
+    <div style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "1.5px", borderBottom: `2.5px solid ${C.primary}`, paddingBottom: 4, marginBottom: 8 }}>
+      {children}
+    </div>
+  );
+}
+
+function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
+  const C = themes[theme];
+  const LS = 250;
+  const RS = A4_W - LS;
+  const topExps = d.experience?.slice(0, 2) || [];
+  const historyExps = d.history?.length ? d.history : d.experience?.slice(2) || [];
+
+  // ── Engine: page budgets ──
+  const P1_BODY_TOP = 28;
+  const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
+  const SIDEBAR_BUDGET = A4_H - PRINT_MARGIN.bottom;
+  const CONT_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
+
+  return (
+    <div>
+      {/* ══ PAGE 1 ══ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        {/* Wide dark left sidebar */}
+        <div style={{ position: "absolute", top: 0, left: 0, width: LS, height: A4_H, backgroundColor: C.headerBg, padding: "0 18px", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Monogram circle */}
+          <div style={{ paddingTop: 28, paddingBottom: 18, display: "flex", flexDirection: "column", alignItems: "center", borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
+            <div style={{ width: 52, height: 52, borderRadius: 26, border: `2px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+              <span style={{ fontFamily: FONT, fontSize: "20px", fontWeight: 800, color: C.primary }}>{d.fullName?.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+            </div>
+            <div style={{ fontFamily: FONT, fontSize: "16px", fontWeight: 800, color: C.headerText, textAlign: "center", lineHeight: "20px", wordWrap: "break-word" }}>{d.fullName}</div>
+            <div style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 3, textAlign: "center", wordWrap: "break-word" }}>{d.title}</div>
+            {d.tagline && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.45, marginTop: 4, fontStyle: "italic", textAlign: "center" }}>"{d.tagline}"</div>}
+          </div>
+          {/* Contact */}
+          <div style={{ paddingTop: 12, paddingBottom: 12, borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
+            <ExecSideLabel C={C}>Contact</ExecSideLabel>
+            <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.8, lineHeight: "14px" }}>
+              {d.email && <div>✉ {d.email}</div>}
+              {d.phone && <div>☎ {d.phone}</div>}
+              {d.location && <div>📍 {d.location}</div>}
+              {d.linkedin && <div>in {d.linkedin}</div>}
+              {d.website && <div>🌐 {d.website}</div>}
+            </div>
+          </div>
+          {/* Skills */}
+          {d.skills?.length > 0 && (
+            <div style={{ paddingTop: 12, paddingBottom: 12, borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
+              <ExecSideLabel C={C}>Core Competencies</ExecSideLabel>
+              {d.skills.map((skill, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                  <div style={{ width: 4, height: 4, backgroundColor: C.primary, flexShrink: 0 }} />
+                  <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.85, wordWrap: "break-word" }}>{skill}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Education */}
+          {d.education?.length > 0 && (
+            <div style={{ paddingTop: 12, paddingBottom: 12, borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
+              <ExecSideLabel C={C}>Education</ExecSideLabel>
+              {d.education.map((edu, i) => (
+                <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.headerText, wordWrap: "break-word" }}>{edu.degree}</div>
+                  <div style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.6 }}>{edu.school} · {edu.year}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Certifications */}
+          {d.certifications && d.certifications.length > 0 && (
+            <div style={{ paddingTop: 12, paddingBottom: 12, borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
+              <ExecSideLabel C={C}>Certifications</ExecSideLabel>
+              {d.certifications.map((cert, i) => (
+                <div key={i} style={{ marginBottom: 3 }}>
+                  <div style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 600, color: C.headerText, wordWrap: "break-word" }}>{cert.name}</div>
+                  <div style={{ fontFamily: FONT, fontSize: "6.5px", color: C.headerText, opacity: 0.5 }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Languages */}
+          {d.languages && d.languages.length > 0 && (
+            <div style={{ paddingTop: 12, paddingBottom: 12 }}>
+              <ExecSideLabel C={C}>Languages</ExecSideLabel>
+              {d.languages.map((lang, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "8.5px", padding: "2px 0" }}>
+                  <span style={{ fontWeight: 600, color: C.headerText, wordWrap: "break-word" }}>{lang.name}</span>
+                  <span style={{ color: C.headerText, opacity: 0.5, fontSize: "8px" }}>{lang.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right main body */}
+        <div style={{ position: "absolute", top: P1_BODY_TOP, left: LS + 20, width: RS - 40, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+          {d.profile && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Executive Profile</ExecBodyH>
+              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+            </div>
+          )}
+          {topExps.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Professional Experience</ExecBodyH>
+              {topExps.map((exp, i) => (
+                <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, whiteSpace: "nowrap", fontStyle: "italic" }}>{exp.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  {exp.bullets?.length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                      {exp.bullets.map((b, bi) => (
+                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.achievements && d.achievements.length > 0 && (
+            <div>
+              <ExecBodyH C={C}>Career Highlights</ExecBodyH>
+              {d.achievements.map((ach, i) => (
+                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 5 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>★</span>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══ PAGE 2 ══ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 32, backgroundColor: C.headerBg, display: "flex", alignItems: "center", padding: "0 22px", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 700, color: C.headerText }}>{d.fullName}</span>
+          <span style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.5 }}>Page 2</span>
+        </div>
+        <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {historyExps.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Career History</ExecBodyH>
+              {historyExps.map((exp, i) => (
+                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  {exp.bullets?.length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                      {exp.bullets.map((b, bi) => (
+                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1 }}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.boardRoles && d.boardRoles.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Board & Advisory Roles</ExecBodyH>
+              {d.boardRoles.map((role, i) => (
+                <div key={i} style={{ marginBottom: i < d.boardRoles!.length - 1 ? 8 : 0, padding: "7px 12px", backgroundColor: C.cardBg, borderRadius: 4, borderLeft: `3px solid ${C.primary}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{role.title}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.muted, fontStyle: "italic" }}>{role.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 500 }}>{role.organization}</div>
+                  {role.description && <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.muted, margin: "2px 0 0" }}>{role.description}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.executiveTraining && d.executiveTraining.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Executive Training</ExecBodyH>
+              {d.executiveTraining.map((tr, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div><span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{tr.name}</span>{tr.institution && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> — {tr.institution}</span>}</div>
+                  {tr.year && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{tr.year}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.publications && d.publications.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Publications & Speaking</ExecBodyH>
+              {d.publications.map((pub, i) => (
+                <div key={i} style={{ marginBottom: 4 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{pub.title}</span>
+                  {pub.publisher && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> — {pub.publisher}</span>}
+                  {pub.year && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> ({pub.year})</span>}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.awards && d.awards.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Awards & Recognition</ExecBodyH>
+              {d.awards.map((award, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
+                  <div>
+                    <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
+                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {d.projects && d.projects.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Key Projects</ExecBodyH>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {d.projects.map((proj, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{proj.name}</div>
+                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0", wordWrap: "break-word" }}>{proj.description}</p>
+                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500, wordWrap: "break-word" }}>{proj.tech}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══ PAGE 3 ══ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 32, backgroundColor: C.headerBg, display: "flex", alignItems: "center", padding: "0 22px", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 700, color: C.headerText }}>{d.fullName}</span>
+          <span style={{ fontFamily: FONT, fontSize: "8px", color: C.headerText, opacity: 0.5 }}>Page 3</span>
+        </div>
+        <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {d.references?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>References</ExecBodyH>
+              <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 3 ? "1fr 1fr 1fr" : d.references.length === 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
+                {d.references.map((ref, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{ref.name}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.title}</div>
+                    {ref.company && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
+                    {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
+                    {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {d.projects && d.projects.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Strategic Projects</ExecBodyH>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {d.projects.map((proj, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{proj.name}</div>
+                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0", wordWrap: "break-word" }}>{proj.description}</p>
+                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500, wordWrap: "break-word" }}>{proj.tech}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {d.volunteer && d.volunteer.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Community & Volunteer</ExecBodyH>
+              {d.volunteer.map((vol, i) => (
+                <div key={i} style={{ marginBottom: i < d.volunteer!.length - 1 ? 6 : 0 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{vol}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {d.declaration?.declaration && (
+            <div>
+              <ExecBodyH C={C}>Declaration</ExecBodyH>
+              <p style={{ fontFamily: FONT, fontSize: "12px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+              <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "9px", color: C.muted }}>
+                {d.declaration.place && <span>Place: {d.declaration.place}</span>}
+                {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// VARIANT C — Minimal Premium: thin top accent, large name, two-column body
+// ═══════════════════════════════════════════════════════════
+
+function MinimalH({ children, C }: { children: string; C: ThemeColors }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
+      <div style={{ width: 4, height: 14, backgroundColor: C.primary, borderRadius: 1, flexShrink: 0 }} />
+      <span style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 700, color: C.text, textTransform: "uppercase", letterSpacing: "1.2px", wordWrap: "break-word" }}>{children}</span>
+    </div>
+  );
+}
+
+function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
+  const C = themes[theme];
+  const MX = 36;
+  const W = A4_W - MX * 2;
+  const topExps = d.experience?.slice(0, 2) || [];
+  const historyExps = d.history?.length ? d.history : d.experience?.slice(2) || [];
+
+  // ── Engine: page budgets ──
+  const P1_BODY_TOP = 130;
+  const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
+  const CONT_BODY_BUDGET = A4_H - 60 - PRINT_MARGIN.bottom;
+
+  return (
+    <div>
+      {/* ══ PAGE 1 ══ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        {/* Thin top accent line */}
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 4, backgroundColor: C.primary }} />
+        {/* Header — white bg, large name */}
+        <div style={{ position: "absolute", top: 4, left: MX, width: W, paddingTop: 24, paddingBottom: 16, borderBottom: `1px solid ${C.divider}` }}>
+          <div style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.text, letterSpacing: "1px", textTransform: "uppercase", lineHeight: "34px" }}>{d.fullName}</div>
+          <div style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.primary, marginTop: 3, wordWrap: "break-word" }}>{d.title}</div>
+          {d.tagline && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginTop: 5, fontStyle: "italic" }}>"{d.tagline}"</div>}
+          <div style={{ display: "flex", gap: 18, marginTop: 8, fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>
+            {d.email && <span>✉ {d.email}</span>}
+            {d.phone && <span>☎ {d.phone}</span>}
+            {d.location && <span>📍 {d.location}</span>}
+            {d.linkedin && <span>in {d.linkedin}</span>}
+            {d.website && <span>🌐 {d.website}</span>}
+          </div>
+        </div>
+
+        {/* Two-column body */}
+        <div style={{ position: "absolute", top: P1_BODY_TOP, left: MX, width: W, maxHeight: P1_BODY_BUDGET, overflow: "hidden", display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 28 }}>
+          {/* Left — main content */}
+          <div style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+            {d.profile && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Executive Profile</MinimalH>
+                <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+              </div>
+            )}
+            {topExps.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Experience</MinimalH>
+                {topExps.map((exp, i) => (
+                  <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                      <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
+                    </div>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                    {exp.bullets?.length > 0 && (
+                      <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                        {exp.bullets.map((b, bi) => (
+                          <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {d.achievements && d.achievements.length > 0 && (
+              <div>
+                <MinimalH C={C}>Career Highlights</MinimalH>
+                {d.achievements.map((ach, i) => (
+                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary }}>—</span>
+                    <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right — sidebar content */}
+          <div style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+            {d.skills?.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Core Competencies</MinimalH>
+                {d.skills.map((skill, i) => (
+                  <div key={i} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.text, padding: "2.5px 0", borderBottom: i < d.skills.length - 1 ? `1px solid ${C.divider}` : "none" }}>{skill}</div>
+                ))}
+              </div>
+            )}
+            {d.education?.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Education</MinimalH>
+                {d.education.map((edu, i) => (
+                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
+                    <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {d.certifications && d.certifications.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Certifications</MinimalH>
+                {d.certifications.map((cert, i) => (
+                  <div key={i} style={{ marginBottom: 3 }}>
+                    <div style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {d.languages && d.languages.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Languages</MinimalH>
+                {d.languages.map((lang, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9px", padding: "2px 0" }}>
+                    <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span style={{ color: C.muted }}>{lang.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {d.memberships && d.memberships.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <MinimalH C={C}>Affiliations</MinimalH>
+                {d.memberships.map((m, i) => (
+                  <div key={i} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.text, padding: "2px 0" }}>• {m}</div>
+                ))}
+              </div>
+            )}
+            {d.tools && d.tools.length > 0 && (
+              <div>
+                <MinimalH C={C}>Tools</MinimalH>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                  {d.tools.map((tool, i) => (
+                    <span key={i} style={{ fontFamily: FONT, fontSize: "8px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ══ PAGE 2 ══ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 4, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 4, left: MX, width: W, paddingTop: 14, paddingBottom: 10, borderBottom: `1px solid ${C.divider}`, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 800, color: C.text, letterSpacing: "1px", textTransform: "uppercase" }}>{d.fullName}</span>
+          <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>Page 2</span>
+        </div>
+        <div style={{ position: "absolute", top: 60, left: MX, width: W, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {historyExps.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Career History</MinimalH>
+              {historyExps.map((exp, i) => (
+                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  {exp.bullets?.length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                      {exp.bullets.map((b, bi) => (
+                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1 }}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.boardRoles && d.boardRoles.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Board & Advisory Roles</MinimalH>
+              {d.boardRoles.map((role, i) => (
+                <div key={i} style={{ marginBottom: i < d.boardRoles!.length - 1 ? 6 : 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{role.title}</span>
+                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.muted, fontStyle: "italic" }}>{role.dates}</span>
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 500 }}>{role.organization}</div>
+                  {role.description && <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.muted, margin: "2px 0 0" }}>{role.description}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.executiveTraining && d.executiveTraining.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Executive Training</MinimalH>
+              {d.executiveTraining.map((tr, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div><span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{tr.name}</span>{tr.institution && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> — {tr.institution}</span>}</div>
+                  {tr.year && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{tr.year}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.publications && d.publications.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Publications</MinimalH>
+              {d.publications.map((pub, i) => (
+                <div key={i} style={{ marginBottom: 4 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{pub.title}</span>
+                  {pub.publisher && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> — {pub.publisher}</span>}
+                  {pub.year && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}> ({pub.year})</span>}
+                </div>
+              ))}
+            </div>
+          )}
+          {d.awards && d.awards.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Awards & Recognition</MinimalH>
+              {d.awards.map((award, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
+                  <div>
+                    <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══ PAGE 3 ══ */}
+      <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 4, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 4, left: MX, width: W, paddingTop: 14, paddingBottom: 10, borderBottom: `1px solid ${C.divider}`, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <span style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 800, color: C.text, letterSpacing: "1px", textTransform: "uppercase" }}>{d.fullName}</span>
+          <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>Page 3</span>
+        </div>
+        <div style={{ position: "absolute", top: 60, left: MX, width: W, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {d.references?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>References</MinimalH>
+              <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 3 ? "1fr 1fr 1fr" : d.references.length === 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
+                {d.references.map((ref, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, border: `1px solid ${C.divider}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.title}</div>
+                    {ref.company && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
+                    {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
+                    {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {d.projects && d.projects.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Strategic Projects</MinimalH>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {d.projects.map((proj, i) => (
+                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, borderLeft: `3px solid ${C.primary}`, border: `1px solid ${C.divider}` }}>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
+                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
+                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary }}>{proj.tech}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {d.volunteer && d.volunteer.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Community & Volunteer</MinimalH>
+              {d.volunteer.map((vol, i) => (
+                <div key={i} style={{ marginBottom: i < d.volunteer!.length - 1 ? 6 : 0 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{vol}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {d.declaration?.declaration && (
+            <div>
+              <MinimalH C={C}>Declaration</MinimalH>
+              <p style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+              <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "9px", color: C.muted }}>
+                {d.declaration.place && <span>Place: {d.declaration.place}</span>}
+                {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

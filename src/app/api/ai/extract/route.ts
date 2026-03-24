@@ -1,0 +1,386 @@
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// ─── Post-extraction validation ───
+function validateExperiences(experiences: any[]): any[] {
+  if (!Array.isArray(experiences) || experiences.length === 0) return experiences;
+
+  const cleaned = experiences.map((exp) => {
+    const c = { ...exp };
+
+    // Normalize and validate dates
+    c.startDate = normalizeDate(c.startDate || "");
+    c.endDate   = normalizeDate(c.endDate   || "");
+
+    // Handle full range in one field: "Jan 2020 – Dec 2022" in startDate
+    const rangeInStart = (c.startDate || "").match(/^(.+?)\s*[–\-]\s*(.+)$/);
+    if (rangeInStart && /\d{4}/.test(rangeInStart[1]) && /\d{4}|present/i.test(rangeInStart[2])) {
+      c.startDate = rangeInStart[1].trim();
+      c.endDate   = rangeInStart[2].trim();
+    }
+
+    // Handle full range in endDate field too
+    const rangeInEnd = (c.endDate || "").match(/^(.+?)\s*[–\-]\s*(.+)$/);
+    if (rangeInEnd && /\d{4}/.test(rangeInEnd[1]) && /\d{4}|present/i.test(rangeInEnd[2])) {
+      if (!c.startDate) c.startDate = rangeInEnd[1].trim();
+      c.endDate = rangeInEnd[2].trim();
+    }
+
+    // Skip garbage entries with no title AND no company
+    if (!c.title && !c.company) return null;
+
+    return c;
+  }).filter(Boolean);
+
+  // ── Detect and flag suspiciously short durations (< 2 months) ──
+  // These often indicate the AI fabricated or mixed up dates
+  cleaned.forEach((exp: any) => {
+    if (exp.startDate && exp.endDate && exp.endDate !== "Present") {
+      const start = parseDateToMonths(exp.startDate);
+      const end = parseDateToMonths(exp.endDate);
+      if (start > 0 && end > 0 && end < start) {
+        // End date is before start date — swap them
+        const tmp = exp.startDate;
+        exp.startDate = exp.endDate;
+        exp.endDate = tmp;
+      }
+    }
+  });
+
+  return cleaned;
+}
+
+// Parse a date string like "Jan 2020" or "2020" into total months for comparison
+function parseDateToMonths(dateStr: string): number {
+  if (!dateStr) return 0;
+  const months: Record<string, number> = {
+    jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+    jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+    january: 1, february: 2, march: 3, april: 4, june: 6,
+    july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+  };
+  // Try "Mon YYYY" or "Month YYYY"
+  const match = dateStr.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (match) {
+    const m = months[match[1].toLowerCase()] || 0;
+    return parseInt(match[2], 10) * 12 + m;
+  }
+  // Try just "YYYY"
+  const yearOnly = dateStr.match(/^(\d{4})$/);
+  if (yearOnly) return parseInt(yearOnly[1], 10) * 12;
+  return 0;
+}
+
+// ─── Normalize a single date string ───
+// Converts "01", "04", "01/04" etc. to empty string
+// Converts "01 April 2020" → "April 2020", "04/2020" → "April 2020"
+function normalizeDate(raw: string): string {
+  if (!raw) return "";
+  const s = raw.trim();
+
+  // If it's just a 1-2 digit number (a day), it's garbage — clear it
+  if (/^\d{1,2}$/.test(s)) return "";
+
+  // DD Month YYYY → strip the leading day number
+  // e.g. "01 April 2020" → "April 2020"
+  const ddMonthYear = s.match(/^\d{1,2}[\s/-]([A-Za-z]+[\s.,-]+\d{4})$/);
+  if (ddMonthYear) return ddMonthYear[1].trim();
+
+  // DD/MM/YYYY or MM/YYYY → convert to "Mon YYYY"
+  const slashFull = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashFull) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const mon = parseInt(slashFull[2], 10) - 1;
+    return `${months[mon] ?? slashFull[2]} ${slashFull[3]}`;
+  }
+
+  // MM/YYYY → "Mon YYYY"
+  const slashMonYear = s.match(/^(\d{1,2})\/(\d{4})$/);
+  if (slashMonYear) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const mon = parseInt(slashMonYear[1], 10) - 1;
+    return `${months[mon] ?? slashMonYear[1]} ${slashMonYear[2]}`;
+  }
+
+  // Already has a 4-digit year somewhere — keep as-is
+  if (/\d{4}/.test(s)) return s;
+
+  // Anything without a 4-digit year and not "Present" is garbage
+  if (/^(present|current|now|to date|till date)$/i.test(s)) return "Present";
+
+  return "";
+}
+
+function validateDates(data: any): any {
+  // Validate experiences
+  if (data.experiences?.length) {
+    data.experiences = validateExperiences(data.experiences);
+  }
+
+  // Validate board roles
+  if (data.boardRoles?.length) {
+    data.boardRoles = data.boardRoles.filter((b: any) => b.title || b.organization);
+  }
+
+  // Remove empty strings from simple arrays
+  for (const key of ["memberships", "keyAchievements", "tools", "volunteer", "interests"]) {
+    if (Array.isArray(data[key])) {
+      data[key] = data[key].filter((item: any) => {
+        if (typeof item === "string") return item.trim().length > 0;
+        return true;
+      });
+    }
+  }
+
+  // Fix declaration: use current date instead of old CV date
+  if (data.declaration) {
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.toLocaleString('default', { month: 'long' });
+    const year = today.getFullYear();
+    data.declaration.date = `${day} ${month} ${year}`;
+  }
+
+  return data;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const { text } = await req.json();
+
+    if (!text || typeof text !== "string") {
+      return NextResponse.json({ error: "No text provided" }, { status: 400 });
+    }
+
+    const prompt = `You are an expert CV/resume parser with years of experience reading professional documents. Your task is to extract EVERY piece of information from this CV into a structured JSON object.
+
+CRITICAL RULES FOR EXPERIENCE EXTRACTION:
+1. Each job/role is a SEPARATE entry in the "experiences" array.
+2. Each entry MUST have its OWN startDate and endDate — NEVER mix dates from one role into another.
+3. Read the CV top-to-bottom. For each role you encounter, identify:
+   - The job title (on or near the role header line)
+   - The company name (on or near the role header line — see COMPANY NAME rules below)
+   - The date range that is closest to / on the same line as that role header
+   - The description/bullets that follow that header UNTIL the next role header begins
+4. Order experiences from MOST RECENT first (reverse chronological).
+5. If a role says "Present" or "Current" or "To Date" or "Till Date", set endDate to "Present".
+6. NEVER assign a date range from Role A to Role B. Each role's dates must come from its own header line.
+7. If a role has no visible dates, leave startDate and endDate as empty strings — do NOT guess or fabricate dates.
+8. DURATION ACCURACY IS CRITICAL: The date range for each role must reflect the ACTUAL duration shown in the CV. Do NOT shorten, compress, or fabricate date ranges.
+9. CHRONOLOGICAL CONSISTENCY: Roles should not have overlapping dates (unless the person explicitly held concurrent positions). If the CV shows a career progression at the same company (e.g. promotions), each role MUST have its own distinct non-overlapping date range.
+10. LOOK FOR DATE PATTERNS: CVs typically show dates near the job title or company name. Common patterns:
+    - Right-aligned dates on the same line as the title
+    - Dates on a separate line between title and description
+    - Dates in parentheses after the company name
+    - Date ranges like "June 2007 - October 2009" or "Jun 2007 – Oct 2009"
+11. When multiple roles are at the SAME company, pay extra attention — each role has its own date range showing the period in that specific position.
+
+DATE FORMAT RULES (CRITICAL):
+- startDate and endDate MUST always contain a Month AND a Year (e.g. "Jan 2020", "April 2020", "2020").
+- NEVER put a day number alone (e.g. "01", "04", "15") in startDate or endDate.
+- If the CV shows "01 April 2020", extract startDate as "April 2020" (drop the day).
+- If the CV shows "04/2020" or "4/2020", extract as "Apr 2020".
+- If the CV shows "01/04/2020" (DD/MM/YYYY), extract as "Apr 2020".
+- If the date range appears as a single string like "Jan 2020 – Mar 2022", split it: startDate="Jan 2020", endDate="Mar 2022".
+- Use 3-letter month abbreviations: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec.
+- If only a year is available (e.g. "2020"), use just the year.
+
+COMPANY NAME RULES (CRITICAL):
+- The company name is often on the SAME line as the job title, or on the IMMEDIATELY FOLLOWING line.
+- Common CV layouts for role headers:
+  a) "Job Title | Company Name | Jan 2020 – Dec 2022"
+  b) "Job Title – Company Name (Jan 2020 – Dec 2022)"
+  c) "Job Title\nCompany Name\nJan 2020 – Dec 2022"
+  d) "Job Title, Company Name, Location\nJan 2020 – Dec 2022"
+  e) "Company Name\nJob Title\nJan 2020 – Dec 2022"
+- If the company name appears on the next line after the title, ALWAYS extract it as the company.
+- Do NOT leave company blank if a company name exists anywhere near the role header.
+- Do NOT confuse the company name with the location or dates.
+
+Return ONLY valid JSON with this exact structure (use empty strings/arrays for missing fields):
+{
+  "personalInfo": {
+    "fullName": "",
+    "email": "",
+    "phone": "",
+    "location": "",
+    "headline": "",
+    "linkedin": "",
+    "website": ""
+  },
+  "summary": "",
+  "experiences": [
+    {
+      "title": "",
+      "company": "",
+      "location": "",
+      "startDate": "",
+      "endDate": "",
+      "description": ""
+    }
+  ],
+  "education": [
+    {
+      "degree": "",
+      "institution": "",
+      "year": "",
+      "description": ""
+    }
+  ],
+  "skills": [
+    { "name": "", "category": "" }
+  ],
+  "certifications": [
+    { "name": "", "issuer": "", "year": "" }
+  ],
+  "languages": [
+    { "name": "", "proficiency": "" }
+  ],
+  "memberships": [""],
+  "keyAchievements": [""],
+  "projects": [
+    { "name": "", "description": "", "tech": "" }
+  ],
+  "boardRoles": [
+    { "title": "", "organization": "", "startDate": "", "endDate": "", "description": "" }
+  ],
+  "executiveTraining": [
+    { "name": "", "institution": "", "year": "" }
+  ],
+  "publications": [
+    { "title": "", "publisher": "", "year": "", "type": "" }
+  ],
+  "referees": [
+    { "name": "", "title": "", "company": "", "phone": "", "email": "" }
+  ],
+  "areasOfExpertise": [
+    { "name": "", "description": "" }
+  ],
+  "tools": [""],
+  "volunteer": [""],
+  "interests": [""],
+  "internships": [
+    { "title": "", "company": "", "location": "", "startDate": "", "endDate": "", "description": "" }
+  ],
+  "declaration": {
+    "declaration": "",
+    "place": "",
+    "date": ""
+  }
+}
+
+SECTION-BY-SECTION EXTRACTION RULES:
+
+PERSONAL INFO:
+- Extract full name, email, phone (including country code), location (city + country), LinkedIn URL, website/portfolio URL.
+- For headline: use the professional title or tagline near the top of the CV. If none exists, infer from the most recent job title.
+
+SUMMARY / PROFILE:
+- Extract the entire professional summary, executive profile, or career objective paragraph. Preserve it fully — do not truncate.
+
+EXPERIENCES:
+- Extract ALL roles including part-time, contract, freelance, and consulting positions.
+- For description: combine ALL bullet points and paragraphs under that role into one string, separated by newlines ("\\n").
+- Include quantified results (%, $, numbers) exactly as written.
+- For location: extract city and/or country for each role. Look near the company name or date line.
+- startDate/endDate: Always Month+Year format. Drop day numbers. Use "Present" for current roles.
+
+EDUCATION:
+- Extract ALL qualifications: degrees, diplomas, certificates from academic institutions.
+- "year" should be the graduation/completion year (or year range like "2015-2019").
+- "description" should include honors, GPA, thesis title, or relevant coursework if mentioned.
+
+SKILLS:
+- Extract EVERY skill mentioned anywhere in the CV (in skills sections, experience bullets, summary, etc.).
+- Categorize each: "Technical", "Soft Skills", "Tools", "Leadership", "Core", "Industry", "Languages", or "Other".
+
+CERTIFICATIONS:
+- Extract name, issuing body, and year for each certification, license, or professional credential.
+
+LANGUAGES:
+- Extract language name and proficiency level (e.g., "Native", "Fluent", "Intermediate", "Basic").
+
+MEMBERSHIPS:
+- Extract professional bodies, associations, societies, or affiliations as simple strings.
+
+KEY ACHIEVEMENTS:
+- Hunt throughout the ENTIRE CV for achievements - not just in dedicated sections.
+- Look in: experience bullet points, summary sections, project descriptions, awards sections, certifications, and any text showing results.
+- Extract: quantified results (% improvements, $ savings, time reductions), leadership impacts, process improvements, quality implementations, team achievements, strategic initiatives.
+- Include Key Result Areas, performance metrics, successful projects, and any statement showing impact or value.
+- Convert bullet points and fragmented text into complete achievement descriptions.
+- If achievements are embedded in experience bullets, extract them as separate achievements.
+
+PROJECTS:
+- Extract project name, description, and technologies used. Look for "Projects", "Notable Projects", "Key Projects" sections.
+
+BOARD ROLES:
+- Extract board positions, committee roles, or governance roles with organization, dates, and description.
+
+EXECUTIVE TRAINING:
+- Extract leadership programs, executive education, advanced professional development. NOT regular degrees.
+
+PUBLICATIONS:
+- Extract papers, articles, books, conference presentations. Set type to "publication" or "speaking".
+
+REFEREES:
+- Extract referee/reference name, their job title, company, phone, and email.
+
+AREAS OF EXPERTISE:
+- Extract any "Core Competencies", "Areas of Expertise", "Key Areas", "Specializations" sections.
+
+TOOLS:
+- Extract software, platforms, systems, and tools mentioned (e.g., "SAP", "Salesforce", "JIRA", "Excel").
+
+VOLUNTEER:
+- Extract community service, volunteer work, or pro-bono activities as descriptive strings.
+
+INTERNSHIPS:
+- Extract entries with titles like "Intern", "Trainee", "Attachment", "Industrial Training", "Work Placement" separately.
+
+DECLARATION:
+- Extract any declaration/affirmation statement, place, and date.
+
+FINAL REMINDERS:
+- Do NOT skip any section. Extract EVERYTHING.
+- Do NOT mix dates between different experiences.
+- Do NOT leave a field empty if the information exists somewhere in the CV.
+- Return ONLY the JSON — no markdown fences, no explanation.
+
+CV TEXT:
+${text}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a precise CV data extraction engine. You MUST extract every piece of information from the CV and return perfectly structured JSON. Pay extreme attention to matching dates with their correct job roles — NEVER mix dates between roles."
+        },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.05,
+      response_format: { type: "json_object" },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      return NextResponse.json({ error: "No response from AI" }, { status: 500 });
+    }
+
+    const parsed = JSON.parse(content);
+
+    // Post-extraction validation: fix date mixing, remove empty entries
+    const validated = validateDates(parsed);
+
+    return NextResponse.json({ data: validated });
+  } catch (err: any) {
+    console.error("AI extraction error:", err);
+    return NextResponse.json(
+      { error: err.message || "AI extraction failed" },
+      { status: 500 }
+    );
+  }
+}
