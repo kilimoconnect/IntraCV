@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 export async function POST(req: NextRequest) {
   try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const { jobRole, company, action, question, answer } = await req.json();
 
     // Generate interview questions
@@ -37,11 +36,10 @@ Return ONLY valid JSON with this structure:
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are an expert interview coach. Generate realistic, challenging interview questions. Return only valid JSON with a 'questions' key containing the array." },
+          { role: "system", content: "You are an expert interview coach. Generate realistic, challenging interview questions. You MUST return ONLY valid JSON with a 'questions' key containing the array. No other text." },
           { role: "user", content: prompt },
         ],
         temperature: 0.7,
-        response_format: { type: "json_object" },
       });
 
       const content = completion.choices[0]?.message?.content;
@@ -49,7 +47,9 @@ Return ONLY valid JSON with this structure:
         return NextResponse.json({ error: "No response from AI" }, { status: 500 });
       }
 
-      const parsed = JSON.parse(content);
+      // Strip markdown fences if present (model may wrap JSON in ```json ... ```)
+      const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      const parsed = JSON.parse(cleaned);
       const questions = Array.isArray(parsed) ? parsed : parsed.questions || parsed[Object.keys(parsed)[0]] || [];
 
       return NextResponse.json({ questions });
@@ -78,11 +78,10 @@ Provide feedback in this JSON format:
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are a supportive but honest interview coach. Give actionable feedback. Return only valid JSON." },
+          { role: "system", content: "You are a supportive but honest interview coach. Give actionable feedback. You MUST return ONLY valid JSON. No other text." },
           { role: "user", content: prompt },
         ],
         temperature: 0.5,
-        response_format: { type: "json_object" },
       });
 
       const content = completion.choices[0]?.message?.content;
@@ -90,7 +89,8 @@ Provide feedback in this JSON format:
         return NextResponse.json({ error: "No response from AI" }, { status: 500 });
       }
 
-      const feedback = JSON.parse(content);
+      const cleanedFb = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      const feedback = JSON.parse(cleanedFb);
       return NextResponse.json({ feedback });
     }
 
