@@ -1,0 +1,104 @@
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export async function POST(req: NextRequest) {
+  try {
+    const { jobRole, company, action, question, answer } = await req.json();
+
+    // Generate interview questions
+    if (action === "generate") {
+      if (!jobRole) {
+        return NextResponse.json({ error: "Job role is required" }, { status: 400 });
+      }
+
+      const prompt = `Generate 5 realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}. 
+
+Include a mix of:
+- 1 behavioral question (STAR method)
+- 1 technical/role-specific question
+- 1 situational question
+- 1 competency-based question
+- 1 culture-fit or motivational question
+
+Return ONLY valid JSON array with this structure:
+[
+  {
+    "id": 1,
+    "question": "The interview question text",
+    "type": "behavioral" | "technical" | "situational" | "competency" | "culture-fit",
+    "tips": "Brief tip on how to approach this question"
+  }
+]`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are an expert interview coach. Generate realistic, challenging interview questions. Return only valid JSON." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        return NextResponse.json({ error: "No response from AI" }, { status: 500 });
+      }
+
+      const parsed = JSON.parse(content);
+      const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
+
+      return NextResponse.json({ questions });
+    }
+
+    // Provide feedback on an answer
+    if (action === "feedback") {
+      if (!question || !answer) {
+        return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
+      }
+
+      const prompt = `You are an expert interview coach. Evaluate this interview answer and provide constructive feedback.
+
+Interview Question: "${question}"
+Candidate's Answer: "${answer}"
+
+Provide feedback in this JSON format:
+{
+  "score": <number 1-10>,
+  "strengths": ["strength 1", "strength 2"],
+  "improvements": ["improvement 1", "improvement 2"],
+  "suggestedAnswer": "A brief model answer or key points to include",
+  "overallFeedback": "2-3 sentence summary of the feedback"
+}`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a supportive but honest interview coach. Give actionable feedback. Return only valid JSON." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.5,
+        response_format: { type: "json_object" },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        return NextResponse.json({ error: "No response from AI" }, { status: 500 });
+      }
+
+      const feedback = JSON.parse(content);
+      return NextResponse.json({ feedback });
+    }
+
+    return NextResponse.json({ error: "Invalid action. Use 'generate' or 'feedback'." }, { status: 400 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("Interview questions error:", err);
+    return NextResponse.json(
+      { error: err.message || "Failed to process request" },
+      { status: 500 }
+    );
+  }
+}
