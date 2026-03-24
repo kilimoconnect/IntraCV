@@ -114,6 +114,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
         .upsert({
           user_id: userId,
           ...profile,
+          ...cvPrefs,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
       if (error) throw error;
@@ -132,6 +133,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
         .from("user_settings")
         .upsert({
           user_id: userId,
+          ...profile,
           ...cvPrefs,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
