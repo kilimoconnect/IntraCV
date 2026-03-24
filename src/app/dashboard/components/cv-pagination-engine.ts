@@ -225,7 +225,8 @@ function rebalance(pages: PagePlan[], mmap: Map<SectionId, SectionMeasure>): voi
       const curFill = cur.budget > 0 ? cur.usedHeight / cur.budget : 0;
       const nxtFill = nxt.budget > 0 ? nxt.usedHeight / nxt.budget : 0;
 
-      // Relaxed thresholds: if current is >85% full and next is <65%, move last section
+      // Push-down: if current is >85% full and next is <65%, move last section down
+      let movedThisPair = false;
       if (curFill > 0.85 && nxtFill < 0.65 && cur.sections.length > 1) {
         const lastId = cur.sections[cur.sections.length - 1];
         const m = mmap.get(lastId);
@@ -237,16 +238,20 @@ function rebalance(pages: PagePlan[], mmap: Map<SectionId, SectionMeasure>): voi
           nxt.sections.unshift(lastId);
           nxt.usedHeight += h;
           moved = true;
+          movedThisPair = true;
         }
       }
 
-      // Also try to shift from very light pages to previous pages with room
-      if (nxtFill < 0.30 && curFill < 0.80 && nxt.sections.length > 0) {
+      // Pull-up: consolidate very light next page into current, but only if
+      // push-down didn't already fire for this pair and receiving the section
+      // won't push current above 0.85 (prevents oscillation)
+      if (!movedThisPair && nxtFill < 0.30 && curFill < 0.80 && nxt.sections.length > 0) {
         const firstId = nxt.sections[0];
         const m = mmap.get(firstId);
         if (!m) continue;
         const h = m.fullHeight + GAP.section;
-        if (h <= cur.budget - cur.usedHeight) {
+        const newCurFill = cur.budget > 0 ? (cur.usedHeight + h) / cur.budget : 0;
+        if (h <= cur.budget - cur.usedHeight && newCurFill <= 0.85) {
           nxt.sections.shift();
           nxt.usedHeight -= h;
           cur.sections.push(firstId);

@@ -22,20 +22,22 @@ Include a mix of:
 - 1 competency-based question
 - 1 culture-fit or motivational question
 
-Return ONLY valid JSON array with this structure:
-[
-  {
-    "id": 1,
-    "question": "The interview question text",
-    "type": "behavioral" | "technical" | "situational" | "competency" | "culture-fit",
-    "tips": "Brief tip on how to approach this question"
-  }
-]`;
+Return ONLY valid JSON with this structure:
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "The interview question text",
+      "type": "behavioral" | "technical" | "situational" | "competency" | "culture-fit",
+      "tips": "Brief tip on how to approach this question"
+    }
+  ]
+}`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are an expert interview coach. Generate realistic, challenging interview questions. Return only valid JSON." },
+          { role: "system", content: "You are an expert interview coach. Generate realistic, challenging interview questions. Return only valid JSON with a 'questions' key containing the array." },
           { role: "user", content: prompt },
         ],
         temperature: 0.7,
@@ -48,7 +50,7 @@ Return ONLY valid JSON array with this structure:
       }
 
       const parsed = JSON.parse(content);
-      const questions = Array.isArray(parsed) ? parsed : parsed.questions || [];
+      const questions = Array.isArray(parsed) ? parsed : parsed.questions || parsed[Object.keys(parsed)[0]] || [];
 
       return NextResponse.json({ questions });
     }
