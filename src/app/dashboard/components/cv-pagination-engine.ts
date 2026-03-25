@@ -167,7 +167,12 @@ export function paginateSections(
   }
 
   // ── Rebalance: shift sections from overloaded to underloaded pages ──
-  rebalance(pages, mmap);
+  // Skip rebalance for single-budget callers (e.g. junior layout) that only
+  // render pages[0] — rebalance could move sections to dynamically-created
+  // pages and cause them to silently disappear.
+  if (pageBudgets.length > 1) {
+    rebalance(pages, mmap);
+  }
 
   // ── Remove empty trailing pages ──
   while (pages.length > 1 && pages[pages.length - 1].sections.length === 0) {
