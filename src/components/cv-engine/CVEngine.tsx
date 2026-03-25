@@ -86,6 +86,14 @@ export function runEngine(
     log.push(`After bullet reduction (max ${rs.maxBulletsPerJob}/job): ${pages.length} pages`);
   }
 
+  // Step 5: Final safety — if pages still exceed target, try aggressive bullet reduction
+  if (pages.length > targetPages) {
+    compressedData = reduceBullets(compressedData, Math.max(1, rs.maxBulletsPerJob - 2));
+    measures = measureComponents(compressedData, style, mainW);
+    pages = planPages(layout, measures, style);
+    log.push(`After aggressive bullet reduction: ${pages.length} pages`);
+  }
+
   return {
     pages,
     style,

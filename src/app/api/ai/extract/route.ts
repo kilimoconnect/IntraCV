@@ -146,6 +146,179 @@ function validateDates(data: any): any {
   return data;
 }
 
+// ─── Comprehensive post-extraction validation ───
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function validateAllSections(data: any): any {
+  // Ensure personalInfo always has required fields
+  if (!data.personalInfo || typeof data.personalInfo !== "object") {
+    data.personalInfo = { fullName: "", email: "", phone: "", location: "", headline: "", linkedin: "", website: "" };
+  } else {
+    const pi = data.personalInfo;
+    pi.fullName = (pi.fullName || "").trim();
+    pi.email = (pi.email || "").trim();
+    pi.phone = (pi.phone || "").trim();
+    pi.location = (pi.location || "").trim();
+    pi.headline = (pi.headline || "").trim();
+    pi.linkedin = (pi.linkedin || "").trim();
+    pi.website = (pi.website || "").trim();
+  }
+
+  // Ensure summary is a string
+  if (typeof data.summary !== "string") {
+    data.summary = "";
+  }
+
+  // Validate skills array — ensure each has name and category
+  if (Array.isArray(data.skills)) {
+    data.skills = data.skills
+      .filter((s: any) => s && typeof s === "object" && (s.name || "").trim())
+      .map((s: any) => ({
+        name: (s.name || "").trim(),
+        category: (s.category || "Other").trim(),
+      }));
+  } else {
+    data.skills = [];
+  }
+
+  // Validate education array
+  if (Array.isArray(data.education)) {
+    data.education = data.education
+      .filter((e: any) => e && typeof e === "object" && ((e.degree || "").trim() || (e.institution || "").trim()))
+      .map((e: any) => ({
+        degree: (e.degree || "").trim(),
+        institution: (e.institution || "").trim(),
+        year: (e.year || "").trim(),
+        description: (e.description || "").trim(),
+      }));
+  } else {
+    data.education = [];
+  }
+
+  // Validate certifications array
+  if (Array.isArray(data.certifications)) {
+    data.certifications = data.certifications
+      .filter((c: any) => c && typeof c === "object" && (c.name || "").trim())
+      .map((c: any) => ({
+        name: (c.name || "").trim(),
+        issuer: (c.issuer || "").trim(),
+        year: (c.year || "").trim(),
+      }));
+  } else {
+    data.certifications = [];
+  }
+
+  // Validate languages array
+  if (Array.isArray(data.languages)) {
+    data.languages = data.languages
+      .filter((l: any) => l && typeof l === "object" && (l.name || "").trim())
+      .map((l: any) => ({
+        name: (l.name || "").trim(),
+        proficiency: (l.proficiency || "").trim(),
+      }));
+  } else {
+    data.languages = [];
+  }
+
+  // Validate referees array
+  if (Array.isArray(data.referees)) {
+    data.referees = data.referees
+      .filter((r: any) => r && typeof r === "object" && (r.name || "").trim())
+      .map((r: any) => ({
+        name: (r.name || "").trim(),
+        title: (r.title || "").trim(),
+        company: (r.company || "").trim(),
+        phone: (r.phone || "").trim(),
+        email: (r.email || "").trim(),
+      }));
+  } else {
+    data.referees = [];
+  }
+
+  // Validate projects array
+  if (Array.isArray(data.projects)) {
+    data.projects = data.projects
+      .filter((p: any) => p && typeof p === "object" && ((p.name || "").trim() || (p.description || "").trim()))
+      .map((p: any) => ({
+        name: (p.name || "").trim(),
+        description: (p.description || "").trim(),
+        tech: (p.tech || "").trim(),
+      }));
+  } else {
+    data.projects = [];
+  }
+
+  // Validate internships array
+  if (Array.isArray(data.internships)) {
+    data.internships = data.internships
+      .filter((i: any) => i && typeof i === "object" && ((i.title || "").trim() || (i.company || "").trim()))
+      .map((i: any) => ({
+        title: (i.title || "").trim(),
+        company: (i.company || "").trim(),
+        location: (i.location || "").trim(),
+        startDate: normalizeDate(i.startDate || ""),
+        endDate: normalizeDate(i.endDate || ""),
+        description: (i.description || "").trim(),
+      }));
+  } else {
+    data.internships = [];
+  }
+
+  // Validate areasOfExpertise
+  if (Array.isArray(data.areasOfExpertise)) {
+    data.areasOfExpertise = data.areasOfExpertise
+      .filter((a: any) => a && typeof a === "object" && (a.name || "").trim())
+      .map((a: any) => ({
+        name: (a.name || "").trim(),
+        description: (a.description || "").trim(),
+      }));
+  } else {
+    data.areasOfExpertise = [];
+  }
+
+  // Validate executive fields
+  if (Array.isArray(data.executiveTraining)) {
+    data.executiveTraining = data.executiveTraining
+      .filter((t: any) => t && typeof t === "object" && (t.name || "").trim())
+      .map((t: any) => ({
+        name: (t.name || "").trim(),
+        institution: (t.institution || "").trim(),
+        year: (t.year || "").trim(),
+      }));
+  } else {
+    data.executiveTraining = [];
+  }
+
+  if (Array.isArray(data.publications)) {
+    data.publications = data.publications
+      .filter((p: any) => p && typeof p === "object" && (p.title || "").trim())
+      .map((p: any) => ({
+        title: (p.title || "").trim(),
+        publisher: (p.publisher || "").trim(),
+        year: (p.year || "").trim(),
+        type: (p.type || "publication").trim(),
+      }));
+  } else {
+    data.publications = [];
+  }
+
+  // Ensure declaration object structure
+  if (data.declaration && typeof data.declaration === "object") {
+    data.declaration = {
+      declaration: (data.declaration.declaration || "").trim(),
+      place: (data.declaration.place || "").trim(),
+      date: (data.declaration.date || "").trim(),
+    };
+    // Remove empty declaration
+    if (!data.declaration.declaration) {
+      data.declaration = null;
+    }
+  } else {
+    data.declaration = null;
+  }
+
+  return data;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { text } = await req.json();
@@ -373,7 +546,10 @@ ${text}`;
     const parsed = JSON.parse(content);
 
     // Post-extraction validation: fix date mixing, remove empty entries
-    const validated = validateDates(parsed);
+    const dateValidated = validateDates(parsed);
+
+    // Comprehensive validation: ensure all sections have proper structure
+    const validated = validateAllSections(dateValidated);
 
     return NextResponse.json({ data: validated });
   } catch (err: any) {
