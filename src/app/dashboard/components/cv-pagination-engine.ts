@@ -3,9 +3,10 @@
 // ═══════════════════════════════════════════════════════════
 // Takes measured sections + per-page height budgets and distributes
 // sections across pages so that:
-//   1. No section is split across a page break
+//   1. No section is split across a page break (unless it's too tall for any page)
 //   2. Pages are filled as evenly as possible (target 75-95%)
-//   3. Overflow sections are reported (never silently lost)
+//   3. Overflow sections get additional pages dynamically
+//   4. Large sections (experience, education) can be split across pages
 // ═══════════════════════════════════════════════════════════
 
 import { type CareerCategory } from "./cv-layout-types";
@@ -58,6 +59,14 @@ export const SECTION_ORDER: Record<CareerCategory, SectionId[]> = {
   ],
 };
 
+// ── Sections that should NOT be split across pages ──
+const ATOMIC_SECTIONS: Set<SectionId> = new Set([
+  "profile", "skills", "declaration", "references",
+]);
+
+// ── Default continuation page budget (A4 minus mini header and footer) ──
+const DEFAULT_CONTINUATION_BUDGET = 1040;
+
 // ═══════════════════════════════════════════════════════════
 // MAIN API
 // ═══════════════════════════════════════════════════════════
@@ -85,7 +94,7 @@ export function paginateSections(
     return m && m.present;
   });
 
-  // Init pages
+  // Init pages from budgets
   const pages: PagePlan[] = pageBudgets.map((budget, i) => ({
     page: i,
     sections: [],
@@ -96,35 +105,79 @@ export function paginateSections(
 
   const overflow: SectionId[] = [];
 
-  // ── First-fit packing ──
+  // ── Sequential placement — maintain section order across pages ──
+  let currentPageIdx = 0;
+
   for (const id of presentIds) {
     const m = mmap.get(id)!;
     const needed = m.fullHeight + GAP.section;
 
     let placed = false;
-    for (const pg of pages) {
+
+    // Try to place on pages starting from current (maintains order)
+    for (let pi = currentPageIdx; pi < pages.length; pi++) {
+      const pg = pages[pi];
       const remaining = pg.budget - pg.usedHeight;
-      // Try full height
+
+      // Full section fits on this page
       if (needed <= remaining) {
         pg.sections.push(id);
         pg.usedHeight += needed;
+        currentPageIdx = pi;
         placed = true;
         break;
       }
-      // Try min height (truncated fit) — only if at least minHeight fits
-      const minNeeded = m.minHeight + GAP.section;
-      if (minNeeded <= remaining && remaining >= 40) {
+
+      // Section doesn't fit fully — try minHeight if section is atomic
+      if (ATOMIC_SECTIONS.has(id)) {
+        const minNeeded = m.minHeight + GAP.section;
+        if (minNeeded <= remaining && remaining >= 40) {
+          pg.sections.push(id);
+          pg.usedHeight += Math.min(needed, remaining);
+          currentPageIdx = pi;
+          placed = true;
+          break;
+        }
+      }
+
+      // For non-atomic (splittable) sections, if at least minHeight fits,
+      // place the section here; the renderer will handle truncation
+      if (!ATOMIC_SECTIONS.has(id) && m.minHeight + GAP.section <= remaining && remaining >= 60) {
         pg.sections.push(id);
-        pg.usedHeight += Math.min(needed, remaining); // cap at remaining
+        pg.usedHeight += Math.min(needed, remaining);
+        currentPageIdx = pi;
         placed = true;
         break;
       }
     }
-    if (!placed) overflow.push(id);
+
+    // If not placed on any existing page, add a new page dynamically
+    if (!placed) {
+      const newBudget = pageBudgets[pageBudgets.length - 1] ?? DEFAULT_CONTINUATION_BUDGET;
+      const newPage: PagePlan = {
+        page: pages.length,
+        sections: [id],
+        usedHeight: Math.min(needed, newBudget),
+        budget: newBudget,
+        fillRatio: 0,
+      };
+      pages.push(newPage);
+      currentPageIdx = pages.length - 1;
+    }
   }
 
   // ── Rebalance: shift sections from overloaded to underloaded pages ──
-  rebalance(pages, mmap);
+  // Skip rebalance for single-budget callers (e.g. junior layout) that only
+  // render pages[0] — rebalance could move sections to dynamically-created
+  // pages and cause them to silently disappear.
+  if (pageBudgets.length > 1) {
+    rebalance(pages, mmap);
+  }
+
+  // ── Remove empty trailing pages ──
+  while (pages.length > 1 && pages[pages.length - 1].sections.length === 0) {
+    pages.pop();
+  }
 
   // ── Compute fill ratios ──
   let totalUsed = 0;
@@ -141,19 +194,26 @@ export function paginateSections(
 /**
  * Convenience: paginate using default category order.
  */
+/**
+ * Convenience: paginate using default category order.
+ * Now allows dynamic page overflow beyond target count.
+ */
 export function paginateCV(
   category: CareerCategory,
   measures: SectionMeasure[],
   pageBudgets: number[],
 ): PaginationResult {
   const order = SECTION_ORDER[category];
-  // Ensure enough budget entries
   const target = TARGET_PAGES[category];
   const budgets = [...pageBudgets];
+
+  // Ensure at least target number of budget entries
   while (budgets.length < target) {
-    budgets.push(budgets[budgets.length - 1] ?? 900);
+    budgets.push(budgets[budgets.length - 1] ?? DEFAULT_CONTINUATION_BUDGET);
   }
-  return paginateSections(order, measures, budgets.slice(0, target));
+
+  // Pass all budgets (not sliced to target) to allow dynamic overflow
+  return paginateSections(order, measures, budgets);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -161,8 +221,8 @@ export function paginateCV(
 // ═══════════════════════════════════════════════════════════
 
 function rebalance(pages: PagePlan[], mmap: Map<SectionId, SectionMeasure>): void {
-  // Up to 5 passes to converge
-  for (let pass = 0; pass < 5; pass++) {
+  // Up to 8 passes to converge
+  for (let pass = 0; pass < 8; pass++) {
     let moved = false;
     for (let i = 0; i < pages.length - 1; i++) {
       const cur = pages[i];
@@ -170,8 +230,9 @@ function rebalance(pages: PagePlan[], mmap: Map<SectionId, SectionMeasure>): voi
       const curFill = cur.budget > 0 ? cur.usedHeight / cur.budget : 0;
       const nxtFill = nxt.budget > 0 ? nxt.usedHeight / nxt.budget : 0;
 
-      // If current is >90% full and next is <50%, move last section
-      if (curFill > 0.90 && nxtFill < 0.50 && cur.sections.length > 1) {
+      // Push-down: if current is >85% full and next is <65%, move last section down
+      let movedThisPair = false;
+      if (curFill > 0.85 && nxtFill < 0.65 && cur.sections.length > 1) {
         const lastId = cur.sections[cur.sections.length - 1];
         const m = mmap.get(lastId);
         if (!m) continue;
@@ -181,6 +242,25 @@ function rebalance(pages: PagePlan[], mmap: Map<SectionId, SectionMeasure>): voi
           cur.usedHeight -= h;
           nxt.sections.unshift(lastId);
           nxt.usedHeight += h;
+          moved = true;
+          movedThisPair = true;
+        }
+      }
+
+      // Pull-up: consolidate very light next page into current, but only if
+      // push-down didn't already fire for this pair and receiving the section
+      // won't push current above 0.85 (prevents oscillation)
+      if (!movedThisPair && nxtFill < 0.30 && curFill < 0.80 && nxt.sections.length > 0) {
+        const firstId = nxt.sections[0];
+        const m = mmap.get(firstId);
+        if (!m) continue;
+        const h = m.fullHeight + GAP.section;
+        const newCurFill = cur.budget > 0 ? (cur.usedHeight + h) / cur.budget : 0;
+        if (h <= cur.budget - cur.usedHeight && newCurFill <= 0.85) {
+          nxt.sections.shift();
+          nxt.usedHeight -= h;
+          cur.sections.push(firstId);
+          cur.usedHeight += h;
           moved = true;
         }
       }

@@ -75,9 +75,18 @@ export async function POST(req: NextRequest) {
     let text: string;
 
     if (fileName.endsWith(".pdf")) {
-      const result = await pdfParse(buffer, {
-        pagerender: layoutPageRenderer,
-      });
+      let result;
+      try {
+        // Try custom layout renderer first (preserves column alignment)
+        result = await pdfParse(buffer, {
+          pagerender: layoutPageRenderer,
+        });
+      } catch {
+        // Fallback to default renderer if custom one fails (e.g. certain
+        // PDF structures trigger "Command token too long" in pdfjs)
+        console.warn("Custom PDF renderer failed, falling back to default renderer");
+        result = await pdfParse(buffer);
+      }
       text = result.text;
     } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
       const result = await mammoth.extractRawText({ buffer });

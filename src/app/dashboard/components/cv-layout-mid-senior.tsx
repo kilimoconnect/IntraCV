@@ -8,11 +8,42 @@
 // Distinctive look: colored sidebar runs full page height.
 // ═══════════════════════════════════════════════════════════
 
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
 import { measureAllSections } from "./cv-constraint-engine";
 import { paginateSections } from "./cv-pagination-engine";
 import { PRINT_MARGIN } from "./cv-design-system";
+
+// ── Page-fill hook: measures content height after paint and returns a CSS zoom ──
+// The ref div uses flex (space-between) so its scrollHeight = container height.
+// We sum each child's offsetHeight + margins to get the natural content height.
+function usePageFill(budget: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Wait one frame so the browser has fully laid out the content
+    const raf = requestAnimationFrame(() => {
+      // Sum children's natural heights (flex stretches the container itself)
+      let contentH = 0;
+      for (const child of Array.from(el.children)) {
+        const ch = child as HTMLElement;
+        const cs = getComputedStyle(ch);
+        contentH += ch.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+      }
+      if (contentH > 0 && contentH < budget * 0.92) {
+        // Linear scale toward 95% fill, cap at 1.45x to keep text readable
+        const sf = Math.min(1.45, (budget * 0.95) / contentH);
+        setZoom(sf);
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [budget]);
+
+  return { ref, zoom };
+}
 
 interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
 
@@ -39,6 +70,14 @@ function MainHeading({ children, C }: { children: string; C: ThemeColors }) {
 }
 
 export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Props) {
+  // ── Hooks MUST be called before any conditional returns (Rules of Hooks) ──
+  const P1_BODY_TOP = 28;
+  const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
+  const p1Fill = usePageFill(P1_BODY_BUDGET);
+  const P2_CHROME = 32 + SP;
+  const P2_BODY_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
+  const p2Fill = usePageFill(P2_BODY_BUDGET);
+
   if (variant === "B") return <MidSeniorVariantB data={d} theme={theme} />;
   if (variant === "C") return <MidSeniorVariantC data={d} theme={theme} />;
   const C = themes[theme];
@@ -47,11 +86,9 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
 
   // ── Engine: page budgets ──
   const BODY_W = MAIN_W - 40;
-  const P1_BODY_TOP = 28;
-  const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
-  const P2_CHROME = 32 + SP;
+  // P1_BODY_TOP, P1_BODY_BUDGET, p1Fill already declared above
   const P2_BODY_W = A4_W - 52;
-  const P2_BODY_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
+  // P2_CHROME, P2_BODY_BUDGET, p2Fill already declared above
   const SIDEBAR_BUDGET = A4_H - PRINT_MARGIN.bottom;
 
   return (
@@ -154,8 +191,9 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
           )}
         </div>
 
-        {/* ── Right Main Body — Page 1 ── */}
-        <div style={{ position: "absolute", top: P1_BODY_TOP, left: MAIN_X + 20, width: BODY_W, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+        {/* ── Right Main Body — Page 1 — flex distributes whitespace ── */}
+        <div style={{ position: "absolute", top: P1_BODY_TOP, left: MAIN_X + 20, width: BODY_W, height: P1_BODY_BUDGET, overflow: "hidden" }}>
+         <div ref={p1Fill.ref} style={{ minHeight: `${P1_BODY_BUDGET / p1Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p1Fill.zoom !== 1 ? { zoom: p1Fill.zoom } : {}) }}>
 
           {/* Summary */}
           {d.profile && (
@@ -204,6 +242,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
               ))}
             </div>
           )}
+         </div>
         </div>
       </div>
 
@@ -219,8 +258,9 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
             <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginLeft: 10 }}>Page 2</span>
           </div>
 
-          {/* Page 2 body */}
-          <div style={{ position: "absolute", top: P2_CHROME, left: 26, width: P2_BODY_W, maxHeight: P2_BODY_BUDGET, overflow: "hidden" }}>
+          {/* Page 2 body — flex distributes whitespace between sections */}
+          <div style={{ position: "absolute", top: P2_CHROME, left: 26, width: P2_BODY_W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
+           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
 
             {/* Career History — timeline */}
             {historyExps.length > 0 && (
@@ -308,6 +348,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                 </div>
               </div>
             )}
+           </div>
           </div>
         </div>
     </div>
@@ -338,6 +379,10 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P1_BODY_BUDGET = A4_H - P1_CHROME - PRINT_MARGIN.bottom;
   const P1_SIDEBAR_BUDGET = A4_H - 83 - PRINT_MARGIN.bottom;
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
+
+  // ── Space fillers: zoom content to eliminate empty bottom space ──
+  const p1Fill = usePageFill(P1_BODY_BUDGET);
+  const p2Fill = usePageFill(P2_BODY_BUDGET);
 
   return (
     <div>
@@ -421,8 +466,9 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           )}
         </div>
 
-        {/* Left body */}
-        <div style={{ position: "absolute", top: P1_CHROME, left: 22, width: BODY_W - 44, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+        {/* Left body — flex distributes whitespace */}
+        <div style={{ position: "absolute", top: P1_CHROME, left: 22, width: BODY_W - 44, height: P1_BODY_BUDGET, overflow: "hidden" }}>
+         <div ref={p1Fill.ref} style={{ minHeight: `${P1_BODY_BUDGET / p1Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p1Fill.zoom !== 1 ? { zoom: p1Fill.zoom } : {}) }}>
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <BoldHeading C={C}>Professional Summary</BoldHeading>
@@ -461,6 +507,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               ))}
             </div>
           )}
+         </div>
         </div>
       </div>
 
@@ -471,7 +518,8 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.5, marginLeft: 10 }}>Page 2</span>
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
-          <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: P2_BODY_BUDGET, overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, height: P2_BODY_BUDGET, overflow: "hidden" }}>
+           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <BoldHeading C={C}>Career History</BoldHeading>
@@ -537,6 +585,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+           </div>
           </div>
         </div>
     </div>
@@ -570,6 +619,10 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P1_BODY_BUDGET = A4_H - P1_CHROME - PRINT_MARGIN.bottom;
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
 
+  // ── Space fillers: zoom content to eliminate empty bottom space ──
+  const p1Fill = usePageFill(P1_BODY_BUDGET);
+  const p2Fill = usePageFill(P2_BODY_BUDGET);
+
   return (
     <div>
       {/* ══ PAGE 1 ══ */}
@@ -587,8 +640,9 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
         </div>
         <div style={{ position: "absolute", top: 90, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
 
-        {/* Full-width body */}
-        <div style={{ position: "absolute", top: P1_CHROME, left: MX, width: W, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+        {/* Full-width body — flex distributes whitespace */}
+        <div style={{ position: "absolute", top: P1_CHROME, left: MX, width: W, height: P1_BODY_BUDGET, overflow: "hidden" }}>
+         <div ref={p1Fill.ref} style={{ minHeight: `${P1_BODY_BUDGET / p1Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p1Fill.zoom !== 1 ? { zoom: p1Fill.zoom } : {}) }}>
           {d.profile && (
             <div style={{ marginBottom: 14 }}>
               <CardHeading C={C}>Professional Summary</CardHeading>
@@ -684,6 +738,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
               )}
             </div>
           </div>
+         </div>
         </div>
       </div>
 
@@ -694,7 +749,8 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.5, marginLeft: 10 }}>Page 2</span>
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
-          <div style={{ position: "absolute", top: 50, left: MX, width: W, maxHeight: P2_BODY_BUDGET, overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 50, left: MX, width: W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
+           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <CardHeading C={C}>Career History</CardHeading>
@@ -760,6 +816,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+           </div>
           </div>
         </div>
     </div>
