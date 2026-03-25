@@ -67,43 +67,50 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
   const totalVisualHeight = pageCount * A4_H + (pageCount - 1) * PAGE_GAP;
   const scaledHeight = totalVisualHeight * scale + 48;
 
+  // On mobile the 794px paper must be scaled + centered without clipping
+  const scaledWidth = A4_W * scale;
+
   return (
     <div
       ref={outerRef}
-      className="relative w-full overflow-hidden"
-      style={{ minHeight: `${scaledHeight}px` }}
+      className="relative w-full"
+      style={{ minHeight: `${scaledHeight}px`, overflowX: "hidden" }}
     >
+      {/* Centering wrapper — its width equals the scaled paper so margin:auto works */}
       <div
-        className="mx-auto relative"
         style={{
-          width: `${A4_W}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: "top center",
+          width: `${scaledWidth}px`,
+          margin: "0 auto",
         }}
       >
         <div
-          ref={previewRef}
-          style={{ width: `${A4_W}px`, pointerEvents: "none" }}
+          style={{
+            width: `${A4_W}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
         >
-          {/* Gap CSS between sheets */}
-          <style>{`
-            .cv-page-sheet {
-              box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
-              border-radius: 2px;
-            }
-            .cv-page-sheet + .cv-page-sheet {
-              margin-top: ${PAGE_GAP}px;
-            }
-          `}</style>
-          {children}
+          <div
+            ref={previewRef}
+            style={{ width: `${A4_W}px`, pointerEvents: "none" }}
+          >
+            {/* Gap CSS between sheets */}
+            <style>{`
+              .cv-page-sheet {
+                box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+                border-radius: 2px;
+              }
+              .cv-page-sheet + .cv-page-sheet {
+                margin-top: ${PAGE_GAP}px;
+              }
+            `}</style>
+            {children}
+          </div>
         </div>
       </div>
 
       {/* Page count badge */}
-      <div
-        className="text-center mt-2"
-        style={{ transform: `scale(${1 / Math.max(scale, 0.5)})`, transformOrigin: "top center" }}
-      >
+      <div className="text-center mt-2">
         <span className="text-[10px] text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
           {pageCount} page{pageCount > 1 ? "s" : ""}
         </span>
