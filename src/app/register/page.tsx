@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, UserPlus } from "lucide-react";
 import AppShell from "@/components/app-shell";
+import Image from "next/image";
 
 export default function RegisterPage() {
   const { signUp } = useAuth();
@@ -38,6 +39,9 @@ export default function RegisterPage() {
       <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-2">
+            <Image src="/icon.svg" alt="IntraCV" width={48} height={48} className="rounded-xl" />
+          </div>
           <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
           <CardDescription>Get started with IntraCV</CardDescription>
         </CardHeader>

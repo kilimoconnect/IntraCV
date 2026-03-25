@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5"/>
+      <stop offset="100%" style="stop-color:#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A78BFA"/>
+      <stop offset="100%" style="stop-color:#C4B5FD"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
+  <!-- Document shape -->
+  <rect x="120" y="72" width="272" height="368" rx="20" ry="20" fill="white" opacity="0.95"/>
+  <!-- Folded corner -->
+  <path d="M344 72 L392 72 L392 120 Z" fill="url(#accent)" opacity="0.6"/>
+  <!-- Profile circle -->
+  <circle cx="196" cy="148" r="32" fill="url(#accent)" opacity="0.7"/>
+  <!-- Name line -->
+  <rect x="244" y="132" width="124" height="14" rx="7" fill="#4F46E5" opacity="0.3"/>
+  <!-- Subtitle line -->
+  <rect x="244" y="158" width="88" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
+  <!-- Divider -->
+  <rect x="148" y="200" width="216" height="3" rx="1.5" fill="#4F46E5" opacity="0.15"/>
+  <!-- Content lines -->
+  <rect x="148" y="222" width="216" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
+  <rect x="148" y="246" width="184" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
+  <rect x="148" y="270" width="200" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
+  <!-- Second section -->
+  <rect x="148" y="300" width="216" height="3" rx="1.5" fill="#4F46E5" opacity="0.15"/>
+  <rect x="148" y="320" width="176" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
+  <rect x="148" y="344" width="216" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
+  <rect x="148" y="368" width="152" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
+  <rect x="148" y="392" width="196" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
+  <!-- AI sparkle indicator -->
+  <g transform="translate(356, 396)">
+    <circle cx="0" cy="0" r="44" fill="white" opacity="0.25"/>
+    <circle cx="0" cy="0" r="34" fill="white" opacity="0.95"/>
+    <!-- Pen/wand -->
+    <path d="M-10 10 L7 -7 L11 -3 L-6 14 Z" fill="#4F46E5"/>
+    <path d="M7 -7 L13 -13 L17 -9 L11 -3 Z" fill="#7C3AED"/>
+    <!-- Sparkles -->
+    <circle cx="-14" cy="-12" r="2.5" fill="#F59E0B"/>
+    <circle cx="5" cy="-18" r="2" fill="#F59E0B"/>
+    <circle cx="-18" cy="2" r="1.5" fill="#F59E0B"/>
+  </g>
+</svg>

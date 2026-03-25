@@ -8,6 +8,7 @@ import {
   User, Wand2, BriefcaseBusiness, FolderOpen, Bot, Settings as SettingsIcon,
   LogOut, Loader2,
 } from "lucide-react";
+import Image from "next/image";
 
 const NAV_ITEMS = [
   { key: "profile", label: "My Profile", href: "/dashboard?tab=profile", icon: User },
@@ -52,9 +53,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <h1 className="text-lg font-bold cursor-pointer" onClick={() => router.push(user ? "/dashboard" : "/")}>
-            IntraCV
-          </h1>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push(user ? "/dashboard" : "/")}>
+            <Image src="/icon.svg" alt="IntraCV" width={28} height={28} className="rounded-md" />
+            <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              IntraCV
+            </h1>
+          </div>
           <div className="flex items-center gap-3">
             {user && (
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
