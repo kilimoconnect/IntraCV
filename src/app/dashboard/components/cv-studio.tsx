@@ -806,68 +806,71 @@ export default function CvStudio({ userId, cvData }: Props) {
   if (!aiData || !selectedCategory) return null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3 sm:gap-4">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3 px-2 flex-wrap">
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* Back to category selection */}
-          <button
-            onClick={() => { setStep("select"); setAiData(null); }}
-            className="flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Change Layout
-          </button>
+      <div className="flex flex-col gap-2 sm:gap-3 px-1 sm:px-2">
+        {/* Top row: back + badge + actions */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <button
+              onClick={() => { setStep("select"); setAiData(null); }}
+              className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Change Layout</span>
+              <span className="sm:hidden">Back</span>
+            </button>
 
-          {/* Category badge */}
-          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-            selectedCategory === "junior" ? "bg-emerald-100 text-emerald-700" :
-            selectedCategory === "mid-senior" ? "bg-indigo-100 text-indigo-700" :
-            "bg-purple-100 text-purple-700"
-          }`}>
-            {CATEGORY_CARDS.find((c) => c.id === selectedCategory)?.label} Layout
-          </span>
+            <span className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full ${
+              selectedCategory === "junior" ? "bg-emerald-100 text-emerald-700" :
+              selectedCategory === "mid-senior" ? "bg-indigo-100 text-indigo-700" :
+              "bg-purple-100 text-purple-700"
+            }`}>
+              {CATEGORY_CARDS.find((c) => c.id === selectedCategory)?.label} Layout
+            </span>
+          </div>
 
-          {/* Theme picker */}
-          <div className="flex items-center gap-2">
-            <Palette className="h-4 w-4 text-slate-600" />
-            <div className="flex gap-1">
-              {THEME_LIST.map((t) => (
-                <button
-                  key={t.name}
-                  onClick={() => setSelectedTheme(t.name)}
-                  className={`relative h-7 w-7 rounded-full border-2 transition-all ${
-                    selectedTheme === t.name ? "border-slate-400 shadow-sm" : "border-slate-200 hover:border-slate-300"
-                  }`}
-                  style={{ backgroundColor: t.color }}
-                  title={t.label}
-                >
-                  {selectedTheme === t.name && (
-                    <span className="absolute inset-0 flex items-center justify-center">
-                      <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={() => void handleGenerate(selectedCategory)}
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md border border-slate-200 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-slate-600 hover:bg-slate-50"
+            >
+              <RefreshCw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Regenerate</span>
+              <span className="sm:hidden">Redo</span>
+            </button>
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700"
+            >
+              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              Download
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => void handleGenerate(selectedCategory)}
-            className="flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Regenerate
-          </button>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download
-          </button>
+        {/* Theme picker row */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 shrink-0" />
+          <div className="flex gap-1">
+            {THEME_LIST.map((t) => (
+              <button
+                key={t.name}
+                onClick={() => setSelectedTheme(t.name)}
+                className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border-2 transition-all shrink-0 ${
+                  selectedTheme === t.name ? "border-slate-400 shadow-sm" : "border-slate-200 hover:border-slate-300"
+                }`}
+                style={{ backgroundColor: t.color }}
+                title={t.label}
+              >
+                {selectedTheme === t.name && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

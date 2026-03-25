@@ -345,6 +345,7 @@ function CVBuilderPage() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [hasExistingData, setHasExistingData] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showMobileAddSection, setShowMobileAddSection] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ sections: string[]; firstKey: string } | null>(null);
 
@@ -1424,12 +1425,12 @@ function CVBuilderPage() {
   // ─── Render ───
   return (
     <AppShell hideMobileNav>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4">
         {/* ─── STEP: UPLOAD ─── */}
         {step === "upload" && (
-          <div className="max-w-xl mx-auto space-y-6">
+          <div className="max-w-xl mx-auto space-y-4 sm:space-y-6">
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold">Upload Your CV</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold">Upload Your CV</h2>
               <p className="text-muted-foreground">Upload a PDF or Word document and our AI will extract all sections automatically</p>
             </div>
 
@@ -1437,7 +1438,7 @@ function CVBuilderPage() {
               <CardContent className="pt-6">
                 <label
                   htmlFor="cv-upload"
-                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-12 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 sm:p-12 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
                 >
                   {uploading || extracting ? (
                     <>
@@ -1484,24 +1485,24 @@ function CVBuilderPage() {
         {step === "edit" && (
           <div className="space-y-4">
             {/* ── Top Save Bar ── */}
-            <div className="flex justify-between items-center bg-muted/50 rounded-lg p-4">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h3 className="font-semibold">Edit Your CV</h3>
-                  <p className="text-sm text-muted-foreground">Review and edit each section below</p>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-muted/50 rounded-lg p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base">Edit Your CV</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Review and edit each section</p>
                 </div>
                 {experiences && experiences.length > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm font-medium">{yearsOfExperience} yrs</span>
+                  <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200">
+                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="text-xs sm:text-sm font-medium">{yearsOfExperience} yrs</span>
                   </div>
                 )}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium ${categoryResult.color}`}>
-                  <Briefcase className="h-4 w-4" />
+                <div className={`flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md border text-xs sm:text-sm font-medium ${categoryResult.color}`}>
+                  <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {categoryResult.label}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 self-end sm:self-auto">
                 <Button
                   onClick={async () => {
                     // 1. Check missing required sections
@@ -1702,7 +1703,7 @@ function CVBuilderPage() {
               </div>
             )}
             
-            <div className="flex gap-6">
+            <div className="flex gap-4 md:gap-6">
             {/* ── Sidebar Navigation ── */}
             <aside className="w-56 shrink-0 hidden md:block">
               <div className="sticky top-20 space-y-1">
@@ -1784,7 +1785,7 @@ function CVBuilderPage() {
             </aside>
 
             {/* ── Mobile Tab Bar ── */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50 px-2 py-2 flex gap-1 overflow-x-auto">
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
               {SECTIONS.map((sec) => {
                 const Icon = sec.icon;
                 const isActive = activeTab === sec.key;
@@ -1803,30 +1804,76 @@ function CVBuilderPage() {
                   </button>
                 );
               })}
+              {hiddenSections.length > 0 && (
+                <button
+                  onClick={() => setShowMobileAddSection(true)}
+                  className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium shrink-0 transition-colors text-primary border border-dashed border-primary/40 bg-primary/5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add
+                </button>
+              )}
             </div>
 
+            {/* ── Mobile Add Section Sheet ── */}
+            {showMobileAddSection && (
+              <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end">
+                {/* Backdrop */}
+                <div className="absolute inset-0 bg-black/40" onClick={() => setShowMobileAddSection(false)} />
+                {/* Sheet */}
+                <div className="relative bg-white rounded-t-2xl max-h-[70vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+                  <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">Add Section</h3>
+                    <button onClick={() => setShowMobileAddSection(false)} className="text-muted-foreground p-1">
+                      <XCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="p-3 space-y-1">
+                    {hiddenSections.map((sec) => {
+                      const Icon = sec.icon;
+                      return (
+                        <button
+                          key={sec.key}
+                          onClick={() => {
+                            setManuallyShown((prev) => new Set(prev).add(sec.key));
+                            setActiveTab(sec.key);
+                            setShowMobileAddSection(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <Icon className="h-5 w-5 shrink-0" />
+                          <span className="flex-1">{sec.label}</span>
+                          <Plus className="h-4 w-4 shrink-0 text-primary" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* ── Section Content ── */}
-            <div className="flex-1 min-w-0 pb-20 md:pb-0">
+            <div className="flex-1 min-w-0 pb-24 md:pb-0">
               {/* Section Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  {(() => { const Icon = SECTIONS[safeIdx].icon; return <Icon className="h-6 w-6 text-primary" />; })()}
-                  <div>
-                    <h2 className="text-2xl font-bold">{SECTIONS[safeIdx].label}</h2>
-                    <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  {(() => { const Icon = SECTIONS[safeIdx].icon; return <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />; })()}
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-2xl font-bold truncate">{SECTIONS[safeIdx].label}</h2>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Step {safeIdx + 1} of {SECTIONS.length}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="outline" className="text-[10px] sm:text-xs">
                     {Object.values(sectionCounts).filter((v) => v && v > 0).length}/{SECTIONS.length} filled
                   </Badge>
                 </div>
               </div>
 
               <Card>
-                <CardContent className="pt-6">
+                <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
                   {/* ── Personal Info ── */}
                   {currentKey === "personal" && (() => {
                     const piMissing = getItemMissing("personal", personalInfo);
@@ -1889,7 +1936,7 @@ function CVBuilderPage() {
                       {experiences.map((exp, i) => {
                         const expMissing = getItemMissing("experience", exp);
                         return (
-                        <div key={exp.id} className={`border rounded-lg p-4 space-y-3 ${expMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={exp.id} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${expMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -1945,7 +1992,7 @@ function CVBuilderPage() {
                       {education.map((edu, i) => {
                         const eduMissing = getItemMissing("education", edu);
                         return (
-                        <div key={edu.id} className={`border rounded-lg p-4 space-y-3 ${eduMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={edu.id} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${eduMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -2036,7 +2083,7 @@ function CVBuilderPage() {
                       {languages.map((lang) => (
                         <div key={lang.id} className={`flex gap-2 items-center ${!lang.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
                           <Input className={`flex-1 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Language *" value={lang.name} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, name: e.target.value } : l))} />
-                          <Input className="w-48" placeholder="Proficiency (e.g. Fluent)" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
+                          <Input className="w-28 sm:w-48" placeholder="Proficiency" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
                           <Button variant="ghost" size="sm" onClick={() => setLanguages(languages.filter((l) => l.id !== lang.id))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
@@ -2057,7 +2104,7 @@ function CVBuilderPage() {
                       {referees.map((ref, i) => {
                         const refMissing = getItemMissing("referees", ref);
                         return (
-                        <div key={ref.id} className={`border rounded-lg p-4 space-y-3 ${refMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={ref.id} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${refMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>

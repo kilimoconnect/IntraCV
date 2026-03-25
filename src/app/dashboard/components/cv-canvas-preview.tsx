@@ -29,7 +29,8 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
   const recalcScale = useCallback(() => {
     if (!outerRef.current) return;
     const availableWidth = outerRef.current.clientWidth;
-    const targetWidth = availableWidth - 32;
+    const padding = availableWidth < 640 ? 8 : 32; // less padding on mobile
+    const targetWidth = availableWidth - padding;
     setScale(Math.min(1, targetWidth / A4_W));
   }, []);
 
@@ -56,7 +57,7 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
   return (
     <div
       ref={outerRef}
-      className="relative w-full"
+      className="relative w-full overflow-hidden"
       style={{ minHeight: `${scaledHeight}px` }}
     >
       <div
