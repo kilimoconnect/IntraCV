@@ -8,11 +8,34 @@
 // Distinctive look: colored sidebar runs full page height.
 // ═══════════════════════════════════════════════════════════
 
-import React from "react";
+import React, { useRef, useLayoutEffect, useState } from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
 import { measureAllSections } from "./cv-constraint-engine";
 import { paginateSections } from "./cv-pagination-engine";
 import { PRINT_MARGIN } from "./cv-design-system";
+
+// ── Page-fill hook: measures content and returns a zoom factor to fill empty space ──
+function usePageFill(budget: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const measured = useRef(false);
+
+  useLayoutEffect(() => {
+    if (measured.current || !ref.current) return;
+    measured.current = true;
+    const contentH = ref.current.scrollHeight;
+    // Only scale up if content fills less than 82% of the page budget
+    if (contentH > 0 && contentH < budget * 0.82) {
+      const ratio = contentH / budget;
+      // Height scales ~quadratically with zoom (font size + line wrapping both increase).
+      // Target 93% fill, cap at 1.32x to keep text readable.
+      const sf = Math.min(1.32, Math.sqrt(0.93 / ratio));
+      setZoom(sf);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { ref, zoom };
+}
 
 interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
 
@@ -53,6 +76,9 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
   const P2_BODY_W = A4_W - 52;
   const P2_BODY_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
   const SIDEBAR_BUDGET = A4_H - PRINT_MARGIN.bottom;
+
+  // ── Space filler: zoom page 2 content to eliminate empty bottom space ──
+  const p2Fill = usePageFill(P2_BODY_BUDGET);
 
   return (
     <div>
@@ -221,6 +247,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
 
           {/* Page 2 body */}
           <div style={{ position: "absolute", top: P2_CHROME, left: 26, width: P2_BODY_W, maxHeight: P2_BODY_BUDGET, overflow: "hidden" }}>
+           <div ref={p2Fill.ref} style={p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : undefined}>
 
             {/* Career History — timeline */}
             {historyExps.length > 0 && (
@@ -308,6 +335,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                 </div>
               </div>
             )}
+           </div>
           </div>
         </div>
     </div>
@@ -338,6 +366,9 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P1_BODY_BUDGET = A4_H - P1_CHROME - PRINT_MARGIN.bottom;
   const P1_SIDEBAR_BUDGET = A4_H - 83 - PRINT_MARGIN.bottom;
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
+
+  // ── Space filler: zoom page 2 content to eliminate empty bottom space ──
+  const p2Fill = usePageFill(P2_BODY_BUDGET);
 
   return (
     <div>
@@ -472,6 +503,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: P2_BODY_BUDGET, overflow: "hidden" }}>
+           <div ref={p2Fill.ref} style={p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : undefined}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <BoldHeading C={C}>Career History</BoldHeading>
@@ -537,6 +569,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+           </div>
           </div>
         </div>
     </div>
@@ -569,6 +602,9 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P1_CHROME = 93 + 16;
   const P1_BODY_BUDGET = A4_H - P1_CHROME - PRINT_MARGIN.bottom;
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
+
+  // ── Space filler: zoom page 2 content to eliminate empty bottom space ──
+  const p2Fill = usePageFill(P2_BODY_BUDGET);
 
   return (
     <div>
@@ -695,6 +731,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: MX, width: W, maxHeight: P2_BODY_BUDGET, overflow: "hidden" }}>
+           <div ref={p2Fill.ref} style={p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : undefined}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <CardHeading C={C}>Career History</CardHeading>
@@ -760,6 +797,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+           </div>
           </div>
         </div>
     </div>
