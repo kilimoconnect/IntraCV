@@ -625,39 +625,37 @@ export default function CvStudio({ userId, cvData }: Props) {
           description: asString(p.description),
           tech: asString(p.tech) || undefined,
         })),
-        achievements: asStringArray(data.achievements).length > 0
-          ? asStringArray(data.achievements)
-          : (Array.isArray(cvData.keyAchievements) ? asTextArray(cvData.keyAchievements) : 
-             (typeof cvData.keyAchievements === 'string' ? [cvData.keyAchievements] : [])),
-        memberships: asStringArray(data.memberships).length > 0
-          ? asStringArray(data.memberships)
-          : asStringArray(cvData.memberships),
-        tools: asStringArray(data.tools).length > 0
-          ? asStringArray(data.tools)
-          : asStringArray(cvData.tools),
-        volunteer: asStringArray(data.volunteer).length > 0
-          ? asStringArray(data.volunteer)
-          : asStringArray(cvData.volunteer),
-        boardRoles: (asObjectArray(data.boardRoles).length > 0 ? asObjectArray(data.boardRoles) : asObjectArray(cvData.boardRoles)).map((role) => ({
+        achievements: asStringArray(data.achievements),
+        memberships: asStringArray(data.memberships),
+        tools: asStringArray(data.tools),
+        volunteer: asStringArray(data.volunteer),
+        boardRoles: asObjectArray(data.boardRoles).map((role) => ({
           title: asString(role.title),
           organization: asString(role.organization),
           dates: asString(role.dates) || formatDateRange(asString(role.startDate), asString(role.endDate)),
           description: asString(role.description) || undefined,
         })),
-        executiveTraining: (asObjectArray(data.executiveTraining).length > 0
-          ? asObjectArray(data.executiveTraining)
-          : asObjectArray(cvData.executiveTraining)).map((t) => ({
+        executiveTraining: asObjectArray(data.executiveTraining).map((t) => ({
           name: asString(t.name),
           institution: asString(t.institution),
           year: asString(t.year),
         })),
-        publications: (asObjectArray(data.publications).length > 0
-          ? asObjectArray(data.publications)
-          : asObjectArray(cvData.publications)).map((p) => ({
+        publications: asObjectArray(data.publications).map((p) => ({
           title: asString(p.title),
           publisher: asString(p.publisher),
           year: asString(p.year),
           type: asString(p.type) || undefined,
+        })),
+        history: asObjectArray(data.history).map((h) => ({
+          role: asString(h.role),
+          company: asString(h.company),
+          dates: asString(h.dates),
+          location: asString(h.location) || undefined,
+          bullets: asStringArray(h.bullets),
+        })),
+        awards: asObjectArray(data.awards).map((a) => ({
+          title: asString(a.title),
+          description: asString(a.description) || undefined,
         })),
         declaration: asString(generatedDeclaration.declaration)
           ? {
