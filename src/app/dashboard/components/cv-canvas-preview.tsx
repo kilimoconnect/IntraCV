@@ -7,7 +7,7 @@
 // available viewport width, and adds visual gaps between pages.
 // ═══════════════════════════════════════════════════════════
 
-import { useRef, useEffect, useState, useCallback, type ReactNode } from "react";
+import { useRef, useEffect, useState, useCallback, useLayoutEffect, type ReactNode } from "react";
 
 // A4 at 96 DPI
 const A4_W = 794;
@@ -20,29 +20,48 @@ interface CanvasPreviewProps {
 
 const PAGE_GAP = 24;
 
+// Safe initial scale for mobile (will be recalculated immediately)
+const INITIAL_SCALE = 0.45;
+
 export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewProps) {
   const outerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [pageCount, setPageCount] = useState(2);
+  const [scale, setScale] = useState(INITIAL_SCALE);
+  const [pageCount, setPageCount] = useState(1);
 
   // ─── Fit the A4 paper to the available width ───
   const recalcScale = useCallback(() => {
     if (!outerRef.current) return;
     const availableWidth = outerRef.current.clientWidth;
+    if (availableWidth <= 0) return;
     const padding = availableWidth < 640 ? 8 : 32; // less padding on mobile
     const targetWidth = availableWidth - padding;
     setScale(Math.min(1, targetWidth / A4_W));
   }, []);
 
+  // Calculate scale before first paint to avoid flash of oversized content
+  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+  useIsomorphicLayoutEffect(() => {
+    recalcScale();
+  }, [recalcScale]);
+
+  // Recalculate on resize
   useEffect(() => {
     recalcScale();
+    const el = outerRef.current;
+    if (!el) return;
     const observer = new ResizeObserver(() => recalcScale());
-    if (outerRef.current) observer.observe(outerRef.current);
+    observer.observe(el);
     return () => observer.disconnect();
   }, [recalcScale]);
 
+  // Recalculate when children (layout/theme) change
+  useEffect(() => {
+    // Small delay to let the new layout render, then recalc
+    const t = setTimeout(recalcScale, 50);
+    return () => clearTimeout(t);
+  }, [children, recalcScale]);
+
   // ─── Count pages after render ───
-  // Use MutationObserver for reliable page count detection instead of a fixed timer
   useEffect(() => {
     if (!previewRef.current) return;
 
@@ -66,6 +85,7 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
 
   const totalVisualHeight = pageCount * A4_H + (pageCount - 1) * PAGE_GAP;
   const scaledHeight = totalVisualHeight * scale + 48;
+  const scaledWidth = A4_W * scale;
 
   return (
     <div
@@ -73,37 +93,42 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
       className="relative w-full overflow-hidden"
       style={{ minHeight: `${scaledHeight}px` }}
     >
+      {/* Wrapper: actual width = scaled A4, centered via mx-auto */}
       <div
-        className="mx-auto relative"
-        style={{
-          width: `${A4_W}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: "top center",
-        }}
+        className="mx-auto"
+        style={{ width: `${scaledWidth}px` }}
       >
+        {/* Inner: full A4 width, scaled from top-left to stay within wrapper */}
         <div
-          ref={previewRef}
-          style={{ width: `${A4_W}px`, pointerEvents: "none" }}
+          style={{
+            width: `${A4_W}px`,
+            height: `${totalVisualHeight}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
         >
-          {/* Gap CSS between sheets */}
-          <style>{`
-            .cv-page-sheet {
-              box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
-              border-radius: 2px;
-            }
-            .cv-page-sheet + .cv-page-sheet {
-              margin-top: ${PAGE_GAP}px;
-            }
-          `}</style>
-          {children}
+          <div
+            ref={previewRef}
+            style={{ width: `${A4_W}px`, pointerEvents: "none" }}
+          >
+            {/* Gap CSS between sheets */}
+            <style>{`
+              .cv-page-sheet {
+                box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+                border-radius: 2px;
+                overflow: hidden;
+              }
+              .cv-page-sheet + .cv-page-sheet {
+                margin-top: ${PAGE_GAP}px;
+              }
+            `}</style>
+            {children}
+          </div>
         </div>
       </div>
 
       {/* Page count badge */}
-      <div
-        className="text-center mt-2"
-        style={{ transform: `scale(${1 / Math.max(scale, 0.5)})`, transformOrigin: "top center" }}
-      >
+      <div className="text-center mt-2">
         <span className="text-[10px] text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
           {pageCount} page{pageCount > 1 ? "s" : ""}
         </span>

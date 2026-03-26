@@ -76,7 +76,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
   const p1Fill = usePageFill(P1_BODY_BUDGET, 1.30);
   const P2_CHROME = 32 + SP;
   const P2_BODY_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
-  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.8);
+  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.30);
 
   if (variant === "B") return <MidSeniorVariantB data={d} theme={theme} />;
   if (variant === "C") return <MidSeniorVariantC data={d} theme={theme} />;
@@ -260,7 +260,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
 
           {/* Page 2 body — flex distributes whitespace between sections */}
           <div style={{ position: "absolute", top: P2_CHROME, left: 26, width: P2_BODY_W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
-           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-evenly", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
+           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
 
             {/* Career History — timeline */}
             {historyExps.length > 0 && (
@@ -382,7 +382,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
 
   // ── Space fillers: zoom content to eliminate empty bottom space ──
   const p1Fill = usePageFill(P1_BODY_BUDGET, 1.30);
-  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.8);
+  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.30);
 
   return (
     <div>
@@ -519,7 +519,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, height: P2_BODY_BUDGET, overflow: "hidden" }}>
-           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-evenly", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
+           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <BoldHeading C={C}>Career History</BoldHeading>
@@ -621,7 +621,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
 
   // ── Space fillers: zoom content to eliminate empty bottom space ──
   const p1Fill = usePageFill(P1_BODY_BUDGET, 1.30);
-  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.8);
+  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.30);
 
   return (
     <div>
@@ -750,7 +750,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: MX, width: W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
-           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-evenly", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
+           <div ref={p2Fill.ref} style={{ minHeight: `${P2_BODY_BUDGET / p2Fill.zoom}px`, display: "flex", flexDirection: "column", justifyContent: "space-between", ...(p2Fill.zoom !== 1 ? { zoom: p2Fill.zoom } : {}) }}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <CardHeading C={C}>Career History</CardHeading>
