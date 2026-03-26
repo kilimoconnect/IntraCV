@@ -4,7 +4,7 @@ import OpenAI from "openai";
 export async function POST(req: NextRequest) {
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const { jobRole, company, action, question, answer } = await req.json();
+    const { jobRole, company, jobDescription, action, question, answer } = await req.json();
 
     // Generate interview questions
     if (action === "generate") {
@@ -12,7 +12,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Job role is required" }, { status: 400 });
       }
 
-      const prompt = `Generate 5 realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}. 
+      const jdContext = jobDescription
+        ? `\n\nThe job description is:\n"""\n${jobDescription.slice(0, 3000)}\n"""\n\nUse the specific requirements, responsibilities, and qualifications from this job description to tailor the questions. Reference specific skills, tools, or responsibilities mentioned in the JD.`
+        : "";
+
+      const prompt = `Generate 5 realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}
 
 Include a mix of:
 - 1 behavioral question (STAR method)
