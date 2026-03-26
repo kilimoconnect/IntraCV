@@ -33,7 +33,11 @@ function usePageFill(budget: number, maxZoom = 1.35) {
         const cs = getComputedStyle(ch);
         contentH += ch.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
       }
-      if (contentH > 0 && contentH < budget * 0.92) {
+      if (contentH > budget) {
+        // Content overflows — scale down to fit, floor at 0.65 for readability
+        const sf = Math.max(0.65, budget / contentH);
+        setZoom(sf);
+      } else if (contentH > 0 && contentH < budget * 0.92) {
         // Linear scale toward 92% fill, cap at maxZoom to keep text readable
         const sf = Math.min(maxZoom, (budget * 0.92) / contentH);
         setZoom(sf);
