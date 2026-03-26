@@ -63,7 +63,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
   const show = new Set(plan.pages[0]?.sections ?? []);
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
@@ -292,7 +292,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const show = new Set(plan.pages[0]?.sections ?? []);
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Left sidebar — light bg */}
         <div style={{ position: "absolute", top: 0, left: 0, width: SIDE, height: A4_H, backgroundColor: C.sidebarBg, borderRight: `3px solid ${C.primary}`, overflow: "hidden" }}>
@@ -475,7 +475,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const showR = new Set(planR.pages[0]?.sections ?? []);
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Split header: name left, contact right */}
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 80, display: "flex", alignItems: "center", padding: `0 ${MX}px`, borderBottom: `3px solid ${C.primary}` }}>

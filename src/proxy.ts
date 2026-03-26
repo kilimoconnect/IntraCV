@@ -1,3 +1,5 @@
+// Next.js 16+ uses "proxy" as the file convention (replacing the deprecated "middleware").
+// See: https://nextjs.org/docs/messages/middleware-to-proxy
 import { updateSession } from "@/lib/supabase/middleware";
 import type { NextRequest } from "next/server";
 

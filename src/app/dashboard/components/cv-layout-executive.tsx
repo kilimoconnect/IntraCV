@@ -52,7 +52,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
   const CONT_BODY_BUDGET = A4_H - CONT_CHROME - PRINT_MARGIN.bottom;
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══════ PAGE 1 ══════ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
@@ -446,7 +446,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const CONT_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Wide dark left sidebar */}
@@ -752,7 +752,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const CONT_BODY_BUDGET = A4_H - 60 - PRINT_MARGIN.bottom;
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Thin top accent line */}

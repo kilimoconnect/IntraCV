@@ -92,12 +92,12 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
   const SIDEBAR_BUDGET = A4_H - PRINT_MARGIN.bottom;
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══════ PAGE 1 ══════ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
         {/* ── Full-Height Left Sidebar ── */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: SIDE_W, height: A4_H, backgroundColor: C.headerBg, padding: `0 ${SP}px`, display: "flex", flexDirection: "column", overflow: "auto" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: SIDE_W, height: A4_H, backgroundColor: C.headerBg, padding: `0 ${SP}px`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
           {/* Name block at top of sidebar */}
           <div style={{ paddingTop: 28, paddingBottom: 20, borderBottom: `1px solid rgba(255,255,255,0.15)` }}>
@@ -385,7 +385,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const p2Fill = usePageFill(P2_BODY_BUDGET, 1.8);
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Dark top header */}
@@ -624,7 +624,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const p2Fill = usePageFill(P2_BODY_BUDGET, 1.8);
 
   return (
-    <div>
+    <div style={{ width: A4_W }}>
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Full-width header */}
