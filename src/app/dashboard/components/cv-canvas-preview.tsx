@@ -70,20 +70,23 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
   return (
     <div
       ref={outerRef}
-      className="relative w-full overflow-hidden"
+      className="relative w-full overflow-hidden flex justify-center"
       style={{ minHeight: `${scaledHeight}px` }}
     >
       <div
-        className="mx-auto relative"
+        className="relative"
         style={{
-          width: `${A4_W}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: "top center",
+          width: `${A4_W * scale}px`,
         }}
       >
         <div
           ref={previewRef}
-          style={{ width: `${A4_W}px`, pointerEvents: "none" }}
+          style={{
+            width: `${A4_W}px`,
+            pointerEvents: "none",
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
         >
           {/* Gap CSS between sheets */}
           <style>{`
