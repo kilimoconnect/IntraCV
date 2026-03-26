@@ -8,7 +8,7 @@
 // Distinctive: centered monogram header, right sidebar, gold accents.
 // ═══════════════════════════════════════════════════════════
 
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
 import { PRINT_MARGIN } from "./cv-design-system";
 
@@ -38,21 +38,105 @@ function BodySection({ children, C }: { children: string; C: ThemeColors }) {
 }
 
 export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Props) {
+  // ── DOM measurement hooks (unconditional, before variant routing) ──
+  const aMeasRef = useRef<HTMLDivElement>(null);
+  const [aExpSplit, setAExpSplit] = useState(2);
+  const aExpFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
+  const P1_BODY_TOP_CONST = HEADER_H + 22 + SP;
+  const P1_BODY_BUDGET_CONST = A4_H - P1_BODY_TOP_CONST - PRINT_MARGIN.bottom;
+
+  useEffect(() => {
+    const el = aMeasRef.current;
+    if (!el) return;
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (cancelled) return;
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const heights: Record<string, number> = {};
+        for (const child of Array.from(el.children)) {
+          const mid = (child as HTMLElement).dataset.mid;
+          if (mid) heights[mid] = Math.ceil(child.getBoundingClientRect().height);
+        }
+        const profileH = heights["profile"] || 0;
+        const achievementsH = heights["achievements"] || 0;
+        const expHeadingH = 30;
+        let used = profileH + achievementsH + expHeadingH + 6;
+        let count = 0;
+        for (let i = 0; i < (d.experience?.length || 0); i++) {
+          const h = heights[`exp-${i}`] || 0;
+          if (used + h > P1_BODY_BUDGET_CONST) break;
+          used += h;
+          count++;
+        }
+        const optimal = Math.max(1, count);
+        setAExpSplit(prev => prev === optimal ? prev : optimal);
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[Executive A DOM] budget=${P1_BODY_BUDGET_CONST}, expFit=${optimal}/${d.experience?.length || 0}`, heights);
+        }
+      });
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [P1_BODY_BUDGET_CONST, aExpFP]);
+
   if (variant === "B") return <ExecutiveVariantB data={d} theme={theme} />;
   if (variant === "C") return <ExecutiveVariantC data={d} theme={theme} />;
   const C = themes[theme];
-  const topExps = d.experience?.slice(0, 2) || [];
-  const historyExps = d.history?.length ? d.history : d.experience?.slice(2) || [];
+  const topExps = d.experience?.slice(0, aExpSplit) || [];
+  const historyExps = d.history?.length ? d.history : d.experience?.slice(aExpSplit) || [];
 
   // ── Engine: page budgets ──
-  const P1_BODY_TOP = HEADER_H + 22 + SP;
-  const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
+  const P1_BODY_TOP = P1_BODY_TOP_CONST;
+  const P1_BODY_BUDGET = P1_BODY_BUDGET_CONST;
   const P1_SIDEBAR_BUDGET = A4_H - HEADER_H - 22 - PRINT_MARGIN.bottom;
   const CONT_CHROME = 38 + SP;
   const CONT_BODY_BUDGET = A4_H - CONT_CHROME - PRINT_MARGIN.bottom;
+  const BODY_W = MAIN_W - 48;
 
   return (
     <div>
+      {/* ── Hidden measurement container ── */}
+      <div ref={aMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: BODY_W, overflow: "visible", fontFamily: FONT }}>
+        {d.profile && (
+          <div data-mid="profile" style={{ marginBottom: 16 }}>
+            <BodySection C={C}>Executive Profile</BodySection>
+            <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+          </div>
+        )}
+        {d.experience?.map((exp, i) => (
+          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 12, paddingLeft: 14, borderLeft: `3px solid ${C.primary}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+              <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8, fontStyle: "italic" }}>{exp.dates}</span>
+            </div>
+            <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>
+              {exp.company}{exp.location ? ` — ${exp.location}` : ""}
+            </div>
+            {exp.bullets?.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                {exp.bullets.map((b, bi) => (
+                  <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+        {d.achievements && d.achievements.length > 0 && (
+          <div data-mid="achievements" style={{ marginBottom: 16 }}>
+            <BodySection C={C}>Career Highlights</BodySection>
+            {d.achievements.map((ach, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "9px", color: C.primary, fontWeight: 700 }}>★</span>
+                </div>
+                <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, paddingTop: 2, wordWrap: "break-word" }}>{ach}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ══════ PAGE 1 ══════ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
@@ -436,8 +520,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const C = themes[theme];
   const LS = 250;
   const RS = A4_W - LS;
-  const topExps = d.experience?.slice(0, 2) || [];
-  const historyExps = d.history?.length ? d.history : d.experience?.slice(2) || [];
+  const INNER_W = RS - 44;
 
   // ── Engine: page budgets ──
   const P1_BODY_TOP = 28;
@@ -445,8 +528,90 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const SIDEBAR_BUDGET = A4_H - PRINT_MARGIN.bottom;
   const CONT_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
 
+  // ── DOM measurement for dynamic experience split ──
+  const bMeasRef = useRef<HTMLDivElement>(null);
+  const [bExpSplit, setBExpSplit] = useState(2);
+  const bExpFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
+
+  useEffect(() => {
+    const el = bMeasRef.current;
+    if (!el) return;
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (cancelled) return;
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const heights: Record<string, number> = {};
+        for (const child of Array.from(el.children)) {
+          const mid = (child as HTMLElement).dataset.mid;
+          if (mid) heights[mid] = Math.ceil(child.getBoundingClientRect().height);
+        }
+        const profileH = heights["profile"] || 0;
+        const achievementsH = heights["achievements"] || 0;
+        const expHeadingH = 30;
+        let used = profileH + achievementsH + expHeadingH + 6;
+        let count = 0;
+        for (let i = 0; i < (d.experience?.length || 0); i++) {
+          const h = heights[`exp-${i}`] || 0;
+          if (used + h > P1_BODY_BUDGET) break;
+          used += h;
+          count++;
+        }
+        const optimal = Math.max(1, count);
+        setBExpSplit(prev => prev === optimal ? prev : optimal);
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[Executive B DOM] budget=${P1_BODY_BUDGET}, expFit=${optimal}/${d.experience?.length || 0}`, heights);
+        }
+      });
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [P1_BODY_BUDGET, bExpFP]);
+
+  const topExps = d.experience?.slice(0, bExpSplit) || [];
+  const historyExps = d.history?.length ? d.history : d.experience?.slice(bExpSplit) || [];
+
   return (
     <div>
+      {/* ── Hidden measurement container ── */}
+      <div ref={bMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: INNER_W, overflow: "visible", fontFamily: FONT }}>
+        {d.profile && (
+          <div data-mid="profile" style={{ marginBottom: 16 }}>
+            <ExecBodyH C={C}>Executive Profile</ExecBodyH>
+            <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+          </div>
+        )}
+        {d.experience?.map((exp, i) => (
+          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+              <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
+            </div>
+            <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4 }}>
+              {exp.company}{exp.location ? ` — ${exp.location}` : ""}
+            </div>
+            {exp.bullets?.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                {exp.bullets.map((b, bi) => (
+                  <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+        {d.achievements && d.achievements.length > 0 && (
+          <div data-mid="achievements" style={{ marginBottom: 16 }}>
+            <ExecBodyH C={C}>Career Highlights</ExecBodyH>
+            {d.achievements.map((ach, i) => (
+              <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>★</span>
+                <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Wide dark left sidebar */}
@@ -743,16 +908,109 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const C = themes[theme];
   const MX = 36;
   const W = A4_W - MX * 2;
-  const topExps = d.experience?.slice(0, 2) || [];
-  const historyExps = d.history?.length ? d.history : d.experience?.slice(2) || [];
 
   // ── Engine: page budgets ──
   const P1_BODY_TOP = 130;
   const P1_BODY_BUDGET = A4_H - P1_BODY_TOP - PRINT_MARGIN.bottom;
   const CONT_BODY_BUDGET = A4_H - 60 - PRINT_MARGIN.bottom;
 
+  // ── DOM measurement for dynamic experience split ──
+  const cMeasRef = useRef<HTMLDivElement>(null);
+  const [cExpSplit, setCExpSplit] = useState(2);
+  const cExpFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
+
+  useEffect(() => {
+    const el = cMeasRef.current;
+    if (!el) return;
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      if (cancelled) return;
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        const heights: Record<string, number> = {};
+        for (const child of Array.from(el.children)) {
+          const mid = (child as HTMLElement).dataset.mid;
+          if (mid) heights[mid] = Math.ceil(child.getBoundingClientRect().height);
+        }
+        const profileH = heights["profile"] || 0;
+        const achievementsH = heights["achievements"] || 0;
+        const boardH = heights["board"] || 0;
+        const expHeadingH = 30;
+        let used = profileH + achievementsH + boardH + expHeadingH + 6;
+        let count = 0;
+        for (let i = 0; i < (d.experience?.length || 0); i++) {
+          const h = heights[`exp-${i}`] || 0;
+          if (used + h > P1_BODY_BUDGET) break;
+          used += h;
+          count++;
+        }
+        const optimal = Math.max(1, count);
+        setCExpSplit(prev => prev === optimal ? prev : optimal);
+        if (process.env.NODE_ENV === "development") {
+          console.log(`[Executive C DOM] budget=${P1_BODY_BUDGET}, expFit=${optimal}/${d.experience?.length || 0}`, heights);
+        }
+      });
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [P1_BODY_BUDGET, cExpFP]);
+
+  const topExps = d.experience?.slice(0, cExpSplit) || [];
+  const historyExps = d.history?.length ? d.history : d.experience?.slice(cExpSplit) || [];
+
   return (
     <div>
+      {/* ── Hidden measurement container ── */}
+      <div ref={cMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: W, overflow: "visible", fontFamily: FONT }}>
+        {d.profile && (
+          <div data-mid="profile" style={{ marginBottom: 16 }}>
+            <MinimalH C={C}>Executive Profile</MinimalH>
+            <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+          </div>
+        )}
+        {d.experience?.map((exp, i) => (
+          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+              <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
+            </div>
+            <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4 }}>
+              {exp.company}{exp.location ? ` — ${exp.location}` : ""}
+            </div>
+            {exp.bullets?.length > 0 && (
+              <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                {exp.bullets.map((b, bi) => (
+                  <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+        {d.achievements && d.achievements.length > 0 && (
+          <div data-mid="achievements" style={{ marginBottom: 16 }}>
+            <MinimalH C={C}>Career Highlights</MinimalH>
+            {d.achievements.map((ach, i) => (
+              <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>★</span>
+                <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.boardRoles && d.boardRoles.length > 0 && (
+          <div data-mid="board" style={{ marginBottom: 16 }}>
+            <MinimalH C={C}>Board & Advisory Roles</MinimalH>
+            {d.boardRoles.map((role, i) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{role.title}</div>
+                <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 600 }}>{role.organization} · {role.dates}</div>
+                {role.description && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginTop: 2 }}>{role.description}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Thin top accent line */}

@@ -13,6 +13,9 @@ import { type CareerCategory } from "./cv-layout-types";
 import { type SectionId, type SectionMeasure } from "./cv-constraint-engine";
 import { GAP } from "./cv-design-system";
 
+// ── Safety buffer to prevent edge-case overflow (px) ──
+const SAFETY = 6;
+
 // ── Page plan for one page ──
 export interface PagePlan {
   page: number;          // 0-indexed
@@ -110,7 +113,14 @@ export function paginateSections(
 
   for (const id of presentIds) {
     const m = mmap.get(id)!;
-    const needed = m.fullHeight + GAP.section;
+    const needed = m.fullHeight + GAP.section + SAFETY;
+
+    // Debug logging (development only)
+    if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+      const pg = pages[currentPageIdx];
+      const remaining = pg ? pg.budget - pg.usedHeight : 0;
+      console.log(`[Paginate] ${id}: height=${Math.round(m.fullHeight)}px, needed=${Math.round(needed)}px, remaining=${Math.round(remaining)}px`);
+    }
 
     let placed = false;
 
@@ -128,9 +138,9 @@ export function paginateSections(
         break;
       }
 
-      // Section doesn't fit fully — try minHeight if section is atomic
+      // Section doesn't fit fully — for atomic sections try minHeight
       if (ATOMIC_SECTIONS.has(id)) {
-        const minNeeded = m.minHeight + GAP.section;
+        const minNeeded = m.minHeight + GAP.section + SAFETY;
         if (minNeeded <= remaining && remaining >= 40) {
           pg.sections.push(id);
           pg.usedHeight += Math.min(needed, remaining);
@@ -140,15 +150,8 @@ export function paginateSections(
         }
       }
 
-      // For non-atomic (splittable) sections, if at least minHeight fits,
-      // place the section here; the renderer will handle truncation
-      if (!ATOMIC_SECTIONS.has(id) && m.minHeight + GAP.section <= remaining && remaining >= 60) {
-        pg.sections.push(id);
-        pg.usedHeight += Math.min(needed, remaining);
-        currentPageIdx = pi;
-        placed = true;
-        break;
-      }
+      // Non-atomic sections: do NOT fake partial height.
+      // Push the whole section to the next page instead of truncating.
     }
 
     // If not placed on any existing page, add a new page dynamically
@@ -231,8 +234,10 @@ function rebalance(pages: PagePlan[], mmap: Map<SectionId, SectionMeasure>): voi
       const nxtFill = nxt.budget > 0 ? nxt.usedHeight / nxt.budget : 0;
 
       // Push-down: if current is >85% full and next is <65%, move last section down
+      // Tolerance prevents oscillation between passes
+      const TOLERANCE = 0.05;
       let movedThisPair = false;
-      if (curFill > 0.85 && nxtFill < 0.65 && cur.sections.length > 1) {
+      if (curFill > 0.85 + TOLERANCE && nxtFill < 0.65 - TOLERANCE && cur.sections.length > 1) {
         const lastId = cur.sections[cur.sections.length - 1];
         const m = mmap.get(lastId);
         if (!m) continue;

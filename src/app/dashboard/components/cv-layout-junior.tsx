@@ -12,6 +12,7 @@ import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColo
 import { measureAllSections } from "./cv-constraint-engine";
 import { paginateSections, type PaginationResult } from "./cv-pagination-engine";
 import { PRINT_MARGIN } from "./cv-design-system";
+import { useDOMMeasure, buildFingerprint } from "./cv-dom-measure";
 
 interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
 
@@ -43,6 +44,9 @@ function HeadingUnderline({ children, C }: { children: string; C: ThemeColors })
 }
 
 export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props) {
+  // ── Hooks MUST be called before conditional returns (Rules of Hooks) ──
+  const { measureRef, measures: domMeasures } = useDOMMeasure(buildFingerprint(d as unknown as Record<string, unknown>));
+
   if (variant === "B") return <JuniorVariantB data={d} theme={theme} />;
   if (variant === "C") return <JuniorVariantC data={d} theme={theme} />;
   const C = themes[theme];
@@ -52,18 +56,170 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
   const CONTACT_H = 28;
   const BODY_TOP = HEADER_H + CONTACT_H + 16;
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
+  const P2_CHROME = 40;
+  const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
-  // ── Engine: measure + paginate ──
-  const measures = measureAllSections(d, COL_W);
+  // ── Engine: DOM measures (pixel-perfect) with approximate fallback ──
+  const approxMeasures = measureAllSections(d, COL_W);
+  const measures = domMeasures || approxMeasures;
+  const sectionOrder: Parameters<typeof paginateSections>[0] = ["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references", "declaration"];
   const plan = paginateSections(
-    ["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references", "declaration"],
+    sectionOrder,
     measures,
-    [PAGE_BUDGET],
+    [PAGE_BUDGET, P2_BUDGET],
   );
   const show = new Set(plan.pages[0]?.sections ?? []);
+  const showP2 = new Set(plan.pages[1]?.sections ?? []);
 
   return (
     <div>
+      {/* ── Hidden measurement container (pixel-perfect DOM heights) ── */}
+      <div ref={measureRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: COL_W, overflow: "visible", fontFamily: FONT }}>
+        {d.profile && (
+          <div data-section-id="profile" style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
+            <Heading C={C}>Professional Summary</Heading>
+            <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+          </div>
+        )}
+        {d.experience?.length > 0 && (
+          <div data-section-id="experience" style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
+            <Heading C={C}>Experience</Heading>
+            {d.experience.map((exp, i) => (
+              <div key={i} style={{ marginBottom: i < d.experience.length - 1 ? 10 : 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{exp.role}</span>
+                  <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
+                </div>
+                <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                {exp.bullets?.length > 0 && (
+                  <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
+                    {exp.bullets.map((b, bi) => (
+                      <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {d.achievements && d.achievements.length > 0 && (
+          <div data-section-id="achievements" style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
+            <Heading C={C}>Key Achievements</Heading>
+            {d.achievements.map((ach, i) => (
+              <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>★</span>
+                <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.skills?.length > 0 && (
+          <div data-section-id="skills" style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
+            <Heading C={C}>Skills</Heading>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {d.skills.map((skill, i) => (
+                <span key={i} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "3px 11px", borderRadius: 20, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {d.education?.length > 0 && (
+          <div data-section-id="education" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Education</Heading>
+            {d.education.map((edu, i) => (
+              <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
+                <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.languages && d.languages.length > 0 && (
+          <div data-section-id="languages" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Languages</Heading>
+            {d.languages.map((lang, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9.5px", padding: "2px 0" }}>
+                <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                <span style={{ color: C.muted }}>{lang.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.certifications && d.certifications.length > 0 && (
+          <div data-section-id="certifications" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Certifications</Heading>
+            {d.certifications.map((cert, i) => (
+              <div key={i} style={{ marginBottom: 3 }}>
+                <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.projects && d.projects.length > 0 && (
+          <div data-section-id="projects" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Projects</Heading>
+            {d.projects.map((proj, i) => (
+              <div key={i} style={{ padding: "7px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}`, marginBottom: 6 }}>
+                <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
+                <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
+                {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500 }}>{proj.tech}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+        {d.awards && d.awards.length > 0 && (
+          <div data-section-id="awards" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Awards & Recognition</Heading>
+            {d.awards.map((award, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 4 }}>
+                <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
+                <div>
+                  <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                  {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.volunteer && d.volunteer.length > 0 && (
+          <div data-section-id="volunteer" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Volunteer Experience</Heading>
+            {d.volunteer.map((v, i) => (
+              <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 3 }}>
+                <span style={{ fontFamily: FONT, fontSize: "9px", color: C.primary, marginTop: 1 }}>●</span>
+                <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {d.references?.length > 0 && (
+          <div data-section-id="references" style={{ marginBottom: 14 }}>
+            <Heading C={C}>References</Heading>
+            <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
+              {d.references.map((ref, i) => (
+                <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
+                  <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                  <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                  {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                  {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {d.declaration?.declaration && (
+          <div data-section-id="declaration" style={{ marginBottom: 14 }}>
+            <Heading C={C}>Declaration</Heading>
+            <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+            <div style={{ display: "flex", gap: 24, marginTop: 3, fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>
+              {d.declaration.place && <span>Place: {d.declaration.place}</span>}
+              {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
@@ -265,6 +421,151 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
           )}
         </div>
       </div>
+
+      {/* ══ PAGE 2 (overflow sections) ══ */}
+      {showP2.size > 0 && (
+        <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
+          {/* Continuation header */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: P2_CHROME, backgroundColor: C.sidebarBg, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `0 ${MX}px`, borderBottom: `2px solid ${C.primary}` }}>
+            <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text }}>{d.fullName}</span>
+            <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>Page 2</span>
+          </div>
+
+          {/* Page 2 body */}
+          <div style={{ position: "absolute", top: P2_CHROME, left: MX, width: COL_W, maxHeight: P2_BUDGET, overflow: "hidden" }}>
+            {showP2.has("experience") && d.experience?.length > 0 && (
+              <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
+                <Heading C={C}>Experience</Heading>
+                {d.experience.map((exp, i) => (
+                  <div key={i} style={{ marginBottom: i < d.experience.length - 1 ? 10 : 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{exp.role}</span>
+                      <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
+                    </div>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                    {exp.bullets?.length > 0 && (
+                      <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
+                        {exp.bullets.map((b, bi) => (
+                          <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("achievements") && d.achievements && d.achievements.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Key Achievements</Heading>
+                {d.achievements.map((ach, i) => (
+                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>★</span>
+                    <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("skills") && d.skills?.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Skills</Heading>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {d.skills.map((skill, i) => (
+                    <span key={i} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "3px 11px", borderRadius: 20, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showP2.has("education") && d.education?.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Education</Heading>
+                {d.education.map((edu, i) => (
+                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
+                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("languages") && d.languages && d.languages.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Languages</Heading>
+                {d.languages.map((lang, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9.5px", padding: "2px 0" }}>
+                    <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span style={{ color: C.muted }}>{lang.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("certifications") && d.certifications && d.certifications.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Certifications</Heading>
+                {d.certifications.map((cert, i) => (
+                  <div key={i} style={{ marginBottom: 3 }}>
+                    <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                    <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("projects") && d.projects && d.projects.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Projects</Heading>
+                <div style={{ display: "grid", gridTemplateColumns: d.projects.length >= 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
+                  {d.projects.map((proj, i) => (
+                    <div key={i} style={{ padding: "7px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
+                      <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
+                      <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
+                      {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500 }}>{proj.tech}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showP2.has("awards") && d.awards && d.awards.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Awards & Recognition</Heading>
+                {d.awards.map((award, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 4 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
+                    <div>
+                      <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                      {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("volunteer") && d.volunteer && d.volunteer.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>Volunteer Experience</Heading>
+                {d.volunteer.map((v, i) => (
+                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 3 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.primary, marginTop: 1 }}>●</span>
+                    <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("references") && d.references?.length > 0 && (
+              <div style={{ marginBottom: 14 }}><Heading C={C}>References</Heading>
+                <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
+                  {d.references.map((ref, i) => (
+                    <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
+                      <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                      <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                      {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                      {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {showP2.has("declaration") && d.declaration?.declaration && (
+              <div style={{ marginTop: 14 }}>
+                <Heading C={C}>Declaration</Heading>
+                <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+                <div style={{ display: "flex", gap: 24, marginTop: 3, fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>
+                  {d.declaration.place && <span>Place: {d.declaration.place}</span>}
+                  {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
