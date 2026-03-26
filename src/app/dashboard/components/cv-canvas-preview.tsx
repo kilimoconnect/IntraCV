@@ -7,7 +7,7 @@
 // available viewport width, and adds visual gaps between pages.
 // ═══════════════════════════════════════════════════════════
 
-import { useRef, useEffect, useState, useCallback, type ReactNode } from "react";
+import { useRef, useEffect, useLayoutEffect, useState, useCallback, type ReactNode } from "react";
 
 // A4 at 96 DPI
 const A4_W = 794;
@@ -22,19 +22,24 @@ const PAGE_GAP = 24;
 
 export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewProps) {
   const outerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(0);
   const [pageCount, setPageCount] = useState(2);
 
   // ─── Fit the A4 paper to the available width ───
   const recalcScale = useCallback(() => {
     if (!outerRef.current) return;
     const availableWidth = outerRef.current.clientWidth;
+    if (availableWidth <= 0) return; // not laid out yet
     const padding = availableWidth < 640 ? 8 : 32; // less padding on mobile
     const targetWidth = availableWidth - padding;
     setScale(Math.min(1, targetWidth / A4_W));
   }, []);
 
-  useEffect(() => {
+  // useLayoutEffect runs synchronously before the browser paints, so scale is
+  // always correct on the very first frame — preventing the initial scale=1
+  // flash that centres the 794 px CV in the mobile viewport and shows only
+  // the middle strip.
+  useLayoutEffect(() => {
     recalcScale();
     const observer = new ResizeObserver(() => recalcScale());
     if (outerRef.current) observer.observe(outerRef.current);
