@@ -3,9 +3,10 @@
 // ═══════════════════════════════════════════════════════════
 // CV CANVAS PREVIEW — Scale-to-Fit A4 Preview Wrapper
 // ═══════════════════════════════════════════════════════════
-// Uses CSS zoom to scale A4 pages to fit the container width.
-// Zoom changes layout dimensions (unlike transform: scale)
-// so the element naturally fits without overflow tricks.
+// Uses transform:scale to visually shrink A4 pages to fit the
+// container width. transform does NOT affect child layout
+// measurements, so internal CSS zoom (usePageFill) works
+// correctly without compounding issues.
 // ═══════════════════════════════════════════════════════════
 
 import { useRef, useEffect, useState, useCallback, type ReactNode } from "react";
@@ -23,32 +24,32 @@ const PAGE_GAP = 24;
 
 export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewProps) {
   const outerRef = useRef<HTMLDivElement>(null);
-  const [zoomLevel, setZoomLevel] = useState(0);
+  const [scale, setScale] = useState(0.45);
   const [pageCount, setPageCount] = useState(1);
 
   // ─── Fit the A4 paper to the available width ───
-  const recalcZoom = useCallback(() => {
+  const recalcScale = useCallback(() => {
     if (!outerRef.current) return;
     const availableWidth = outerRef.current.clientWidth;
     if (availableWidth <= 0) return;
-    setZoomLevel(Math.min(1, availableWidth / A4_W));
+    setScale(Math.min(1, availableWidth / A4_W));
   }, []);
 
   // Recalculate on mount + resize
   useEffect(() => {
-    recalcZoom();
+    recalcScale();
     const el = outerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => recalcZoom());
+    const observer = new ResizeObserver(() => recalcScale());
     observer.observe(el);
     return () => observer.disconnect();
-  }, [recalcZoom]);
+  }, [recalcScale]);
 
   // Recalculate when children (layout/theme) change
   useEffect(() => {
-    const t = setTimeout(recalcZoom, 50);
+    const t = setTimeout(recalcScale, 50);
     return () => clearTimeout(t);
-  }, [children, recalcZoom]);
+  }, [children, recalcScale]);
 
   // ─── Count pages after render ───
   useEffect(() => {
@@ -69,14 +70,23 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
     };
   }, [children, previewRef]);
 
+  // transform:scale doesn't change layout size, so we set height manually
+  const totalContentHeight = pageCount * A4_H + (pageCount - 1) * PAGE_GAP;
+  const scaledHeight = totalContentHeight * scale;
+
   return (
-    <div ref={outerRef} className="relative w-full">
-      {/* Zoomed A4 content — zoom changes actual layout size */}
+    <div
+      ref={outerRef}
+      className="relative w-full overflow-hidden"
+      style={{ height: `${scaledHeight + 40}px` }}
+    >
+      {/* A4 content scaled from top-left — transform doesn't affect child measurements */}
       <div
         ref={previewRef}
         style={{
           width: `${A4_W}px`,
-          zoom: zoomLevel || undefined,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
           pointerEvents: "none",
         }}
       >
@@ -94,7 +104,7 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
       </div>
 
       {/* Page count badge */}
-      <div className="text-center mt-3">
+      <div className="absolute bottom-0 left-0 right-0 text-center pb-2">
         <span className="text-[10px] text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
           {pageCount} page{pageCount > 1 ? "s" : ""}
         </span>
