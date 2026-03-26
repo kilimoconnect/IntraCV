@@ -70,11 +70,11 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
   return (
     <div
       ref={outerRef}
-      className="relative w-full overflow-x-auto overflow-y-hidden"
+      className="relative w-full overflow-hidden flex justify-center"
       style={{ minHeight: `${scaledHeight}px` }}
     >
       <div
-        className="mx-auto relative"
+        className="relative"
         style={{
           width: `${A4_W * scale}px`,
         }}
