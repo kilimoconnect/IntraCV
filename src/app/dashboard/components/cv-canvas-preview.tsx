@@ -76,14 +76,18 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
       <div
         className="mx-auto relative"
         style={{
-          width: `${A4_W}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: "top center",
+          width: `${A4_W * scale}px`,
+          maxWidth: "100%",
         }}
       >
         <div
           ref={previewRef}
-          style={{ width: `${A4_W}px`, pointerEvents: "none" }}
+          style={{
+            width: `${A4_W}px`,
+            pointerEvents: "none",
+            transform: `scale(${scale})`,
+            transformOrigin: "top center",
+          }}
         >
           {/* Gap CSS between sheets */}
           <style>{`
