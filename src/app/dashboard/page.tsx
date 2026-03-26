@@ -52,6 +52,7 @@ function DashboardPage() {
   const [areasOfExpertise, setAreasOfExpertise] = useState<any[]>([]);
   const [declaration, setDeclaration] = useState<any>(null);
   const [keyAchievements, setKeyAchievements] = useState<any[]>([]);
+  const [awards, setAwards] = useState<any[]>([]);
   const [memberships, setMemberships] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [boardRoles, setBoardRoles] = useState<any[]>([]);
@@ -78,7 +79,7 @@ function DashboardPage() {
     setLoading(true);
     try {
       const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, exprtRes, declRes,
-             achRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
+             achRes, awardsRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
         await Promise.all([
           supabase.from("cv_personal_info").select("*").eq("user_id", user.id).maybeSingle(),
           supabase.from("cv_summary").select("*").eq("user_id", user.id).maybeSingle(),
@@ -91,6 +92,7 @@ function DashboardPage() {
           supabase.from("cv_areas_of_expertise").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_declarations").select("*").eq("user_id", user.id).maybeSingle(),
           supabase.from("cv_key_achievements").select("*").eq("user_id", user.id).order("sort_order"),
+          supabase.from("cv_awards").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_memberships").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_projects").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_board_roles").select("*").eq("user_id", user.id).order("sort_order"),
@@ -160,6 +162,9 @@ function DashboardPage() {
       setKeyAchievements((achRes.data || []).map((a: any) => ({
         id: a.id, achievement: a.achievement || "",
       })).filter((a: any) => a.achievement.trim()));
+      setAwards((awardsRes.data || []).map((a: any) => ({
+        id: a.id, title: a.title || "", description: a.description || "",
+      })).filter((a: any) => a.title.trim()));
       setMemberships((memRes.data || []).map((m: any) => ({
         id: m.id, name: m.name || "",
       })).filter((m: any) => m.name.trim()));
@@ -225,7 +230,7 @@ function DashboardPage() {
     personalInfo, summary, experiences, education,
     skills, certifications, languages, referees,
     areasOfExpertise, declaration,
-    keyAchievements, memberships, projects,
+    keyAchievements, awards, memberships, projects,
     boardRoles, executiveTraining, publications,
     tools, volunteer,
   };
@@ -256,6 +261,7 @@ function DashboardPage() {
           areasOfExpertise={areasOfExpertise}
           declaration={declaration}
           keyAchievements={keyAchievements}
+          awards={awards}
           memberships={memberships}
           projects={projects}
           boardRoles={boardRoles}

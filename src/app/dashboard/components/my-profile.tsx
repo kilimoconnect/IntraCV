@@ -26,6 +26,7 @@ interface MyProfileProps {
   areasOfExpertise: any[];
   declaration: any;
   keyAchievements: any[];
+  awards: any[];
   memberships: any[];
   projects: any[];
   boardRoles: any[];
@@ -168,6 +169,7 @@ function categorizeProfile(
       ],
       recommended: [
         { key: "certifications", label: "Certifications" },
+        { key: "awards", label: "Awards & Recognition" },
         { key: "memberships", label: "Professional Memberships" },
         { key: "tools", label: "Tools & Software" },
         { key: "languages", label: "Languages" },
@@ -188,6 +190,7 @@ function categorizeProfile(
       recommended: [
         { key: "execTraining", label: "Executive Training" },
         { key: "publications", label: "Publications & Speaking" },
+        { key: "awards", label: "Awards & Recognition" },
         { key: "certifications", label: "Certifications" },
         { key: "memberships", label: "Professional Affiliations" },
         { key: "languages", label: "Languages" },
@@ -208,7 +211,7 @@ function categorizeProfile(
 export default function MyProfile({
   personalInfo, summary, experiences, education, skills,
   certifications, languages, referees, areasOfExpertise, declaration,
-  keyAchievements, memberships, projects, boardRoles, execTraining,
+  keyAchievements, awards, memberships, projects, boardRoles, execTraining,
   publications, tools, volunteer,
 }: MyProfileProps) {
   const router = useRouter();
@@ -371,6 +374,20 @@ export default function MyProfile({
           </div>
         ))}</div>
       ) : <p className="text-muted-foreground italic">No key achievements added</p>,
+    },
+    {
+      key: "awards", label: "Awards & Recognition", icon: Award, hasContent: awards.length > 0,
+      render: () => awards.length > 0 ? (
+        <div className="space-y-3">{awards.map((award: any, i: number) => (
+          <div key={award.id || i} className="border-l-2 border-amber-200 pl-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Award className="h-4 w-4 text-amber-600" />
+              <h4 className="font-semibold text-sm">{award.title}</h4>
+            </div>
+            {award.description && <p className="text-sm text-muted-foreground">{award.description}</p>}
+          </div>
+        ))}</div>
+      ) : <p className="text-muted-foreground italic">No awards added</p>,
     },
     {
       key: "skills", label: "Skills", icon: Sparkles, hasContent: sectionHasContent.skills,
