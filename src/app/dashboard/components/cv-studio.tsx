@@ -16,6 +16,59 @@ interface Props {
 
 type LooseObject = Record<string, unknown>;
 
+// ─── Career category detection from profile data ───
+
+const EXEC_TITLES = /\b(chief|ceo|cfo|cto|coo|cio|cmo|cpo|president|vice\s*president|vp|managing\s*director|md|executive\s*director|group\s*director|partner|head\s*of|country\s*manager|regional\s*director|general\s*manager|gm|board\s*member|chairman|chairperson)\b/i;
+const MID_TITLES = /\b(senior|sr\.?|lead|manager|director|team\s*lead|principal|supervisor|coordinator|specialist|consultant|architect|head|associate\s*director)\b/i;
+const JUNIOR_TITLES = /\b(junior|jr\.?|intern|trainee|entry|assistant|graduate|apprentice|associate|analyst|officer|clerk|attachment|industrial\s*training)\b/i;
+const EXEC_SCOPE = /\b(p&l|profit\s*and\s*loss|board|strategy|transformation|million|billion|revenue|shareholder|governance|merger|acquisition|m&a)\b/i;
+const MID_SCOPE = /\b(managed\s*(?:a\s*)?team|budget|cross-functional|department|division|portfolio|stakeholder|kpi|roadmap|mentored|coached|process\s*improvement)\b/i;
+
+function detectCategory(cvData: Record<string, unknown>): CareerCategory {
+  const experiences = Array.isArray(cvData.experiences) ? cvData.experiences : [];
+  const education = Array.isArray(cvData.education) ? cvData.education : [];
+  const boardRoles = Array.isArray(cvData.boardRoles) ? cvData.boardRoles : [];
+  const publications = Array.isArray(cvData.publications) ? cvData.publications : [];
+  const execTraining = Array.isArray(cvData.executiveTraining) ? cvData.executiveTraining : [];
+
+  let score = 0;
+  let execTitleCount = 0, midTitleCount = 0;
+  for (const exp of experiences) {
+    const t = (exp as any)?.title || "";
+    if (EXEC_TITLES.test(t)) execTitleCount++;
+    else if (MID_TITLES.test(t)) midTitleCount++;
+  }
+  if (execTitleCount >= 2) score += 35;
+  else if (execTitleCount === 1) score += 28;
+  else if (midTitleCount >= 3) score += 22;
+  else if (midTitleCount >= 1) score += 15;
+  else if (experiences.length > 0) score += 10;
+
+  let execScopeHits = 0, midScopeHits = 0;
+  for (const exp of experiences) {
+    const desc = (exp as any)?.description || "";
+    if (EXEC_SCOPE.test(desc)) execScopeHits++;
+    if (MID_SCOPE.test(desc)) midScopeHits++;
+  }
+  if (execScopeHits >= 2) score += 20;
+  else if (execScopeHits === 1) score += 14;
+  else if (midScopeHits >= 2) score += 10;
+  else if (midScopeHits === 1) score += 6;
+
+  if (education.some((e: any) => /\b(mba|phd|doctorate|masters?|m\.?sc|emba)\b/i.test(e?.degree || ""))) score += 10;
+  else if (education.length > 0) score += 4;
+  if (boardRoles.length >= 2) score += 10; else if (boardRoles.length === 1) score += 7;
+  if (publications.length >= 2) score += 5; else if (publications.length === 1) score += 3;
+  if (execTraining.length >= 2) score += 5; else if (execTraining.length === 1) score += 3;
+  if (experiences.length >= 6) score += 10;
+  else if (experiences.length >= 4) score += 7;
+  else if (experiences.length >= 2) score += 4;
+
+  if (score >= 60) return "executive";
+  if (score >= 30) return "mid-senior";
+  return "junior";
+}
+
 // ─── Helpers ───
 
 function asObject(value: unknown): LooseObject {
@@ -495,6 +548,7 @@ function ExecutiveCMiniPreview() {
 export default function CvStudio({ userId, cvData }: Props) {
   void userId;
 
+  const detectedCategory = detectCategory(cvData);
   const [step, setStep] = useState<"select" | "pick-layout" | "generating" | "preview" | "error">("select");
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<LayoutVariant>("A");
@@ -661,20 +715,32 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {CATEGORY_CARDS.map((cat) => {
             const Icon = cat.icon;
+            const isMatch = cat.id === detectedCategory;
+            const isDisabled = !isMatch;
             return (
               <button
                 key={cat.id}
-                onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
-                className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} transition-all hover:shadow-xl hover:-translate-y-1 overflow-hidden`}
+                onClick={() => { if (!isDisabled) { setSelectedCategory(cat.id); setStep("pick-layout"); } }}
+                disabled={isDisabled}
+                className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br overflow-hidden transition-all ${
+                  isDisabled
+                    ? "opacity-40 cursor-not-allowed grayscale border-slate-200"
+                    : `${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
+                }`}
               >
+                {isMatch && (
+                  <div className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white shadow-sm border border-slate-200 text-slate-700">
+                    Your Level
+                  </div>
+                )}
                 {/* ── Card Info ── */}
                 <div className="px-5 pt-5 pb-5">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-1.5 rounded-lg bg-white shadow-sm ${cat.color}`}>
+                    <div className={`p-1.5 rounded-lg bg-white shadow-sm ${isDisabled ? "text-slate-400" : cat.color}`}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className={`text-base font-bold ${cat.color}`}>{cat.label}</div>
+                      <div className={`text-base font-bold ${isDisabled ? "text-slate-400" : cat.color}`}>{cat.label}</div>
                       <div className="text-[11px] text-slate-500">{cat.subtitle}</div>
                     </div>
                   </div>
@@ -693,9 +759,13 @@ export default function CvStudio({ userId, cvData }: Props) {
                     </div>
                   </div>
 
-                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-lg bg-white/80 border border-slate-200 text-sm font-medium ${cat.color} group-hover:bg-white transition-colors`}>
+                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 text-sm font-medium transition-colors ${
+                    isDisabled
+                      ? "bg-slate-100 text-slate-400"
+                      : `bg-white/80 ${cat.color} group-hover:bg-white`
+                  }`}>
                     <Sparkles className="h-4 w-4" />
-                    Generate
+                    {isDisabled ? "Not Available" : "Generate"}
                   </div>
                 </div>
               </button>
