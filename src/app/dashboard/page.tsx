@@ -49,7 +49,6 @@ function DashboardPage() {
   const [certifications, setCertifications] = useState<any[]>([]);
   const [languages, setLanguages] = useState<any[]>([]);
   const [referees, setReferees] = useState<any[]>([]);
-  const [areasOfExpertise, setAreasOfExpertise] = useState<any[]>([]);
   const [declaration, setDeclaration] = useState<any>(null);
   const [keyAchievements, setKeyAchievements] = useState<any[]>([]);
   const [awards, setAwards] = useState<any[]>([]);
@@ -78,7 +77,7 @@ function DashboardPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, exprtRes, declRes,
+      const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, declRes,
              achRes, awardsRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
         await Promise.all([
           supabase.from("cv_personal_info").select("*").eq("user_id", user.id).maybeSingle(),
@@ -89,7 +88,6 @@ function DashboardPage() {
           supabase.from("cv_certifications").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_languages").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_referees").select("*").eq("user_id", user.id).order("sort_order"),
-          supabase.from("cv_areas_of_expertise").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_declarations").select("*").eq("user_id", user.id).maybeSingle(),
           supabase.from("cv_key_achievements").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_awards").select("*").eq("user_id", user.id).order("sort_order"),
@@ -150,10 +148,6 @@ function DashboardPage() {
         phone: r.phone || "",
         email: r.email || "",
       })));
-      setAreasOfExpertise((exprtRes.data || []).map((a: any) => ({
-        name: a.name || "",
-        description: a.description || "",
-      })).filter((a: any) => a.name.trim()));
       setDeclaration(declRes.data ? {
         declaration: declRes.data.declaration || "",
         place: declRes.data.place || "",
@@ -229,7 +223,7 @@ function DashboardPage() {
   const cvData = {
     personalInfo, summary, experiences, education,
     skills, certifications, languages, referees,
-    areasOfExpertise, declaration,
+    declaration,
     keyAchievements, awards, memberships, projects,
     boardRoles, executiveTraining, publications,
     tools, volunteer,
@@ -258,7 +252,6 @@ function DashboardPage() {
           certifications={certifications}
           languages={languages}
           referees={referees}
-          areasOfExpertise={areasOfExpertise}
           declaration={declaration}
           keyAchievements={keyAchievements}
           awards={awards}

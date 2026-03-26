@@ -43,7 +43,6 @@ import {
   ArrowRight,
   Check,
   AlertTriangle,
-  Target,
   ScrollText,
   Trophy,
   Building2,
@@ -103,11 +102,6 @@ interface Referee {
   company: string;
   phone: string;
   email: string;
-}
-interface AreaOfExpertise {
-  id: string;
-  name: string;
-  description: string;
 }
 interface KeyAchievement {
   id: string;
@@ -368,7 +362,6 @@ function CVBuilderPage() {
     { key: "experience", label: "Experience", icon: Briefcase },
     { key: "education", label: "Education", icon: GraduationCap },
     { key: "skills", label: "Skills", icon: Sparkles },
-    { key: "expertise", label: "Areas of Expertise", icon: Target },
     { key: "certifications", label: "Certifications", icon: Award },
     { key: "achievements", label: "Key Achievements", icon: Trophy },
     { key: "awards", label: "Awards", icon: Award },
@@ -401,7 +394,6 @@ function CVBuilderPage() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [referees, setReferees] = useState<Referee[]>([]);
-  const [areasOfExpertise, setAreasOfExpertise] = useState<AreaOfExpertise[]>([]);
   const [keyAchievements, setKeyAchievements] = useState<KeyAchievement[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -427,7 +419,7 @@ function CVBuilderPage() {
     if (!user) return;
     setLoadingProfile(true);
     try {
-      const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, exprtRes, declRes,
+      const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, declRes,
              achRes, awardsRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
         await Promise.all([
           supabase.from("cv_personal_info").select("*").eq("user_id", user.id).maybeSingle(),
@@ -438,7 +430,6 @@ function CVBuilderPage() {
           supabase.from("cv_certifications").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_languages").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_referees").select("*").eq("user_id", user.id).order("sort_order"),
-          supabase.from("cv_areas_of_expertise").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_declarations").select("*").eq("user_id", user.id).maybeSingle(),
           supabase.from("cv_key_achievements").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_awards").select("*").eq("user_id", user.id).order("sort_order"),
@@ -525,14 +516,6 @@ function CVBuilderPage() {
           company: r.company || "",
           phone: r.phone || "",
           email: r.email || "",
-        })));
-      }
-      if (exprtRes.data && exprtRes.data.length > 0) {
-        found = true;
-        setAreasOfExpertise(exprtRes.data.map((a: any) => ({
-          id: a.id,
-          name: a.name || "",
-          description: a.description || "",
         })));
       }
       if (declRes.data) {
@@ -627,8 +610,7 @@ function CVBuilderPage() {
           skills: skills,
           education: education,
           certifications: certifications,
-          projects: projects,
-          areasOfExpertise: areasOfExpertise
+          projects: projects
         })
       });
       
@@ -789,11 +771,6 @@ function CVBuilderPage() {
           phone: r.phone || "", email: r.email || "",
         })));
       }
-      if (d.areasOfExpertise?.length) {
-        setAreasOfExpertise(d.areasOfExpertise.map((a: any) => ({
-          id: uid(), name: a.name || a || "", description: a.description || "",
-        })));
-      }
       if (d.keyAchievements) {
         let achievements: any[] = [];
         
@@ -894,7 +871,6 @@ function CVBuilderPage() {
           certifications,
           languages,
           referees,
-          areasOfExpertise,
           keyAchievements,
           memberships,
           projects,
@@ -1044,21 +1020,7 @@ function CVBuilderPage() {
         if (refErr) throw refErr;
       }
 
-      // 9. Areas of Expertise — delete all then insert fresh
-      await supabase.from("cv_areas_of_expertise").delete().eq("user_id", user.id);
-      if (areasOfExpertise.filter((a) => a.name).length > 0) {
-        const { error: exprtErr } = await supabase.from("cv_areas_of_expertise").insert(
-          areasOfExpertise.filter((a) => a.name).map((a, i) => ({
-            user_id: user.id,
-            name: a.name,
-            description: a.description,
-            sort_order: i,
-          }))
-        );
-        if (exprtErr) throw exprtErr;
-      }
-
-      // 10. Declaration — upsert (unique per user)
+      // 9. Declaration — upsert (unique per user)
       const { error: declErr } = await supabase.from("cv_declarations").upsert({
         user_id: user.id,
         declaration: declaration.declaration,
@@ -1190,7 +1152,6 @@ function CVBuilderPage() {
         supabase.from("cv_certifications").delete().eq("user_id", user.id),
         supabase.from("cv_languages").delete().eq("user_id", user.id),
         supabase.from("cv_referees").delete().eq("user_id", user.id),
-        supabase.from("cv_areas_of_expertise").delete().eq("user_id", user.id),
         supabase.from("cv_declarations").delete().eq("user_id", user.id),
         supabase.from("cv_key_achievements").delete().eq("user_id", user.id),
         supabase.from("cv_awards").delete().eq("user_id", user.id),
@@ -1215,7 +1176,6 @@ function CVBuilderPage() {
       setCertifications([]);
       setLanguages([]);
       setReferees([]);
-      setAreasOfExpertise([]);
       setKeyAchievements([]);
       setAwards([]);
       setMemberships([]);
@@ -1268,7 +1228,6 @@ function CVBuilderPage() {
     publications: publications.length,
     languages: languages.length,
     referees: referees.length,
-    expertise: areasOfExpertise.length,
     tools: tools.length,
     volunteer: volunteer.length,
     declaration: declaration.declaration ? 1 : 0,
@@ -1333,7 +1292,6 @@ function CVBuilderPage() {
     achievements: [{ field: "achievement", label: "Achievement" }],
     awards: [{ field: "title", label: "Award Title" }],
     memberships: [{ field: "name", label: "Name" }],
-    expertise: [{ field: "name", label: "Area Name" }],
   };
 
   const getItemMissing = (sectionKey: string, item: any): string[] => {
@@ -1430,7 +1388,6 @@ function CVBuilderPage() {
   boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) sectionsWithIssues.add("boardRoles"); });
   execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) sectionsWithIssues.add("execTraining"); });
   publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) sectionsWithIssues.add("publications"); });
-  areasOfExpertise.forEach((a) => { if (getItemMissing("expertise", a).length > 0) sectionsWithIssues.add("expertise"); });
   tools.forEach((t) => { if (!t?.trim()) sectionsWithIssues.add("tools"); });
   volunteer.forEach((v) => { if (!v?.trim()) sectionsWithIssues.add("volunteer"); });
 
@@ -1556,7 +1513,6 @@ function CVBuilderPage() {
                     boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) incompleteItems.push({ section: "Board Roles", key: "boardRoles", count: 0 }); });
                     execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) incompleteItems.push({ section: "Exec Training", key: "execTraining", count: 0 }); });
                     publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) incompleteItems.push({ section: "Publications", key: "publications", count: 0 }); });
-                    areasOfExpertise.forEach((a) => { if (getItemMissing("expertise", a).length > 0) incompleteItems.push({ section: "Areas of Expertise", key: "expertise", count: 0 }); });
                     tools.forEach((t) => { if (!t?.trim()) incompleteItems.push({ section: "Tools", key: "tools", count: 0 }); });
                     volunteer.forEach((v) => { if (!v?.trim()) incompleteItems.push({ section: "Volunteer", key: "volunteer", count: 0 }); });
 
@@ -2178,27 +2134,6 @@ function CVBuilderPage() {
                           </Button>
                         )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* ── Areas of Expertise ── */}
-                  {currentKey === "expertise" && (
-                    <div className="space-y-3">
-                      {areasOfExpertise.length === 0 && (
-                        <p className="text-muted-foreground text-sm text-center py-8">No areas of expertise added yet</p>
-                      )}
-                      {areasOfExpertise.map((area) => (
-                        <div key={area.id} className={`flex gap-2 items-start ${!area.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!area.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Area name (e.g. Project Management) *" value={area.name} onChange={(e) => setAreasOfExpertise(areasOfExpertise.map((a) => a.id === area.id ? { ...a, name: e.target.value } : a))} />
-                          <Input className="flex-1" placeholder="Brief description (optional)" value={area.description} onChange={(e) => setAreasOfExpertise(areasOfExpertise.map((a) => a.id === area.id ? { ...a, description: e.target.value } : a))} />
-                          <Button variant="ghost" size="sm" onClick={() => setAreasOfExpertise(areasOfExpertise.filter((a) => a.id !== area.id))}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button variant="outline" className="w-full" onClick={() => setAreasOfExpertise([...areasOfExpertise, { id: uid(), name: "", description: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Area of Expertise
-                      </Button>
                     </div>
                   )}
 

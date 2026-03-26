@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   User, FileText, Briefcase, GraduationCap, Sparkles, Award,
-  Globe, Users, Target, ScrollText, Mail, Phone, MapPin, Linkedin,
+  Globe, Users, ScrollText, Mail, Phone, MapPin, Linkedin,
   Link as LinkIcon, Pencil, Trophy, Building2, FolderKanban, Shield,
   BookMarked, PenLine, Wrench, Heart, Plus, Clock,
   AlertCircle, AlertTriangle, XCircle,
@@ -23,7 +23,6 @@ interface MyProfileProps {
   certifications: any[];
   languages: any[];
   referees: any[];
-  areasOfExpertise: any[];
   declaration: any;
   keyAchievements: any[];
   awards: any[];
@@ -210,7 +209,7 @@ function categorizeProfile(
 
 export default function MyProfile({
   personalInfo, summary, experiences, education, skills,
-  certifications, languages, referees, areasOfExpertise, declaration,
+  certifications, languages, referees, declaration,
   keyAchievements, awards, memberships, projects, boardRoles, execTraining,
   publications, tools, volunteer,
 }: MyProfileProps) {
@@ -302,7 +301,6 @@ export default function MyProfile({
     publications: publications.length > 0,
     tools: tools.length > 0,
     volunteer: volunteer.length > 0,
-    expertise: areasOfExpertise.length > 0,
     awards: awards.length > 0,
     memberships: memberships.length > 0,
     referees: referees.length > 0,
@@ -512,17 +510,6 @@ export default function MyProfile({
       ) : <p className="text-muted-foreground italic">No volunteer experience added</p>,
     },
     {
-      key: "expertise", label: "Areas of Expertise", icon: Target, hasContent: sectionHasContent.expertise,
-      render: () => areasOfExpertise.length > 0 ? (
-        <div className="flex flex-wrap gap-2">{areasOfExpertise.map((a: any, i: number) => (
-          <div key={a.id || i} className="border rounded-lg px-3 py-2">
-            <span className="font-medium text-sm">{a.name}</span>
-            {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
-          </div>
-        ))}</div>
-      ) : <p className="text-muted-foreground italic">No areas of expertise added</p>,
-    },
-    {
       key: "memberships", label: "Professional Memberships", icon: Building2, hasContent: sectionHasContent.memberships,
       render: () => memberships.length > 0 ? (
         <div className="flex flex-wrap gap-2">{memberships.map((mem: any, i: number) => (
@@ -663,7 +650,6 @@ export default function MyProfile({
           : sec.key === "publications" ? publications.length
           : sec.key === "tools" ? tools.length
           : sec.key === "volunteer" ? volunteer.length
-          : sec.key === "expertise" ? areasOfExpertise.length
           : sec.key === "memberships" ? memberships.length
           : sec.key === "referees" ? referees.length
           : 0;
