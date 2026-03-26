@@ -303,6 +303,7 @@ export default function MyProfile({
     tools: tools.length > 0,
     volunteer: volunteer.length > 0,
     expertise: areasOfExpertise.length > 0,
+    awards: awards.length > 0,
     memberships: memberships.length > 0,
     referees: referees.length > 0,
     declaration: !!declaration?.declaration,
@@ -376,7 +377,7 @@ export default function MyProfile({
       ) : <p className="text-muted-foreground italic">No key achievements added</p>,
     },
     {
-      key: "awards", label: "Awards & Recognition", icon: Award, hasContent: awards.length > 0,
+      key: "awards", label: "Awards & Recognition", icon: Award, hasContent: sectionHasContent.awards,
       render: () => awards.length > 0 ? (
         <div className="space-y-3">{awards.map((award: any, i: number) => (
           <div key={award.id || i} className="border-l-2 border-amber-200 pl-3">

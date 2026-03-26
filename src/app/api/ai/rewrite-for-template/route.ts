@@ -264,28 +264,18 @@ async function blockHistory(exps: any[]): Promise<any[]> {
 async function blockProjects(cvData: any): Promise<any[]> {
   const { count, descMaxChars, maxTechChars } = S.projects;
   
-  // Build a comprehensive profile from all CV data
-  const profile = {
-    name: cvData.personalInfo?.fullName || "",
-    title: cvData.personalInfo?.headline || "",
-    summary: cvData.summary || "",
-    experience: cvData.experiences || [],
-    skills: cvData.skills || [],
-    education: cvData.education || [],
-    certifications: cvData.certifications || [],
-  };
+  // Only use real projects from database — never generate fake ones
+  const rawProjects = (cvData.projects || []).filter((p: any) => (p.name || "").trim());
+  if (rawProjects.length === 0) return [];
 
-  const r = await ai(`Based on this complete professional profile, generate ${count} impressive projects.
-    
-PROFILE:
-${JSON.stringify(profile, null, 2)}
+  const r = await ai(`Polish these real projects for a professional CV.
+    SOURCE: ${JSON.stringify(rawProjects)}
 
 Requirements:
-- Each project name: max 36 chars, bold impact, NO MARKDOWN (no asterisks, no bold formatting)
+- Each project name: max 36 chars, NO MARKDOWN (no asterisks, no bold formatting)
 - Each description: ${descMaxChars} chars (3 sentences), focus on results and technologies used
 - Each tech stack: max ${maxTechChars} chars, list key technologies
-- Projects should reflect the person's actual experience level and industry
-- Include quantifiable outcomes where possible
+- Do NOT invent new projects — only rewrite the ones provided
 - Return JSON: {"projects": [{"name": "", "description": "", "tech": ""}]}`);
 
   return (r.projects || []).slice(0, count).map((p: any) => ({
@@ -315,29 +305,16 @@ async function blockAwards(cvData: any): Promise<any[]> {
   
   const { max, maxTitleChars, maxDescChars } = S.awards;
 
-  // If no source awards, generate from experience context
-  if (existingAwards.length === 0) {
-    if ((cvData.experiences || []).length === 0 && !cvData.summary) return [];
-    const r = await ai(`Based on this professional profile, generate ${max} FORMAL awards or recognitions.
-      SUMMARY: ${(cvData.summary || "").slice(0, 200)}
-      EXPERIENCE: ${JSON.stringify((cvData.experiences || []).slice(0, 3))}
-      SKILLS: ${(cvData.skills || []).slice(0, 8).map((s: any) => s.name || s).join(", ")}
-      Rules:
-      - Focus on EXTERNAL recognitions: Employee of the Year, Best Project Award, Industry Certifications, Leadership Honors
-      - Each award title: max ${maxTitleChars} chars (e.g., "Employee of the Year 2022")
-      - Each description: 40-${maxDescChars} chars (e.g., "Recognized for outstanding performance among 500+ employees")
-      - Make them realistic and specific to the person's field
-      Return JSON: {"awards":[{"title":"","description":""}]}`);
-    return (r.awards || []).slice(0, max).map((a: any) => ({ title: a.title || "", description: a.description || "" }));
-  }
+  // Only use real awards from database — never generate fake ones
+  if (existingAwards.length === 0) return [];
   
   const r = await ai(`Rewrite these FORMAL awards into polished CV format: ${JSON.stringify(existingAwards)}.
-    Select the ${max} most impactful.
+    Return EXACTLY ${existingAwards.length} award(s) — do NOT add or invent extra awards.
     Each award title: max ${maxTitleChars} chars. Each description: 40-${maxDescChars} chars.
     Focus on external recognitions, certificates, and honors received.
     Return JSON: {"awards":[{"title":"","description":""}]}`);
 
-  return (r.awards || []).slice(0, max).map((a: any) => ({
+  return (r.awards || []).slice(0, existingAwards.length).map((a: any) => ({
     title: a.title || "",
     description: a.description || ""
   }));
@@ -395,28 +372,20 @@ function formatDateRange(start?: string, end?: string): string {
 }
 
 async function blockTools(cvData: any): Promise<string[]> {
-  const sourceTools = [
-    ...normalizeStringArray(cvData.tools),
-    ...normalizeStringArray(cvData.skills?.map((skill: any) => skill?.name || skill)),
-    ...normalizeStringArray(cvData.certifications?.map((cert: any) => cert?.name || cert)),
-    ...normalizeStringArray(cvData.areasOfExpertise?.map((area: any) => area?.name || area)),
-  ];
+  // Only use real tools from database — never mix in skills or other sections
+  const sourceTools = normalizeStringArray(cvData.tools);
+  if (sourceTools.length === 0) return [];
 
-  if (sourceTools.length === 0 && (cvData.experiences || []).length === 0) {
-    return [];
-  }
-
-  const { count, maxLabelChars } = S.tools;
-  const r = await ai(`Select exactly ${count} concrete professional tools, platforms, or systems for this CV.
+  const { maxLabelChars } = S.tools;
+  const r = await ai(`Polish these tools/software for a professional CV.
+    SOURCE: ${JSON.stringify(sourceTools)}
+    Return EXACTLY ${sourceTools.length} tool(s) — do NOT add or invent extra tools.
     Each label must be ${maxLabelChars} characters or fewer.
-    Prefer software, platforms, frameworks, or operating systems over broad soft skills.
-    Remove duplicates.
-    SOURCE TOOLS: ${sourceTools.join(", ")}
-    EXPERIENCE CONTEXT: ${JSON.stringify((cvData.experiences || []).slice(0, 4))}
+    Use official product/platform names where possible.
     Return JSON: {"tools": [""]}`);
 
   return (r.tools || [])
-    .slice(0, count)
+    .slice(0, sourceTools.length)
     .map((tool: any) => trimToWord(String(tool || "").trim(), maxLabelChars))
     .filter(Boolean);
 }
@@ -460,23 +429,8 @@ async function blockAchievements(cvData: any): Promise<string[]> {
     }).filter(a => a.length >= 20); // Only filter very short fragments, allow longer content
   }
   
-  // If still no achievements, generate from experience/summary
-  if (achievements.length === 0) {
-    const r = await ai(`Write up to ${count} QUANTIFIED achievement statements for a CV.
-      Each achievement must be one sentence and between ${minChars} and ${maxChars} characters.
-      Focus on MEASURABLE impact: numbers, percentages, results, and outcomes.
-      Examples: "Increased team productivity by 35% through process automation.", "Managed $2M project budget delivering 2 weeks ahead of schedule."
-      Avoid general responsibilities - focus on concrete results and accomplishments.
-      Do not use bullets, numbering, or quotation marks.
-      SUMMARY: ${cvData.summary || ""}
-      EXPERIENCE: ${JSON.stringify((cvData.experiences || []).slice(0, 4))}
-      Return JSON: {"achievements": [""]}`);
-    
-    achievements = (r.achievements || [])
-      .slice(0, count)
-      .map((achievement: any) => String(achievement || "").trim())
-      .filter(Boolean);
-  }
+  // Only use real achievements from database — never generate fake ones
+  if (achievements.length === 0) return [];
 
   return achievements;
 }
@@ -781,11 +735,16 @@ export async function POST(req: NextRequest) {
         blockHistory(cvData.experiences || []),
         (!isJunior || (cvData.projects || []).length > 0) ? blockProjects(cvData) : Promise.resolve([]),
         blockEducation(cvData.education || []),
-        ai(
-          `List exactly ${S.skills.count} professional skills. Max ${S.skills.maxLabelChars} chars each. ` +
-          `Source: ${(cvData.skills || []).map((s: any) => s.name || s).join(",")}. ` +
-          `Return JSON: {"skills":[...]}`
-        ),
+        (async () => {
+          const rawSkills = (cvData.skills || []).map((s: any) => s.name || s).filter((s: string) => s.trim());
+          if (rawSkills.length === 0) return { skills: [] };
+          return ai(
+            `Polish these professional skills/competencies for a CV. Max ${S.skills.maxLabelChars} chars each. ` +
+            `Return EXACTLY ${rawSkills.length} skill(s) — do NOT add or invent extra skills. ` +
+            `Source: ${rawSkills.join(",")}. ` +
+            `Return JSON: {"skills":[...]}`
+          );
+        })(),
         blockAwards(cvData),
         blockCertifications(cvData),
       ]);
@@ -813,7 +772,7 @@ export async function POST(req: NextRequest) {
           const mRes = await ai(`Polish these professional memberships/affiliations for a CV. Use official organization names.
             SOURCE: ${JSON.stringify(rawMemberships)}
             Return JSON: {"memberships":[""]}`);
-          memberships = (mRes.memberships || rawMemberships).slice(0, 5);
+          memberships = (mRes.memberships || rawMemberships).slice(0, rawMemberships.length);
         }
       }
 
@@ -825,7 +784,7 @@ export async function POST(req: NextRequest) {
           const vRes = await ai(`Rewrite these volunteer experiences as concise CV entries. Each max 80 chars, focus on impact.
             SOURCE: ${JSON.stringify(rawVolunteer)}
             Return JSON: {"volunteer":[""]}`);
-          volunteer = (vRes.volunteer || rawVolunteer).slice(0, 3);
+          volunteer = (vRes.volunteer || rawVolunteer).slice(0, rawVolunteer.length);
         }
       }
 
@@ -839,13 +798,13 @@ export async function POST(req: NextRequest) {
         location: pi.location,
         profile,
         tagline,
-        skills: (skillsRes.skills || []).filter((s: any) => s && s.trim()).slice(0, S.skills.count),
+        skills: (skillsRes.skills || []).filter((s: any) => s && s.trim()),
         experience,
         history,
         projects,
         education,
         certifications: certsRes.filter((c: any) => c && c.name && c.name.trim()),
-        awards: (awardsRes || []).filter((a: any) => a.title && a.title.trim()).slice(0, S.awards.max).map((a: any) => ({
+        awards: (awardsRes || []).filter((a: any) => a.title && a.title.trim()).map((a: any) => ({
           title: a.title,
           description: a.description || ""
         })),

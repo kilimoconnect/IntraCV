@@ -579,24 +579,13 @@ export default function CvStudio({ userId, cvData }: Props) {
       const rawDeclaration = asObject(cvData.declaration);
       const generatedDeclaration = asObject(data.declaration);
 
-      // Helper to check if section has meaningful data
-      const hasData = (section: any): boolean => {
-        if (Array.isArray(section)) {
-          return section.length > 0 && section.some(item => {
-            if (typeof item === 'string') {
-              return item.trim().length > 0;
-            }
-            if (typeof item === 'object' && item !== null) {
-              return Object.values(item).some(val => 
-                val && typeof val === 'string' ? val.trim().length > 0 : 
-                val && typeof val === 'number' ? val > 0 : 
-                !!val
-              );
-            }
-            return false;
-          });
-        }
-        return !!section;
+      // Helper: check if original DB data has meaningful content for a section
+      const dbHas = (key: string): boolean => {
+        const val = cvData[key];
+        if (!val) return false;
+        if (Array.isArray(val)) return val.length > 0;
+        if (typeof val === 'object') return Object.values(val as Record<string,unknown>).some(v => !!v);
+        return !!val;
       };
 
       const filled: CategoryCVData = {
@@ -607,88 +596,90 @@ export default function CvStudio({ userId, cvData }: Props) {
         linkedin: asString(data.linkedin),
         website: asString(data.website),
         location: asString(data.location),
-        tagline: asString(data.tagline),
-        profile: asString(data.profile),
-        skills: hasData(data.skills) ? asStringArray(data.skills) : [],
-        languages: hasData(data.languages) ? asObjectArray(data.languages).map((l) => ({
+        tagline: dbHas("summary") ? asString(data.tagline) : "",
+        profile: dbHas("summary") ? asString(data.profile) : "",
+        skills: dbHas("skills") ? asStringArray(data.skills) : [],
+        languages: dbHas("languages") ? asObjectArray(data.languages).map((l) => ({
           name: asString(l.name),
           level: asNumber(l.level, 50),
           label: asString(l.label) || asString(l.proficiency) || "Intermediate",
         })) : [],
-        experience: hasData(data.experience) ? asObjectArray(data.experience).map((e) => ({
+        experience: dbHas("experiences") ? asObjectArray(data.experience).map((e) => ({
           role: asString(e.role),
           company: asString(e.company),
           dates: asString(e.dates),
           location: asString(e.location) || undefined,
           bullets: asStringArray(e.bullets),
         })) : [],
-        education: hasData(data.education) ? asObjectArray(data.education).map((e) => ({
+        education: dbHas("education") ? asObjectArray(data.education).map((e) => ({
           degree: asString(e.degree),
           school: asString(e.school),
           year: asString(e.year),
           details: asString(e.details),
         })) : [],
-        certifications: hasData(data.certifications) ? asObjectArray(data.certifications).map((c) => ({
+        certifications: dbHas("certifications") ? asObjectArray(data.certifications).map((c) => ({
           name: asString(c.name),
           issuer: asString(c.issuer),
           year: asString(c.year),
         })) : [],
-        references: hasData(data.references) ? asObjectArray(data.references).map((r) => ({
+        references: (dbHas("referees") || dbHas("references")) ? asObjectArray(data.references).map((r) => ({
           name: asString(r.name),
           title: asString(r.title),
           company: asString(r.company),
           phone: asString(r.phone),
           email: asString(r.email),
         })) : [],
-        projects: hasData(data.projects) ? asObjectArray(data.projects).map((p) => ({
+        projects: dbHas("projects") ? asObjectArray(data.projects).map((p) => ({
           name: asString(p.name),
           description: asString(p.description),
           tech: asString(p.tech) || undefined,
         })) : [],
-        achievements: hasData(data.achievements) ? asStringArray(data.achievements) : [],
-        memberships: hasData(data.memberships) ? asStringArray(data.memberships) : [],
-        tools: hasData(data.tools) ? asStringArray(data.tools) : [],
-        volunteer: hasData(data.volunteer) ? asStringArray(data.volunteer) : [],
-        boardRoles: hasData(data.boardRoles) ? asObjectArray(data.boardRoles).map((role) => ({
+        achievements: dbHas("keyAchievements") ? asStringArray(data.achievements) : [],
+        memberships: dbHas("memberships") ? asStringArray(data.memberships) : [],
+        tools: dbHas("tools") ? asStringArray(data.tools) : [],
+        volunteer: dbHas("volunteer") ? asStringArray(data.volunteer) : [],
+        boardRoles: dbHas("boardRoles") ? asObjectArray(data.boardRoles).map((role) => ({
           title: asString(role.title),
           organization: asString(role.organization),
           dates: asString(role.dates) || formatDateRange(asString(role.startDate), asString(role.endDate)),
           description: asString(role.description) || undefined,
         })) : [],
-        executiveTraining: hasData(data.executiveTraining) ? asObjectArray(data.executiveTraining).map((t) => ({
+        executiveTraining: dbHas("executiveTraining") ? asObjectArray(data.executiveTraining).map((t) => ({
           name: asString(t.name),
           institution: asString(t.institution),
           year: asString(t.year),
         })) : [],
-        publications: hasData(data.publications) ? asObjectArray(data.publications).map((p) => ({
+        publications: dbHas("publications") ? asObjectArray(data.publications).map((p) => ({
           title: asString(p.title),
           publisher: asString(p.publisher),
           year: asString(p.year),
           type: asString(p.type) || undefined,
         })) : [],
-        history: hasData(data.history) ? asObjectArray(data.history).map((h) => ({
+        history: dbHas("experiences") ? asObjectArray(data.history).map((h) => ({
           role: asString(h.role),
           company: asString(h.company),
           dates: asString(h.dates),
           location: asString(h.location) || undefined,
           bullets: asStringArray(h.bullets),
         })) : [],
-        awards: hasData(data.awards) ? asObjectArray(data.awards).map((a) => ({
+        awards: dbHas("awards") ? asObjectArray(data.awards).map((a) => ({
           title: asString(a.title),
           description: asString(a.description) || undefined,
         })) : [],
-        declaration: asString(generatedDeclaration.declaration)
-          ? {
-              declaration: asString(generatedDeclaration.declaration),
-              place: asString(generatedDeclaration.place) || undefined,
-              date: asString(generatedDeclaration.date) || undefined,
-            }
-          : asString(rawDeclaration.declaration)
-          ? {
-              declaration: asString(rawDeclaration.declaration),
-              place: asString(rawDeclaration.place) || undefined,
-              date: asString(rawDeclaration.date) || undefined,
-            }
+        declaration: dbHas("declaration")
+          ? (asString(generatedDeclaration.declaration)
+            ? {
+                declaration: asString(generatedDeclaration.declaration),
+                place: asString(generatedDeclaration.place) || asString(rawDeclaration.place) || undefined,
+                date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+              }
+            : asString(rawDeclaration.declaration)
+            ? {
+                declaration: asString(rawDeclaration.declaration),
+                place: asString(rawDeclaration.place) || undefined,
+                date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+              }
+            : undefined)
           : undefined,
       };
 

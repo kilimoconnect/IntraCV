@@ -301,6 +301,18 @@ function validateAllSections(data: any): any {
     data.publications = [];
   }
 
+  // Validate awards array
+  if (Array.isArray(data.awards)) {
+    data.awards = data.awards
+      .filter((a: any) => a && typeof a === "object" && (a.title || "").trim())
+      .map((a: any) => ({
+        title: (a.title || "").trim(),
+        description: (a.description || "").trim(),
+      }));
+  } else {
+    data.awards = [];
+  }
+
   // Ensure declaration object structure
   if (data.declaration && typeof data.declaration === "object") {
     data.declaration = {
@@ -431,6 +443,9 @@ Return ONLY valid JSON with this exact structure (use empty strings/arrays for m
   "areasOfExpertise": [
     { "name": "", "description": "" }
   ],
+  "awards": [
+    { "title": "", "description": "" }
+  ],
   "tools": [""],
   "volunteer": [""],
   "interests": [""],
@@ -466,8 +481,10 @@ EDUCATION:
 - "description" should include honors, GPA, thesis title, or relevant coursework if mentioned.
 
 SKILLS:
-- Extract EVERY skill mentioned anywhere in the CV (in skills sections, experience bullets, summary, etc.).
-- Categorize each: "Technical", "Soft Skills", "Tools", "Leadership", "Core", "Industry", "Languages", or "Other".
+- Extract skills/competencies from dedicated skills sections, core competencies, or areas of expertise.
+- Do NOT include software tools or platforms here — those go in the "tools" array.
+- Categorize each: "Technical", "Soft Skills", "Leadership", "Core", "Industry", or "Other".
+- Focus on professional competencies like "Financial Management", "Strategic Planning", "Risk Assessment", etc.
 
 CERTIFICATIONS:
 - Extract name, issuing body, and year for each certification, license, or professional credential.
@@ -479,15 +496,15 @@ MEMBERSHIPS:
 - Extract professional bodies, associations, societies, or affiliations as simple strings.
 
 KEY ACHIEVEMENTS:
-- Hunt throughout the ENTIRE CV for achievements - not just in dedicated sections.
-- Look in: experience bullet points, summary sections, project descriptions, awards sections, certifications, and any text showing results.
-- Extract: quantified results (% improvements, $ savings, time reductions), leadership impacts, process improvements, quality implementations, team achievements, strategic initiatives.
-- Include Key Result Areas, performance metrics, successful projects, and any statement showing impact or value.
-- Convert bullet points and fragmented text into complete achievement descriptions.
-- If achievements are embedded in experience bullets, extract them as separate achievements.
+- Extract achievements ONLY from dedicated "Key Achievements", "Achievements", "Key Accomplishments", or "Key Result Areas" sections.
+- Do NOT fabricate achievements from experience bullet points — those belong in experiences.
+- Extract: quantified results (% improvements, $ savings, time reductions), leadership impacts, process improvements.
+- If no dedicated achievements section exists, return an empty array.
 
 PROJECTS:
-- Extract project name, description, and technologies used. Look for "Projects", "Notable Projects", "Key Projects" sections.
+- Extract projects ONLY from dedicated "Projects", "Notable Projects", "Key Projects" sections.
+- Do NOT fabricate projects from experience descriptions.
+- If no projects section exists, return an empty array.
 
 BOARD ROLES:
 - Extract board positions, committee roles, or governance roles with organization, dates, and description.
@@ -504,8 +521,16 @@ REFEREES:
 AREAS OF EXPERTISE:
 - Extract any "Core Competencies", "Areas of Expertise", "Key Areas", "Specializations" sections.
 
+AWARDS:
+- Extract any awards, recognitions, honors, or prizes from dedicated "Awards", "Awards & Recognition", or "Honors" sections.
+- Each award needs a title and optional description.
+- Do NOT fabricate awards — only extract what is explicitly listed in the CV.
+- If no awards section exists, return an empty array.
+
 TOOLS:
-- Extract software, platforms, systems, and tools mentioned (e.g., "SAP", "Salesforce", "JIRA", "Excel").
+- Extract software, platforms, systems, and tools from dedicated "Tools", "Software", "Technical Tools" sections.
+- Examples: "SAP", "Salesforce", "JIRA", "Microsoft Excel", "QuickBooks".
+- Do NOT duplicate items that are already in the skills array.
 
 VOLUNTEER:
 - Extract community service, volunteer work, or pro-bono activities as descriptive strings.

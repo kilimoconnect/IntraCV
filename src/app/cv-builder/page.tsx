@@ -788,11 +788,6 @@ function CVBuilderPage() {
           id: uid(), name: r.name || "", title: r.title || "", company: r.company || "",
           phone: r.phone || "", email: r.email || "",
         })));
-      } else {
-        // Generate references if none found
-        console.log('No references found, generating from experience...');
-        await generateReferencesFromExperience();
-        console.log('References generation completed');
       }
       if (d.areasOfExpertise?.length) {
         setAreasOfExpertise(d.areasOfExpertise.map((a: any) => ({
@@ -823,11 +818,6 @@ function CVBuilderPage() {
         }
         
         setKeyAchievements(achievements);
-      } else {
-        // Generate achievements from experience if none found
-        console.log('No achievements found, generating from experience...');
-        await generateAchievementsFromExperience();
-        console.log('Achievements generation completed');
       }
       if (d.memberships?.length) {
         setMemberships(d.memberships.filter((m: any) => m && m.trim()).map((m: any) => ({
@@ -861,6 +851,13 @@ function CVBuilderPage() {
           place: d.declaration.place || "",
           date: d.declaration.date || "",
         });
+      }
+      if (d.awards?.length) {
+        setAwards(d.awards
+          .filter((a: any) => a && typeof a === "object" && (a.title || "").trim())
+          .map((a: any) => ({
+            id: uid(), title: (a.title || "").trim(), description: (a.description || "").trim(),
+          })));
       }
       if (d.tools?.length) {
         setTools(d.tools.map((t: any) => typeof t === "string" ? t : t.name || "").filter(Boolean));
