@@ -3,11 +3,12 @@
 // ═══════════════════════════════════════════════════════════
 // CV CANVAS PREVIEW — Scale-to-Fit A4 Preview Wrapper
 // ═══════════════════════════════════════════════════════════
-// Detects .cv-page-sheet elements, scales them to fit the
-// available viewport width, and adds visual gaps between pages.
+// Uses CSS zoom to scale A4 pages to fit the container width.
+// Zoom changes layout dimensions (unlike transform: scale)
+// so the element naturally fits without overflow tricks.
 // ═══════════════════════════════════════════════════════════
 
-import { useRef, useEffect, useState, useCallback, useLayoutEffect, type ReactNode } from "react";
+import { useRef, useEffect, useState, useCallback, type ReactNode } from "react";
 
 // A4 at 96 DPI
 const A4_W = 794;
@@ -20,46 +21,34 @@ interface CanvasPreviewProps {
 
 const PAGE_GAP = 24;
 
-// Safe initial scale for mobile (will be recalculated immediately)
-const INITIAL_SCALE = 0.45;
-
 export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewProps) {
   const outerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(INITIAL_SCALE);
+  const [zoomLevel, setZoomLevel] = useState(0);
   const [pageCount, setPageCount] = useState(1);
 
   // ─── Fit the A4 paper to the available width ───
-  const recalcScale = useCallback(() => {
+  const recalcZoom = useCallback(() => {
     if (!outerRef.current) return;
     const availableWidth = outerRef.current.clientWidth;
     if (availableWidth <= 0) return;
-    const padding = availableWidth < 640 ? 8 : 32; // less padding on mobile
-    const targetWidth = availableWidth - padding;
-    setScale(Math.min(1, targetWidth / A4_W));
+    setZoomLevel(Math.min(1, availableWidth / A4_W));
   }, []);
 
-  // Calculate scale before first paint to avoid flash of oversized content
-  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-  useIsomorphicLayoutEffect(() => {
-    recalcScale();
-  }, [recalcScale]);
-
-  // Recalculate on resize
+  // Recalculate on mount + resize
   useEffect(() => {
-    recalcScale();
+    recalcZoom();
     const el = outerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => recalcScale());
+    const observer = new ResizeObserver(() => recalcZoom());
     observer.observe(el);
     return () => observer.disconnect();
-  }, [recalcScale]);
+  }, [recalcZoom]);
 
   // Recalculate when children (layout/theme) change
   useEffect(() => {
-    // Small delay to let the new layout render, then recalc
-    const t = setTimeout(recalcScale, 50);
+    const t = setTimeout(recalcZoom, 50);
     return () => clearTimeout(t);
-  }, [children, recalcScale]);
+  }, [children, recalcZoom]);
 
   // ─── Count pages after render ───
   useEffect(() => {
@@ -70,10 +59,7 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
       if (sheets && sheets.length > 0) setPageCount(sheets.length);
     };
 
-    // Initial count after a short delay for first render
     const timer = setTimeout(countPages, 150);
-
-    // Watch for DOM changes (new pages added/removed)
     const observer = new MutationObserver(countPages);
     observer.observe(previewRef.current, { childList: true, subtree: true });
 
@@ -83,52 +69,32 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
     };
   }, [children, previewRef]);
 
-  const totalVisualHeight = pageCount * A4_H + (pageCount - 1) * PAGE_GAP;
-  const scaledHeight = totalVisualHeight * scale + 48;
-  const scaledWidth = A4_W * scale;
-
   return (
-    <div
-      ref={outerRef}
-      className="relative w-full overflow-hidden"
-      style={{ minHeight: `${scaledHeight}px` }}
-    >
-      {/* Wrapper: actual width = scaled A4, centered via mx-auto */}
+    <div ref={outerRef} className="relative w-full">
+      {/* Zoomed A4 content — zoom changes actual layout size */}
       <div
-        className="mx-auto"
-        style={{ width: `${scaledWidth}px` }}
+        ref={previewRef}
+        style={{
+          width: `${A4_W}px`,
+          zoom: zoomLevel || undefined,
+          pointerEvents: "none",
+        }}
       >
-        {/* Inner: full A4 width, scaled from top-left to stay within wrapper */}
-        <div
-          style={{
-            width: `${A4_W}px`,
-            height: `${totalVisualHeight}px`,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-          }}
-        >
-          <div
-            ref={previewRef}
-            style={{ width: `${A4_W}px`, pointerEvents: "none" }}
-          >
-            {/* Gap CSS between sheets */}
-            <style>{`
-              .cv-page-sheet {
-                box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
-                border-radius: 2px;
-                overflow: hidden;
-              }
-              .cv-page-sheet + .cv-page-sheet {
-                margin-top: ${PAGE_GAP}px;
-              }
-            `}</style>
-            {children}
-          </div>
-        </div>
+        <style>{`
+          .cv-page-sheet {
+            box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+          }
+          .cv-page-sheet + .cv-page-sheet {
+            margin-top: ${PAGE_GAP}px;
+          }
+        `}</style>
+        {children}
       </div>
 
       {/* Page count badge */}
-      <div className="text-center mt-2">
+      <div className="text-center mt-3">
         <span className="text-[10px] text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
           {pageCount} page{pageCount > 1 ? "s" : ""}
         </span>
