@@ -696,6 +696,14 @@ function CVBuilderPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size — Vercel serverless limit is 4.5MB
+    const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File too large. Please upload a CV smaller than 4MB.");
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
     setExtracting(false);
     setExtractionProgress(10);
@@ -705,6 +713,7 @@ function CVBuilderPage() {
       const formData = new FormData();
       formData.append("file", file);
       const parseRes = await fetch("/api/ai/parse-pdf", { method: "POST", body: formData });
+      if (parseRes.status === 413) throw new Error("File too large. Please upload a CV smaller than 4MB.");
       const parseData = await parseRes.json();
       if (!parseRes.ok) throw new Error(parseData.error || "PDF parsing failed");
 
