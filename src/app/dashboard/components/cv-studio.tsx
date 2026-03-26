@@ -582,10 +582,19 @@ export default function CvStudio({ userId, cvData }: Props) {
       // Helper to check if section has meaningful data
       const hasData = (section: any): boolean => {
         if (Array.isArray(section)) {
-          return section.length > 0 && section.some(item => 
-            typeof item === 'string' ? item.trim().length > 0 : 
-            Object.values(item).some(val => val && typeof val === 'string' ? val.trim().length > 0 : val)
-          );
+          return section.length > 0 && section.some(item => {
+            if (typeof item === 'string') {
+              return item.trim().length > 0;
+            }
+            if (typeof item === 'object' && item !== null) {
+              return Object.values(item).some(val => 
+                val && typeof val === 'string' ? val.trim().length > 0 : 
+                val && typeof val === 'number' ? val > 0 : 
+                !!val
+              );
+            }
+            return false;
+          });
         }
         return !!section;
       };

@@ -839,14 +839,14 @@ export async function POST(req: NextRequest) {
         location: pi.location,
         profile,
         tagline,
-        skills: (skillsRes.skills || []).slice(0, S.skills.count),
+        skills: (skillsRes.skills || []).filter((s: any) => s && s.trim()).slice(0, S.skills.count),
         experience,
         history,
         projects,
         education,
-        certifications: certsRes,
-        awards: (awardsRes || []).slice(0, S.awards.max).map((a: any) => ({
-          title: a.title || "",
+        certifications: certsRes.filter((c: any) => c && c.name && c.name.trim()),
+        awards: (awardsRes || []).filter((a: any) => a.title && a.title.trim()).slice(0, S.awards.max).map((a: any) => ({
+          title: a.title,
           description: a.description || ""
         })),
         languages: await (async () => {
@@ -876,14 +876,14 @@ export async function POST(req: NextRequest) {
             email: r.email || ""
           }));
         })(),
-        tools,
-        achievements,
+        tools: (tools || []).filter((t: any) => t && t.trim()),
+        achievements: (achievements || []).filter((a: any) => a && a.trim()),
         boardRoles,
         executiveTraining,
         publications,
         declaration,
-        memberships,
-        volunteer,
+        memberships: (memberships || []).filter((m: any) => m && m.trim()),
+        volunteer: (volunteer || []).filter((v: any) => v && v.trim()),
       };
 
       const validatedData = await validateAndFix(finalizedData);
