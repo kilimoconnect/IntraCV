@@ -310,33 +310,31 @@ async function blockEducation(edus: any[]): Promise<any[]> {
 }
 
 async function blockAwards(cvData: any): Promise<any[]> {
-  const existingAwards = [
-    ...normalizeStringArray(cvData.keyAchievements),
-    ...(Array.isArray(cvData.awards) ? cvData.awards.map((a: any) => a.description || a.title || a.name || (typeof a === 'string' ? a : '')) : []),
-  ].filter(Boolean);
+  // Awards are FORMAL recognitions: certificates, honors, titles received from organizations
+  const existingAwards = Array.isArray(cvData.awards) ? cvData.awards.map((a: any) => a.description || a.title || a.name || (typeof a === 'string' ? a : '')) : [];
   
   const { max, maxTitleChars, maxDescChars } = S.awards;
 
   // If no source awards, generate from experience context
   if (existingAwards.length === 0) {
     if ((cvData.experiences || []).length === 0 && !cvData.summary) return [];
-    const r = await ai(`Based on this professional profile, generate ${max} impressive awards or recognitions.
+    const r = await ai(`Based on this professional profile, generate ${max} FORMAL awards or recognitions.
       SUMMARY: ${(cvData.summary || "").slice(0, 200)}
       EXPERIENCE: ${JSON.stringify((cvData.experiences || []).slice(0, 3))}
       SKILLS: ${(cvData.skills || []).slice(0, 8).map((s: any) => s.name || s).join(", ")}
       Rules:
-      - Each award title: max ${maxTitleChars} chars
-      - Each description: 40-${maxDescChars} chars
-      - Focus on industry-relevant recognitions, performance awards, or leadership honors
+      - Focus on EXTERNAL recognitions: Employee of the Year, Best Project Award, Industry Certifications, Leadership Honors
+      - Each award title: max ${maxTitleChars} chars (e.g., "Employee of the Year 2022")
+      - Each description: 40-${maxDescChars} chars (e.g., "Recognized for outstanding performance among 500+ employees")
       - Make them realistic and specific to the person's field
       Return JSON: {"awards":[{"title":"","description":""}]}`);
     return (r.awards || []).slice(0, max).map((a: any) => ({ title: a.title || "", description: a.description || "" }));
   }
   
-  const r = await ai(`Rewrite and enhance these awards into polished CV format: ${JSON.stringify(existingAwards)}.
+  const r = await ai(`Rewrite these FORMAL awards into polished CV format: ${JSON.stringify(existingAwards)}.
     Select the ${max} most impactful.
     Each award title: max ${maxTitleChars} chars. Each description: 40-${maxDescChars} chars.
-    Make them sound professional and impressive.
+    Focus on external recognitions, certificates, and honors received.
     Return JSON: {"awards":[{"title":"","description":""}]}`);
 
   return (r.awards || []).slice(0, max).map((a: any) => ({
@@ -437,10 +435,8 @@ async function blockAchievements(cvData: any): Promise<string[]> {
       .filter((s: string) => s.length > 10); // Filter out very short fragments
   }
   
-  const sourceHighlights = [
-    ...rawAchievements,
-    ...normalizeStringArray(cvData.awards),
-  ];
+  // NOTE: Do NOT include cvData.awards here - that's for formal recognitions
+  const sourceHighlights = rawAchievements;
 
   const { count, minChars, maxChars } = S.achievements;
   
@@ -466,10 +462,11 @@ async function blockAchievements(cvData: any): Promise<string[]> {
   
   // If still no achievements, generate from experience/summary
   if (achievements.length === 0) {
-    const r = await ai(`Write up to ${count} career highlight statements for a fixed CV layout.
-      Each highlight must be one sentence and between ${minChars} and ${maxChars} characters.
-      Include ANY significant career contributions: key responsibilities, major accomplishments, process improvements, quality implementations, team leadership, operational excellence, or strategic initiatives.
-      Accept both measurable achievements AND important responsibilities that demonstrate value.
+    const r = await ai(`Write up to ${count} QUANTIFIED achievement statements for a CV.
+      Each achievement must be one sentence and between ${minChars} and ${maxChars} characters.
+      Focus on MEASURABLE impact: numbers, percentages, results, and outcomes.
+      Examples: "Increased team productivity by 35% through process automation.", "Managed $2M project budget delivering 2 weeks ahead of schedule."
+      Avoid general responsibilities - focus on concrete results and accomplishments.
       Do not use bullets, numbering, or quotation marks.
       SUMMARY: ${cvData.summary || ""}
       EXPERIENCE: ${JSON.stringify((cvData.experiences || []).slice(0, 4))}

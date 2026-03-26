@@ -113,6 +113,11 @@ interface KeyAchievement {
   id: string;
   achievement: string;
 }
+interface Award {
+  id: string;
+  title: string;
+  description: string;
+}
 interface Membership {
   id: string;
   name: string;
@@ -269,6 +274,7 @@ function categorizeProfile(
       ],
       recommended: [
         { key: "certifications", label: "Certifications" },
+        { key: "awards", label: "Awards & Recognition" },
         { key: "memberships", label: "Professional Memberships" },
         { key: "tools", label: "Tools & Software" },
         { key: "languages", label: "Languages" },
@@ -289,6 +295,7 @@ function categorizeProfile(
       recommended: [
         { key: "execTraining", label: "Executive Training" },
         { key: "publications", label: "Publications & Speaking" },
+        { key: "awards", label: "Awards & Recognition" },
         { key: "certifications", label: "Certifications" },
         { key: "memberships", label: "Professional Affiliations" },
         { key: "languages", label: "Languages" },
@@ -364,6 +371,7 @@ function CVBuilderPage() {
     { key: "expertise", label: "Areas of Expertise", icon: Target },
     { key: "certifications", label: "Certifications", icon: Award },
     { key: "achievements", label: "Key Achievements", icon: Trophy },
+    { key: "awards", label: "Awards", icon: Award },
     { key: "memberships", label: "Memberships", icon: Building2 },
     { key: "projects", label: "Projects", icon: FolderKanban },
     { key: "boardRoles", label: "Board Roles", icon: Shield },
@@ -395,6 +403,7 @@ function CVBuilderPage() {
   const [referees, setReferees] = useState<Referee[]>([]);
   const [areasOfExpertise, setAreasOfExpertise] = useState<AreaOfExpertise[]>([]);
   const [keyAchievements, setKeyAchievements] = useState<KeyAchievement[]>([]);
+  const [awards, setAwards] = useState<Award[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [boardRoles, setBoardRoles] = useState<BoardRole[]>([]);
@@ -419,7 +428,7 @@ function CVBuilderPage() {
     setLoadingProfile(true);
     try {
       const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, exprtRes, declRes,
-             achRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
+             achRes, awardsRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
         await Promise.all([
           supabase.from("cv_personal_info").select("*").eq("user_id", user.id).maybeSingle(),
           supabase.from("cv_summary").select("*").eq("user_id", user.id).maybeSingle(),
@@ -432,6 +441,7 @@ function CVBuilderPage() {
           supabase.from("cv_areas_of_expertise").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_declarations").select("*").eq("user_id", user.id).maybeSingle(),
           supabase.from("cv_key_achievements").select("*").eq("user_id", user.id).order("sort_order"),
+          supabase.from("cv_awards").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_memberships").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_projects").select("*").eq("user_id", user.id).order("sort_order"),
           supabase.from("cv_board_roles").select("*").eq("user_id", user.id).order("sort_order"),
@@ -536,6 +546,10 @@ function CVBuilderPage() {
       if (achRes.data && achRes.data.length > 0) {
         found = true;
         setKeyAchievements(achRes.data.map((a: any) => ({ id: a.id, achievement: a.achievement || "" })));
+      }
+      if (awardsRes.data && awardsRes.data.length > 0) {
+        found = true;
+        setAwards(awardsRes.data.map((a: any) => ({ id: a.id, title: a.title || "", description: a.description || "" })));
       }
       if (memRes.data && memRes.data.length > 0) {
         found = true;
@@ -1068,7 +1082,18 @@ function CVBuilderPage() {
         if (achErr) throw achErr;
       }
 
-      // 12. Memberships
+      // 12. Awards
+      await supabase.from("cv_awards").delete().eq("user_id", user.id);
+      if (awards.filter((a) => a.title).length > 0) {
+        const { error: awardErr } = await supabase.from("cv_awards").insert(
+          awards.filter((a) => a.title).map((a, i) => ({
+            user_id: user.id, title: a.title, description: a.description, sort_order: i,
+          }))
+        );
+        if (awardErr) throw awardErr;
+      }
+
+      // 13. Memberships
       await supabase.from("cv_memberships").delete().eq("user_id", user.id);
       if (memberships.filter((m) => m.name).length > 0) {
         const { error: memErr } = await supabase.from("cv_memberships").insert(
@@ -1171,6 +1196,7 @@ function CVBuilderPage() {
         supabase.from("cv_areas_of_expertise").delete().eq("user_id", user.id),
         supabase.from("cv_declarations").delete().eq("user_id", user.id),
         supabase.from("cv_key_achievements").delete().eq("user_id", user.id),
+        supabase.from("cv_awards").delete().eq("user_id", user.id),
         supabase.from("cv_memberships").delete().eq("user_id", user.id),
         supabase.from("cv_projects").delete().eq("user_id", user.id),
         supabase.from("cv_board_roles").delete().eq("user_id", user.id),
@@ -1194,6 +1220,7 @@ function CVBuilderPage() {
       setReferees([]);
       setAreasOfExpertise([]);
       setKeyAchievements([]);
+      setAwards([]);
       setMemberships([]);
       setProjects([]);
       setBoardRoles([]);
@@ -1236,6 +1263,7 @@ function CVBuilderPage() {
     skills: skills.length,
     certifications: certifications.length,
     achievements: keyAchievements.length,
+    awards: awards.length,
     memberships: memberships.length,
     projects: projects.length,
     boardRoles: boardRoles.length,
@@ -1259,6 +1287,7 @@ function CVBuilderPage() {
       case "skills": return skills.length > 0;
       case "certifications": return certifications.length > 0;
       case "achievements": return keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0);
+      case "awards": return awards.some(a => a.title && a.title.trim().length > 0);
       case "memberships": return memberships.length > 0;
       case "projects": return projects.length > 0;
       case "boardRoles": return boardRoles.length > 0;
@@ -1305,6 +1334,7 @@ function CVBuilderPage() {
     execTraining: [{ field: "name", label: "Program Name" }],
     publications: [{ field: "title", label: "Title" }],
     achievements: [{ field: "achievement", label: "Achievement" }],
+    awards: [{ field: "title", label: "Award Title" }],
     memberships: [{ field: "name", label: "Name" }],
     expertise: [{ field: "name", label: "Area Name" }],
   };
@@ -2199,6 +2229,33 @@ function CVBuilderPage() {
                           </Button>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* ── Awards ── */}
+                  {currentKey === "awards" && (
+                    <div className="space-y-3">
+                      {awards.length === 0 && (
+                        <p className="text-muted-foreground text-sm text-center py-8">No awards added yet</p>
+                      )}
+                      {awards.map((award) => (
+                        <div key={award.id} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <Trophy className="h-4 w-4 text-amber-600" />
+                              <span className="text-sm font-medium">Award</span>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => setAwards(awards.filter((a) => a.id !== award.id))}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                          <Input placeholder="Award title *" value={award.title} onChange={(e) => setAwards(awards.map((a) => a.id === award.id ? { ...a, title: e.target.value } : a))} />
+                          <Textarea placeholder="Award description (optional)" value={award.description} onChange={(e) => setAwards(awards.map((a) => a.id === award.id ? { ...a, description: e.target.value } : a))} rows={2} />
+                        </div>
+                      ))}
+                      <Button variant="outline" className="w-full" onClick={() => setAwards([...awards, { id: uid(), title: "", description: "" }])}>
+                        <Plus className="mr-2 h-4 w-4" /> Add Award
+                      </Button>
                     </div>
                   )}
 
