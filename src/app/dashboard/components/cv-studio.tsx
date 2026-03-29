@@ -976,7 +976,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
       const cat = selectedCategory ? `_${selectedCategory}` : "";
       const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
-      await printCvAsPdf(element, filename);
+      printCvAsPdf(element, filename);
     } catch (err) {
       console.error("PDF export failed", err);
     } finally {

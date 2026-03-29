@@ -106,7 +106,7 @@ export default function Documents({ userId }: DocumentsProps) {
 
       const fullName = cv.data.personalInfo?.fullName || "CV";
       const filename = `${fullName.replace(/\s+/g, "_")}_CV`;
-      await printCvAsPdf(container, filename);
+      printCvAsPdf(container, filename);
     } catch (err: any) {
       console.error(err);
       toast.error("PDF export failed");
