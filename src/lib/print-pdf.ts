@@ -29,8 +29,10 @@ export function printCvAsPdf(element: HTMLElement, filename: string): void {
   styleEl.textContent = `
     @media print {
       @page { size: 210mm 297mm; margin: 0; }
+      /* Force 794px base width so mobile viewports don't compress the A4 content */
+      html { width: 794px !important; min-width: 794px !important; }
       body > *:not(.${PRINT_CLASS}) { display: none !important; }
-      body { margin: 0 !important; padding: 0 !important; background: white !important; }
+      body { width: 794px !important; min-width: 794px !important; margin: 0 !important; padding: 0 !important; background: white !important; }
       /* Force browser to print background colors and images */
       * {
         -webkit-print-color-adjust: exact !important;
