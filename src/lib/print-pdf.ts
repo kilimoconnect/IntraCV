@@ -16,6 +16,14 @@ export function printCvAsPdf(element: HTMLElement, filename: string): void {
   const clone = element.cloneNode(true) as HTMLElement;
   clone.classList.add(PRINT_CLASS);
 
+  // Reset any transform/scale from the preview
+  clone.style.transform = "none";
+  clone.style.transformOrigin = "unset";
+  clone.style.position = "relative";
+  clone.style.width = "100%";
+  clone.style.maxWidth = "100%";
+  clone.style.margin = "0 auto";
+
   // Create a clean print wrapper
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
@@ -27,6 +35,10 @@ export function printCvAsPdf(element: HTMLElement, filename: string): void {
     background: white;
     z-index: 999999;
     overflow: visible;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 0;
   `;
   wrapper.appendChild(clone);
   document.body.appendChild(wrapper);
