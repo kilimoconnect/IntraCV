@@ -97,51 +97,34 @@ export default function Documents({ userId }: DocumentsProps) {
     setDownloadingId(doc.id);
 
     // Wait for the preview to render
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 600));
 
     try {
-      const { toPng } = await import("html-to-image");
-      const jsPDF = (await import("jspdf")).default;
-
       const container = document.getElementById(`cv-preview-${doc.id}`);
       if (!container) { toast.error("Preview not ready"); return; }
 
-      const pages = container.querySelectorAll(".cv-template > div") as NodeListOf<HTMLElement>;
-      const targetEls = pages.length > 0
-        ? Array.from(pages)
-        : [container.querySelector(".cv-template") as HTMLElement].filter(Boolean);
+      const pageCount = container.querySelectorAll(".cv-page-sheet").length || 1;
+      const fullName = cv.data.personalInfo?.fullName || "CV";
 
-      if (targetEls.length === 0) { toast.error("No CV content found"); return; }
+      const res = await fetch("/api/pdf/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: container.innerHTML,
+          pageCount,
+          fullName,
+        }),
+      });
 
-      // A4 dimensions in mm
-      const A4_W = 210;
-      const A4_H = 297;
-      // Template design dimensions in px
-      const TPL_W = 794;
-      const TPL_H = 1123;
+      if (!res.ok) throw new Error("PDF generation failed");
 
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      for (let i = 0; i < targetEls.length; i++) {
-        if (i > 0) pdf.addPage("a4", "portrait");
-        const element = targetEls[i];
-
-        const dataUrl = await toPng(element, {
-          width: TPL_W,
-          height: TPL_H,
-          pixelRatio: 3,
-          backgroundColor: "#ffffff",
-          cacheBust: true,
-          skipAutoScale: true,
-          filter: (node: HTMLElement) => {
-            if (node.tagName === "SCRIPT") return false;
-            return true;
-          },
-        });
-        pdf.addImage(dataUrl, "PNG", 0, 0, A4_W, A4_H, undefined, "FAST");
-      }
-
-      const name = cv.data.personalInfo?.fullName || "CV";
-      pdf.save(`${name.replace(/\s+/g, "_")}_CV.pdf`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${fullName.replace(/\s+/g, "_")}_CV.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
       toast.success("PDF downloaded!");
     } catch (err: any) {
       console.error(err);

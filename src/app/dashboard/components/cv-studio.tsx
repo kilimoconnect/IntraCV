@@ -572,6 +572,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
@@ -967,19 +968,34 @@ export default function CvStudio({ userId, cvData }: Props) {
   }, [cvData]);
 
   const handleDownload = useCallback(async () => {
+    const element = previewRef.current;
+    if (!element || !aiData) return;
+    setDownloadingPdf(true);
     try {
-      const element = previewRef.current;
-      if (!element) return;
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(element, { quality: 1, pixelRatio: 2 });
+      const pageCount = element.querySelectorAll(".cv-page-sheet").length || 1;
+      const res = await fetch("/api/pdf/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: element.innerHTML,
+          pageCount,
+          fullName: aiData.fullName,
+          industryCategory: selectedCategory || "",
+        }),
+      });
+      if (!res.ok) throw new Error("PDF generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = `${aiData?.fullName || "CV"}.png`;
-      link.href = dataUrl;
+      link.href = url;
+      link.download = `${(aiData.fullName || "CV").replace(/\s+/g, "_")}_${selectedCategory || ""}_CV_${new Date().getFullYear()}.pdf`;
       link.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Download failed:", err);
+      console.error("PDF download failed:", err);
     }
-  }, [aiData]);
+    setDownloadingPdf(false);
+  }, [aiData, selectedCategory]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -1208,10 +1224,11 @@ export default function CvStudio({ userId, cvData }: Props) {
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700"
+              disabled={downloadingPdf}
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
             >
-              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              Download
+              {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              {downloadingPdf ? <span className="hidden sm:inline">Generating…</span> : "Download"}
             </button>
           </div>
         </div>
