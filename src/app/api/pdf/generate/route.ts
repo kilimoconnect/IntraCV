@@ -15,10 +15,6 @@ import puppeteer from "puppeteer-core";
 // Allow up to 60s for PDF generation on Vercel
 export const maxDuration = 60;
 
-// Remote Chromium binary for Vercel/Lambda (downloaded at runtime, cached in /tmp)
-const CHROMIUM_REMOTE_URL =
-  "https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar";
-
 async function launchBrowser() {
   const isLocal = process.env.NODE_ENV === "development";
 
@@ -39,12 +35,12 @@ async function launchBrowser() {
     });
   }
 
-  // Vercel/serverless: use @sparticuz/chromium-min (downloads Chromium from GitHub)
-  const chromium = (await import("@sparticuz/chromium-min")).default;
+  // Vercel/serverless: use @sparticuz/chromium (built-in CDN, cached in /tmp)
+  const chromium = (await import("@sparticuz/chromium")).default;
   return puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
+    executablePath: await chromium.executablePath(),
     headless: chromium.headless as boolean,
   });
 }

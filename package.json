@@ -21,7 +21,7 @@
     "openai": "^6.29.0",
     "pagedjs": "^0.4.3",
     "pdf-parse": "^1.1.1",
-    "@sparticuz/chromium-min": "^131.0.0",
+    "@sparticuz/chromium": "^131.0.0",
     "puppeteer-core": "^24.39.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
