@@ -5,19 +5,28 @@
  * Works on all hosting plans — no server required.
  */
 export function printCvAsPdf(element: HTMLElement, filename: string): void {
-  // Resolve all stylesheet <link> tags to absolute URLs so they load in
-  // the new window (which has no implicit base URL).
+  const origin = window.location.origin;
+
+  // 1. Resolve all <link rel="stylesheet"> to absolute URLs.
   const styleLinks = Array.from(
     document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
   )
     .map((el) => {
       const href = el.getAttribute("href") || "";
-      const abs = href.startsWith("http")
-        ? href
-        : `${window.location.origin}${href}`;
+      const abs = href.startsWith("http") ? href : `${origin}${href}`;
       return `<link rel="stylesheet" href="${abs}" />`;
     })
     .join("\n");
+
+  // 2. Copy every <style> from <head> verbatim (Tailwind v4 injects CSS
+  //    custom-property resets here; missing these strips all theme colors).
+  const inlineStyles = Array.from(
+    document.querySelectorAll<HTMLStyleElement>("head style")
+  )
+    .map((el) => el.outerHTML)
+    .join("\n");
+
+  const linkCount = document.querySelectorAll('link[rel="stylesheet"]').length;
 
   const win = window.open("", "_blank");
   if (!win) {
@@ -31,10 +40,10 @@ export function printCvAsPdf(element: HTMLElement, filename: string): void {
   <meta charset="utf-8" />
   <title>${filename}</title>
   ${styleLinks}
+  ${inlineStyles}
   <style>
     @page { size: 210mm 297mm; margin: 0; }
     html, body { margin: 0; padding: 0; background: white; }
-    /* Ensure each CV page prints on its own sheet */
     .cv-page-sheet {
       width: 794px !important;
       height: 1123px !important;
@@ -49,14 +58,30 @@ export function printCvAsPdf(element: HTMLElement, filename: string): void {
   </style>
 </head>
 <body>
-${element.innerHTML}
+${element.outerHTML}
 <script>
-  window.onload = function () {
-    // Small delay lets stylesheets and fonts finish loading
-    setTimeout(function () {
-      window.print();
-    }, 600);
-  };
+  (function () {
+    var total = ${linkCount};
+    var loaded = 0;
+
+    function doPrint() {
+      // Extra 200ms after all sheets load for fonts/images to settle
+      setTimeout(function () { window.print(); }, 200);
+    }
+
+    if (total === 0) {
+      doPrint();
+      return;
+    }
+
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(function (el) {
+      el.addEventListener('load',  function () { loaded++; if (loaded >= total) doPrint(); });
+      el.addEventListener('error', function () { loaded++; if (loaded >= total) doPrint(); });
+    });
+
+    // Safety fallback: print after 3 s regardless
+    setTimeout(doPrint, 3000);
+  })();
 </script>
 </body>
 </html>`);
