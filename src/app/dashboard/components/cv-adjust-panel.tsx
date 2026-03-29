@@ -135,7 +135,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
                     <div key={bi} className="flex items-start gap-1 group">
                       <span className="text-xs text-slate-400 mt-0.5 shrink-0">{"\u2022"}</span>
                       <input className="text-sm text-slate-600 bg-transparent focus:outline-none flex-1 min-w-0" value={b} onChange={e => { const bs = [...(exp.bullets || [])]; bs[bi] = e.target.value; updateExp(i, "bullets", bs); }} />
-                      <button onClick={() => rmExpBullet(i, bi)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
+                      <button onClick={() => rmExpBullet(i, bi)} className="text-red-300 hover:text-red-500 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
                     </div>
                   ))}
                 </div>
@@ -151,7 +151,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
           <div className="flex flex-wrap gap-1">
             {data.skills.map((s, i) => (
               <span key={i} className="flex items-center gap-1.5 text-sm bg-slate-100 border border-slate-200 px-3 py-1 rounded-full group">{s}
-                <button onClick={() => rmItem("skills", i)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><Trash2 className="h-2.5 w-2.5" /></button>
+                <button onClick={() => rmItem("skills", i)} className="text-red-300 hover:text-red-500"><Trash2 className="h-2.5 w-2.5" /></button>
               </span>
             ))}
           </div>
@@ -166,7 +166,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
               <div key={i} className="flex items-start gap-1 group">
                 <span className="text-xs text-indigo-400 mt-0.5 shrink-0">{"\u2605"}</span>
                 <input className="text-sm text-slate-600 bg-transparent focus:outline-none flex-1 min-w-0" value={a} onChange={e => { const achs = [...(data.achievements || [])]; achs[i] = e.target.value; patch({ achievements: achs }); }} />
-                <button onClick={() => rmItem("achievements", i)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
+                <button onClick={() => rmItem("achievements", i)} className="text-red-300 hover:text-red-500 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
               </div>
             ))}
           </div>
@@ -182,7 +182,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
                 <input className="text-sm font-semibold text-slate-700 bg-transparent focus:outline-none w-full" value={edu.degree} onChange={e => { const a = [...data.education]; a[i] = { ...a[i], degree: e.target.value }; patch({ education: a }); }} />
                 <input className="text-sm text-slate-500 bg-transparent focus:outline-none w-full" value={`${edu.school} - ${edu.year}`} onChange={e => { const a = [...data.education]; a[i] = { ...a[i], school: e.target.value }; patch({ education: a }); }} />
               </div>
-              <button onClick={() => rmItem("education", i)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
+              <button onClick={() => rmItem("education", i)} className="text-red-300 hover:text-red-500 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
             </div>
           ))}
         </Acc>
@@ -194,7 +194,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
           {data.certifications.map((c, i) => (
             <div key={i} className="flex items-center gap-1 group">
               <span className="text-sm text-slate-600 flex-1 truncate">{c.name} - {c.issuer}</span>
-              <button onClick={() => rmItem("certifications", i)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
+              <button onClick={() => rmItem("certifications", i)} className="text-red-300 hover:text-red-500 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
             </div>
           ))}
         </Acc>
@@ -206,7 +206,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
           {data.references.map((r, i) => (
             <div key={i} className="flex items-center gap-1 group">
               <span className="text-sm text-slate-600 flex-1 truncate">{r.name} - {r.title}</span>
-              <button onClick={() => rmItem("references", i)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
+              <button onClick={() => rmItem("references", i)} className="text-red-300 hover:text-red-500 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
             </div>
           ))}
         </Acc>
@@ -219,7 +219,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
             <div key={i} className="flex items-center gap-2 group text-sm">
               <span className="text-slate-600 font-medium">{l.name}</span>
               <span className="text-slate-400 flex-1">{l.label}</span>
-              <button onClick={() => rmItem("languages", i)} className="text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
+              <button onClick={() => rmItem("languages", i)} className="text-red-300 hover:text-red-500 p-0.5 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
             </div>
           ))}
         </Acc>
