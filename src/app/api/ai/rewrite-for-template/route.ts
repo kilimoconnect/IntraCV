@@ -496,23 +496,27 @@ async function blockPublications(cvData: any): Promise<any[]> {
   })).filter((item: any) => item.title);
 }
 
-function blockDeclaration(cvData: any): any {
-  if (typeof cvData.declaration === "string") {
-    return { declaration: cvData.declaration.trim() };
-  }
+async function blockDeclaration(cvData: any): Promise<any> {
+  const raw = cvData.declaration;
+  const src = typeof raw === "string" ? { declaration: raw.trim() }
+    : (raw && typeof raw === "object" ? raw : null);
 
-  const declaration = cvData.declaration && typeof cvData.declaration === "object"
-    ? cvData.declaration
-    : {};
-
-  const text = String(declaration.declaration || declaration.text || "").trim();
+  const text = String(src?.declaration || src?.text || "").trim();
   if (!text) return undefined;
 
-  return {
-    declaration: text,
-    place: String(declaration.place || declaration.location || "").trim() || undefined,
-    date: String(declaration.date || "").trim() || undefined,
-  };
+  const place = String(src?.place || src?.location || "").trim() || undefined;
+  const date  = String(src?.date  || "").trim() || undefined;
+
+  // AI-polish grammar and professionalism while preserving meaning and personal tone
+  const r = await ai(
+    `Polish this CV declaration statement for grammar and professional tone. ` +
+    `Preserve the original meaning exactly — do NOT change the facts, place, or date. ` +
+    `Keep it as one paragraph. ` +
+    `Return JSON: {"declaration": ""}\nORIGINAL: ${text}`
+  );
+  const polished = String(r.declaration || text).trim() || text;
+
+  return { declaration: polished, place, date };
 }
 
 async function validateAndFix(data: any): Promise<any> {
@@ -751,7 +755,7 @@ export async function POST(req: NextRequest) {
         isExecutive ? blockBoardRoles(cvData) : Promise.resolve([]),
         isExecutive ? blockExecutiveTraining(cvData) : Promise.resolve([]),
         isExecutive ? blockPublications(cvData) : Promise.resolve([]),
-        Promise.resolve(blockDeclaration(cvData)),
+        blockDeclaration(cvData),
       ]);
 
       const [
@@ -771,16 +775,14 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // ── Volunteer — AI-polished ──
+      // ── Volunteer — AI-polished (all categories) ──
       let volunteer: string[] = [];
-      if (isJunior) {
-        const rawVolunteer = normalizeStringArray(cvData.volunteer);
-        if (rawVolunteer.length > 0) {
-          const vRes = await ai(`Rewrite these volunteer experiences as concise CV entries. Each max 80 chars, focus on impact.
-            SOURCE: ${JSON.stringify(rawVolunteer)}
-            Return JSON: {"volunteer":[""]}`);
-          volunteer = (vRes.volunteer || rawVolunteer).slice(0, rawVolunteer.length);
-        }
+      const rawVolunteer = normalizeStringArray(cvData.volunteer);
+      if (rawVolunteer.length > 0) {
+        const vRes = await ai(`Rewrite these volunteer experiences as concise CV entries. Each max 80 chars, focus on impact.
+          SOURCE: ${JSON.stringify(rawVolunteer)}
+          Return JSON: {"volunteer":[""]}`);
+        volunteer = (vRes.volunteer || rawVolunteer).slice(0, rawVolunteer.length);
       }
 
       const finalizedData = {
