@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +22,7 @@ ${cvSummary ? `The user's CV summary for context:\n${cvSummary}` : ""}
 
 Be concise, actionable, and supportive. Format responses with markdown for readability.`;
 
+    const openai = openaiClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

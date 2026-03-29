@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,6 +38,7 @@ Rules:
 - Suggest power words and metrics
 - Return ONLY valid JSON`;
 
+    const openai = openaiClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],

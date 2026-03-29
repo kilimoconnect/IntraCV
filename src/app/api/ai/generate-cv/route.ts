@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 // ═══════════════════════════════════════════════════════════════
 // LAYOUT CONSTANTS — mirrors config-renderer.tsx
@@ -198,7 +196,7 @@ function buildPlan(cvData: any, templateType: string): Plan {
 // AI CALLER
 // ═══════════════════════════════════════════════════════════════
 async function callAI(prompt: string): Promise<any> {
-  const resp = await openai.chat.completions.create({
+  const resp = await openaiClient().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.35,

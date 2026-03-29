@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
@@ -82,6 +80,7 @@ RULES:
 - "changes" should list every deduplication action taken
 - If NO duplicates found, still return the data with changes: ["No duplicates found"]`;
 
+    const openai = openaiClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

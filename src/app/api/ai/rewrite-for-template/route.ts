@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
-import OpenAI from "openai";
+import { openaiClient } from "@/lib/openai";
 import { SLOT_RULES as BASE_TWO_PAGE_SLOT_RULES } from "@/app/dashboard/components/cv-template";
 import { SLOT_RULES as THREE_PAGE_SLOT_RULES } from "@/app/dashboard/components/cv-template - 3pages1";
 import { CATEGORY_RULES, type CategorySlotRules } from "@/app/dashboard/components/cv-category-rules";
 import type { CareerCategory } from "@/app/dashboard/components/cv-layout-types";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 type TemplateType = "two-page" | "three-page";
 
@@ -47,7 +45,7 @@ CRITICAL RULES:
 - Prefer shorter, punchier sentences over long compound ones to avoid mid-sentence breaks.`;
 
 async function ai(prompt: string): Promise<any> {
-  const res = await openai.chat.completions.create({
+  const res = await openaiClient().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },

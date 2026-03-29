@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { openaiClient } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = openaiClient();
     const { jobRole, company, jobDescription, action, question, answer } = await req.json();
 
     // Generate interview questions

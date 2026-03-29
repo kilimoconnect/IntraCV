@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 const SYSTEM_PROMPT = `You are a precision CV copy-fitter. Your job is to shorten CV text to fit within a character budget while preserving impact and professionalism.
 
@@ -67,6 +65,7 @@ SOURCE: ${JSON.stringify(content)}
 Return JSON: {"result": ${Array.isArray(content) ? '["item1"]' : '"condensed text"'}}`;
     }
 
+    const openai = openaiClient();
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

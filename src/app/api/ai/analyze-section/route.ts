@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 const SECTION_PROMPTS: Record<string, string> = {
   personal: `Analyze this CV personal information section. Check for:
@@ -113,6 +111,7 @@ Rules:
 SECTION DATA:
 ${JSON.stringify(data, null, 2)}`;
 
+    const openai = openaiClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],

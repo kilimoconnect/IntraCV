@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 // Check if API key is configured
 if (!process.env.OPENAI_API_KEY) {
@@ -74,6 +72,7 @@ ACHIEVEMENT REQUIREMENTS:
 
 Return JSON: {"achievements": ["achievement1", "achievement2", "achievement3"]}`;
 
+    const openai = openaiClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

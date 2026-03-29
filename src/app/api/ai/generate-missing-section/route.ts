@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 // ─── Helper: summarize experience for context ───
 function expSummary(cvData: any): string {
@@ -169,6 +167,7 @@ export async function POST(req: NextRequest) {
 
     const prompt = getSectionPrompt(sectionKey, cvData, careerLevel || "mid-senior");
 
+    const openai = openaiClient();
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

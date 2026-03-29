@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { openaiClient } from "@/lib/openai";
 
 export interface ReviewSuggestion {
   section: string;
@@ -102,6 +100,7 @@ Return ONLY valid JSON:
   ]
 }`;
 
+    const openai = openaiClient();
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
