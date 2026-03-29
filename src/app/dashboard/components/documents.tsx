@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { printCvAsPdf } from "@/lib/print-pdf";
 import {
   Loader2, FileText, Trash2, Copy, File, Download, Eye, EyeOff,
 } from "lucide-react";
@@ -103,29 +104,9 @@ export default function Documents({ userId }: DocumentsProps) {
       const container = document.getElementById(`cv-preview-${doc.id}`);
       if (!container) { toast.error("Preview not ready"); return; }
 
-      const pageCount = container.querySelectorAll(".cv-page-sheet").length || 1;
       const fullName = cv.data.personalInfo?.fullName || "CV";
-
-      const res = await fetch("/api/pdf/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          html: container.innerHTML,
-          pageCount,
-          fullName,
-        }),
-      });
-
-      if (!res.ok) throw new Error("PDF generation failed");
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${fullName.replace(/\s+/g, "_")}_CV.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success("PDF downloaded!");
+      const filename = `${fullName.replace(/\s+/g, "_")}_CV`;
+      printCvAsPdf(container, filename);
     } catch (err: any) {
       console.error(err);
       toast.error("PDF export failed");

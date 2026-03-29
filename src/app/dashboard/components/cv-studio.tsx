@@ -10,6 +10,7 @@ import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
 import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
+import { printCvAsPdf } from "@/lib/print-pdf";
 
 interface Props {
   userId: string;
@@ -572,7 +573,6 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
@@ -967,34 +967,13 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [cvData]);
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = useCallback(() => {
     const element = previewRef.current;
     if (!element || !aiData) return;
-    setDownloadingPdf(true);
-    try {
-      const pageCount = element.querySelectorAll(".cv-page-sheet").length || 1;
-      const res = await fetch("/api/pdf/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          html: element.innerHTML,
-          pageCount,
-          fullName: aiData.fullName,
-          industryCategory: selectedCategory || "",
-        }),
-      });
-      if (!res.ok) throw new Error("PDF generation failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${(aiData.fullName || "CV").replace(/\s+/g, "_")}_${selectedCategory || ""}_CV_${new Date().getFullYear()}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("PDF download failed:", err);
-    }
-    setDownloadingPdf(false);
+    const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
+    const cat = selectedCategory ? `_${selectedCategory}` : "";
+    const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+    printCvAsPdf(element, filename);
   }, [aiData, selectedCategory]);
 
   // ── Category Selection ──
@@ -1224,11 +1203,10 @@ export default function CvStudio({ userId, cvData }: Props) {
             </button>
             <button
               onClick={handleDownload}
-              disabled={downloadingPdf}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700"
             >
-              {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-              {downloadingPdf ? <span className="hidden sm:inline">Generating…</span> : "Download"}
+              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              Download
             </button>
           </div>
         </div>
