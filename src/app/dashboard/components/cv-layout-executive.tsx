@@ -155,10 +155,10 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
 
         {/* ── Contact strip ── */}
         <div style={{ position: "absolute", top: HEADER_H, left: 0, width: A4_W, height: 22, backgroundColor: C.primaryDark, display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
-          {d.email && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>✉ {d.email}</span>}
-          {d.phone && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>☎ {d.phone}</span>}
-          {d.location && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>📍 {d.location}</span>}
-          {d.linkedin && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>in {d.linkedin}</span>}
+          {d.email && <span data-cv-field="email" style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>✉ {d.email}</span>}
+          {d.phone && <span data-cv-field="phone" style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>☎ {d.phone}</span>}
+          {d.location && <span data-cv-field="location" style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>📍 {d.location}</span>}
+          {d.linkedin && <span data-cv-field="linkedin" style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>in {d.linkedin}</span>}
           {d.website && <span style={{ fontFamily: FONT, fontSize: "8px", color: "#fff", opacity: 0.9 }}>🌐 {d.website}</span>}
         </div>
 
@@ -394,7 +394,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
-                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
               ))}
@@ -623,16 +623,16 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
             </div>
             <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "16px", fontWeight: 800, color: C.headerText, textAlign: "center", lineHeight: "20px", wordWrap: "break-word" }}>{d.fullName}</div>
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 3, textAlign: "center", wordWrap: "break-word" }}>{d.title}</div>
-            {d.tagline && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.45, marginTop: 4, fontStyle: "italic", textAlign: "center" }}>"{d.tagline}"</div>}
+            {d.tagline && <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.45, marginTop: 4, fontStyle: "italic", textAlign: "center" }}>"{d.tagline}"</div>}
           </div>
           {/* Contact */}
           <div style={{ paddingTop: 12, paddingBottom: 12, borderBottom: `1px solid rgba(255,255,255,0.12)` }}>
             <ExecSideLabel C={C}>Contact</ExecSideLabel>
             <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.8, lineHeight: "14px" }}>
-              {d.email && <div>✉ {d.email}</div>}
-              {d.phone && <div>☎ {d.phone}</div>}
-              {d.location && <div>📍 {d.location}</div>}
-              {d.linkedin && <div>in {d.linkedin}</div>}
+              {d.email && <div data-cv-field="email">✉ {d.email}</div>}
+              {d.phone && <div data-cv-field="phone">☎ {d.phone}</div>}
+              {d.location && <div data-cv-field="location">📍 {d.location}</div>}
+              {d.linkedin && <div data-cv-field="linkedin">in {d.linkedin}</div>}
               {d.website && <div>🌐 {d.website}</div>}
             </div>
           </div>
@@ -804,7 +804,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
-                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
               ))}
@@ -1017,14 +1017,14 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 4, backgroundColor: C.primary }} />
         {/* Header — white bg, large name */}
         <div style={{ position: "absolute", top: 4, left: MX, width: W, paddingTop: 24, paddingBottom: 16, borderBottom: `1px solid ${C.divider}` }}>
-          <div style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.text, letterSpacing: "1px", textTransform: "uppercase", lineHeight: "34px" }}>{d.fullName}</div>
-          <div style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.primary, marginTop: 3, wordWrap: "break-word" }}>{d.title}</div>
-          {d.tagline && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginTop: 5, fontStyle: "italic" }}>"{d.tagline}"</div>}
+          <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.text, letterSpacing: "1px", textTransform: "uppercase", lineHeight: "34px" }}>{d.fullName}</div>
+          <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.primary, marginTop: 3, wordWrap: "break-word" }}>{d.title}</div>
+          {d.tagline && <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginTop: 5, fontStyle: "italic" }}>"{d.tagline}"</div>}
           <div style={{ display: "flex", gap: 18, marginTop: 8, fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>
-            {d.email && <span>✉ {d.email}</span>}
-            {d.phone && <span>☎ {d.phone}</span>}
-            {d.location && <span>📍 {d.location}</span>}
-            {d.linkedin && <span>in {d.linkedin}</span>}
+            {d.email && <span data-cv-field="email">✉ {d.email}</span>}
+            {d.phone && <span data-cv-field="phone">☎ {d.phone}</span>}
+            {d.location && <span data-cv-field="location">📍 {d.location}</span>}
+            {d.linkedin && <span data-cv-field="linkedin">in {d.linkedin}</span>}
             {d.website && <span>🌐 {d.website}</span>}
           </div>
         </div>
@@ -1213,7 +1213,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
               ))}

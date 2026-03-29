@@ -24,7 +24,12 @@ function fieldLabel(field: string): string {
   const num = (n: string) => `#${+n + 1}`;
   if (p[0] === "fullName") return "Full Name";
   if (p[0] === "title") return "Job Title";
+  if (p[0] === "tagline") return "Tagline";
   if (p[0] === "profile") return "Professional Summary";
+  if (p[0] === "email") return "Email";
+  if (p[0] === "phone") return "Phone";
+  if (p[0] === "location") return "Location";
+  if (p[0] === "linkedin") return "LinkedIn";
   if (p[0] === "exp") {
     const n = num(p[1]);
     if (p[2] === "role") return `Experience ${n} – Role`;
@@ -69,7 +74,11 @@ function fieldLabel(field: string): string {
     if (p[2] === "tech") return `Project ${n} – Tech Stack`;
     return `Project ${n}`;
   }
-  if (p[0] === "award") return `Award ${num(p[1])} – Title`;
+  if (p[0] === "award") {
+    const n = num(p[1]);
+    if (p[2] === "description") return `Award ${n} – Description`;
+    return `Award ${n} – Title`;
+  }
   if (p[0] === "ref") {
     const n = num(p[1]);
     if (p[2] === "name") return `Reference ${n} – Name`;
@@ -81,7 +90,8 @@ function fieldLabel(field: string): string {
 
 function isDeletable(field: string): boolean {
   const p = field.split(".");
-  return ["ach", "skill", "proj", "award"].includes(p[0]) ||
+  if (p[0] === "award" && p[2] === "description") return false;
+  return ["ach", "skill", "proj", "award", "cert", "lang", "edu", "ref", "tool", "memb", "vol", "boardRole", "execTrain", "pub"].includes(p[0]) ||
     (p[0] === "exp" && p[2] === "bullet") ||
     (p[0] === "hist" && p[2] === "bullet");
 }

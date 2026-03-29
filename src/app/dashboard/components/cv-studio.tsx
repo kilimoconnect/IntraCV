@@ -568,6 +568,11 @@ export default function CvStudio({ userId, cvData }: Props) {
     if (p[0] === "profile") return aiData.profile || "";
     if (p[0] === "fullName") return aiData.fullName || "";
     if (p[0] === "title") return aiData.title || "";
+    if (p[0] === "tagline") return aiData.tagline || "";
+    if (p[0] === "email") return aiData.email || "";
+    if (p[0] === "phone") return aiData.phone || "";
+    if (p[0] === "location") return aiData.location || "";
+    if (p[0] === "linkedin") return aiData.linkedin || "";
     if (p[0] === "exp") { const e = aiData.experience?.[+p[1]]; if (!e) return ""; if (p[2] === "role") return e.role || ""; if (p[2] === "company") return e.company || ""; if (p[2] === "dates") return e.dates || ""; if (p[2] === "bullet") return e.bullets?.[+p[3]] || ""; }
     if (p[0] === "hist") { const e = aiData.history?.[+p[1]]; if (!e) return ""; if (p[2] === "role") return e.role || ""; if (p[2] === "company") return e.company || ""; if (p[2] === "dates") return e.dates || ""; if (p[2] === "bullet") return e.bullets?.[+p[3]] || ""; }
     if (p[0] === "skill") return aiData.skills?.[+p[1]] || "";
@@ -577,7 +582,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     if (p[0] === "lang") { const e = aiData.languages?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "label") return e.label || ""; }
     if (p[0] === "ref") { const e = aiData.references?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "title") return e.title || ""; }
     if (p[0] === "proj") { const e = aiData.projects?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "description") return e.description || ""; if (p[2] === "tech") return e.tech || ""; }
-    if (p[0] === "award") { const e = aiData.awards?.[+p[1]]; if (!e) return ""; return e.title || ""; }
+    if (p[0] === "award") { const e = aiData.awards?.[+p[1]]; if (!e) return ""; if (p[2] === "description") return e.description || ""; return e.title || ""; }
     if (p[0] === "tool") return aiData.tools?.[+p[1]] || "";
     if (p[0] === "memb") return aiData.memberships?.[+p[1]] || "";
     if (p[0] === "vol") return aiData.volunteer?.[+p[1]] || "";
@@ -595,6 +600,11 @@ export default function CvStudio({ userId, cvData }: Props) {
       if (p[0] === "profile") return { ...prev, profile: value };
       if (p[0] === "fullName") return { ...prev, fullName: value };
       if (p[0] === "title") return { ...prev, title: value };
+      if (p[0] === "tagline") return { ...prev, tagline: value };
+      if (p[0] === "email") return { ...prev, email: value };
+      if (p[0] === "phone") return { ...prev, phone: value };
+      if (p[0] === "location") return { ...prev, location: value };
+      if (p[0] === "linkedin") return { ...prev, linkedin: value };
       if (p[0] === "exp") {
         const exps = [...(prev.experience || [])]; const i = +p[1];
         if (p[2] === "role") exps[i] = { ...exps[i], role: value };
@@ -647,7 +657,8 @@ export default function CvStudio({ userId, cvData }: Props) {
       }
       if (p[0] === "award") {
         const awards = [...(prev.awards || [])]; const i = +p[1];
-        awards[i] = { ...awards[i], title: value };
+        if (p[2] === "description") awards[i] = { ...awards[i], description: value };
+        else awards[i] = { ...awards[i], title: value };
         return { ...prev, awards };
       }
       if (p[0] === "tool") { const t = [...(prev.tools || [])]; t[+p[1]] = value; return { ...prev, tools: t }; }

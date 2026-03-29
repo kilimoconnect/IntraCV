@@ -197,10 +197,10 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
           <div style={{ paddingTop: 14, paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.15)` }}>
             <SideLabel C={C}>Contact</SideLabel>
             <div style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.85, lineHeight: "17px" }}>
-              {d.email && <div>✉  {d.email}</div>}
-              {d.phone && <div>☎  {d.phone}</div>}
-              {d.location && <div>📍  {d.location}</div>}
-              {d.linkedin && <div>in  {d.linkedin}</div>}
+              {d.email && <div data-cv-field="email">✉  {d.email}</div>}
+              {d.phone && <div data-cv-field="phone">☎  {d.phone}</div>}
+              {d.location && <div data-cv-field="location">📍  {d.location}</div>}
+              {d.linkedin && <div data-cv-field="linkedin">in  {d.linkedin}</div>}
             </div>
           </div>
 
@@ -400,7 +400,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
                       <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
-                      {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                      {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                     </div>
                   </div>
                 ))}
@@ -564,10 +564,10 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           </div>
           <div style={{ textAlign: "right", fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.7, lineHeight: "14px" }}>
-            {d.email && <div>✉ {d.email}</div>}
-            {d.phone && <div>☎ {d.phone}</div>}
-            {d.location && <div>📍 {d.location}</div>}
-            {d.linkedin && <div>in {d.linkedin}</div>}
+            {d.email && <div data-cv-field="email">✉ {d.email}</div>}
+            {d.phone && <div data-cv-field="phone">☎ {d.phone}</div>}
+            {d.location && <div data-cv-field="location">📍 {d.location}</div>}
+            {d.linkedin && <div data-cv-field="linkedin">in {d.linkedin}</div>}
           </div>
         </div>
         <div style={{ position: "absolute", top: 80, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
@@ -732,7 +732,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
                       <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
-                      {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                      {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                     </div>
                   </div>
                 ))}
@@ -932,10 +932,10 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "26px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
           <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           <div style={{ display: "flex", gap: 18, marginTop: 6, fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.65 }}>
-            {d.email && <span>✉ {d.email}</span>}
-            {d.phone && <span>☎ {d.phone}</span>}
-            {d.location && <span>📍 {d.location}</span>}
-            {d.linkedin && <span>in {d.linkedin}</span>}
+            {d.email && <span data-cv-field="email">✉ {d.email}</span>}
+            {d.phone && <span data-cv-field="phone">☎ {d.phone}</span>}
+            {d.location && <span data-cv-field="location">📍 {d.location}</span>}
+            {d.linkedin && <span data-cv-field="linkedin">in {d.linkedin}</span>}
           </div>
         </div>
         <div style={{ position: "absolute", top: 90, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
@@ -1094,7 +1094,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
                       <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
-                      {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                      {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                     </div>
                   </div>
                 ))}

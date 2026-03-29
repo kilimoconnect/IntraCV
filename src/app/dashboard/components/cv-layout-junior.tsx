@@ -176,7 +176,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                 <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                 <div>
                   <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                  {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                  {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                 </div>
               </div>
             ))}
@@ -231,10 +231,10 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
 
         {/* ── Contact strip below banner ── */}
         <div style={{ position: "absolute", top: HEADER_H, left: 0, width: A4_W, height: CONTACT_H, backgroundColor: C.primary, display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
-          {d.email && <span style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>✉ {d.email}</span>}
-          {d.phone && <span style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>☎ {d.phone}</span>}
-          {d.location && <span style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>📍 {d.location}</span>}
-          {d.linkedin && <span style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>in {d.linkedin}</span>}
+          {d.email && <span data-cv-field="email" style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>✉ {d.email}</span>}
+          {d.phone && <span data-cv-field="phone" style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>☎ {d.phone}</span>}
+          {d.location && <span data-cv-field="location" style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>📍 {d.location}</span>}
+          {d.linkedin && <span data-cv-field="linkedin" style={{ fontFamily: FONT, fontSize: "8.5px", color: "#fff", opacity: 0.95 }}>in {d.linkedin}</span>}
         </div>
 
         {/* ── Body (height-budgeted) ── */}
@@ -371,7 +371,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
               ))}
@@ -523,7 +523,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
                       <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                      {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                      {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                     </div>
                   </div>
                 ))}
@@ -604,10 +604,10 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
           </div>
           {/* Contact */}
           <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.divider}`, fontFamily: FONT, fontSize: "8.5px", color: C.muted, lineHeight: "14px" }}>
-            {d.email && <div>✉ {d.email}</div>}
-            {d.phone && <div>☎ {d.phone}</div>}
-            {d.location && <div>📍 {d.location}</div>}
-            {d.linkedin && <div>in {d.linkedin}</div>}
+            {d.email && <div data-cv-field="email">✉ {d.email}</div>}
+            {d.phone && <div data-cv-field="phone">☎ {d.phone}</div>}
+            {d.location && <div data-cv-field="location">📍 {d.location}</div>}
+            {d.linkedin && <div data-cv-field="linkedin">in {d.linkedin}</div>}
           </div>
           {/* Education */}
           {d.education?.length > 0 && (
@@ -717,7 +717,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                    {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
               ))}
@@ -785,10 +785,10 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.primary, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           </div>
           <div style={{ textAlign: "right", fontFamily: FONT, fontSize: "8.5px", color: C.muted, lineHeight: "15px" }}>
-            {d.email && <div>{d.email}</div>}
-            {d.phone && <div>{d.phone}</div>}
-            {d.location && <div>{d.location}</div>}
-            {d.linkedin && <div>{d.linkedin}</div>}
+            {d.email && <div data-cv-field="email">{d.email}</div>}
+            {d.phone && <div data-cv-field="phone">{d.phone}</div>}
+            {d.location && <div data-cv-field="location">{d.location}</div>}
+            {d.linkedin && <div data-cv-field="linkedin">{d.linkedin}</div>}
           </div>
         </div>
 
@@ -902,7 +902,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                     <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
                       <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                      {award.description && <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginLeft: 3 }}>— {award.description}</span>}
+                      {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginLeft: 3 }}>— {award.description}</span>}
                     </div>
                   </div>
                 ))}
