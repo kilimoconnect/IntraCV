@@ -1,81 +1,71 @@
 /**
- * Client-side CV PDF download via browser print API.
+ * Client-side CV PDF download via html2canvas + jsPDF.
  *
- * Strategy: clone the CV element directly onto document.body and print
- * the current page — all Tailwind CSS, CSS variables, and fonts are
- * already loaded so no async stylesheet fetching is needed and colors
- * are always preserved. The transform:scale from the canvas preview
- * is stripped from the clone so it prints at full A4 size.
+ * Strategy: clone the CV element off-screen at full A4 size (794×1123 px),
+ * capture each .cv-page-sheet as a high-DPI canvas, then compile them into
+ * a proper .pdf file that downloads automatically — no print dialog, works
+ * on desktop and mobile.
  */
-export function printCvAsPdf(element: HTMLElement, filename: string): void {
-  const PRINT_CLASS = "__cv-print-only__";
-  const originalTitle = document.title;
-  document.title = filename;
 
-  // Clone and reset preview transform
+const A4_W_PX = 794;
+const A4_H_PX = 1123;
+
+export async function printCvAsPdf(element: HTMLElement, filename: string): Promise<void> {
+  const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+    import("jspdf"),
+    import("html2canvas"),
+  ]);
+
+  // Clone and position off-screen so the transform:scale from the preview
+  // wrapper doesn't affect rendering.
   const clone = element.cloneNode(true) as HTMLElement;
-  clone.classList.add(PRINT_CLASS);
-  clone.style.transform = "none";
-  clone.style.transformOrigin = "unset";
-  clone.style.position = "static";
-  clone.style.margin = "0";
-  clone.style.padding = "0";
-  clone.style.width = "794px";
+  clone.style.cssText = [
+    "position:fixed",
+    "left:-9999px",
+    "top:0",
+    `width:${A4_W_PX}px`,
+    "transform:none",
+    "transform-origin:unset",
+    "margin:0",
+    "padding:0",
+    "z-index:-1",
+  ].join(";");
   document.body.appendChild(clone);
 
-  // Inject print-only styles — hide the entire app, show only the clone
-  const styleEl = document.createElement("style");
-  styleEl.setAttribute("data-cv-print", "");
-  styleEl.textContent = `
-    @media print {
-      @page { size: 210mm 297mm; margin: 0; }
-      /* Force 794px base width so mobile viewports don't compress the A4 content */
-      html { width: 794px !important; min-width: 794px !important; }
-      body > *:not(.${PRINT_CLASS}) { display: none !important; }
-      body { width: 794px !important; min-width: 794px !important; margin: 0 !important; padding: 0 !important; background: white !important; }
-      /* Force browser to print background colors and images */
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      .${PRINT_CLASS} {
-        display: block !important;
-        position: static !important;
-        transform: none !important;
-        width: 794px !important;
-        height: auto !important;
-        overflow: visible !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .cv-page-sheet {
-        width: 794px !important;
-        height: 1123px !important;
-        overflow: hidden !important;
-        page-break-after: always !important;
-        break-after: page !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        margin-top: 0 !important;
-      }
-      .cv-page-sheet:last-child {
-        page-break-after: auto !important;
-        break-after: auto !important;
-      }
+  try {
+    // Wait one frame so the browser computes layout for the clone
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+
+    const sheets = Array.from(clone.querySelectorAll<HTMLElement>(".cv-page-sheet"));
+    const pages = sheets.length > 0 ? sheets : [clone];
+
+    const pdf = new jsPDF({
+      unit: "px",
+      format: [A4_W_PX, A4_H_PX],
+      orientation: "portrait",
+      compress: true,
+    });
+
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) pdf.addPage([A4_W_PX, A4_H_PX], "portrait");
+
+      const canvas = await html2canvas(pages[i], {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        width: A4_W_PX,
+        height: A4_H_PX,
+        logging: false,
+        imageTimeout: 0,
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      pdf.addImage(imgData, "JPEG", 0, 0, A4_W_PX, A4_H_PX);
     }
-  `;
-  document.head.appendChild(styleEl);
 
-  // Small delay lets the clone render before the print dialog opens
-  setTimeout(() => {
-    window.print();
-
-    // Clean up after the dialog is dismissed
-    setTimeout(() => {
-      document.body.removeChild(clone);
-      document.head.removeChild(styleEl);
-      document.title = originalTitle;
-    }, 500);
-  }, 150);
+    pdf.save(`${filename}.pdf`);
+  } finally {
+    document.body.removeChild(clone);
+  }
 }

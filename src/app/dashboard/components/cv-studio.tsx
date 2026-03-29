@@ -573,6 +573,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
@@ -967,14 +968,21 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [cvData]);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     const element = previewRef.current;
-    if (!element || !aiData) return;
-    const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
-    const cat = selectedCategory ? `_${selectedCategory}` : "";
-    const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
-    printCvAsPdf(element, filename);
-  }, [aiData, selectedCategory]);
+    if (!element || !aiData || downloadingPdf) return;
+    setDownloadingPdf(true);
+    try {
+      const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
+      const cat = selectedCategory ? `_${selectedCategory}` : "";
+      const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+      await printCvAsPdf(element, filename);
+    } catch (err) {
+      console.error("PDF export failed", err);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }, [aiData, selectedCategory, downloadingPdf]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -1203,10 +1211,11 @@ export default function CvStudio({ userId, cvData }: Props) {
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700"
+              disabled={downloadingPdf}
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
             >
-              <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              Download
+              {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              {downloadingPdf ? "Generating..." : "Download"}
             </button>
           </div>
         </div>
