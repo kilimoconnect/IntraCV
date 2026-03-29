@@ -225,8 +225,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
 
         {/* ── Colored Banner ── */}
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: HEADER_H, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
-          <div style={{ fontFamily: FONT, fontSize: "28px", fontWeight: 800, color: C.headerText, letterSpacing: "-0.5px" }}>{d.fullName}</div>
-          <div style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 500, color: C.headerText, opacity: 0.85, marginTop: 3 }}>{d.title}</div>
+          <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "28px", fontWeight: 800, color: C.headerText, letterSpacing: "-0.5px" }}>{d.fullName}</div>
+          <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 500, color: C.headerText, opacity: 0.85, marginTop: 3 }}>{d.title}</div>
         </div>
 
         {/* ── Contact strip below banner ── */}
@@ -244,7 +244,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
           {show.has("profile") && d.profile && (
             <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
               <Heading C={C}>Professional Summary</Heading>
-              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
 
@@ -255,16 +255,16 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               {d.experience.map((exp, i) => (
                 <div key={i} style={{ marginBottom: i < d.experience.length - 1 ? 10 : 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{exp.role}</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
+                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{exp.role}</span>
+                    <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>
+                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>
                     {exp.company}{exp.location ? ` — ${exp.location}` : ""}
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
                       {exp.bullets.map((b, bi) => (
-                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -280,7 +280,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               {d.achievements.map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>★</span>
-                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
                 </div>
               ))}
             </div>
@@ -292,7 +292,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <Heading C={C}>Skills</Heading>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                 {d.skills.map((skill, i) => (
-                  <span key={i} style={{
+                  <span key={i} data-cv-field={`skill.${i}`} style={{
                     fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary,
                     padding: "3px 11px", borderRadius: 20,
                     backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}`,
@@ -325,8 +325,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                   <Heading C={C}>Languages</Heading>
                   {d.languages.map((lang, i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9.5px", padding: "2px 0" }}>
-                      <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                      <span style={{ color: C.muted }}>{lang.label}</span>
+                      <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                      <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
                     </div>
                   ))}
                 </div>
@@ -337,8 +337,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                   <Heading C={C}>Certifications</Heading>
                   {d.certifications.map((cert, i) => (
                     <div key={i} style={{ marginBottom: 3 }}>
-                      <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                      <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                      <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                      <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                     </div>
                   ))}
                 </div>

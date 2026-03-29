@@ -189,8 +189,8 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
 
           {/* Name block at top of sidebar */}
           <div style={{ paddingTop: 28, paddingBottom: 20, borderBottom: `1px solid rgba(255,255,255,0.15)` }}>
-            <div style={{ fontFamily: FONT, fontSize: "20px", fontWeight: 800, color: C.headerText, lineHeight: "24px" }}>{d.fullName}</div>
-            <div style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 4, wordWrap: "break-word" }}>{d.title}</div>
+            <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "20px", fontWeight: 800, color: C.headerText, lineHeight: "24px" }}>{d.fullName}</div>
+            <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 4, wordWrap: "break-word" }}>{d.title}</div>
           </div>
 
           {/* Contact */}
@@ -211,7 +211,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
               {d.skills.map((skill, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <div style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: C.primary, flexShrink: 0 }} />
-                  <span style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.9 }}>{skill}</span>
+                  <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.9 }}>{skill}</span>
                 </div>
               ))}
             </div>
@@ -287,7 +287,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <MainHeading C={C}>Professional Summary</MainHeading>
-              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
 
@@ -298,16 +298,16 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
               {topExps.map((exp, i) => (
                 <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0, paddingLeft: 12, borderLeft: `2px solid ${C.primary}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
+                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>
+                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>
                     {exp.company}{exp.location ? ` — ${exp.location}` : ""}
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.map((b, bi) => (
-                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -325,7 +325,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                   <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <span style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 700, color: C.primary }}>{i + 1}</span>
                   </div>
-                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, paddingTop: 2 }}>{ach}</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, paddingTop: 2 }}>{ach}</span>
                 </div>
               ))}
             </div>
@@ -560,8 +560,8 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         {/* Dark top header */}
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 80, backgroundColor: C.headerBg, display: "flex", alignItems: "center", padding: "0 22px" }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
-            <div style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
+            <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
+            <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           </div>
           <div style={{ textAlign: "right", fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.7, lineHeight: "14px" }}>
             {d.email && <div>✉ {d.email}</div>}
@@ -577,7 +577,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           {d.skills?.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 6 }}>Core Competencies</div>
-              {d.skills.map((skill, i) => (
+              {d.skills.map((skill, i) => ( // eslint-disable-line
                 <div key={i} style={{ fontFamily: FONT, fontSize: "9px", color: C.text, padding: "2.5px 0", borderBottom: i < d.skills.length - 1 ? `1px solid ${C.divider}` : "none" }}>• {skill}</div>
               ))}
             </div>
@@ -641,7 +641,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <BoldHeading C={C}>Professional Summary</BoldHeading>
-              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
           {topExps.length > 0 && (
@@ -650,14 +650,14 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               {topExps.map((exp, i) => (
                 <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
+                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.map((b, bi) => (
-                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -671,7 +671,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               {d.achievements.map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>★</span>
-                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
                 </div>
               ))}
             </div>
@@ -929,8 +929,8 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Full-width header */}
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 90, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", justifyContent: "center", padding: `0 ${MX}px` }}>
-          <div style={{ fontFamily: FONT, fontSize: "26px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
-          <div style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
+          <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "26px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
+          <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           <div style={{ display: "flex", gap: 18, marginTop: 6, fontFamily: FONT, fontSize: "8.5px", color: C.headerText, opacity: 0.65 }}>
             {d.email && <span>✉ {d.email}</span>}
             {d.phone && <span>☎ {d.phone}</span>}
@@ -946,7 +946,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           {d.profile && (
             <div style={{ marginBottom: 14 }}>
               <CardHeading C={C}>Professional Summary</CardHeading>
-              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
 
@@ -956,7 +956,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
               <CardHeading C={C}>Core Competencies</CardHeading>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {d.skills.map((skill, i) => (
-                  <span key={i} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "3px 10px", borderRadius: 4, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
+                  <span key={i} data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "3px 10px", borderRadius: 4, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
                 ))}
               </div>
             </div>
@@ -969,14 +969,14 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
               {topExps.map((exp, i) => (
                 <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 10 : 0, padding: "8px 12px", backgroundColor: C.cardBg, borderRadius: 6, border: `1px solid ${C.divider}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
+                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.map((b, bi) => (
-                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -993,7 +993,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                 {d.achievements.map((ach, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", padding: "6px 10px", backgroundColor: C.cardBg, borderRadius: 4, border: `1px solid ${C.divider}` }}>
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>★</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
+                    <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
                   </div>
                 ))}
               </div>

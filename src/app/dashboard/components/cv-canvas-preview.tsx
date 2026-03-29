@@ -18,11 +18,13 @@ const A4_H = 1123;
 interface CanvasPreviewProps {
   children: ReactNode;
   previewRef: React.RefObject<HTMLDivElement | null>;
+  editMode?: boolean;
+  onCvClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 const PAGE_GAP = 24;
 
-export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewProps) {
+export default function CVCanvasPreview({ children, previewRef, editMode, onCvClick }: CanvasPreviewProps) {
   const outerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.45);
   const [pageCount, setPageCount] = useState(1);
@@ -81,13 +83,17 @@ export default function CVCanvasPreview({ children, previewRef }: CanvasPreviewP
       style={{ height: `${scaledHeight + 40}px` }}
     >
       {/* A4 content scaled from top-left — transform doesn't affect child measurements */}
+      {editMode && (
+        <style>{`[data-cv-field] { cursor: text !important; outline: 1.5px dashed rgba(99,102,241,0.35); outline-offset: 1px; border-radius: 2px; } [data-cv-field]:hover { outline-color: rgba(99,102,241,0.75); background: rgba(99,102,241,0.04); }`}</style>
+      )}
       <div
         ref={previewRef}
+        onClick={editMode ? onCvClick : undefined}
         style={{
           width: `${A4_W}px`,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
-          pointerEvents: "none",
+          pointerEvents: editMode ? "auto" : "none",
         }}
       >
         <style>{`

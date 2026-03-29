@@ -6,7 +6,7 @@ import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
 import CVLayoutExecutive from "./cv-layout-executive";
-import CvAdjustPanel from "./cv-adjust-panel";
+import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
 import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
@@ -557,9 +557,88 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [aiData, setAiData] = useState<CategoryCVData | null>(null);
   const [error, setError] = useState("");
   const [selectedTheme, setSelectedTheme] = useState<ThemeName>("corporate");
-  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
+
+  const getFieldValue = useCallback((field: string): string => {
+    if (!aiData) return "";
+    const p = field.split(".");
+    if (p[0] === "profile") return aiData.profile || "";
+    if (p[0] === "fullName") return aiData.fullName || "";
+    if (p[0] === "title") return aiData.title || "";
+    if (p[0] === "exp") { const e = aiData.experience?.[+p[1]]; if (!e) return ""; if (p[2] === "role") return e.role || ""; if (p[2] === "company") return e.company || ""; if (p[2] === "dates") return e.dates || ""; if (p[2] === "bullet") return e.bullets?.[+p[3]] || ""; }
+    if (p[0] === "skill") return aiData.skills?.[+p[1]] || "";
+    if (p[0] === "ach") return aiData.achievements?.[+p[1]] || "";
+    if (p[0] === "edu") { const e = aiData.education?.[+p[1]]; if (!e) return ""; if (p[2] === "degree") return e.degree || ""; if (p[2] === "school") return e.school || ""; if (p[2] === "year") return e.year || ""; }
+    if (p[0] === "cert") { const e = aiData.certifications?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "issuer") return e.issuer || ""; }
+    if (p[0] === "lang") { const e = aiData.languages?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "label") return e.label || ""; }
+    if (p[0] === "ref") { const e = aiData.references?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "title") return e.title || ""; }
+    return "";
+  }, [aiData]);
+
+  const setFieldValue = useCallback((field: string, value: string) => {
+    setAiData(prev => {
+      if (!prev) return prev;
+      const p = field.split(".");
+      if (p[0] === "profile") return { ...prev, profile: value };
+      if (p[0] === "fullName") return { ...prev, fullName: value };
+      if (p[0] === "title") return { ...prev, title: value };
+      if (p[0] === "exp") {
+        const exps = [...(prev.experience || [])]; const i = +p[1];
+        if (p[2] === "role") exps[i] = { ...exps[i], role: value };
+        else if (p[2] === "company") exps[i] = { ...exps[i], company: value };
+        else if (p[2] === "dates") exps[i] = { ...exps[i], dates: value };
+        else if (p[2] === "bullet") { const bs = [...(exps[i].bullets || [])]; bs[+p[3]] = value; exps[i] = { ...exps[i], bullets: bs }; }
+        return { ...prev, experience: exps };
+      }
+      if (p[0] === "skill") { const s = [...(prev.skills || [])]; s[+p[1]] = value; return { ...prev, skills: s }; }
+      if (p[0] === "ach") { const a = [...(prev.achievements || [])]; a[+p[1]] = value; return { ...prev, achievements: a }; }
+      if (p[0] === "edu") {
+        const edu = [...(prev.education || [])]; const i = +p[1];
+        if (p[2] === "degree") edu[i] = { ...edu[i], degree: value };
+        else if (p[2] === "school") edu[i] = { ...edu[i], school: value };
+        else if (p[2] === "year") edu[i] = { ...edu[i], year: value };
+        return { ...prev, education: edu };
+      }
+      if (p[0] === "cert") {
+        const cert = [...(prev.certifications || [])]; const i = +p[1];
+        if (p[2] === "name") cert[i] = { ...cert[i], name: value };
+        else if (p[2] === "issuer") cert[i] = { ...cert[i], issuer: value };
+        return { ...prev, certifications: cert };
+      }
+      if (p[0] === "lang") {
+        const lang = [...(prev.languages || [])]; const i = +p[1];
+        if (p[2] === "name") lang[i] = { ...lang[i], name: value };
+        else if (p[2] === "label") lang[i] = { ...lang[i], label: value };
+        return { ...prev, languages: lang };
+      }
+      if (p[0] === "ref") {
+        const refs = [...(prev.references || [])]; const i = +p[1];
+        if (p[2] === "name") refs[i] = { ...refs[i], name: value };
+        else if (p[2] === "title") refs[i] = { ...refs[i], title: value };
+        return { ...prev, references: refs };
+      }
+      return prev;
+    });
+  }, []);
+
+  const handleCvClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-cv-field]");
+    if (!el) return;
+    const field = el.dataset.cvField!;
+    const rect = el.getBoundingClientRect();
+    const multiline = el.tagName === "P" || (el.dataset.cvMultiline === "true");
+    setInlineEditor({
+      field,
+      value: getFieldValue(field),
+      x: rect.left,
+      y: rect.top,
+      width: Math.max(rect.width, 260),
+      multiline,
+    });
+  }, [getFieldValue]);
 
   const handleGenerate = useCallback(async (category: CareerCategory) => {
     setSelectedCategory(category);
@@ -923,19 +1002,19 @@ export default function CvStudio({ userId, cvData }: Props) {
               <span className="sm:hidden">Redo</span>
             </button>
             <button
-              onClick={() => setAdjustOpen(!adjustOpen)}
+              onClick={() => { setEditMode(!editMode); setInlineEditor(null); }}
               className={`flex items-center gap-1 sm:gap-1.5 rounded-md border px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors ${
-                adjustOpen
+                editMode
                   ? "border-indigo-300 bg-indigo-50 text-indigo-700"
                   : overflowSections.size > 0
                     ? "border-amber-300 bg-amber-50 text-amber-700 animate-pulse"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {adjustOpen ? <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <PenLine className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-              <span className="hidden sm:inline">{adjustOpen ? "Close Editor" : overflowSections.size > 0 ? "Fix Overflow" : "Adjust Content"}</span>
-              <span className="sm:hidden">{adjustOpen ? "Close" : "Edit"}</span>
-              {!adjustOpen && overflowSections.size > 0 && (
+              {editMode ? <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <PenLine className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              <span className="hidden sm:inline">{editMode ? "Done Editing" : overflowSections.size > 0 ? "Fix Overflow" : "Edit CV"}</span>
+              <span className="sm:hidden">{editMode ? "Done" : "Edit"}</span>
+              {!editMode && overflowSections.size > 0 && (
                 <span className="ml-0.5 h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{overflowSections.size}</span>
               )}
             </button>
@@ -974,20 +1053,26 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       </div>
 
-      {/* CV Preview + Adjust Panel */}
-      <div className={`flex gap-4 ${adjustOpen ? "flex-col lg:flex-row" : ""}`}>
-        {adjustOpen && aiData && (
-          <div className="w-full lg:w-[480px] lg:min-w-[480px] lg:max-h-[85vh] border border-slate-200 rounded-xl bg-white p-4 shadow-sm overflow-y-auto">
-            <CvAdjustPanel data={aiData} onChange={setAiData} overflowSections={overflowSections} />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <CVCanvasPreview previewRef={previewRef}>
-            {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-            {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-            {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-          </CVCanvasPreview>
+      {/* CV Preview — inline editing */}
+      {editMode && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
+          <PenLine className="h-3.5 w-3.5 shrink-0" />
+          <span>Click any text in the CV to edit it inline. Press <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Enter</kbd> to save or <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Esc</kbd> to cancel.</span>
         </div>
+      )}
+      <div className="relative">
+        <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
+          {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+          {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+          {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+        </CVCanvasPreview>
+        {inlineEditor && (
+          <CVInlineEditor
+            editor={inlineEditor}
+            onSave={setFieldValue}
+            onClose={() => setInlineEditor(null)}
+          />
+        )}
       </div>
     </div>
   );
