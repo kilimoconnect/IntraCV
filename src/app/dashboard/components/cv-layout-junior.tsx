@@ -477,8 +477,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <div style={{ marginBottom: 14 }}><Heading C={C}>Education</Heading>
                 {d.education.map((edu, i) => (
                   <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
-                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
                   </div>
                 ))}
               </div>
@@ -487,8 +487,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <div style={{ marginBottom: 14 }}><Heading C={C}>Languages</Heading>
                 {d.languages.map((lang, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9.5px", padding: "2px 0" }}>
-                    <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                    <span style={{ color: C.muted }}>{lang.label}</span>
+                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
                   </div>
                 ))}
               </div>
@@ -497,8 +497,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <div style={{ marginBottom: 14 }}><Heading C={C}>Certifications</Heading>
                 {d.certifications.map((cert, i) => (
                   <div key={i} style={{ marginBottom: 3 }}>
-                    <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                   </div>
                 ))}
               </div>
@@ -522,7 +522,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                   <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 4 }}>
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
-                      <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                      <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
                       {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                     </div>
                   </div>
@@ -652,7 +652,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
           {show.has("profile") && d.profile && (
             <div style={{ marginBottom: 14 }}>
               <HeadingLine C={C}>Professional Summary</HeadingLine>
-              <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
           {show.has("experience") && d.experience?.length > 0 && (
