@@ -310,8 +310,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                 <Heading C={C}>Education</Heading>
                 {d.education.map((edu, i) => (
                   <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
-                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
                     {edu.details && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, fontStyle: "italic" }}>{edu.details}</div>}
                   </div>
                 ))}
@@ -353,9 +353,9 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <div style={{ display: "grid", gridTemplateColumns: d.projects.length >= 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
                 {d.projects.map((proj, i) => (
                   <div key={i} style={{ padding: "7px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
-                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
-                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500 }}>{proj.tech}</div>}
+                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
+                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
+                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.primary, fontWeight: 500 }}>{proj.tech}</div>}
                   </div>
                 ))}
               </div>
@@ -370,7 +370,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
-                    <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                    <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
                     {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
@@ -385,7 +385,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               {d.volunteer.map((v, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 3 }}>
                   <span style={{ fontFamily: FONT, fontSize: "9px", color: C.primary, marginTop: 1 }}>●</span>
-                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{v}</span>
+                  <span data-cv-field={`vol.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -398,8 +398,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
                 {d.references.map((ref, i) => (
                   <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                    <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                    <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
                     {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
                     {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                   </div>
@@ -412,10 +412,10 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
           {show.has("declaration") && d.declaration?.declaration && (
             <div style={{ marginTop: 14 }}>
               <Heading C={C}>Declaration</Heading>
-              <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+              <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
               <div style={{ display: "flex", gap: 24, marginTop: 3, fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>
-                {d.declaration.place && <span>Place: {d.declaration.place}</span>}
-                {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+                {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
+                {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
               </div>
             </div>
           )}
@@ -534,7 +534,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                 {d.volunteer.map((v, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 3 }}>
                     <span style={{ fontFamily: FONT, fontSize: "9px", color: C.primary, marginTop: 1 }}>●</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{v}</span>
+                    <span data-cv-field={`vol.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{v}</span>
                   </div>
                 ))}
               </div>
@@ -544,8 +544,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                 <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
                   {d.references.map((ref, i) => (
                     <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                      <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                      <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                      <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                      <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
                       {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
                       {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
@@ -556,10 +556,10 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
             {showP2.has("declaration") && d.declaration?.declaration && (
               <div style={{ marginTop: 14 }}>
                 <Heading C={C}>Declaration</Heading>
-                <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+                <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
                 <div style={{ display: "flex", gap: 24, marginTop: 3, fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>
-                  {d.declaration.place && <span>Place: {d.declaration.place}</span>}
-                  {d.declaration.date && <span>Date: {d.declaration.date}</span>}
+                  {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
+                  {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
                 </div>
               </div>
             )}
@@ -599,8 +599,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
         <div style={{ position: "absolute", top: 0, left: 0, width: SIDE, height: A4_H, backgroundColor: C.sidebarBg, borderRight: `3px solid ${C.primary}`, overflow: "hidden" }}>
           {/* Name */}
           <div style={{ padding: "28px 16px 18px", borderBottom: `1px solid ${C.divider}` }}>
-            <div style={{ fontFamily: FONT, fontSize: "18px", fontWeight: 800, color: C.text, lineHeight: "22px" }}>{d.fullName}</div>
-            <div style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.primary, marginTop: 3, wordWrap: "break-word" }}>{d.title}</div>
+            <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "18px", fontWeight: 800, color: C.text, lineHeight: "22px" }}>{d.fullName}</div>
+            <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.primary, marginTop: 3, wordWrap: "break-word" }}>{d.title}</div>
           </div>
           {/* Contact */}
           <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.divider}`, fontFamily: FONT, fontSize: "8.5px", color: C.muted, lineHeight: "14px" }}>
@@ -615,8 +615,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <HeadingLine C={C}>Education</HeadingLine>
               {d.education.map((edu, i) => (
                 <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                  <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                  <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                  <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
                 </div>
               ))}
             </div>
@@ -627,8 +627,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <HeadingLine C={C}>Languages</HeadingLine>
               {d.languages.map((lang, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9px", padding: "2px 0" }}>
-                  <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                  <span style={{ color: C.muted, fontSize: "8px" }}>{lang.label}</span>
+                  <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                  <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted, fontSize: "8px" }}>{lang.label}</span>
                 </div>
               ))}
             </div>
@@ -639,8 +639,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <HeadingLine C={C}>Certifications</HeadingLine>
               {d.certifications.map((cert, i) => (
                 <div key={i} style={{ marginBottom: 3 }}>
-                  <div style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                  <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                  <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                 </div>
               ))}
             </div>
@@ -661,14 +661,14 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               {d.experience.map((exp, i) => (
                 <div key={i} style={{ marginBottom: i < d.experience.length - 1 ? 10 : 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{exp.role}</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
+                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{exp.role}</span>
+                    <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
                       {exp.bullets.map((b, bi) => (
-                        <li key={bi} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -682,7 +682,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               {d.achievements.map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>★</span>
-                  <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
                 </div>
               ))}
             </div>
@@ -692,7 +692,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <HeadingLine C={C}>Skills</HeadingLine>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                 {d.skills.map((skill, i) => (
-                  <span key={i} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "3px 10px", borderRadius: 20, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
+                  <span key={i} data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "3px 10px", borderRadius: 20, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
                 ))}
               </div>
             </div>
@@ -702,9 +702,9 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <HeadingLine C={C}>Projects</HeadingLine>
               {d.projects.map((proj, i) => (
                 <div key={i} style={{ marginBottom: 6, padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
-                  <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "2px 0" }}>{proj.description}</p>
-                  {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8px", color: C.primary }}>{proj.tech}</div>}
+                  <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
+                  <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "2px 0" }}>{proj.description}</p>
+                  {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "8px", color: C.primary }}>{proj.tech}</div>}
                 </div>
               ))}
             </div>
@@ -716,7 +716,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                   <div>
-                    <span style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                    <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
                     {award.description && <span style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
                   </div>
                 </div>
@@ -729,8 +729,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
                 {d.references.map((ref, i) => (
                   <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                    <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                    <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
                     {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
                     {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                   </div>
@@ -781,8 +781,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
         {/* Split header: name left, contact right */}
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 80, display: "flex", alignItems: "center", padding: `0 ${MX}px`, borderBottom: `3px solid ${C.primary}` }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.text, letterSpacing: "-0.5px" }}>{d.fullName}</div>
-            <div style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.primary, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
+            <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.text, letterSpacing: "-0.5px" }}>{d.fullName}</div>
+            <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.primary, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           </div>
           <div style={{ textAlign: "right", fontFamily: FONT, fontSize: "8.5px", color: C.muted, lineHeight: "15px" }}>
             {d.email && <div>{d.email}</div>}
@@ -799,7 +799,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
             {showL.has("profile") && d.profile && (
               <div style={{ marginBottom: 14 }}>
                 <HeadingUnderline C={C}>Summary</HeadingUnderline>
-                <p style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
+                <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0 }}>{d.profile}</p>
               </div>
             )}
             {showL.has("experience") && d.experience?.length > 0 && (
@@ -808,14 +808,14 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 {d.experience.map((exp, i) => (
                   <div key={i} style={{ marginBottom: i < d.experience.length - 1 ? 10 : 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <span style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{exp.role}</span>
-                      <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
+                      <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{exp.role}</span>
+                      <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
                     </div>
-                    <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                    <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                         {exp.bullets.map((b, bi) => (
-                          <li key={bi} style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14.5px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                          <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14.5px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                         ))}
                       </ul>
                     )}
@@ -829,7 +829,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 {d.achievements.map((ach, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                     <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>★</span>
-                    <span style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
+                    <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", lineHeight: "15px", color: C.text }}>{ach}</span>
                   </div>
                 ))}
               </div>
@@ -839,9 +839,9 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <HeadingUnderline C={C}>Projects</HeadingUnderline>
                 {d.projects.map((proj, i) => (
                   <div key={i} style={{ marginBottom: 6 }}>
-                    <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
-                    <p style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "2px 0" }}>{proj.description}</p>
-                    {proj.tech && <div style={{ fontFamily: FONT, fontSize: "8px", color: C.primary }}>{proj.tech}</div>}
+                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{proj.name}</div>
+                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "9px", lineHeight: "14px", color: C.text, margin: "2px 0" }}>{proj.description}</p>
+                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "8px", color: C.primary }}>{proj.tech}</div>}
                   </div>
                 ))}
               </div>
@@ -856,7 +856,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 {d.skills.map((skill, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, padding: "2.5px 0" }}>
                     <div style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.primary, flexShrink: 0 }} />
-                    <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.text }}>{skill}</span>
+                    <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.text }}>{skill}</span>
                   </div>
                 ))}
               </div>
@@ -866,8 +866,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <HeadingUnderline C={C}>Education</HeadingUnderline>
                 {d.education.map((edu, i) => (
                   <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                    <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
                   </div>
                 ))}
               </div>
@@ -877,8 +877,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <HeadingUnderline C={C}>Languages</HeadingUnderline>
                 {d.languages.map((lang, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9px", padding: "2px 0" }}>
-                    <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                    <span style={{ color: C.muted }}>{lang.label}</span>
+                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
                   </div>
                 ))}
               </div>
@@ -888,8 +888,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <HeadingUnderline C={C}>Certifications</HeadingUnderline>
                 {d.certifications.map((cert, i) => (
                   <div key={i} style={{ marginBottom: 3 }}>
-                    <div style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                   </div>
                 ))}
               </div>
@@ -901,7 +901,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                     <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, lineHeight: "15px" }}>🏆</span>
                     <div>
-                      <span style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                      <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 700, color: C.text }}>{award.title}</span>
                       {award.description && <span style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginLeft: 3 }}>— {award.description}</span>}
                     </div>
                   </div>
@@ -912,7 +912,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div style={{ marginBottom: 14 }}>
                 <HeadingUnderline C={C}>Volunteer</HeadingUnderline>
                 {d.volunteer.map((v, i) => (
-                  <div key={i} style={{ fontFamily: FONT, fontSize: "9px", color: C.text, padding: "2px 0" }}>• {v}</div>
+                  <div key={i} data-cv-field={`vol.${i}`} style={{ fontFamily: FONT, fontSize: "9px", color: C.text, padding: "2px 0" }}>• {v}</div>
                 ))}
               </div>
             )}
@@ -921,8 +921,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <HeadingUnderline C={C}>References</HeadingUnderline>
                 {d.references.map((ref, i) => (
                   <div key={i} style={{ marginBottom: 6, padding: "5px 8px", borderRadius: 4, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                    <div style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                    <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                    <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                    <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
                     {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>☎ {ref.phone}</div>}
                     {ref.email && <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>✉ {ref.email}</div>}
                   </div>

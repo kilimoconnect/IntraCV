@@ -578,6 +578,13 @@ export default function CvStudio({ userId, cvData }: Props) {
     if (p[0] === "ref") { const e = aiData.references?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "title") return e.title || ""; }
     if (p[0] === "proj") { const e = aiData.projects?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "description") return e.description || ""; if (p[2] === "tech") return e.tech || ""; }
     if (p[0] === "award") { const e = aiData.awards?.[+p[1]]; if (!e) return ""; return e.title || ""; }
+    if (p[0] === "tool") return aiData.tools?.[+p[1]] || "";
+    if (p[0] === "memb") return aiData.memberships?.[+p[1]] || "";
+    if (p[0] === "vol") return aiData.volunteer?.[+p[1]] || "";
+    if (p[0] === "decl") { const d = aiData.declaration; if (!d) return ""; if (p[1] === "declaration") return d.declaration || ""; if (p[1] === "place") return d.place || ""; if (p[1] === "date") return d.date || ""; }
+    if (p[0] === "boardRole") { const e = aiData.boardRoles?.[+p[1]]; if (!e) return ""; if (p[2] === "title") return e.title || ""; if (p[2] === "dates") return e.dates || ""; if (p[2] === "organization") return e.organization || ""; if (p[2] === "description") return e.description || ""; }
+    if (p[0] === "execTrain") { const e = aiData.executiveTraining?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "institution") return e.institution || ""; if (p[2] === "year") return e.year || ""; }
+    if (p[0] === "pub") { const e = aiData.publications?.[+p[1]]; if (!e) return ""; if (p[2] === "title") return e.title || ""; if (p[2] === "publisher") return e.publisher || ""; if (p[2] === "year") return e.year || ""; }
     return "";
   }, [aiData]);
 
@@ -643,6 +650,38 @@ export default function CvStudio({ userId, cvData }: Props) {
         awards[i] = { ...awards[i], title: value };
         return { ...prev, awards };
       }
+      if (p[0] === "tool") { const t = [...(prev.tools || [])]; t[+p[1]] = value; return { ...prev, tools: t }; }
+      if (p[0] === "memb") { const m = [...(prev.memberships || [])]; m[+p[1]] = value; return { ...prev, memberships: m }; }
+      if (p[0] === "vol") { const v = [...(prev.volunteer || [])]; v[+p[1]] = value; return { ...prev, volunteer: v }; }
+      if (p[0] === "decl") {
+        const decl = { ...(prev.declaration || { declaration: "" }) };
+        if (p[1] === "declaration") decl.declaration = value;
+        else if (p[1] === "place") decl.place = value;
+        else if (p[1] === "date") decl.date = value;
+        return { ...prev, declaration: decl };
+      }
+      if (p[0] === "boardRole") {
+        const roles = [...(prev.boardRoles || [])]; const i = +p[1];
+        if (p[2] === "title") roles[i] = { ...roles[i], title: value };
+        else if (p[2] === "dates") roles[i] = { ...roles[i], dates: value };
+        else if (p[2] === "organization") roles[i] = { ...roles[i], organization: value };
+        else if (p[2] === "description") roles[i] = { ...roles[i], description: value };
+        return { ...prev, boardRoles: roles };
+      }
+      if (p[0] === "execTrain") {
+        const tr = [...(prev.executiveTraining || [])]; const i = +p[1];
+        if (p[2] === "name") tr[i] = { ...tr[i], name: value };
+        else if (p[2] === "institution") tr[i] = { ...tr[i], institution: value };
+        else if (p[2] === "year") tr[i] = { ...tr[i], year: value };
+        return { ...prev, executiveTraining: tr };
+      }
+      if (p[0] === "pub") {
+        const pubs = [...(prev.publications || [])]; const i = +p[1];
+        if (p[2] === "title") pubs[i] = { ...pubs[i], title: value };
+        else if (p[2] === "publisher") pubs[i] = { ...pubs[i], publisher: value };
+        else if (p[2] === "year") pubs[i] = { ...pubs[i], year: value };
+        return { ...prev, publications: pubs };
+      }
       return prev;
     });
   }, []);
@@ -665,6 +704,16 @@ export default function CvStudio({ userId, cvData }: Props) {
         const bs = [...(hist[i].bullets || [])]; bs.splice(+p[3], 1);
         hist[i] = { ...hist[i], bullets: bs }; return { ...prev, history: hist };
       }
+      if (p[0] === "tool") { const t = [...(prev.tools || [])]; t.splice(+p[1], 1); return { ...prev, tools: t }; }
+      if (p[0] === "memb") { const m = [...(prev.memberships || [])]; m.splice(+p[1], 1); return { ...prev, memberships: m }; }
+      if (p[0] === "vol") { const v = [...(prev.volunteer || [])]; v.splice(+p[1], 1); return { ...prev, volunteer: v }; }
+      if (p[0] === "ref") { const r = [...(prev.references || [])]; r.splice(+p[1], 1); return { ...prev, references: r }; }
+      if (p[0] === "edu") { const e = [...(prev.education || [])]; e.splice(+p[1], 1); return { ...prev, education: e }; }
+      if (p[0] === "cert") { const c = [...(prev.certifications || [])]; c.splice(+p[1], 1); return { ...prev, certifications: c }; }
+      if (p[0] === "lang") { const l = [...(prev.languages || [])]; l.splice(+p[1], 1); return { ...prev, languages: l }; }
+      if (p[0] === "boardRole") { const r = [...(prev.boardRoles || [])]; r.splice(+p[1], 1); return { ...prev, boardRoles: r }; }
+      if (p[0] === "execTrain") { const t = [...(prev.executiveTraining || [])]; t.splice(+p[1], 1); return { ...prev, executiveTraining: t }; }
+      if (p[0] === "pub") { const pb = [...(prev.publications || [])]; pb.splice(+p[1], 1); return { ...prev, publications: pb }; }
       return prev;
     });
   }, []);
