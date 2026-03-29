@@ -10,9 +10,9 @@ import {
   Globe, Users, ScrollText, Mail, Phone, MapPin, Linkedin,
   Link as LinkIcon, Pencil, Trophy, Building2, FolderKanban, Shield,
   BookMarked, PenLine, Wrench, Heart, Plus, Clock,
-  AlertCircle, AlertTriangle, XCircle,
+  AlertCircle, AlertTriangle, XCircle, Loader2,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 interface MyProfileProps {
   personalInfo: any;
@@ -214,6 +214,13 @@ export default function MyProfile({
   publications, tools, volunteer,
 }: MyProfileProps) {
   const router = useRouter();
+  const [isGeneratingCV, setIsGeneratingCV] = useState(false);
+
+  const handleGenerateCV = () => {
+    setIsGeneratingCV(true);
+    router.push("/dashboard?tab=studio");
+  };
+
   const groupedSkills = skills.reduce((acc: Record<string, string[]>, s: any) => {
     const cat = s.category || "Other";
     if (!acc[cat]) acc[cat] = [];
@@ -570,8 +577,9 @@ export default function MyProfile({
         
         {/* Actions row */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <Button size="sm" variant="default" onClick={() => router.push("/dashboard?tab=studio")} className="w-full sm:w-auto">
-            <Sparkles className="mr-2 h-4 w-4" /> Generate CV
+          <Button size="sm" variant="default" onClick={handleGenerateCV} disabled={isGeneratingCV} className="w-full sm:w-auto">
+            {isGeneratingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {isGeneratingCV ? "Loading..." : "Generate CV"}
           </Button>
           <Button size="sm" variant="outline" onClick={() => router.push("/cv-builder")} className="w-full sm:w-auto">
             <Pencil className="mr-2 h-4 w-4" /> Edit CV
