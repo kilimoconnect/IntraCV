@@ -1,49 +1,46 @@
 /**
- * Client-side CV PDF download via html2canvas + jsPDF.
+ * Client-side CV PDF download via html-to-image + jsPDF.
  *
- * Strategy: clone each .cv-page-sheet individually into a clean body-level
- * wrapper (no parent overflow clipping, no transform scale). All Tailwind
- * CSS and inline styles are already in the document so the clone renders
- * identically to the screen preview. Downloads automatically — no dialog.
+ * html-to-image uses the browser's native SVGForeignObject renderer so
+ * every CSS property (absolute positioning, grid, custom properties, fonts)
+ * is handled exactly as the browser draws it on screen.
+ * No print dialog — downloads automatically on desktop and mobile.
  */
 
 const A4_W_PX = 794;
 const A4_H_PX = 1123;
 
-async function capturePageToCanvas(
+async function capturePageAsJpeg(
   source: HTMLElement,
-  html2canvas: (el: HTMLElement, opts: object) => Promise<HTMLCanvasElement>
-): Promise<HTMLCanvasElement> {
+  toJpeg: (el: HTMLElement, opts: object) => Promise<string>
+): Promise<string> {
   const clone = source.cloneNode(true) as HTMLElement;
 
-  // Reset any inherited transform or preview-specific overrides
+  // Strip screen-only decorations
   clone.style.transform = "none";
   clone.style.transformOrigin = "unset";
   clone.style.boxShadow = "none";
   clone.style.borderRadius = "0";
   clone.style.margin = "0";
 
-  // Isolated wrapper — body-level, no overflow clipping
+  // position:absolute (not fixed) — avoids iOS Safari viewport-relative
+  // positioning bugs that break absolutely-positioned child elements
   const wrapper = document.createElement("div");
-  wrapper.style.cssText = `position:fixed;left:-9999px;top:0;width:${A4_W_PX}px;height:${A4_H_PX}px;overflow:visible;pointer-events:none;z-index:-9999;`;
+  wrapper.style.cssText = `position:absolute;left:-9999px;top:0;width:${A4_W_PX}px;height:${A4_H_PX}px;overflow:visible;pointer-events:none;`;
   wrapper.appendChild(clone);
   document.body.appendChild(wrapper);
 
   try {
-    // Two frames: reflow + paint
+    // Two animation frames: layout reflow + paint
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
-    return await html2canvas(clone, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: "#ffffff",
+    return await toJpeg(clone, {
+      quality: 0.92,
       width: A4_W_PX,
       height: A4_H_PX,
-      logging: false,
-      imageTimeout: 0,
-      scrollX: 0,
-      scrollY: 0,
+      pixelRatio: 2,
+      backgroundColor: "#ffffff",
+      skipFonts: false,
     });
   } finally {
     document.body.removeChild(wrapper);
@@ -51,12 +48,12 @@ async function capturePageToCanvas(
 }
 
 export async function printCvAsPdf(element: HTMLElement, filename: string): Promise<void> {
-  const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+  const [{ default: jsPDF }, { toJpeg }] = await Promise.all([
     import("jspdf"),
-    import("html2canvas"),
+    import("html-to-image"),
   ]);
 
-  // Wait for fonts so text renders correctly
+  // Ensure all fonts are loaded before capture
   await document.fonts.ready;
 
   const sheets = Array.from(element.querySelectorAll<HTMLElement>(".cv-page-sheet"));
@@ -72,8 +69,7 @@ export async function printCvAsPdf(element: HTMLElement, filename: string): Prom
   for (let i = 0; i < sources.length; i++) {
     if (i > 0) pdf.addPage([A4_W_PX, A4_H_PX], "portrait");
 
-    const canvas = await capturePageToCanvas(sources[i], html2canvas);
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+    const imgData = await capturePageAsJpeg(sources[i], toJpeg);
     pdf.addImage(imgData, "JPEG", 0, 0, A4_W_PX, A4_H_PX);
   }
 
