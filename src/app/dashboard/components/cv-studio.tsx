@@ -545,6 +545,18 @@ function ExecutiveCMiniPreview() {
   );
 }
 
+// ─── AI Condense Helper ───
+
+async function aiCondense(sectionType: string, content: unknown, maxChars?: number, count?: number): Promise<unknown> {
+  const res = await fetch("/api/ai/condense-section", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sectionType, content, maxChars, count }),
+  });
+  if (!res.ok) throw new Error("AI condense failed");
+  return (await res.json()).result;
+}
+
 // ─── Main Component ───
 
 export default function CvStudio({ userId, cvData }: Props) {
@@ -559,6 +571,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeName>("corporate");
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
+  const [fixingOverflow, setFixingOverflow] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
@@ -749,6 +762,55 @@ export default function CvStudio({ userId, cvData }: Props) {
       return prev;
     });
   }, []);
+
+  const handleAutoFixOverflow = useCallback(async () => {
+    if (!aiData || overflowSections.size === 0 || fixingOverflow) return;
+    setFixingOverflow(true);
+    try {
+      const patch: Partial<CategoryCVData> = {};
+      const fixes: Promise<void>[] = [];
+
+      if (overflowSections.has("experience") || overflowSections.has("_page")) {
+        const exps = aiData.experience || [];
+        const target = exps.reduce((mi, e, i) => (e.bullets?.length ?? 0) > (exps[mi]?.bullets?.length ?? 0) ? i : mi, 0);
+        const bullets = exps[target]?.bullets ?? [];
+        if (bullets.length > 2) {
+          fixes.push((async () => {
+            const r = await aiCondense("bullets", bullets, 110, bullets.length - 1);
+            if (Array.isArray(r)) patch.experience = exps.map((e, i) => i === target ? { ...e, bullets: r as string[] } : e);
+          })());
+        }
+      }
+      if (overflowSections.has("achievements")) {
+        const achs = aiData.achievements ?? [];
+        if (achs.length > 2) {
+          fixes.push((async () => {
+            const r = await aiCondense("achievements", achs, 110, Math.max(2, achs.length - 1));
+            if (Array.isArray(r)) patch.achievements = r as string[];
+          })());
+        }
+      }
+      if (overflowSections.has("skills")) {
+        const skls = aiData.skills ?? [];
+        if (skls.length > 6) {
+          fixes.push((async () => {
+            const r = await aiCondense("skills", skls, 18, Math.max(6, skls.length - 2));
+            if (Array.isArray(r)) patch.skills = r as string[];
+          })());
+        }
+      }
+      if (overflowSections.has("profile") && aiData.profile) {
+        fixes.push((async () => {
+          const r = await aiCondense("profile", aiData.profile, 280);
+          if (typeof r === "string") patch.profile = r;
+        })());
+      }
+
+      await Promise.all(fixes);
+      if (Object.keys(patch).length > 0) setAiData(prev => prev ? { ...prev, ...patch } : prev);
+    } catch {}
+    setFixingOverflow(false);
+  }, [aiData, overflowSections, fixingOverflow]);
 
   const handleCvClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-cv-field]");
@@ -1181,9 +1243,27 @@ export default function CvStudio({ userId, cvData }: Props) {
 
       {/* CV Preview — inline editing */}
       {editMode && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
-          <PenLine className="h-3.5 w-3.5 shrink-0" />
-          <span>Click any text in the CV to edit it inline. Press <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Enter</kbd> to save or <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Esc</kbd> to cancel.</span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
+            <PenLine className="h-3.5 w-3.5 shrink-0" />
+            <span>Click any text in the CV to edit it inline. Press <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Enter</kbd> to save or <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Esc</kbd> to cancel.</span>
+          </div>
+          {overflowSections.size > 0 && (
+            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 text-xs text-amber-700">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} overflowing — AI can auto-delete excess bullet points to fix it.</span>
+              </div>
+              <button
+                onClick={handleAutoFixOverflow}
+                disabled={fixingOverflow}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-60 shrink-0"
+              >
+                {fixingOverflow ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {fixingOverflow ? "Fixing…" : "AI Auto-Fix"}
+              </button>
+            </div>
+          )}
         </div>
       )}
       <div className="relative">
