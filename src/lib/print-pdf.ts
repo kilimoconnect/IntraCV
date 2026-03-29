@@ -31,6 +31,12 @@ export function printCvAsPdf(element: HTMLElement, filename: string): void {
       @page { size: 210mm 297mm; margin: 0; }
       body > *:not(.${PRINT_CLASS}) { display: none !important; }
       body { margin: 0 !important; padding: 0 !important; background: white !important; }
+      /* Force browser to print background colors and images */
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
       .${PRINT_CLASS} {
         display: block !important;
         position: static !important;
