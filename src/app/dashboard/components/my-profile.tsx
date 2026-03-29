@@ -552,9 +552,10 @@ export default function MyProfile({
 
   return (
     <div className="space-y-6">
-      {/* Edit CV Button + Category Badges */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
+      {/* Header: Badges + Actions */}
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:justify-between sm:items-center">
+        {/* Badges row */}
+        <div className="flex flex-wrap items-center gap-3">
           {experiences.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200">
               <Clock className="h-4 w-4" />
@@ -566,11 +567,13 @@ export default function MyProfile({
             {categoryResult.label}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="default" onClick={() => router.push("/dashboard?tab=studio")}>
+        
+        {/* Actions row */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <Button size="sm" variant="default" onClick={() => router.push("/dashboard?tab=studio")} className="w-full sm:w-auto">
             <Sparkles className="mr-2 h-4 w-4" /> Generate CV
           </Button>
-          <Button size="sm" variant="outline" onClick={() => router.push("/cv-builder")}>
+          <Button size="sm" variant="outline" onClick={() => router.push("/cv-builder")} className="w-full sm:w-auto">
             <Pencil className="mr-2 h-4 w-4" /> Edit CV
           </Button>
         </div>
