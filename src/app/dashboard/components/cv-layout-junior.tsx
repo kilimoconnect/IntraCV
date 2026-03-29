@@ -199,10 +199,10 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
             <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
               {d.references.map((ref, i) => (
                 <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                  <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                  <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                  {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
-                  {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                  <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
+                  <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                  {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                  {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                 </div>
               ))}
             </div>
@@ -400,8 +400,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                   <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                     <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
                     <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                    {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
-                    {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                    {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                    {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                   </div>
                 ))}
               </div>
@@ -546,8 +546,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                     <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                       <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
                       <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                      {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
-                      {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                      {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                      {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
                   ))}
                 </div>
@@ -731,8 +731,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
                   <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                     <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{ref.name}</div>
                     <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                    {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
-                    {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                    {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                    {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                   </div>
                 ))}
               </div>
@@ -923,8 +923,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
                   <div key={i} style={{ marginBottom: 6, padding: "5px 8px", borderRadius: 4, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                     <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 700, color: C.text }}>{ref.name}</div>
                     <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                    {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>☎ {ref.phone}</div>}
-                    {ref.email && <div style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>✉ {ref.email}</div>}
+                    {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>☎ {ref.phone}</div>}
+                    {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8px", color: C.muted }}>✉ {ref.email}</div>}
                   </div>
                 ))}
               </div>

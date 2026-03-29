@@ -83,6 +83,9 @@ function fieldLabel(field: string): string {
     const n = num(p[1]);
     if (p[2] === "name") return `Reference ${n} – Name`;
     if (p[2] === "title") return `Reference ${n} – Title`;
+    if (p[2] === "company") return `Reference ${n} – Company`;
+    if (p[2] === "phone") return `Reference ${n} – Phone`;
+    if (p[2] === "email") return `Reference ${n} – Email`;
     return `Reference ${n}`;
   }
   return field.replace(/\./g, " › ");

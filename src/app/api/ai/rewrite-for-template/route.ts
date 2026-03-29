@@ -393,46 +393,41 @@ async function blockTools(cvData: any): Promise<string[]> {
 async function blockAchievements(cvData: any): Promise<string[]> {
   // Handle both array and raw text input for keyAchievements
   let rawAchievements: string[] = [];
-  
+
   if (Array.isArray(cvData.keyAchievements)) {
     rawAchievements = [...normalizeStringArray(cvData.keyAchievements)];
   } else if (cvData.keyAchievements && typeof cvData.keyAchievements === 'string') {
-    // Split raw text by bullet points, lines, or common separators
     rawAchievements = cvData.keyAchievements
-      .split(/[•·▪‣⁃⬤\n\r]|(?<=\.)\s+/) // Split by bullets or sentence endings
-      .map((s: string) => s.replace(/^[•·▪‣⁃⬤\s]+/, '').trim()) // Clean up bullet prefixes
-      .filter((s: string) => s.length > 10); // Filter out very short fragments
+      .split(/[•·▪‣⁃⬤\n\r]|(?<=\.)\s+/)
+      .map((s: string) => s.replace(/^[•·▪‣⁃⬤\s]+|[0-9]+\.\s*/, '').trim())
+      .filter((s: string) => s.length > 10);
   }
-  
-  // NOTE: Do NOT include cvData.awards here - that's for formal recognitions
-  const sourceHighlights = rawAchievements;
+
+  // Only use real achievements — never generate fake ones
+  if (rawAchievements.length === 0) return [];
 
   const { count, minChars, maxChars } = S.achievements;
-  
-  // If we have raw achievements, use them directly; otherwise generate from experience
-  let achievements: string[] = [];
-  
-  if (rawAchievements.length > 0) {
-    // Process existing achievements - clean them up and ensure proper formatting
-    achievements = rawAchievements.slice(0, count).map(achievement => {
-      let cleaned = achievement.trim();
-      // Remove common bullet prefixes
-      cleaned = cleaned.replace(/^[•·▪‣⁃⬤\s]+|[0-9]+\.\s*/, '');
-      // Ensure it starts with capital letter and ends with period
-      if (cleaned.length > 0) {
-        cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-        if (!cleaned.match(/[.!?]$/)) {
-          cleaned += '.';
-        }
-      }
-      return cleaned;
-    }).filter(a => a.length >= 20); // Only filter very short fragments, allow longer content
-  }
-  
-  // Only use real achievements from database — never generate fake ones
-  if (achievements.length === 0) return [];
+  const toRewrite = rawAchievements.slice(0, count);
 
-  return achievements;
+  // AI-rewrite for professional quality (same pattern as blockBoardRoles, blockProfile, etc.)
+  const r = await ai(`Rewrite these career achievements as high-impact professional CV bullet points.
+    SOURCE: ${JSON.stringify(toRewrite)}
+    Rules:
+    - Return EXACTLY ${toRewrite.length} achievement(s) — do NOT add or invent extras
+    - Each must be ${minChars}-${maxChars} characters
+    - Start with a strong past-tense action verb
+    - Quantify results with metrics (%, $, numbers) where the source supports it
+    - Each must be a complete sentence ending with a period
+    - Do NOT invent facts not present in the source material
+    Return JSON: {"achievements": [""]}`);
+
+  const rewritten: string[] = (r.achievements || [])
+    .slice(0, toRewrite.length)
+    .map((a: any) => String(a || "").trim())
+    .filter((a: string) => a.length >= 20);
+
+  // Fall back to raw if AI returned nothing usable
+  return rewritten.length > 0 ? rewritten : toRewrite;
 }
 
 async function blockBoardRoles(cvData: any): Promise<any[]> {

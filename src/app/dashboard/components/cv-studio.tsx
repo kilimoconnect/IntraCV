@@ -580,7 +580,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     if (p[0] === "edu") { const e = aiData.education?.[+p[1]]; if (!e) return ""; if (p[2] === "degree") return e.degree || ""; if (p[2] === "school") return e.school || ""; if (p[2] === "year") return e.year || ""; }
     if (p[0] === "cert") { const e = aiData.certifications?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "issuer") return e.issuer || ""; }
     if (p[0] === "lang") { const e = aiData.languages?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "label") return e.label || ""; }
-    if (p[0] === "ref") { const e = aiData.references?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "title") return e.title || ""; }
+    if (p[0] === "ref") { const e = aiData.references?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "title") return e.title || ""; if (p[2] === "company") return e.company || ""; if (p[2] === "phone") return e.phone || ""; if (p[2] === "email") return e.email || ""; }
     if (p[0] === "proj") { const e = aiData.projects?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "description") return e.description || ""; if (p[2] === "tech") return e.tech || ""; }
     if (p[0] === "award") { const e = aiData.awards?.[+p[1]]; if (!e) return ""; if (p[2] === "description") return e.description || ""; return e.title || ""; }
     if (p[0] === "tool") return aiData.tools?.[+p[1]] || "";
@@ -646,6 +646,9 @@ export default function CvStudio({ userId, cvData }: Props) {
         const refs = [...(prev.references || [])]; const i = +p[1];
         if (p[2] === "name") refs[i] = { ...refs[i], name: value };
         else if (p[2] === "title") refs[i] = { ...refs[i], title: value };
+        else if (p[2] === "company") refs[i] = { ...refs[i], company: value };
+        else if (p[2] === "phone") refs[i] = { ...refs[i], phone: value };
+        else if (p[2] === "email") refs[i] = { ...refs[i], email: value };
         return { ...prev, references: refs };
       }
       if (p[0] === "proj") {

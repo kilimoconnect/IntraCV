@@ -416,9 +416,9 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                     <div key={i} style={{ padding: "8px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                       <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{ref.name}</div>
                       <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.title}</div>
-                      {ref.company && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
-                      {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
-                      {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                      {ref.company && <div data-cv-field={`ref.${i}.company`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
+                      {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
+                      {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
                   ))}
                 </div>
@@ -746,9 +746,9 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div key={i} style={{ padding: "8px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                       <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{ref.name}</div>
                       <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.title}</div>
-                      {ref.company && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
-                      {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
-                      {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                      {ref.company && <div data-cv-field={`ref.${i}.company`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
+                      {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
+                      {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
                   ))}
                 </div>
@@ -1108,9 +1108,9 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div key={i} style={{ padding: "8px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
                       <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{ref.name}</div>
                       <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.title}</div>
-                      {ref.company && <div style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
-                      {ref.phone && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
-                      {ref.email && <div style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
+                      {ref.company && <div data-cv-field={`ref.${i}.company`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
+                      {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
+                      {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
                   ))}
                 </div>
