@@ -19,9 +19,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+
+  // Guard: only instantiate when env vars are present — prevents SSR prerender
+  // crash on Vercel when NEXT_PUBLIC_SUPABASE_URL/KEY are not in the build env.
+  const [supabase] = useState<ReturnType<typeof createClient> | null>(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
+    return createClient();
+  });
 
   useEffect(() => {
+    if (!supabase) { setLoading(false); return; }
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,9 +45,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase]);
 
   const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
+    if (!supabase) return { error: new Error("Supabase not configured") };
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -49,11 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) return { error: new Error("Supabase not configured") };
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   };
 
