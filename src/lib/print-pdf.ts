@@ -1,90 +1,73 @@
 /**
  * Client-side CV PDF download via browser print API.
- * Opens a dedicated print window with the rendered CV HTML + all page
- * stylesheets (Tailwind, custom fonts, etc.) and auto-triggers print.
- * Works on all hosting plans — no server required.
+ *
+ * Strategy: clone the CV element directly onto document.body and print
+ * the current page — all Tailwind CSS, CSS variables, and fonts are
+ * already loaded so no async stylesheet fetching is needed and colors
+ * are always preserved. The transform:scale from the canvas preview
+ * is stripped from the clone so it prints at full A4 size.
  */
 export function printCvAsPdf(element: HTMLElement, filename: string): void {
-  const origin = window.location.origin;
+  const PRINT_CLASS = "__cv-print-only__";
+  const originalTitle = document.title;
+  document.title = filename;
 
-  // 1. Resolve all <link rel="stylesheet"> to absolute URLs.
-  const styleLinks = Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
-  )
-    .map((el) => {
-      const href = el.getAttribute("href") || "";
-      const abs = href.startsWith("http") ? href : `${origin}${href}`;
-      return `<link rel="stylesheet" href="${abs}" />`;
-    })
-    .join("\n");
+  // Clone and reset preview transform
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.classList.add(PRINT_CLASS);
+  clone.style.transform = "none";
+  clone.style.transformOrigin = "unset";
+  clone.style.position = "static";
+  clone.style.margin = "0";
+  clone.style.padding = "0";
+  clone.style.width = "794px";
+  document.body.appendChild(clone);
 
-  // 2. Copy every <style> from <head> verbatim (Tailwind v4 injects CSS
-  //    custom-property resets here; missing these strips all theme colors).
-  const inlineStyles = Array.from(
-    document.querySelectorAll<HTMLStyleElement>("head style")
-  )
-    .map((el) => el.outerHTML)
-    .join("\n");
-
-  const linkCount = document.querySelectorAll('link[rel="stylesheet"]').length;
-
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Please allow pop-ups for this site to download your CV as PDF.");
-    return;
-  }
-
-  win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${filename}</title>
-  ${styleLinks}
-  ${inlineStyles}
-  <style>
-    @page { size: 210mm 297mm; margin: 0; }
-    html, body { margin: 0; padding: 0; background: white; }
-    .cv-page-sheet {
-      width: 794px !important;
-      height: 1123px !important;
-      overflow: hidden !important;
-      page-break-after: always !important;
-      break-after: page !important;
+  // Inject print-only styles — hide the entire app, show only the clone
+  const styleEl = document.createElement("style");
+  styleEl.setAttribute("data-cv-print", "");
+  styleEl.textContent = `
+    @media print {
+      @page { size: 210mm 297mm; margin: 0; }
+      body > *:not(.${PRINT_CLASS}) { display: none !important; }
+      body { margin: 0 !important; padding: 0 !important; background: white !important; }
+      .${PRINT_CLASS} {
+        display: block !important;
+        position: static !important;
+        transform: none !important;
+        width: 794px !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .cv-page-sheet {
+        width: 794px !important;
+        height: 1123px !important;
+        overflow: hidden !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin-top: 0 !important;
+      }
+      .cv-page-sheet:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
     }
-    .cv-page-sheet:last-child {
-      page-break-after: auto !important;
-      break-after: auto !important;
-    }
-  </style>
-</head>
-<body>
-${element.outerHTML}
-<script>
-  (function () {
-    var total = ${linkCount};
-    var loaded = 0;
+  `;
+  document.head.appendChild(styleEl);
 
-    function doPrint() {
-      // Extra 200ms after all sheets load for fonts/images to settle
-      setTimeout(function () { window.print(); }, 200);
-    }
+  // Small delay lets the clone render before the print dialog opens
+  setTimeout(() => {
+    window.print();
 
-    if (total === 0) {
-      doPrint();
-      return;
-    }
-
-    document.querySelectorAll('link[rel="stylesheet"]').forEach(function (el) {
-      el.addEventListener('load',  function () { loaded++; if (loaded >= total) doPrint(); });
-      el.addEventListener('error', function () { loaded++; if (loaded >= total) doPrint(); });
-    });
-
-    // Safety fallback: print after 3 s regardless
-    setTimeout(doPrint, 3000);
-  })();
-</script>
-</body>
-</html>`);
-
-  win.document.close();
+    // Clean up after the dialog is dismissed
+    setTimeout(() => {
+      document.body.removeChild(clone);
+      document.head.removeChild(styleEl);
+      document.title = originalTitle;
+    }, 500);
+  }, 150);
 }
