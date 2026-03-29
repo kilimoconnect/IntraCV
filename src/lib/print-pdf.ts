@@ -1,10 +1,11 @@
 /**
  * Client-side CV PDF download via html2canvas + jsPDF.
  *
- * Strategy: clone the CV element off-screen at full A4 size (794×1123 px),
- * capture each .cv-page-sheet as a high-DPI canvas, then compile them into
- * a proper .pdf file that downloads automatically — no print dialog, works
- * on desktop and mobile.
+ * Strategy: temporarily remove the transform:scale applied by the canvas
+ * preview wrapper on the ORIGINAL element, capture each .cv-page-sheet
+ * directly (all computed styles already resolved), then restore the
+ * transform. Produces a faithful rendering on both desktop and mobile
+ * with no print dialog.
  */
 
 const A4_W_PX = 794;
@@ -16,28 +17,26 @@ export async function printCvAsPdf(element: HTMLElement, filename: string): Prom
     import("html2canvas"),
   ]);
 
-  // Clone and position off-screen so the transform:scale from the preview
-  // wrapper doesn't affect rendering.
-  const clone = element.cloneNode(true) as HTMLElement;
-  clone.style.cssText = [
-    "position:fixed",
-    "left:-9999px",
-    "top:0",
-    `width:${A4_W_PX}px`,
-    "transform:none",
-    "transform-origin:unset",
-    "margin:0",
-    "padding:0",
-    "z-index:-1",
-  ].join(";");
-  document.body.appendChild(clone);
+  // Wait for all fonts to finish loading before capture
+  await document.fonts.ready;
+
+  // Save and reset the preview transform so html2canvas sees full-size pages
+  const savedTransform = element.style.transform;
+  const savedOrigin = element.style.transformOrigin;
+  const savedWidth = element.style.width;
+  const savedPointerEvents = element.style.pointerEvents;
+
+  element.style.transform = "none";
+  element.style.transformOrigin = "unset";
+  element.style.width = `${A4_W_PX}px`;
+  element.style.pointerEvents = "none";
+
+  // Two frames: first reflow, second paint
+  await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
   try {
-    // Wait one frame so the browser computes layout for the clone
-    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-
-    const sheets = Array.from(clone.querySelectorAll<HTMLElement>(".cv-page-sheet"));
-    const pages = sheets.length > 0 ? sheets : [clone];
+    const sheets = Array.from(element.querySelectorAll<HTMLElement>(".cv-page-sheet"));
+    const pages = sheets.length > 0 ? sheets : [element];
 
     const pdf = new jsPDF({
       unit: "px",
@@ -58,6 +57,9 @@ export async function printCvAsPdf(element: HTMLElement, filename: string): Prom
         height: A4_H_PX,
         logging: false,
         imageTimeout: 0,
+        // Scroll offsets: ensure we capture from the top-left of each sheet
+        scrollX: 0,
+        scrollY: 0,
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
@@ -66,6 +68,10 @@ export async function printCvAsPdf(element: HTMLElement, filename: string): Prom
 
     pdf.save(`${filename}.pdf`);
   } finally {
-    document.body.removeChild(clone);
+    // Always restore the original preview transform
+    element.style.transform = savedTransform;
+    element.style.transformOrigin = savedOrigin;
+    element.style.width = savedWidth;
+    element.style.pointerEvents = savedPointerEvents;
   }
 }
