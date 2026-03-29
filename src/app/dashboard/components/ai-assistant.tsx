@@ -3,14 +3,76 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Send, Bot, UserIcon, Trash2 } from "lucide-react";
 
 interface AiAssistantProps {
   userId: string;
-  cvSummary: string;
+  cvData: Record<string, unknown>;
+}
+
+interface AiResponseSection {
+  title: string;
+  items: { heading: string; body: string }[];
+}
+
+interface AiResponse {
+  reply: string;
+  sections?: AiResponseSection[];
+  tips?: string[];
+}
+
+function parseAiContent(content: string): AiResponse | null {
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed && typeof parsed.reply === "string") return parsed as AiResponse;
+  } catch { /* not JSON */ }
+  return null;
+}
+
+function AssistantBubble({ content }: { content: string }) {
+  const data = parseAiContent(content);
+
+  if (!data) {
+    return <div className="whitespace-pre-wrap leading-relaxed text-sm">{content}</div>;
+  }
+
+  return (
+    <div className="space-y-3 text-sm">
+      {data.reply && (
+        <p className="leading-relaxed">{data.reply}</p>
+      )}
+
+      {data.sections?.map((sec, si) => (
+        <div key={si}>
+          <p className="font-semibold text-foreground mb-1.5">{sec.title}</p>
+          <div className="space-y-2">
+            {sec.items.map((item, ii) => (
+              <div key={ii} className="rounded-md border bg-background/60 px-3 py-2">
+                <p className="font-medium text-foreground text-xs mb-0.5">{item.heading}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {data.tips && data.tips.length > 0 && (
+        <div>
+          <p className="font-semibold text-foreground mb-1.5">Quick Tips</p>
+          <ul className="space-y-1">
+            {data.tips.map((tip, ti) => (
+              <li key={ti} className="flex gap-2 text-xs text-muted-foreground">
+                <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface ChatMessage {
@@ -19,7 +81,7 @@ interface ChatMessage {
   content: string;
 }
 
-export default function AiAssistant({ userId, cvSummary }: AiAssistantProps) {
+export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -64,7 +126,7 @@ export default function AiAssistant({ userId, cvSummary }: AiAssistantProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
-          cvSummary,
+          profile: cvData,
         }),
       });
       const json = await res.json();
@@ -149,12 +211,14 @@ export default function AiAssistant({ userId, cvSummary }: AiAssistantProps) {
                 <Bot className="h-4 w-4 text-primary" />
               </div>
             )}
-            <div className={`max-w-[80%] rounded-lg px-4 py-2.5 text-sm ${
+            <div className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
               msg.role === "user"
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary text-primary-foreground text-sm"
                 : "bg-muted"
             }`}>
-              <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+              {msg.role === "user"
+                ? <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                : <AssistantBubble content={msg.content} />}
             </div>
             {msg.role === "user" && (
               <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shrink-0">

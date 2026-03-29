@@ -3,24 +3,56 @@ import { openaiClient } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, cvSummary } = await req.json();
+    const { messages, profile } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Messages array required" }, { status: 400 });
     }
 
-    const systemPrompt = `You are an expert AI Career Assistant. You help users with:
-- Career advice and planning
-- Job search strategies
-- Interview preparation tips
-- Salary negotiation guidance
-- Resume/CV improvement suggestions
-- Industry insights and trends
-- Professional development recommendations
+    // Build a rich, readable profile context from the user's saved data
+    const lines: string[] = [];
+    if (profile) {
+      const p = profile;
+      if (p.personalInfo?.fullName) lines.push(`Name: ${p.personalInfo.fullName}`);
+      if (p.personalInfo?.headline)  lines.push(`Headline: ${p.personalInfo.headline}`);
+      if (p.personalInfo?.location)  lines.push(`Location: ${p.personalInfo.location}`);
+      if (p.summary)                 lines.push(`Summary: ${p.summary}`);
+      if (p.experiences?.length)     lines.push(`Experience:\n${p.experiences.map((e: any) => `  - ${e.title} at ${e.company} (${e.startDate} – ${e.endDate || "present"})`).join("\n")}`);
+      if (p.education?.length)       lines.push(`Education:\n${p.education.map((e: any) => `  - ${e.degree}, ${e.institution} (${e.year})`).join("\n")}`);
+      if (p.skills?.length)          lines.push(`Skills: ${p.skills.map((s: any) => s.name).join(", ")}`);
+      if (p.certifications?.length)  lines.push(`Certifications: ${p.certifications.map((c: any) => c.name).join(", ")}`);
+      if (p.languages?.length)       lines.push(`Languages: ${p.languages.map((l: any) => `${l.name} (${l.proficiency})`).join(", ")}`);
+      if (p.keyAchievements?.length) lines.push(`Key Achievements:\n${p.keyAchievements.map((a: any) => `  - ${a.achievement}`).join("\n")}`);
+    }
+    const profileContext = lines.length
+      ? `The user's saved profile data:\n${lines.join("\n")}`
+      : "No profile data available yet.";
 
-${cvSummary ? `The user's CV summary for context:\n${cvSummary}` : ""}
+    const systemPrompt = `You are an expert AI Career Assistant embedded in IntraCV. You help users with career advice, job search, interview preparation, salary negotiation, CV improvement, and professional development.
 
-Be concise, actionable, and supportive. Format responses with markdown for readability.`;
+ALWAYS respond with valid JSON matching this exact schema (no markdown, no text outside the JSON):
+{
+  "reply": "1-2 sentence opening that directly addresses the question, referencing the user's specific background",
+  "sections": [
+    {
+      "title": "Section title",
+      "items": [
+        { "heading": "Action or point", "body": "Detailed, specific explanation" }
+      ]
+    }
+  ],
+  "tips": ["Short actionable tip 1", "Short actionable tip 2"]
+}
+
+Rules:
+- "reply" is always present
+- Include "sections" and "tips" only when giving structured advice
+- For simple conversational replies, use only "reply" with empty arrays
+- Always reference the user's actual name, job titles, and skills from their profile
+- Never use markdown syntax (###, **, *, etc.) inside any string value
+- Output raw JSON only
+
+${profileContext}`;
 
     const openai = openaiClient();
     const completion = await openai.chat.completions.create({
@@ -30,7 +62,8 @@ Be concise, actionable, and supportive. Format responses with markdown for reada
         ...messages.slice(-20),
       ],
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 1200,
+      response_format: { type: "json_object" },
     });
 
     const content = completion.choices[0]?.message?.content;

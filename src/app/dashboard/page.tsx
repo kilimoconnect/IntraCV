@@ -281,7 +281,7 @@ function DashboardPage() {
       )}
 
       {visibleTab === "assistant" && (
-        <AiAssistant userId={user.id} cvSummary={summary} />
+        <AiAssistant userId={user.id} cvData={cvData} />
       )}
 
       {visibleTab === "settings" && (
