@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
@@ -37,6 +37,7 @@ function DashboardPage() {
   const supabase = createClient();
 
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnce = useRef(false);
   const activeTab = searchParams.get("tab") || "profile";
   const [tabLoading, setTabLoading] = useState(false);
   const [visibleTab, setVisibleTab] = useState(activeTab);
@@ -75,7 +76,7 @@ function DashboardPage() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
+    if (!hasLoadedOnce.current) setLoading(true);
     try {
       const [piRes, sumRes, expRes, eduRes, skillRes, certRes, langRes, refRes, declRes,
              achRes, awardsRes, memRes, projRes, brRes, etRes, pubRes, toolRes, volRes] =
@@ -181,6 +182,7 @@ function DashboardPage() {
       console.error("Failed to load dashboard data:", err);
     } finally {
       setLoading(false);
+      hasLoadedOnce.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -219,15 +221,15 @@ function DashboardPage() {
     );
   }
 
-  // Build cvData object for studio/assistant — all 19 CVTemplateData fields
-  const cvData = {
+  // Build cvData object for studio/assistant — memoized to prevent reference churn
+  const cvData = useMemo(() => ({
     personalInfo, summary, experiences, education,
     skills, certifications, languages, referees,
     declaration,
     keyAchievements, awards, memberships, projects,
     boardRoles, executiveTraining, publications,
     tools, volunteer,
-  };
+  }), [personalInfo, summary, experiences, education, skills, certifications, languages, referees, declaration, keyAchievements, awards, memberships, projects, boardRoles, executiveTraining, publications, tools, volunteer]);
 
   return (
     <AppShell activeNav={activeTab}>
