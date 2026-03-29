@@ -10,7 +10,44 @@
 // ═══════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+
+// Allow up to 60s for PDF generation on Vercel
+export const maxDuration = 60;
+
+// Remote Chromium binary for Vercel/Lambda (downloaded at runtime, cached in /tmp)
+const CHROMIUM_REMOTE_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar";
+
+async function launchBrowser() {
+  const isLocal = process.env.NODE_ENV === "development";
+
+  if (isLocal) {
+    // Local dev: use system Chrome (set CHROME_EXECUTABLE_PATH to override)
+    const executablePath =
+      process.env.CHROME_EXECUTABLE_PATH ||
+      (process.platform === "win32"
+        ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        : process.platform === "darwin"
+        ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        : "/usr/bin/google-chrome");
+
+    return puppeteer.launch({
+      executablePath,
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--font-render-hinting=none"],
+    });
+  }
+
+  // Vercel/serverless: use @sparticuz/chromium-min (downloads Chromium from GitHub)
+  const chromium = (await import("@sparticuz/chromium-min")).default;
+  return puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
+    headless: chromium.headless as boolean,
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,17 +66,7 @@ export async function POST(req: NextRequest) {
       ? `${safeName}_${industry}_CV_${year}.pdf`
       : `${safeName}_CV_${year}.pdf`;
 
-    // Launch headless Chromium
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--font-render-hinting=none",
-      ],
-    });
+    const browser = await launchBrowser();
 
     const page = await browser.newPage();
 
