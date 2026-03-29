@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ChevronDown, ChevronRight, Sparkles, Loader2, AlertTriangle, Trash2 } from "lucide-react";
 import type { CategoryCVData } from "./cv-layout-types";
 
@@ -11,24 +11,43 @@ async function aiCondense(st: string, content: unknown, mc?: number, cnt?: numbe
   return (await res.json()).result;
 }
 
-function Acc({ title, warn, children, aiBtn, busy }: { title: string; warn: boolean; children: React.ReactNode; aiBtn?: () => void; busy?: boolean }) {
-  const [open, setOpen] = useState(warn);
+function Acc({ title, warn, children, aiBtn, busy, openKey, onToggle }: { title: string; warn: boolean; children: React.ReactNode; aiBtn?: () => void; busy?: boolean; openKey: string | null; onToggle: (key: string | null) => void }) {
+  const isOpen = openKey === title;
   return (<div className={`border rounded-lg overflow-hidden ${warn ? "border-amber-300 bg-amber-50/50" : "border-slate-200"}`}>
-    <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-50/50">
+    <button onClick={() => onToggle(isOpen ? null : title)} className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-50/50">
       <div className="flex items-center gap-2 min-w-0">
-        {open ? <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
+        {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
         <span className="text-sm font-semibold text-slate-700 truncate">{title}</span>
         {warn && <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full shrink-0"><AlertTriangle className="h-3 w-3" />Overflow</span>}
       </div>
       {aiBtn && <span role="button" onClick={e => { e.stopPropagation(); aiBtn(); }} className={`flex items-center gap-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-md shrink-0 ${busy ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}>{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}AI Fix</span>}
     </button>
-    {open && <div className="px-3 pb-3 space-y-2">{children}</div>}
+    {isOpen && <div className="px-3 pb-3 space-y-2">{children}</div>}
   </div>);
 }
 
 export default function CvAdjustPanel({ data, onChange, overflowSections }: AdjustPanelProps) {
   const [busy, setBusy] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<string | null>(null);
   const patch = useCallback((p: Partial<CategoryCVData>) => onChange({ ...data, ...p }), [data, onChange]);
+
+  // Auto-open first overflow section if any
+  useEffect(() => {
+    if (overflowSections.size > 0 && !openSection) {
+      const firstOverflow = Array.from(overflowSections)[0];
+      const titleMap: Record<string, string> = {
+        profile: "Professional Summary",
+        experience: "Experience",
+        skills: "Skills",
+        achievements: "Achievements",
+        education: "Education",
+        certifications: "Certifications",
+        references: "References",
+        languages: "Languages",
+      };
+      setOpenSection(titleMap[firstOverflow] || null);
+    }
+  }, [overflowSections, openSection]);
 
   const updateExp = useCallback((idx: number, field: string, value: unknown) => {
     const exps = [...(data.experience || [])]; exps[idx] = { ...exps[idx], [field]: value }; patch({ experience: exps });
@@ -88,7 +107,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Profile */}
       {data.profile && (
-        <Acc title="Professional Summary" warn={overflowSections.has("profile")} aiBtn={aiProfile} busy={busy === "profile"}>
+        <Acc title="Professional Summary" warn={overflowSections.has("profile")} aiBtn={aiProfile} busy={busy === "profile"} openKey={openSection} onToggle={setOpenSection}>
           <textarea className="w-full text-sm border border-slate-200 rounded-md px-3 py-2 resize-y focus:outline-none focus:ring-1 focus:ring-indigo-300 leading-relaxed" value={data.profile} onChange={e => patch({ profile: e.target.value })} rows={5} />
           <div className="text-xs text-slate-400 text-right">{data.profile.length} chars</div>
         </Acc>
@@ -96,7 +115,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Experience */}
       {data.experience?.length > 0 && (
-        <Acc title={`Experience (${data.experience.length} roles)`} warn={overflowSections.has("experience")}>
+        <Acc title={`Experience (${data.experience.length} roles)`} warn={overflowSections.has("experience")} openKey={openSection} onToggle={setOpenSection}>
           <div className="space-y-3">
             {data.experience.map((exp, i) => (
               <div key={i} className="border border-slate-100 rounded-md p-2 bg-white">
@@ -128,7 +147,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Skills */}
       {data.skills?.length > 0 && (
-        <Acc title={`Skills (${data.skills.length})`} warn={overflowSections.has("skills")} aiBtn={aiSkills} busy={busy === "skills"}>
+        <Acc title={`Skills (${data.skills.length})`} warn={overflowSections.has("skills")} aiBtn={aiSkills} busy={busy === "skills"} openKey={openSection} onToggle={setOpenSection}>
           <div className="flex flex-wrap gap-1">
             {data.skills.map((s, i) => (
               <span key={i} className="flex items-center gap-1.5 text-sm bg-slate-100 border border-slate-200 px-3 py-1 rounded-full group">{s}
@@ -141,7 +160,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Achievements */}
       {data.achievements && data.achievements.length > 0 && (
-        <Acc title={`Achievements (${data.achievements.length})`} warn={overflowSections.has("achievements")} aiBtn={aiAchievements} busy={busy === "achievements"}>
+        <Acc title={`Achievements (${data.achievements.length})`} warn={overflowSections.has("achievements")} aiBtn={aiAchievements} busy={busy === "achievements"} openKey={openSection} onToggle={setOpenSection}>
           <div className="space-y-1">
             {data.achievements.map((a, i) => (
               <div key={i} className="flex items-start gap-1 group">
@@ -156,7 +175,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Education */}
       {data.education?.length > 0 && (
-        <Acc title={`Education (${data.education.length})`} warn={overflowSections.has("education")}>
+        <Acc title={`Education (${data.education.length})`} warn={overflowSections.has("education")} openKey={openSection} onToggle={setOpenSection}>
           {data.education.map((edu, i) => (
             <div key={i} className="flex items-center gap-1 group">
               <div className="flex-1 min-w-0">
@@ -171,7 +190,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Certifications */}
       {data.certifications && data.certifications.length > 0 && (
-        <Acc title={`Certifications (${data.certifications.length})`} warn={overflowSections.has("certifications")}>
+        <Acc title={`Certifications (${data.certifications.length})`} warn={overflowSections.has("certifications")} openKey={openSection} onToggle={setOpenSection}>
           {data.certifications.map((c, i) => (
             <div key={i} className="flex items-center gap-1 group">
               <span className="text-sm text-slate-600 flex-1 truncate">{c.name} - {c.issuer}</span>
@@ -183,7 +202,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* References */}
       {data.references?.length > 0 && (
-        <Acc title={`References (${data.references.length})`} warn={overflowSections.has("references")}>
+        <Acc title={`References (${data.references.length})`} warn={overflowSections.has("references")} openKey={openSection} onToggle={setOpenSection}>
           {data.references.map((r, i) => (
             <div key={i} className="flex items-center gap-1 group">
               <span className="text-sm text-slate-600 flex-1 truncate">{r.name} - {r.title}</span>
@@ -195,7 +214,7 @@ export default function CvAdjustPanel({ data, onChange, overflowSections }: Adju
 
       {/* Languages */}
       {data.languages && data.languages.length > 0 && (
-        <Acc title={`Languages (${data.languages.length})`} warn={overflowSections.has("languages")}>
+        <Acc title={`Languages (${data.languages.length})`} warn={overflowSections.has("languages")} openKey={openSection} onToggle={setOpenSection}>
           {data.languages.map((l, i) => (
             <div key={i} className="flex items-center gap-2 group text-sm">
               <span className="text-slate-600 font-medium">{l.name}</span>
