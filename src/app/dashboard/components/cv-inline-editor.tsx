@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Trash2, Plus } from "lucide-react";
 
 export interface InlineEditorState {
   field: string;
@@ -14,104 +14,211 @@ export interface InlineEditorState {
 interface Props {
   editor: InlineEditorState;
   onSave: (field: string, value: string) => void;
+  onDelete?: (field: string) => void;
+  onAddBullet?: (field: string) => void;
   onClose: () => void;
 }
 
-export default function CVInlineEditor({ editor, onSave, onClose }: Props) {
+function fieldLabel(field: string): string {
+  const p = field.split(".");
+  const num = (n: string) => `#${+n + 1}`;
+  if (p[0] === "fullName") return "Full Name";
+  if (p[0] === "title") return "Job Title";
+  if (p[0] === "profile") return "Professional Summary";
+  if (p[0] === "exp") {
+    const n = num(p[1]);
+    if (p[2] === "role") return `Experience ${n} – Role`;
+    if (p[2] === "company") return `Experience ${n} – Company`;
+    if (p[2] === "dates") return `Experience ${n} – Dates`;
+    if (p[2] === "bullet") return `Experience ${n} – Bullet ${num(p[3])}`;
+    return `Experience ${n}`;
+  }
+  if (p[0] === "hist") {
+    const n = num(p[1]);
+    if (p[2] === "role") return `History ${n} – Role`;
+    if (p[2] === "company") return `History ${n} – Company`;
+    if (p[2] === "dates") return `History ${n} – Dates`;
+    if (p[2] === "bullet") return `History ${n} – Bullet ${num(p[3])}`;
+    return `History ${n}`;
+  }
+  if (p[0] === "ach") return `Achievement ${num(p[1])}`;
+  if (p[0] === "skill") return `Skill ${num(p[1])}`;
+  if (p[0] === "edu") {
+    const n = num(p[1]);
+    if (p[2] === "degree") return `Education ${n} – Degree`;
+    if (p[2] === "school") return `Education ${n} – School`;
+    if (p[2] === "year") return `Education ${n} – Year`;
+    return `Education ${n}`;
+  }
+  if (p[0] === "cert") {
+    const n = num(p[1]);
+    if (p[2] === "name") return `Cert ${n} – Name`;
+    if (p[2] === "issuer") return `Cert ${n} – Issuer`;
+    return `Cert ${n}`;
+  }
+  if (p[0] === "lang") {
+    const n = num(p[1]);
+    if (p[2] === "name") return `Language ${n} – Name`;
+    if (p[2] === "label") return `Language ${n} – Level`;
+    return `Language ${n}`;
+  }
+  if (p[0] === "proj") {
+    const n = num(p[1]);
+    if (p[2] === "name") return `Project ${n} – Title`;
+    if (p[2] === "description") return `Project ${n} – Description`;
+    if (p[2] === "tech") return `Project ${n} – Tech Stack`;
+    return `Project ${n}`;
+  }
+  if (p[0] === "award") return `Award ${num(p[1])} – Title`;
+  if (p[0] === "ref") {
+    const n = num(p[1]);
+    if (p[2] === "name") return `Reference ${n} – Name`;
+    if (p[2] === "title") return `Reference ${n} – Title`;
+    return `Reference ${n}`;
+  }
+  return field.replace(/\./g, " › ");
+}
+
+function isDeletable(field: string): boolean {
+  const p = field.split(".");
+  return ["ach", "skill", "proj", "award"].includes(p[0]) ||
+    (p[0] === "exp" && p[2] === "bullet") ||
+    (p[0] === "hist" && p[2] === "bullet");
+}
+
+function isBulletParent(field: string): boolean {
+  const p = field.split(".");
+  return (p[0] === "exp" || p[0] === "hist") && p[2] === "bullet";
+}
+
+export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, onClose }: Props) {
   const [text, setText] = useState(editor.value);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setText(editor.value);
+    setConfirmDelete(false);
     if (editor.multiline) {
-      textareaRef.current?.focus();
-      textareaRef.current?.select();
+      setTimeout(() => { textareaRef.current?.focus(); textareaRef.current?.select(); }, 10);
     } else {
-      inputRef.current?.focus();
-      inputRef.current?.select();
+      setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select(); }, 10);
     }
-  }, [editor.multiline]);
+  }, [editor.field, editor.value, editor.multiline]);
 
   const save = () => {
     if (text.trim() !== "") onSave(editor.field, text);
     onClose();
   };
 
+  const handleDelete = () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    onDelete?.(editor.field);
+    onClose();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") { onClose(); return; }
     if (e.key === "Enter" && !e.shiftKey && !editor.multiline) { e.preventDefault(); save(); }
-    if (e.key === "Enter" && e.metaKey) { e.preventDefault(); save(); }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); }
   };
 
-  const W = Math.max(editor.width, 260);
-  const maxLeft = typeof window !== "undefined" ? window.innerWidth - W - 12 : 0;
+  const W = 460;
+  const maxLeft = typeof window !== "undefined" ? window.innerWidth - W - 16 : 0;
   const left = Math.max(8, Math.min(editor.x, maxLeft));
-  const top = editor.y;
+  const maxTop = typeof window !== "undefined" ? window.innerHeight - 280 : 0;
+  const top = Math.max(8, Math.min(editor.y, maxTop));
 
-  const sharedStyle: React.CSSProperties = {
-    width: W,
-    fontSize: 13,
-    lineHeight: "1.5",
-    color: "#1e293b",
-    fontFamily: "inherit",
-    outline: "none",
-    background: "transparent",
-    border: "none",
-    padding: 0,
-    resize: "none",
-  };
+  const canDelete = isDeletable(editor.field) && !!onDelete;
+  const canAddBullet = isBulletParent(editor.field) && !!onAddBullet;
 
   return (
     <>
-      {/* Backdrop — click to save */}
+      {/* Backdrop */}
       <div className="fixed inset-0 z-[9998]" onClick={save} />
 
-      {/* Floating editor box */}
+      {/* Floating editor */}
       <div
-        className="fixed z-[9999] bg-white rounded-xl shadow-2xl border-2 border-indigo-400 overflow-hidden"
+        className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden flex flex-col"
         style={{ left, top, width: W }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header bar */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-indigo-50 border-b border-indigo-100">
-          <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wide truncate max-w-[180px]">
-            {editor.field.replace(/\./g, " › ")}
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500">
+          <span className="text-xs font-semibold text-white tracking-wide">
+            ✏️ {fieldLabel(editor.field)}
           </span>
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={onClose} className="p-0.5 text-slate-400 hover:text-red-500 rounded">
-              <X className="h-3.5 w-3.5" />
-            </button>
-            <button onClick={save} className="p-0.5 text-indigo-500 hover:text-indigo-700 rounded">
-              <Check className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          <button onClick={onClose} className="text-indigo-200 hover:text-white transition-colors ml-2">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* Input area */}
-        <div className="px-3 py-2">
+        {/* Input */}
+        <div className="px-4 py-3">
           {editor.multiline ? (
             <textarea
               ref={textareaRef}
-              style={sharedStyle}
+              className="w-full text-sm text-slate-800 leading-relaxed outline-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 resize-none focus:border-indigo-400 focus:bg-white transition-colors"
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKeyDown}
-              rows={4}
+              rows={5}
+              placeholder="Type here…"
             />
           ) : (
             <input
               ref={inputRef}
-              style={sharedStyle}
+              className="w-full text-sm text-slate-800 outline-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:border-indigo-400 focus:bg-white transition-colors"
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKeyDown}
+              placeholder="Type here…"
             />
           )}
         </div>
 
-        {/* Footer hint */}
-        <div className="px-3 py-1 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-400">
-          {editor.multiline ? "⌘Enter to save · Esc to cancel" : "Enter to save · Esc to cancel"}
+        {/* Actions */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-t border-slate-100 gap-2">
+          {/* Left: delete + add-bullet */}
+          <div className="flex items-center gap-2">
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all ${
+                  confirmDelete
+                    ? "bg-red-500 border-red-500 text-white"
+                    : "border-red-200 text-red-500 hover:bg-red-50"
+                }`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {confirmDelete ? "Confirm delete" : "Delete"}
+              </button>
+            )}
+            {canAddBullet && (
+              <button
+                onClick={() => { onAddBullet!(editor.field); onClose(); }}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add bullet
+              </button>
+            )}
+          </div>
+
+          {/* Right: hint + save */}
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-slate-400">
+              {editor.multiline ? "Ctrl+Enter · Esc" : "Enter · Esc"}
+            </span>
+            <button
+              onClick={save}
+              className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors font-medium"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </>

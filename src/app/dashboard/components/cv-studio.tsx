@@ -569,12 +569,15 @@ export default function CvStudio({ userId, cvData }: Props) {
     if (p[0] === "fullName") return aiData.fullName || "";
     if (p[0] === "title") return aiData.title || "";
     if (p[0] === "exp") { const e = aiData.experience?.[+p[1]]; if (!e) return ""; if (p[2] === "role") return e.role || ""; if (p[2] === "company") return e.company || ""; if (p[2] === "dates") return e.dates || ""; if (p[2] === "bullet") return e.bullets?.[+p[3]] || ""; }
+    if (p[0] === "hist") { const e = aiData.history?.[+p[1]]; if (!e) return ""; if (p[2] === "role") return e.role || ""; if (p[2] === "company") return e.company || ""; if (p[2] === "dates") return e.dates || ""; if (p[2] === "bullet") return e.bullets?.[+p[3]] || ""; }
     if (p[0] === "skill") return aiData.skills?.[+p[1]] || "";
     if (p[0] === "ach") return aiData.achievements?.[+p[1]] || "";
     if (p[0] === "edu") { const e = aiData.education?.[+p[1]]; if (!e) return ""; if (p[2] === "degree") return e.degree || ""; if (p[2] === "school") return e.school || ""; if (p[2] === "year") return e.year || ""; }
     if (p[0] === "cert") { const e = aiData.certifications?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "issuer") return e.issuer || ""; }
     if (p[0] === "lang") { const e = aiData.languages?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "label") return e.label || ""; }
     if (p[0] === "ref") { const e = aiData.references?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "title") return e.title || ""; }
+    if (p[0] === "proj") { const e = aiData.projects?.[+p[1]]; if (!e) return ""; if (p[2] === "name") return e.name || ""; if (p[2] === "description") return e.description || ""; if (p[2] === "tech") return e.tech || ""; }
+    if (p[0] === "award") { const e = aiData.awards?.[+p[1]]; if (!e) return ""; return e.title || ""; }
     return "";
   }, [aiData]);
 
@@ -592,6 +595,14 @@ export default function CvStudio({ userId, cvData }: Props) {
         else if (p[2] === "dates") exps[i] = { ...exps[i], dates: value };
         else if (p[2] === "bullet") { const bs = [...(exps[i].bullets || [])]; bs[+p[3]] = value; exps[i] = { ...exps[i], bullets: bs }; }
         return { ...prev, experience: exps };
+      }
+      if (p[0] === "hist") {
+        const hist = [...(prev.history || [])]; const i = +p[1];
+        if (p[2] === "role") hist[i] = { ...hist[i], role: value };
+        else if (p[2] === "company") hist[i] = { ...hist[i], company: value };
+        else if (p[2] === "dates") hist[i] = { ...hist[i], dates: value };
+        else if (p[2] === "bullet") { const bs = [...(hist[i].bullets || [])]; bs[+p[3]] = value; hist[i] = { ...hist[i], bullets: bs }; }
+        return { ...prev, history: hist };
       }
       if (p[0] === "skill") { const s = [...(prev.skills || [])]; s[+p[1]] = value; return { ...prev, skills: s }; }
       if (p[0] === "ach") { const a = [...(prev.achievements || [])]; a[+p[1]] = value; return { ...prev, achievements: a }; }
@@ -619,6 +630,58 @@ export default function CvStudio({ userId, cvData }: Props) {
         if (p[2] === "name") refs[i] = { ...refs[i], name: value };
         else if (p[2] === "title") refs[i] = { ...refs[i], title: value };
         return { ...prev, references: refs };
+      }
+      if (p[0] === "proj") {
+        const proj = [...(prev.projects || [])]; const i = +p[1];
+        if (p[2] === "name") proj[i] = { ...proj[i], name: value };
+        else if (p[2] === "description") proj[i] = { ...proj[i], description: value };
+        else if (p[2] === "tech") proj[i] = { ...proj[i], tech: value };
+        return { ...prev, projects: proj };
+      }
+      if (p[0] === "award") {
+        const awards = [...(prev.awards || [])]; const i = +p[1];
+        awards[i] = { ...awards[i], title: value };
+        return { ...prev, awards };
+      }
+      return prev;
+    });
+  }, []);
+
+  const deleteField = useCallback((field: string) => {
+    setAiData(prev => {
+      if (!prev) return prev;
+      const p = field.split(".");
+      if (p[0] === "ach") { const a = [...(prev.achievements || [])]; a.splice(+p[1], 1); return { ...prev, achievements: a }; }
+      if (p[0] === "skill") { const s = [...(prev.skills || [])]; s.splice(+p[1], 1); return { ...prev, skills: s }; }
+      if (p[0] === "proj") { const pr = [...(prev.projects || [])]; pr.splice(+p[1], 1); return { ...prev, projects: pr }; }
+      if (p[0] === "award") { const aw = [...(prev.awards || [])]; aw.splice(+p[1], 1); return { ...prev, awards: aw }; }
+      if (p[0] === "exp" && p[2] === "bullet") {
+        const exps = [...(prev.experience || [])]; const i = +p[1];
+        const bs = [...(exps[i].bullets || [])]; bs.splice(+p[3], 1);
+        exps[i] = { ...exps[i], bullets: bs }; return { ...prev, experience: exps };
+      }
+      if (p[0] === "hist" && p[2] === "bullet") {
+        const hist = [...(prev.history || [])]; const i = +p[1];
+        const bs = [...(hist[i].bullets || [])]; bs.splice(+p[3], 1);
+        hist[i] = { ...hist[i], bullets: bs }; return { ...prev, history: hist };
+      }
+      return prev;
+    });
+  }, []);
+
+  const addBullet = useCallback((field: string) => {
+    setAiData(prev => {
+      if (!prev) return prev;
+      const p = field.split(".");
+      if (p[0] === "exp") {
+        const exps = [...(prev.experience || [])]; const i = +p[1];
+        const bs = [...(exps[i].bullets || []), "New bullet point"];
+        exps[i] = { ...exps[i], bullets: bs }; return { ...prev, experience: exps };
+      }
+      if (p[0] === "hist") {
+        const hist = [...(prev.history || [])]; const i = +p[1];
+        const bs = [...(hist[i].bullets || []), "New bullet point"];
+        hist[i] = { ...hist[i], bullets: bs }; return { ...prev, history: hist };
       }
       return prev;
     });
@@ -1070,6 +1133,8 @@ export default function CvStudio({ userId, cvData }: Props) {
           <CVInlineEditor
             editor={inlineEditor}
             onSave={setFieldValue}
+            onDelete={deleteField}
+            onAddBullet={addBullet}
             onClose={() => setInlineEditor(null)}
           />
         )}
