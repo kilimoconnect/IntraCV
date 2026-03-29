@@ -203,6 +203,17 @@ function DashboardPage() {
     }
   }, [activeTab, visibleTab]);
 
+  // Build cvData object for studio/assistant — memoized to prevent reference churn
+  // Must be before early returns (Rules of Hooks)
+  const cvData = useMemo(() => ({
+    personalInfo, summary, experiences, education,
+    skills, certifications, languages, referees,
+    declaration,
+    keyAchievements, awards, memberships, projects,
+    boardRoles, executiveTraining, publications,
+    tools, volunteer,
+  }), [personalInfo, summary, experiences, education, skills, certifications, languages, referees, declaration, keyAchievements, awards, memberships, projects, boardRoles, executiveTraining, publications, tools, volunteer]);
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -220,16 +231,6 @@ function DashboardPage() {
       </div>
     );
   }
-
-  // Build cvData object for studio/assistant — memoized to prevent reference churn
-  const cvData = useMemo(() => ({
-    personalInfo, summary, experiences, education,
-    skills, certifications, languages, referees,
-    declaration,
-    keyAchievements, awards, memberships, projects,
-    boardRoles, executiveTraining, publications,
-    tools, volunteer,
-  }), [personalInfo, summary, experiences, education, skills, certifications, languages, referees, declaration, keyAchievements, awards, memberships, projects, boardRoles, executiveTraining, publications, tools, volunteer]);
 
   return (
     <AppShell activeNav={activeTab}>
