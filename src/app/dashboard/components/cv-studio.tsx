@@ -977,7 +977,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       {/* CV Preview + Adjust Panel */}
       <div className={`flex gap-4 ${adjustOpen ? "flex-col lg:flex-row" : ""}`}>
         {adjustOpen && aiData && (
-          <div className="w-full lg:w-[340px] lg:min-w-[340px] lg:max-h-[80vh] border border-slate-200 rounded-xl bg-white p-3 shadow-sm">
+          <div className="w-full lg:w-[480px] lg:min-w-[480px] lg:max-h-[85vh] border border-slate-200 rounded-xl bg-white p-4 shadow-sm overflow-y-auto">
             <CvAdjustPanel data={aiData} onChange={setAiData} overflowSections={overflowSections} />
           </div>
         )}

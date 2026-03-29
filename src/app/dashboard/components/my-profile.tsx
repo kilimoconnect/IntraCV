@@ -566,9 +566,14 @@ export default function MyProfile({
             {categoryResult.label}
           </div>
         </div>
-        <Button size="sm" onClick={() => router.push("/cv-builder")}>
-          <Pencil className="mr-2 h-4 w-4" /> Edit CV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="default" onClick={() => router.push("/dashboard?tab=studio")}>
+            <Sparkles className="mr-2 h-4 w-4" /> Generate CV
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => router.push("/cv-builder")}>
+            <Pencil className="mr-2 h-4 w-4" /> Edit CV
+          </Button>
+        </div>
       </div>
 
       {/* Missing Sections Warning */}
