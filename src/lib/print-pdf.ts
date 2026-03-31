@@ -1,123 +1,88 @@
 /**
- * Client-side CV PDF download via browser print API.
+ * Client-side CV PDF download via html2canvas + jsPDF.
  *
- * Uses window.print() with @media print CSS to generate a real PDF
- * with selectable text and proper fonts. Works on desktop and mobile.
- * Fixes mobile viewport issues by setting zoom: 1 and overflow: visible
- * in print mode so browsers don't scale down the 794px A4 content.
+ * Renders a real .pdf file download with no browser print dialog.
+ * Works identically on desktop and mobile (iOS, Android, all browsers).
+ *
+ * Strategy:
+ *  1. Clone the CV element and strip the transform:scale used in the preview.
+ *  2. Position the clone off-screen at the true A4 width (794 px) so fonts
+ *     and layout render at full resolution.
+ *  3. Capture each .cv-page-sheet with html2canvas at 2× device-pixel-ratio.
+ *  4. Pack the captured images into a jsPDF A4 document.
+ *  5. Trigger a browser file-save (no dialog, no user interaction required).
  */
 
-export function printCvAsPdf(element: HTMLElement, filename: string): void {
-  const PRINT_CLASS = "__cv-print-wrapper__";
-  const originalTitle = document.title;
-  document.title = filename;
+const A4_PX_W = 794;
+const A4_PX_H = 1123;
+const A4_MM_W = 210;
+const A4_MM_H = 297;
 
-  // Clone the CV element to avoid mutating the live preview
+export async function downloadCvAsPdf(element: HTMLElement, filename: string): Promise<void> {
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
+
+  // Clone so we never mutate the live preview
   const clone = element.cloneNode(true) as HTMLElement;
-  clone.classList.add(PRINT_CLASS);
-
-  // Reset any transform/scale from the preview
-  clone.style.transform = "none";
-  clone.style.transformOrigin = "unset";
-  clone.style.position = "relative";
-  clone.style.width = "100%";
-  clone.style.maxWidth = "100%";
-  clone.style.margin = "0 auto";
-
-  // Create a clean print wrapper
-  const wrapper = document.createElement("div");
-  wrapper.style.cssText = `
+  clone.style.cssText = `
     position: fixed;
-    top: 0;
+    top: -${A4_PX_H * 10}px;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: ${A4_PX_W}px;
+    min-width: ${A4_PX_W}px;
+    transform: none !important;
+    transform-origin: unset !important;
+    z-index: -9999;
+    visibility: visible;
+    opacity: 1;
     background: white;
-    z-index: 999999;
     overflow: visible;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px 0;
   `;
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
+  document.body.appendChild(clone);
 
-  // Inject print-only styles
-  const styleEl = document.createElement("style");
-  styleEl.setAttribute("data-cv-print", "");
-  styleEl.textContent = `
-    @media print {
-      @page { size: 210mm 297mm; margin: 0; }
-      html, body {
-        width: 100vw !important;
-        height: 100vh !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: white !important;
-        overflow: visible !important;
-        zoom: 1 !important;
-      }
-      body > *:not(.${PRINT_CLASS}) { display: none !important; }
-      .${PRINT_CLASS} {
-        display: block !important;
-        position: static !important;
-        transform: none !important;
-        transform-origin: unset !important;
-        width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        zoom: 1 !important;
-      }
-      /* Force browser to print background colors and images */
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      .cv-page-sheet {
-        width: 794px !important;
-        height: 1123px !important;
-        overflow: hidden !important;
-        page-break-after: always !important;
-        break-after: page !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        margin: 0 auto !important;
-        position: relative !important;
-        transform: none !important;
-        zoom: 1 !important;
-      }
-      .cv-page-sheet:last-child {
-        page-break-after: auto !important;
-        break-after: auto !important;
-      }
-    }
-    @media screen {
-      .${PRINT_CLASS} {
-        max-width: 100vw;
-        margin: 0 auto;
-        overflow-x: auto;
-      }
-    }
-  `;
-  document.head.appendChild(styleEl);
+  // Brief pause so the browser lays out the cloned element
+  await new Promise<void>((r) => setTimeout(r, 120));
 
-  // Trigger print dialog
-  setTimeout(() => {
-    window.print();
+  const sheets = Array.from(clone.querySelectorAll<HTMLElement>(".cv-page-sheet"));
+  if (sheets.length === 0) {
+    document.body.removeChild(clone);
+    throw new Error("No CV pages found in element");
+  }
 
-    // Clean up after print dialog closes
-    setTimeout(() => {
-      if (wrapper.parentNode) {
-        document.body.removeChild(wrapper);
-      }
-      if (styleEl.parentNode) {
-        document.head.removeChild(styleEl);
-      }
-      document.title = originalTitle;
-    }, 1000);
-  }, 150);
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    compress: true,
+  });
+
+  for (let i = 0; i < sheets.length; i++) {
+    if (i > 0) pdf.addPage();
+
+    const canvas = await html2canvas(sheets[i], {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      width: A4_PX_W,
+      height: A4_PX_H,
+      windowWidth: A4_PX_W,
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.93);
+    pdf.addImage(imgData, "JPEG", 0, 0, A4_MM_W, A4_MM_H, undefined, "FAST");
+  }
+
+  document.body.removeChild(clone);
+  pdf.save(`${filename}.pdf`);
+}
+
+/** @deprecated Use downloadCvAsPdf instead */
+export function printCvAsPdf(element: HTMLElement, filename: string): void {
+  downloadCvAsPdf(element, filename).catch((err) =>
+    console.error("PDF export failed", err)
+  );
 }

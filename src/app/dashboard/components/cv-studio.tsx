@@ -10,7 +10,7 @@ import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
 import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
-import { printCvAsPdf } from "@/lib/print-pdf";
+import { downloadCvAsPdf } from "@/lib/print-pdf";
 
 interface Props {
   userId: string;
@@ -976,7 +976,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
       const cat = selectedCategory ? `_${selectedCategory}` : "";
       const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
-      printCvAsPdf(element, filename);
+      await downloadCvAsPdf(element, filename);
     } catch (err) {
       console.error("PDF export failed", err);
     } finally {

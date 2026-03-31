@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { printCvAsPdf } from "@/lib/print-pdf";
+import { downloadCvAsPdf } from "@/lib/print-pdf";
 import {
   Loader2, FileText, Trash2, Copy, File, Download, Eye, EyeOff,
 } from "lucide-react";
@@ -106,7 +106,7 @@ export default function Documents({ userId }: DocumentsProps) {
 
       const fullName = cv.data.personalInfo?.fullName || "CV";
       const filename = `${fullName.replace(/\s+/g, "_")}_CV`;
-      printCvAsPdf(container, filename);
+      await downloadCvAsPdf(container, filename);
     } catch (err: any) {
       console.error(err);
       toast.error("PDF export failed");
