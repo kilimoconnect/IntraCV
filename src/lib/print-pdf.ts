@@ -70,11 +70,6 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
-        width: A4_PX_W,
-        height: A4_PX_H,
-        windowWidth: A4_PX_W,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.93);
