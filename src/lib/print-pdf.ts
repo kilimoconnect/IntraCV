@@ -24,30 +24,36 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
     import("jspdf"),
   ]);
 
-  // Clone so we never mutate the live preview
+  // Clone so we never mutate the live preview.
+  // Key: position: absolute at top:0 (not fixed at huge negative top) so
+  // html2canvas calculates text baselines from the correct document origin.
   const clone = element.cloneNode(true) as HTMLElement;
   clone.style.cssText = `
-    position: fixed;
-    top: -${A4_PX_H * 10}px;
-    left: 0;
+    position: absolute;
+    top: 0;
+    left: -${A4_PX_W + 200}px;
     width: ${A4_PX_W}px;
     min-width: ${A4_PX_W}px;
     transform: none !important;
     transform-origin: unset !important;
-    z-index: -9999;
-    visibility: visible;
-    opacity: 1;
+    pointer-events: none;
     background: white;
     overflow: visible;
   `;
-  document.body.appendChild(clone);
+
+  // Wrap in a zero-size container so the clone doesn't affect page layout
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText =
+    "position:fixed;top:0;left:0;width:0;height:0;overflow:visible;z-index:-1;";
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
 
   // Brief pause so the browser lays out the cloned element
-  await new Promise<void>((r) => setTimeout(r, 120));
+  await new Promise<void>((r) => setTimeout(r, 150));
 
   const sheets = Array.from(clone.querySelectorAll<HTMLElement>(".cv-page-sheet"));
   if (sheets.length === 0) {
-    document.body.removeChild(clone);
+    document.body.removeChild(wrapper);
     throw new Error("No CV pages found in element");
   }
 
@@ -70,13 +76,16 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       width: A4_PX_W,
       height: A4_PX_H,
       windowWidth: A4_PX_W,
+      // Prevent html2canvas from incorporating any scroll offset into coordinates
+      scrollX: 0,
+      scrollY: 0,
     });
 
     const imgData = canvas.toDataURL("image/jpeg", 0.93);
     pdf.addImage(imgData, "JPEG", 0, 0, A4_MM_W, A4_MM_H, undefined, "FAST");
   }
 
-  document.body.removeChild(clone);
+  document.body.removeChild(wrapper);
   pdf.save(`${filename}.pdf`);
 }
 
