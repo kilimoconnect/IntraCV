@@ -67,7 +67,7 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       // getBoundingClientRect() for the clone will return top≈0, left≈0
       // so html2canvas has zero coordinate offset to accumulate.
       const clone = sheets[i].cloneNode(true) as HTMLElement;
-      clone.style.position = "static";
+      clone.style.position = "relative"; // keep containing block for abs children
       clone.style.margin = "0";
       clone.style.boxShadow = "none";
       clone.style.borderRadius = "0";
