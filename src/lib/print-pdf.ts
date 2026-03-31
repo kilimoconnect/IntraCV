@@ -70,6 +70,18 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
+        onclone: (_clonedDoc, el) => {
+          // Remove box-shadow and border-radius so html2canvas doesn't expand
+          // the canvas area beyond the sheet's exact 794×1123 px boundary.
+          el.style.boxShadow = "none";
+          el.style.borderRadius = "0";
+          el.style.margin = "0";
+          el.style.outline = "none";
+          // Also strip the injected <style> that adds these decorative rules
+          _clonedDoc.querySelectorAll("style").forEach((s) => {
+            if (s.textContent?.includes("cv-page-sheet")) s.remove();
+          });
+        },
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.93);
