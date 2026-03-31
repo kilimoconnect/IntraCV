@@ -89,6 +89,10 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         scrollY: 0,
         width: A4_PX_W,
         height: A4_PX_H,
+        // Use the browser's own rendering engine for text (via SVG foreignObject).
+        // This eliminates the text-baseline shift that occurs when html2canvas
+        // re-calculates glyph positions with its own algorithm.
+        foreignObjectRendering: true,
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
