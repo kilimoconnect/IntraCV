@@ -1,24 +1,23 @@
 /**
- * Client-side CV PDF download via html-to-image + jsPDF.
- *
- * html-to-image renders via SVG foreignObject so the browser uses its own
- * native text engine — text positions are pixel-perfect, no baseline shift.
+ * Client-side CV PDF download via html2canvas + jsPDF.
  *
  * Strategy:
- *  1. Show a white overlay so the user sees "Generating PDF…" while we work.
- *  2. Temporarily remove the transform:scale from the live CV element so it
- *     renders at its natural 794 px A4 width.
- *  3. Capture each .cv-page-sheet with html-to-image at 2× pixel ratio.
- *  4. Pack the JPEG images into a jsPDF A4 document.
- *  5. Trigger a direct browser file-save — no print dialog on any device.
+ *  1. Show a white overlay while we work.
+ *  2. Await document.fonts.ready so font metrics are stable.
+ *  3. Scroll the window to y=0 — removes any fractional-pixel scroll
+ *     offset from getBoundingClientRect that causes the small text shift.
+ *  4. Temporarily remove transform:scale from the live CV element.
+ *  5. Expand the parent container overflow so the full sheet is accessible.
+ *  6. Capture each .cv-page-sheet with html2canvas at 2× resolution.
+ *  7. Pack into jsPDF A4 and trigger a direct file download.
  */
 
 const A4_MM_W = 210;
 const A4_MM_H = 297;
 
 export async function downloadCvAsPdf(element: HTMLElement, filename: string): Promise<void> {
-  const [{ toJpeg }, { default: jsPDF }] = await Promise.all([
-    import("html-to-image"),
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import("html2canvas"),
     import("jspdf"),
   ]);
 
@@ -30,27 +29,36 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
     '<p style="font-family:sans-serif;font-size:14px;color:#4f46e5;">Generating PDF\u2026</p>';
   document.body.appendChild(overlay);
 
-  // Save inline transform set by CVCanvasPreview
+  // Save state we will temporarily change
   const savedTransform = element.style.transform;
   const savedTransformOrigin = element.style.transformOrigin;
-
-  // Also expand parent overflow so the full sheet height is accessible
   const parent = element.parentElement;
   const savedParentOverflow = parent?.style.overflow ?? "";
   const savedParentHeight = parent?.style.height ?? "";
+  const savedScrollY = window.scrollY;
+  const savedScrollX = window.scrollX;
 
   let pdf: InstanceType<typeof jsPDF> | null = null;
 
   try {
-    // Unscale live element — browser keeps all computed styles & loaded fonts
+    // 1. Ensure all web fonts are measured before capture
+    await document.fonts.ready;
+
+    // 2. Scroll to exact origin so getBoundingClientRect has no scroll offset.
+    //    This eliminates the fractional-pixel shift that causes text to drift.
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+
+    // 3. Unscale the live element
     element.style.transform = "none";
     element.style.transformOrigin = "unset";
+
+    // 4. Expand parent so the full sheet height is accessible to html2canvas
     if (parent) {
       parent.style.overflow = "visible";
       parent.style.height = "auto";
     }
 
-    // Two frames for layout to settle
+    // Two frames for layout to settle after scroll + transform removal
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
     const sheets = Array.from(
@@ -63,27 +71,27 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
     for (let i = 0; i < sheets.length; i++) {
       if (i > 0) pdf.addPage();
 
-      // html-to-image uses SVG foreignObject — browser's own text renderer,
-      // no Canvas 2D baseline recalculation, no text shift.
-      const imgData = await toJpeg(sheets[i], {
-        quality: 0.95,
-        pixelRatio: 2,
+      const canvas = await html2canvas(sheets[i], {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
         backgroundColor: "#ffffff",
-        // Strip the decorative <style> injected by CVCanvasPreview so the
-        // box-shadow / border-radius don't influence the capture bounds.
-        filter: (node) => {
-          if (node instanceof HTMLStyleElement && node.textContent?.includes("cv-page-sheet")) {
-            return false;
-          }
-          return true;
-        },
-        style: {
-          boxShadow: "none",
-          borderRadius: "0",
-          margin: "0",
+        logging: false,
+        // scrollX/Y are 0 because we scrolled the window to origin above
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (_doc, el) => {
+          // Strip decorative styles injected by CVCanvasPreview
+          el.style.boxShadow = "none";
+          el.style.borderRadius = "0";
+          el.style.margin = "0";
+          _doc.querySelectorAll("style").forEach((s) => {
+            if (s.textContent?.includes("cv-page-sheet")) s.remove();
+          });
         },
       });
 
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
       pdf.addImage(imgData, "JPEG", 0, 0, A4_MM_W, A4_MM_H, undefined, "FAST");
     }
   } finally {
@@ -93,6 +101,7 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       parent.style.overflow = savedParentOverflow;
       parent.style.height = savedParentHeight;
     }
+    window.scrollTo({ top: savedScrollY, left: savedScrollX, behavior: "instant" as ScrollBehavior });
     document.body.removeChild(overlay);
   }
 
