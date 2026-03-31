@@ -137,10 +137,11 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); }
   };
 
-  const W = 460;
-  const maxLeft = typeof window !== "undefined" ? window.innerWidth - W - 16 : 0;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+  const W = Math.min(460, typeof window !== "undefined" ? window.innerWidth - 16 : 460);
+  const maxLeft = typeof window !== "undefined" ? window.innerWidth - W - 8 : 0;
   const left = Math.max(8, Math.min(editor.x, maxLeft));
-  const maxTop = typeof window !== "undefined" ? window.innerHeight - 280 : 0;
+  const maxTop = typeof window !== "undefined" ? window.innerHeight - 300 : 0;
   const top = Math.max(8, Math.min(editor.y, maxTop));
 
   const canDelete = isDeletable(editor.field) && !!onDelete;
@@ -148,13 +149,19 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-[9998]" onClick={save} />
-
-      {/* Floating editor */}
+      {/* Backdrop — semi-transparent on mobile so CV stays visible */}
       <div
-        className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden flex flex-col"
-        style={{ left, top, width: W }}
+        className={`fixed inset-0 z-[9998] ${isMobile ? "bg-black/30" : ""}`}
+        onClick={save}
+      />
+
+      {/* Bottom sheet on mobile, floating popup on desktop */}
+      <div
+        className="fixed z-[9999] bg-white shadow-2xl border border-indigo-200 overflow-hidden flex flex-col"
+        style={isMobile
+          ? { left: 0, right: 0, bottom: 0, width: "100%", borderRadius: "16px 16px 0 0" }
+          : { left, top, width: W, borderRadius: "16px" }
+        }
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

@@ -1039,104 +1039,112 @@ function CVBuilderPage() {
       }, { onConflict: "user_id" });
       if (declErr) throw declErr;
 
-      // 11. Key Achievements
-      await supabase.from("cv_key_achievements").delete().eq("user_id", user.id);
-      if (keyAchievements.filter((a) => a.achievement).length > 0) {
-        const { error: achErr } = await supabase.from("cv_key_achievements").insert(
-          keyAchievements.filter((a) => a.achievement).map((a, i) => ({
-            user_id: user.id, achievement: a.achievement, sort_order: i,
-          }))
-        );
-        if (achErr) throw achErr;
+      // 11–18. Optional sections — save each independently so one failure doesn't abort others
+      const sectionErrors: string[] = [];
+
+      const saveSection = async (name: string, fn: () => Promise<void>) => {
+        try { await fn(); } catch (e: any) { sectionErrors.push(`${name}: ${e?.message || e}`); }
+      };
+
+      await saveSection("achievements", async () => {
+        await supabase.from("cv_key_achievements").delete().eq("user_id", user.id);
+        if (keyAchievements.filter((a) => a.achievement).length > 0) {
+          const { error } = await supabase.from("cv_key_achievements").insert(
+            keyAchievements.filter((a) => a.achievement).map((a, i) => ({ user_id: user.id, achievement: a.achievement, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("awards", async () => {
+        await supabase.from("cv_awards").delete().eq("user_id", user.id);
+        if (awards.filter((a) => a.title).length > 0) {
+          const { error } = await supabase.from("cv_awards").insert(
+            awards.filter((a) => a.title).map((a, i) => ({ user_id: user.id, title: a.title, description: a.description, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("memberships", async () => {
+        await supabase.from("cv_memberships").delete().eq("user_id", user.id);
+        if (memberships.filter((m) => m.name).length > 0) {
+          const { error } = await supabase.from("cv_memberships").insert(
+            memberships.filter((m) => m.name).map((m, i) => ({ user_id: user.id, name: m.name, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("projects", async () => {
+        await supabase.from("cv_projects").delete().eq("user_id", user.id);
+        if (projects.filter((p) => p.name).length > 0) {
+          const { error } = await supabase.from("cv_projects").insert(
+            projects.filter((p) => p.name).map((p, i) => ({ user_id: user.id, name: p.name, description: p.description, tech: p.tech, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("boardRoles", async () => {
+        await supabase.from("cv_board_roles").delete().eq("user_id", user.id);
+        if (boardRoles.filter((b) => b.title).length > 0) {
+          const { error } = await supabase.from("cv_board_roles").insert(
+            boardRoles.filter((b) => b.title).map((b, i) => ({
+              user_id: user.id, title: b.title, organization: b.organization,
+              start_date: b.startDate, end_date: b.endDate, description: b.description, sort_order: i,
+            }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("execTraining", async () => {
+        await supabase.from("cv_executive_training").delete().eq("user_id", user.id);
+        if (execTraining.filter((t) => t.name).length > 0) {
+          const { error } = await supabase.from("cv_executive_training").insert(
+            execTraining.filter((t) => t.name).map((t, i) => ({ user_id: user.id, name: t.name, institution: t.institution, year: t.year, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("publications", async () => {
+        await supabase.from("cv_publications").delete().eq("user_id", user.id);
+        if (publications.filter((p) => p.title).length > 0) {
+          const { error } = await supabase.from("cv_publications").insert(
+            publications.filter((p) => p.title).map((p, i) => ({ user_id: user.id, title: p.title, publisher: p.publisher, year: p.year, type: p.type, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("tools", async () => {
+        await supabase.from("cv_tools").delete().eq("user_id", user.id);
+        if (tools.filter(Boolean).length > 0) {
+          const { error } = await supabase.from("cv_tools").insert(
+            tools.filter(Boolean).map((t, i) => ({ user_id: user.id, name: t, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      await saveSection("volunteer", async () => {
+        await supabase.from("cv_volunteer").delete().eq("user_id", user.id);
+        if (volunteer.filter(Boolean).length > 0) {
+          const { error } = await supabase.from("cv_volunteer").insert(
+            volunteer.filter(Boolean).map((v, i) => ({ user_id: user.id, description: v, sort_order: i }))
+          );
+          if (error) throw error;
+        }
+      });
+
+      if (sectionErrors.length > 0) {
+        console.error("Some sections failed to save:", sectionErrors);
+        toast.warning(`CV saved (${sectionErrors.length} section(s) failed — check console)`);
+      } else {
+        toast.success("CV saved successfully!");
       }
-
-      // 12. Awards
-      await supabase.from("cv_awards").delete().eq("user_id", user.id);
-      if (awards.filter((a) => a.title).length > 0) {
-        const { error: awardErr } = await supabase.from("cv_awards").insert(
-          awards.filter((a) => a.title).map((a, i) => ({
-            user_id: user.id, title: a.title, description: a.description, sort_order: i,
-          }))
-        );
-        if (awardErr) throw awardErr;
-      }
-
-      // 13. Memberships
-      await supabase.from("cv_memberships").delete().eq("user_id", user.id);
-      if (memberships.filter((m) => m.name).length > 0) {
-        const { error: memErr } = await supabase.from("cv_memberships").insert(
-          memberships.filter((m) => m.name).map((m, i) => ({
-            user_id: user.id, name: m.name, sort_order: i,
-          }))
-        );
-        if (memErr) throw memErr;
-      }
-
-      // 13. Projects
-      await supabase.from("cv_projects").delete().eq("user_id", user.id);
-      if (projects.filter((p) => p.name).length > 0) {
-        const { error: projErr } = await supabase.from("cv_projects").insert(
-          projects.filter((p) => p.name).map((p, i) => ({
-            user_id: user.id, name: p.name, description: p.description, tech: p.tech, sort_order: i,
-          }))
-        );
-        if (projErr) throw projErr;
-      }
-
-      // 14. Board Roles
-      await supabase.from("cv_board_roles").delete().eq("user_id", user.id);
-      if (boardRoles.filter((b) => b.title).length > 0) {
-        const { error: brErr } = await supabase.from("cv_board_roles").insert(
-          boardRoles.filter((b) => b.title).map((b, i) => ({
-            user_id: user.id, title: b.title, organization: b.organization,
-            start_date: b.startDate, end_date: b.endDate, description: b.description, sort_order: i,
-          }))
-        );
-        if (brErr) throw brErr;
-      }
-
-      // 15. Executive Training
-      await supabase.from("cv_executive_training").delete().eq("user_id", user.id);
-      if (execTraining.filter((t) => t.name).length > 0) {
-        const { error: etErr } = await supabase.from("cv_executive_training").insert(
-          execTraining.filter((t) => t.name).map((t, i) => ({
-            user_id: user.id, name: t.name, institution: t.institution, year: t.year, sort_order: i,
-          }))
-        );
-        if (etErr) throw etErr;
-      }
-
-      // 16. Publications
-      await supabase.from("cv_publications").delete().eq("user_id", user.id);
-      if (publications.filter((p) => p.title).length > 0) {
-        const { error: pubErr } = await supabase.from("cv_publications").insert(
-          publications.filter((p) => p.title).map((p, i) => ({
-            user_id: user.id, title: p.title, publisher: p.publisher, year: p.year, type: p.type, sort_order: i,
-          }))
-        );
-        if (pubErr) throw pubErr;
-      }
-
-      // 17. Tools
-      await supabase.from("cv_tools").delete().eq("user_id", user.id);
-      if (tools.filter(Boolean).length > 0) {
-        const { error: toolErr } = await supabase.from("cv_tools").insert(
-          tools.filter(Boolean).map((t, i) => ({ user_id: user.id, name: t, sort_order: i }))
-        );
-        if (toolErr) throw toolErr;
-      }
-
-      // 18. Volunteer
-      await supabase.from("cv_volunteer").delete().eq("user_id", user.id);
-      if (volunteer.filter(Boolean).length > 0) {
-        const { error: volErr } = await supabase.from("cv_volunteer").insert(
-          volunteer.filter(Boolean).map((v, i) => ({ user_id: user.id, description: v, sort_order: i }))
-        );
-        if (volErr) throw volErr;
-      }
-
-
-      toast.success("CV saved successfully!");
       setHasExistingData(true);
       router.push("/dashboard");
     } catch (err: any) {
@@ -2323,13 +2331,17 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No executive training added yet</p>
                       )}
                       {execTraining.map((tr) => (
-                        <div key={tr.id} className={`flex gap-2 items-center ${!tr.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!tr.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Program name *" value={tr.name} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, name: e.target.value } : t))} />
-                          <Input className="w-40" placeholder="Institution" value={tr.institution} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, institution: e.target.value } : t))} />
-                          <Input className="w-24" placeholder="Year" value={tr.year} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, year: e.target.value } : t))} />
-                          <Button variant="ghost" size="sm" onClick={() => setExecTraining(execTraining.filter((t) => t.id !== tr.id))}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                        <div key={tr.id} className={`rounded-lg border p-3 space-y-2 ${!tr.name?.trim() ? "bg-red-50/30 border-red-300" : ""}`}>
+                          <div className="flex gap-2">
+                            <Input className={`flex-1 ${!tr.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Program name *" value={tr.name} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, name: e.target.value } : t))} />
+                            <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setExecTraining(execTraining.filter((t) => t.id !== tr.id))}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input placeholder="Institution" value={tr.institution} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, institution: e.target.value } : t))} />
+                            <Input placeholder="Year" value={tr.year} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, year: e.target.value } : t))} />
+                          </div>
                         </div>
                       ))}
                       <Button variant="outline" className="w-full" onClick={() => setExecTraining([...execTraining, { id: uid(), name: "", institution: "", year: "" }])}>
