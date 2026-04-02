@@ -1259,7 +1259,10 @@ function CVBuilderPage() {
       case "education": return education.length > 0;
       case "skills": return skills.length > 0;
       case "certifications": return certifications.length > 0;
-      case "achievements": return keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0);
+      case "achievements": return (
+        keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0) ||
+        experiences.some(e => (e as any).description && (e as any).description.trim().length > 10)
+      );
       case "awards": return awards.some(a => a.title && a.title.trim().length > 0);
       case "memberships": return memberships.length > 0;
       case "projects": return projects.length > 0;
