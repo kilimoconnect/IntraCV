@@ -1151,10 +1151,7 @@ function CVBuilderPage() {
       case "education": return education.length > 0;
       case "skills": return skills.length > 0;
       case "certifications": return certifications.length > 0;
-      case "achievements": return (
-        keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0) ||
-        experiences.some(e => (e as any).description && (e as any).description.trim().length > 10)
-      );
+      case "achievements": return keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0);
       case "awards": return awards.some(a => a.title && a.title.trim().length > 0);
       case "memberships": return memberships.length > 0;
       case "projects": return projects.length > 0;
@@ -1401,10 +1398,14 @@ function CVBuilderPage() {
                   {categoryResult.label}
                 </div>
               </div>
-              <div className="flex gap-2 self-end sm:self-auto">
+              <div className="flex flex-col items-end gap-1 self-end sm:self-auto">
+                {missingRequired.length > 0 && (
+                  <p className="text-xs text-red-600 font-medium">Complete {missingRequired.length} required section{missingRequired.length > 1 ? "s" : ""} below to save</p>
+                )}
                 <Button
+                  disabled={saving || missingRequired.length > 0}
                   onClick={async () => {
-                    // 1. Check missing required sections
+                    // 1. Check missing required sections (also guarded by disabled above)
                     if (missingRequired.length > 0) {
                       setValidationErrors({ sections: missingRequired.map(s => s.label), firstKey: missingRequired[0].key });
                       return;
@@ -1440,7 +1441,6 @@ function CVBuilderPage() {
                     await saveToDatabase();
                     router.push("/dashboard");
                   }}
-                  disabled={saving}
                   className="flex items-center gap-2"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

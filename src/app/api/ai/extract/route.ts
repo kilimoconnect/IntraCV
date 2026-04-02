@@ -311,6 +311,36 @@ function validateAllSections(data: any): any {
     data.awards = [];
   }
 
+  // ─── Fallback: mine achievements from experience descriptions if empty ───
+  const rawAchievements: string[] = Array.isArray(data.keyAchievements)
+    ? data.keyAchievements.filter((a: any) => typeof a === "string" ? a.trim().length > 0 : !!(a?.achievement?.trim()))
+    : [];
+
+  if (rawAchievements.length === 0 && Array.isArray(data.experiences) && data.experiences.length > 0) {
+    const ACHIEVEMENT_SIGNALS = /(?:\d+\s*%|\$\s*\d|\d+\s*(?:million|billion|m|b)\b|\d+x\b|\d+\s*(?:staff|employees|team members|people|countries|sites|branches|clients|customers)|(?:increased|grew|grew|reduced|cut|saved|generated|delivered|achieved|exceeded|surpassed|launched|built|led|managed|established|transformed|negotiated|secured|raised|streamlined|deployed|implemented)\b.*?\d)/i;
+    const MIN_WORDS = 5;
+    const MAX_WORDS = 40;
+    const mined: string[] = [];
+
+    for (const exp of data.experiences) {
+      const desc: string = (exp.description || "").trim();
+      if (!desc) continue;
+      const lines = desc.split(/\n/);
+      for (const raw of lines) {
+        const line = raw.replace(/^[-•*>\s]+/, "").trim();
+        const wordCount = line.split(/\s+/).length;
+        if (wordCount < MIN_WORDS || wordCount > MAX_WORDS) continue;
+        if (ACHIEVEMENT_SIGNALS.test(line)) {
+          mined.push(line);
+        }
+      }
+    }
+
+    if (mined.length > 0) {
+      data.keyAchievements = [...new Set(mined)].slice(0, 12);
+    }
+  }
+
   // Ensure declaration object structure
   if (data.declaration && typeof data.declaration === "object") {
     data.declaration = {
@@ -498,8 +528,9 @@ MEMBERSHIPS:
 KEY ACHIEVEMENTS:
 - Extract achievements from dedicated "Key Achievements", "Achievements", "Key Accomplishments", "Career Highlights", or "Key Result Areas" sections.
 - ALSO extract bullet points from the Professional Profile/Summary that describe quantified results, specific accomplishments, or named outcomes (not generic competency names).
+- ALSO scan each experience role description and pull out individual bullet lines that contain: quantified results (%, $, numbers), specific metric-driven outcomes, or named accomplishments — for example "Increased revenue by 35%", "Reduced costs by $2M", "Led team of 50 engineers", "Launched product used by 1M+ users".
+- Each extracted achievement must be a complete, standalone sentence or bullet point — do NOT copy the entire experience description.
 - Do NOT fabricate or invent achievements not present in the CV.
-- Extract: quantified results (% improvements, $ savings, time reductions), leadership impacts, process improvements.
 - If no achievements-type content exists anywhere, return an empty array.
 
 PROJECTS:
