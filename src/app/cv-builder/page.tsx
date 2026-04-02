@@ -759,10 +759,22 @@ function CVBuilderPage() {
           year: e.year || "", description: e.description || "",
         })));
       }
-      if (d.skills?.length) {
-        setSkills(d.skills.map((s: any) => ({
-          id: uid(), name: s.name || s || "", category: s.category || "",
-        })));
+      {
+        const extractedSkills = (d.skills || [])
+          .map((s: any) => ({ id: uid(), name: (s.name || s || "").trim(), category: s.category || "" }))
+          .filter((s: any) => s.name.length > 0);
+
+        const expertiseAsSkills = (d.areasOfExpertise || [])
+          .map((a: any) => ({ id: uid(), name: (a.name || "").trim(), category: "Core" }))
+          .filter((a: any) => a.name.length > 0);
+
+        const existingNames = new Set(extractedSkills.map((s: any) => s.name.toLowerCase()));
+        const merged = [
+          ...extractedSkills,
+          ...expertiseAsSkills.filter((a: any) => !existingNames.has(a.name.toLowerCase())),
+        ];
+
+        if (merged.length > 0) setSkills(merged);
       }
       if (d.certifications?.length) {
         setCertifications(d.certifications.map((c: any) => ({
