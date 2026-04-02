@@ -76,6 +76,32 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       captureRoot.innerHTML = "";
       captureRoot.appendChild(clone);
 
+      // Fix: <ul>/<li> with display:list-item renders with different box heights
+      // inside SVG foreignObject, creating phantom gaps after single-line bullets.
+      // Replace every <ul>/<li> with plain <div> elements so the rendering context
+      // doesn't affect list-item box sizing.
+      clone.querySelectorAll("ul").forEach((ul) => {
+        const replacement = document.createElement("div");
+        replacement.style.cssText = `margin:0;padding-left:${(ul as HTMLElement).style.paddingLeft || "0px"};`;
+        Array.from(ul.children).forEach((li) => {
+          const div = document.createElement("div");
+          div.style.cssText = (li as HTMLElement).style.cssText;
+          div.style.display = "flex";
+          div.style.alignItems = "flex-start";
+          const bullet = document.createElement("span");
+          bullet.textContent = "\u25CF";
+          const liStyle = getComputedStyle(li);
+          bullet.style.cssText = `flex-shrink:0;margin-right:4px;font-size:7px;line-height:${(li as HTMLElement).style.lineHeight || "15px"};color:${liStyle.color};padding-top:1px;`;
+          const content = document.createElement("span");
+          content.style.flex = "1";
+          content.innerHTML = li.innerHTML;
+          div.appendChild(bullet);
+          div.appendChild(content);
+          replacement.appendChild(div);
+        });
+        ul.parentNode?.replaceChild(replacement, ul);
+      });
+
       // Two frames: first lets the browser lay out the clone,
       // second ensures any MutationObserver / font rendering settles.
       await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
