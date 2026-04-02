@@ -768,11 +768,29 @@ function CVBuilderPage() {
           .map((a: any) => ({ id: uid(), name: (a.name || "").trim(), category: "Core" }))
           .filter((a: any) => a.name.length > 0);
 
-        const existingNames = new Set(extractedSkills.map((s: any) => s.name.toLowerCase()));
-        const merged = [
+        let merged = [
           ...extractedSkills,
-          ...expertiseAsSkills.filter((a: any) => !existingNames.has(a.name.toLowerCase())),
+          ...expertiseAsSkills.filter((a: any) => {
+            const existingNames = new Set(extractedSkills.map((s: any) => s.name.toLowerCase()));
+            return !existingNames.has(a.name.toLowerCase());
+          }),
         ];
+
+        // Fallback: if still empty, mine the summary text for short competency phrases
+        // (dash/bullet-separated noun phrases of 1–5 words, like "Quality Management")
+        if (merged.length === 0 && d.summary) {
+          const summaryLines = (d.summary as string).split(/\n/);
+          const competencyLine = summaryLines.find((l: string) =>
+            (l.match(/[-•–]\s*[A-Z]/g) || []).length >= 2
+          );
+          if (competencyLine) {
+            const items = competencyLine
+              .split(/\s*[-–•]\s*/)
+              .map((s: string) => s.replace(/[^a-zA-Z &/]/g, "").trim())
+              .filter((s: string) => s.length > 3 && s.split(" ").length <= 5);
+            merged = items.map((name: string) => ({ id: uid(), name, category: "Core" }));
+          }
+        }
 
         if (merged.length > 0) setSkills(merged);
       }

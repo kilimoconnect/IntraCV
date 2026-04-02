@@ -479,7 +479,9 @@ EDUCATION:
 - "description" should include honors, GPA, thesis title, or relevant coursework if mentioned.
 
 SKILLS:
-- Extract skills/competencies from dedicated skills sections, core competencies, or areas of expertise.
+- Extract ALL professional competencies and skills — from dedicated Skills sections AND from bullet-point or dash-separated lists embedded inside a Professional Profile, Executive Summary, or Career Objective section.
+- If the profile/summary contains a list like "- Quality Management  - Process Enhancement  - Team Management", extract EACH item as a separate skill with category "Core".
+- A skill item is a short noun phrase (1–5 words). Full narrative sentences belong in the summary, not here.
 - Do NOT include software tools or platforms here — those go in the "tools" array.
 - Categorize each: "Technical", "Soft Skills", "Leadership", "Core", "Industry", or "Other".
 - Focus on professional competencies like "Financial Management", "Strategic Planning", "Risk Assessment", etc.
@@ -494,10 +496,11 @@ MEMBERSHIPS:
 - Extract professional bodies, associations, societies, or affiliations as simple strings.
 
 KEY ACHIEVEMENTS:
-- Extract achievements ONLY from dedicated "Key Achievements", "Achievements", "Key Accomplishments", or "Key Result Areas" sections.
-- Do NOT fabricate achievements from experience bullet points — those belong in experiences.
+- Extract achievements from dedicated "Key Achievements", "Achievements", "Key Accomplishments", "Career Highlights", or "Key Result Areas" sections.
+- ALSO extract bullet points from the Professional Profile/Summary that describe quantified results, specific accomplishments, or named outcomes (not generic competency names).
+- Do NOT fabricate or invent achievements not present in the CV.
 - Extract: quantified results (% improvements, $ savings, time reductions), leadership impacts, process improvements.
-- If no dedicated achievements section exists, return an empty array.
+- If no achievements-type content exists anywhere, return an empty array.
 
 PROJECTS:
 - Extract projects ONLY from dedicated "Projects", "Notable Projects", "Key Projects" sections.
@@ -518,6 +521,7 @@ REFEREES:
 
 AREAS OF EXPERTISE:
 - Extract any "Core Competencies", "Areas of Expertise", "Key Areas", "Specializations" sections.
+- ALSO extract bullet-point or dash-separated competency lists embedded in Professional Profile or Summary sections — short noun phrases like "Production Planning", "Cost Control", "Quality Management".
 
 AWARDS:
 - Extract any awards, recognitions, honors, or prizes from dedicated "Awards", "Awards & Recognition", or "Honors" sections.
