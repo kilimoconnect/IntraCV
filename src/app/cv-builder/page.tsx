@@ -355,7 +355,7 @@ function CVBuilderPage() {
   const [manuallyShown, setManuallyShown] = useState<Set<string>>(new Set());
 
   // Core sections always visible; optional sections only if they have data or user added them
-  const CORE_KEYS = new Set(["personal", "summary", "experience", "education", "skills"]);
+  const CORE_KEYS = new Set(["personal", "summary", "experience", "education"]);
   const ALL_SECTIONS = [
     { key: "personal", label: "Personal Info", icon: User },
     { key: "summary", label: "Summary", icon: FileText },
@@ -1372,11 +1372,13 @@ function CVBuilderPage() {
   };
 
   // Only show optional sections that have data or were manually added
+  // Use sectionCounts (strict item count) for sidebar visibility, not sectionHasContent (which is broader, for validation)
+  const sectionHasData = (key: string) => (sectionCounts[key] ?? 0) > 0;
   const SECTIONS = ALL_SECTIONS.filter(
-    (s) => CORE_KEYS.has(s.key) || sectionHasContent(s.key) || manuallyShown.has(s.key)
+    (s) => CORE_KEYS.has(s.key) || sectionHasData(s.key) || manuallyShown.has(s.key)
   );
   const hiddenSections = ALL_SECTIONS.filter(
-    (s) => !CORE_KEYS.has(s.key) && !sectionHasContent(s.key) && !manuallyShown.has(s.key)
+    (s) => !CORE_KEYS.has(s.key) && !sectionHasData(s.key) && !manuallyShown.has(s.key)
   );
 
   // ─── Calculate Years of Experience ───
