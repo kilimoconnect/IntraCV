@@ -84,6 +84,9 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         const replacement = document.createElement("div");
         replacement.style.cssText = `margin:0;padding-left:${(ul as HTMLElement).style.paddingLeft || "0px"};`;
         Array.from(ul.children).forEach((li) => {
+          // Empty bullets are invisible in normal <li> (no line box = height 0)
+          // but would become full-height divs — skip them entirely.
+          if (!li.textContent?.trim()) return;
           const div = document.createElement("div");
           div.style.cssText = (li as HTMLElement).style.cssText;
           div.style.display = "flex";
