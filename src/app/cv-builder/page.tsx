@@ -777,18 +777,22 @@ function CVBuilderPage() {
         ];
 
         // Fallback: if still empty, mine the summary text for short competency phrases
-        // (dash/bullet-separated noun phrases of 1–5 words, like "Quality Management")
+        // Scan ALL lines that look like a dash/bullet-separated competency list
         if (merged.length === 0 && d.summary) {
           const summaryLines = (d.summary as string).split(/\n/);
-          const competencyLine = summaryLines.find((l: string) =>
+          const competencyLines = summaryLines.filter((l: string) =>
             (l.match(/[-•–]\s*[A-Z]/g) || []).length >= 2
           );
-          if (competencyLine) {
-            const items = competencyLine
+          const allItems: string[] = [];
+          for (const line of competencyLines) {
+            const items = line
               .split(/\s*[-–•]\s*/)
               .map((s: string) => s.replace(/[^a-zA-Z &/]/g, "").trim())
               .filter((s: string) => s.length > 3 && s.split(" ").length <= 5);
-            merged = items.map((name: string) => ({ id: uid(), name, category: "Core" }));
+            allItems.push(...items);
+          }
+          if (allItems.length > 0) {
+            merged = allItems.map((name: string) => ({ id: uid(), name, category: "Core" }));
           }
         }
 
@@ -880,6 +884,16 @@ function CVBuilderPage() {
       }
       if (d.volunteer?.length) {
         setVolunteer(d.volunteer.map((v: any) => typeof v === "string" ? v : v.description || "").filter(Boolean));
+      }
+      if (d.internships?.length) {
+        setExperiences(prev => [
+          ...prev,
+          ...d.internships.map((i: any) => ({
+            id: uid(), title: i.title || "", company: i.company || "",
+            location: i.location || "",
+            startDate: i.startDate || "", endDate: i.endDate || "", description: i.description || "",
+          })),
+        ]);
       }
 
       setExtractionProgress(100);

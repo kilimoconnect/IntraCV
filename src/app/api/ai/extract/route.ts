@@ -518,6 +518,8 @@ PUBLICATIONS:
 
 REFEREES:
 - Extract referee/reference name, their job title, company, phone, and email.
+- If the CV says "References available on request" or similar, return an empty array — do NOT create a referee entry for that phrase.
+- Only extract actual named individuals with at least a name and title/company.
 
 AREAS OF EXPERTISE:
 - Extract any "Core Competencies", "Areas of Expertise", "Key Areas", "Specializations" sections.
