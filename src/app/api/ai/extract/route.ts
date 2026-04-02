@@ -545,7 +545,7 @@ FINAL REMINDERS:
 - Do NOT leave a field empty if the information exists somewhere in the CV.
 - Return ONLY the JSON — no markdown fences, no explanation.
 
-CV TEXT:
+CV CONTENT (Markdown-formatted):
 ${text}`;
 
     const openai = openaiClient();
@@ -554,7 +554,7 @@ ${text}`;
       messages: [
         {
           role: "system",
-          content: "You are a precise CV data extraction engine. You MUST extract every piece of information from the CV and return perfectly structured JSON. Pay extreme attention to matching dates with their correct job roles — NEVER mix dates between roles."
+          content: "You are a precise CV data extraction engine. The input is Markdown-formatted CV content produced by a visual layout parser — section headers appear as ## headings and bullets as - items. Extract EVERY piece of information into perfectly structured JSON. Pay extreme attention to matching dates with their correct job roles — NEVER mix dates between roles. When you see numbers, percentages, or currency values (%, $, TZS, KSh) in experience descriptions, ensure they are captured verbatim in the description field."
         },
         { role: "user", content: prompt }
       ],
