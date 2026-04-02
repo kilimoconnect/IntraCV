@@ -28,25 +28,33 @@ const EXEC_SCOPE = /\b(p&l|profit\s*and\s*loss|board|strategy|transformation|mil
 const MID_SCOPE = /\b(managed\s*(?:a\s*)?team|budget|cross-functional|department|division|portfolio|stakeholder|kpi|roadmap|mentored|coached|process\s*improvement)\b/i;
 
 function detectCategory(cvData: Record<string, unknown>): CareerCategory {
-  const experiences = Array.isArray(cvData.experiences) ? cvData.experiences : [];
-  const education = Array.isArray(cvData.education) ? cvData.education : [];
-  const boardRoles = Array.isArray(cvData.boardRoles) ? cvData.boardRoles : [];
-  const publications = Array.isArray(cvData.publications) ? cvData.publications : [];
-  const execTraining = Array.isArray(cvData.executiveTraining) ? cvData.executiveTraining : [];
+  const experiences  = Array.isArray(cvData.experiences)       ? cvData.experiences       : [];
+  const education    = Array.isArray(cvData.education)          ? cvData.education          : [];
+  const boardRoles   = Array.isArray(cvData.boardRoles)         ? cvData.boardRoles         : [];
+  const publications = Array.isArray(cvData.publications)       ? cvData.publications       : [];
+  const execTraining = Array.isArray(cvData.executiveTraining)  ? cvData.executiveTraining  : [];
+  const achievements = Array.isArray(cvData.keyAchievements)    ? cvData.keyAchievements    : [];
+  const skills       = Array.isArray(cvData.skills)             ? cvData.skills             : [];
+  const certifications = Array.isArray(cvData.certifications)   ? cvData.certifications     : [];
 
   let score = 0;
-  let execTitleCount = 0, midTitleCount = 0;
+
+  // ── Seniority signals from job titles ──
+  let execTitleCount = 0, midTitleCount = 0, juniorTitleCount = 0;
   for (const exp of experiences) {
     const t = (exp as any)?.title || "";
     if (EXEC_TITLES.test(t)) execTitleCount++;
     else if (MID_TITLES.test(t)) midTitleCount++;
+    else if (JUNIOR_TITLES.test(t)) juniorTitleCount++;
   }
   if (execTitleCount >= 2) score += 35;
   else if (execTitleCount === 1) score += 28;
   else if (midTitleCount >= 3) score += 22;
   else if (midTitleCount >= 1) score += 15;
+  else if (juniorTitleCount >= 1) score += 2;
   else if (experiences.length > 0) score += 10;
 
+  // ── Scope / keyword signals ──
   let execScopeHits = 0, midScopeHits = 0;
   for (const exp of experiences) {
     const desc = (exp as any)?.description || "";
@@ -58,17 +66,33 @@ function detectCategory(cvData: Record<string, unknown>): CareerCategory {
   else if (midScopeHits >= 2) score += 10;
   else if (midScopeHits === 1) score += 6;
 
+  // ── Education ──
   if (education.some((e: any) => /\b(mba|phd|doctorate|masters?|m\.?sc|emba)\b/i.test(e?.degree || ""))) score += 10;
   else if (education.length > 0) score += 4;
+
+  // ── Executive-specific sections ──
   if (boardRoles.length >= 2) score += 10; else if (boardRoles.length === 1) score += 7;
   if (publications.length >= 2) score += 5; else if (publications.length === 1) score += 3;
   if (execTraining.length >= 2) score += 5; else if (execTraining.length === 1) score += 3;
-  if (experiences.length >= 6) score += 10;
-  else if (experiences.length >= 4) score += 7;
-  else if (experiences.length >= 2) score += 4;
+
+  // ── Content volume signals ──
+  if (experiences.length >= 7) score += 15;
+  else if (experiences.length >= 5) score += 10;
+  else if (experiences.length >= 3) score += 6;
+  else if (experiences.length >= 2) score += 3;
+
+  if (achievements.length >= 6) score += 10;
+  else if (achievements.length >= 3) score += 6;
+  else if (achievements.length >= 1) score += 3;
+
+  if (skills.length >= 12) score += 6;
+  else if (skills.length >= 6) score += 3;
+
+  if (certifications.length >= 3) score += 5;
+  else if (certifications.length >= 1) score += 2;
 
   if (score >= 60) return "executive";
-  if (score >= 30) return "mid-senior";
+  if (score >= 25) return "mid-senior";
   return "junior";
 }
 
@@ -998,32 +1022,30 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {CATEGORY_CARDS.map((cat) => {
             const Icon = cat.icon;
-            const isMatch = cat.id === detectedCategory;
-            const isDisabled = !isMatch;
+            const isRecommended = cat.id === detectedCategory;
             return (
               <button
                 key={cat.id}
-                onClick={() => { if (!isDisabled) { setSelectedCategory(cat.id); setStep("pick-layout"); } }}
-                disabled={isDisabled}
-                className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br overflow-hidden transition-all ${
-                  isDisabled
-                    ? "opacity-40 cursor-not-allowed grayscale border-slate-200"
-                    : `${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
+                onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
+                className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all ${
+                  isRecommended
+                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
+                    : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
                 }`}
               >
-                {isMatch && (
+                {isRecommended && (
                   <div className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white shadow-sm border border-slate-200 text-slate-700">
-                    Your Level
+                    ✦ Recommended
                   </div>
                 )}
                 {/* ── Card Info ── */}
                 <div className="px-5 pt-5 pb-5">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-1.5 rounded-lg bg-white shadow-sm ${isDisabled ? "text-slate-400" : cat.color}`}>
+                    <div className={`p-1.5 rounded-lg bg-white shadow-sm ${isRecommended ? cat.color : "text-slate-400"}`}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className={`text-base font-bold ${isDisabled ? "text-slate-400" : cat.color}`}>{cat.label}</div>
+                      <div className={`text-base font-bold ${isRecommended ? cat.color : "text-slate-600"}`}>{cat.label}</div>
                       <div className="text-[11px] text-slate-500">{cat.subtitle}</div>
                     </div>
                   </div>
@@ -1042,13 +1064,13 @@ export default function CvStudio({ userId, cvData }: Props) {
                     </div>
                   </div>
 
-                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-200 text-sm font-medium transition-colors ${
-                    isDisabled
-                      ? "bg-slate-100 text-slate-400"
-                      : `bg-white/80 ${cat.color} group-hover:bg-white`
+                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    isRecommended
+                      ? `border-slate-200 bg-white/80 ${cat.color} group-hover:bg-white`
+                      : "border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-white"
                   }`}>
                     <Sparkles className="h-4 w-4" />
-                    {isDisabled ? "Not Available" : "Generate"}
+                    {isRecommended ? "Generate" : "Select"}
                   </div>
                 </div>
               </button>
