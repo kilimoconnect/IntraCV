@@ -52,14 +52,9 @@ import {
   PenLine,
   Wrench,
   Heart,
-  Bot,
-  TrendingUp,
   AlertCircle,
-  CheckCircle2,
   XCircle,
   Clock,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 // ─── Types ───
@@ -405,14 +400,6 @@ function CVBuilderPage() {
   const [tools, setTools] = useState<string[]>([]);
   const [volunteer, setVolunteer] = useState<string[]>([]);
 
-  // ─── AI Review state ───
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [review, setReview] = useState<null | {
-    score: number;
-    summary: string;
-    suggestions: { section: string; severity: "critical" | "warning" | "tip"; issue: string; suggestion: string }[];
-  }>(null);
-  const [reviewOpen, setReviewOpen] = useState(false);
 
   // ─── Load existing data from DB ───
   const loadFromDB = useCallback(async () => {
@@ -591,105 +578,6 @@ function CVBuilderPage() {
     }
   }, [searchParams, loadingProfile, hasExistingData]);
 
-  // ─── Generate Achievements from Experience ───
-  const generateAchievementsFromExperience = async () => {
-    if (!experiences.length) {
-      console.log('No experiences to generate from');
-      return;
-    }
-    
-    try {
-      console.log('Starting achievement generation with', experiences.length, 'experiences');
-      
-      const response = await fetch("/api/ai/generate-achievements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          experiences: experiences, // All experiences
-          summary: summary,
-          skills: skills,
-          education: education,
-          certifications: certifications,
-          projects: projects
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Achievement API response:', data);
-        
-        if (data.achievements && data.achievements.length > 0) {
-          const generatedAchievements = data.achievements.map((achievement: string) => ({
-            id: uid(),
-            achievement: achievement.trim()
-          }));
-          setKeyAchievements(generatedAchievements);
-          console.log('Generated', generatedAchievements.length, 'achievements');
-        } else {
-          console.error('No achievements returned from AI');
-          alert('Failed to generate achievements. Please try again or add them manually.');
-        }
-      } else {
-        console.error('Achievement generation API failed:', response.status, response.statusText);
-        alert(`Achievement generation failed (${response.status}). Please try again or add them manually.`);
-      }
-    } catch (error) {
-      console.error("Failed to generate achievements:", error);
-      alert('Failed to generate achievements. Please try again or add them manually.');
-    }
-  };
-
-  // ─── Generate References from Experience ───
-  const generateReferencesFromExperience = async () => {
-    if (!experiences.length) {
-      console.log('No experiences to generate references from');
-      return;
-    }
-    
-    try {
-      console.log('Starting reference generation with', experiences.length, 'experiences');
-      
-      const response = await fetch("/api/ai/generate-references", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          experiences: experiences, // All experiences
-          personalInfo: personalInfo,
-          summary: summary,
-          skills: skills,
-          education: education,
-          certifications: certifications
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Reference API response:', data);
-        
-        if (data.references && data.references.length > 0) {
-          const generatedReferences = data.references.map((ref: any) => ({
-            id: uid(),
-            name: ref.name || "",
-            title: ref.title || "",
-            company: ref.company || "",
-            phone: ref.phone || "",
-            email: ref.email || ""
-          }));
-          setReferees(generatedReferences);
-          console.log('Generated', generatedReferences.length, 'references');
-        } else {
-          console.error('No references returned from AI');
-          alert('Failed to generate references. Please try again or add them manually.');
-        }
-      } else {
-        console.error('Reference generation API failed:', response.status, response.statusText);
-        alert(`Reference generation failed (${response.status}). Please try again or add them manually.`);
-      }
-    } catch (error) {
-      console.error("Failed to generate references:", error);
-      alert('Failed to generate references. Please try again or add them manually.');
-    }
-  };
 
   // ─── File Upload + AI Extract ───
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -908,46 +796,6 @@ function CVBuilderPage() {
     }
   };
 
-  // ─── AI Profile Review ───
-  const runReview = async () => {
-    if (!user) return;
-    setReviewLoading(true);
-    setReviewOpen(true);
-    try {
-      const payload = {
-        cvData: {
-          personalInfo,
-          summary,
-          experiences,
-          education,
-          skills,
-          certifications,
-          languages,
-          referees,
-          keyAchievements,
-          memberships,
-          projects,
-          boardRoles,
-          execTraining,
-          publications,
-          tools,
-          volunteer,
-        },
-      };
-      const res = await fetch("/api/ai/review-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.review) setReview(data.review);
-      else toast.error("Failed to get review");
-    } catch {
-      toast.error("Review failed");
-    } finally {
-      setReviewLoading(false);
-    }
-  };
 
   // ─── Save all sections to DB ───
   const saveToDatabase = async () => {
@@ -1442,6 +1290,7 @@ function CVBuilderPage() {
   // ─── Sections with incomplete items (for sidebar highlighting) ───
   const sectionsWithIssues = new Set<string>();
   if (getItemMissing("personal", personalInfo).length > 0) sectionsWithIssues.add("personal");
+  if (!summary || summary.trim().length < 10) sectionsWithIssues.add("summary");
   experiences.forEach((e) => { if (getItemMissing("experience", e).length > 0) sectionsWithIssues.add("experience"); });
   education.forEach((e) => { if (getItemMissing("education", e).length > 0) sectionsWithIssues.add("education"); });
   skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) sectionsWithIssues.add("skills"); });
@@ -1656,101 +1505,6 @@ function CVBuilderPage() {
               </div>
             )}
 
-            {/* ── AI Review Panel ── */}
-            {reviewOpen && (
-              <div className="border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setReviewOpen(r => !r)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-violet-50 hover:bg-violet-100 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5 text-violet-600" />
-                    <span className="font-semibold text-violet-800">AI Profile Review</span>
-                    {review && !reviewLoading && (
-                      <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
-                        review.score >= 75 ? "bg-green-100 text-green-700" :
-                        review.score >= 50 ? "bg-amber-100 text-amber-700" :
-                        "bg-red-100 text-red-700"
-                      }`}>
-                        Score: {review.score}/100
-                      </span>
-                    )}
-                  </div>
-                  {reviewOpen ? <ChevronUp className="h-4 w-4 text-violet-600" /> : <ChevronDown className="h-4 w-4 text-violet-600" />}
-                </button>
-
-                <div className="p-4 space-y-4 bg-white">
-                  {reviewLoading && (
-                    <div className="flex flex-col items-center justify-center py-8 gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-                      <p className="text-sm text-muted-foreground">Analysing your profile…</p>
-                    </div>
-                  )}
-
-                  {!reviewLoading && review && (
-                    <>
-                      {/* Score bar */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-sm font-medium">
-                          <span>Overall CV Strength</span>
-                          <span className={review.score >= 75 ? "text-green-600" : review.score >= 50 ? "text-amber-600" : "text-red-600"}>
-                            {review.score}/100
-                          </span>
-                        </div>
-                        <Progress
-                          value={review.score}
-                          className="h-2"
-                        />
-                        <p className="text-sm text-muted-foreground pt-1">{review.summary}</p>
-                      </div>
-
-                      <Separator />
-
-                      {/* Suggestions */}
-                      <div className="space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {review.suggestions.length} Suggestions
-                        </p>
-                        {review.suggestions.map((s, i) => {
-                          const Icon = s.severity === "critical" ? XCircle : s.severity === "warning" ? AlertCircle : CheckCircle2;
-                          const colors = s.severity === "critical"
-                            ? "border-red-200 bg-red-50 text-red-700"
-                            : s.severity === "warning"
-                            ? "border-amber-200 bg-amber-50 text-amber-700"
-                            : "border-green-200 bg-green-50 text-green-700";
-                          const iconColor = s.severity === "critical" ? "text-red-500" : s.severity === "warning" ? "text-amber-500" : "text-green-500";
-                          return (
-                            <div key={i} className={`rounded-lg border p-3 ${colors}`}>
-                              <div className="flex items-start gap-2">
-                                <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${iconColor}`} />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-sm">{s.section}</span>
-                                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${
-                                      s.severity === "critical" ? "border-red-300 text-red-600" :
-                                      s.severity === "warning" ? "border-amber-300 text-amber-600" :
-                                      "border-green-300 text-green-600"
-                                    }`}>{s.severity}</Badge>
-                                  </div>
-                                  <p className="text-xs font-medium mt-0.5 opacity-80">{s.issue}</p>
-                                  <p className="text-xs mt-1 opacity-90">{s.suggestion}</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="flex justify-end pt-1">
-                        <Button size="sm" variant="outline" onClick={runReview} disabled={reviewLoading} className="text-violet-700 border-violet-200 hover:bg-violet-50">
-                          <TrendingUp className="h-3.5 w-3.5 mr-1.5" /> Re-analyse
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
             
             <div className="flex gap-4 md:gap-6">
             {/* ── Sidebar Navigation ── */}
@@ -1968,12 +1722,22 @@ function CVBuilderPage() {
 
                   {/* ── Summary ── */}
                   {currentKey === "summary" && (
-                    <Textarea
-                      rows={8}
-                      value={summary}
-                      onChange={(e) => setSummary(e.target.value)}
-                      placeholder="Brief professional summary highlighting your key strengths, experience, and career goals..."
-                    />
+                    <div className="space-y-3">
+                      {(!summary || summary.trim().length < 10) && (
+                        <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          <span>A professional summary is required. Describe your experience, skills, and career goals.</span>
+                        </div>
+                      )}
+                      <Textarea
+                        rows={8}
+                        value={summary}
+                        onChange={(e) => setSummary(e.target.value)}
+                        placeholder="Brief professional summary highlighting your key strengths, experience, and career goals..."
+                        className={!summary || summary.trim().length < 10 ? "border-red-300 focus-visible:ring-red-400" : ""}
+                      />
+                      <p className="text-xs text-muted-foreground text-right">{summary.trim().length} characters{summary.trim().length < 100 ? " — aim for at least 100" : ""}</p>
+                    </div>
                   )}
 
                   {/* ── Experience ── */}
@@ -2194,11 +1958,6 @@ function CVBuilderPage() {
                         <Button variant="outline" className="flex-1" onClick={() => setReferees([...referees, { id: uid(), name: "", title: "", company: "", phone: "", email: "" }])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Referee
                         </Button>
-                        {referees.length === 0 && experiences.length > 0 && (
-                          <Button variant="secondary" className="flex-1" onClick={generateReferencesFromExperience}>
-                            <Sparkles className="mr-2 h-4 w-4" /> Generate with AI
-                          </Button>
-                        )}
                       </div>
                     </div>
                   )}
@@ -2221,11 +1980,6 @@ function CVBuilderPage() {
                         <Button variant="outline" className="flex-1" onClick={() => setKeyAchievements([...keyAchievements, { id: uid(), achievement: "" }])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Achievement
                         </Button>
-                        {keyAchievements.length === 0 && experiences.length > 0 && (
-                          <Button variant="secondary" className="flex-1" onClick={generateAchievementsFromExperience}>
-                            <Sparkles className="mr-2 h-4 w-4" /> Generate with AI
-                          </Button>
-                        )}
                       </div>
                     </div>
                   )}
