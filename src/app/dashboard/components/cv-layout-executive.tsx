@@ -125,7 +125,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
         {d.achievements && d.achievements.length > 0 && (
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <BodySection C={C}>Career Highlights</BodySection>
-            {d.achievements.map((ach, i) => (
+            {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
                 <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
@@ -282,7 +282,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           {d.achievements && d.achievements.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Career Highlights</BodySection>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
                   <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
@@ -602,7 +602,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         {d.achievements && d.achievements.length > 0 && (
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <ExecBodyH C={C}>Career Highlights</ExecBodyH>
-            {d.achievements.map((ach, i) => (
+            {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                 <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                 <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -718,7 +718,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           {d.achievements && d.achievements.length > 0 && (
             <div>
               <ExecBodyH C={C}>Career Highlights</ExecBodyH>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 5 }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                   <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
@@ -989,7 +989,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
         {d.achievements && d.achievements.length > 0 && (
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <MinimalH C={C}>Career Highlights</MinimalH>
-            {d.achievements.map((ach, i) => (
+            {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                 <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                 <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -1063,7 +1063,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             {d.achievements && d.achievements.length > 0 && (
               <div>
                 <MinimalH C={C}>Career Highlights</MinimalH>
-                {d.achievements.map((ach, i) => (
+                {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary }}>—</span>
                     <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>

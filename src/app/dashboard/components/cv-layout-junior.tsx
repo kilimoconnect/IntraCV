@@ -105,7 +105,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
         {d.achievements && d.achievements.length > 0 && (
           <div data-section-id="achievements" style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
             <Heading C={C}>Key Achievements</Heading>
-            {d.achievements.map((ach, i) => (
+            {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                 <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "17px" }}>★</span>
                 <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -277,7 +277,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
           {show.has("achievements") && d.achievements && d.achievements.length > 0 && (
             <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.divider}` }}>
               <Heading C={C}>Key Achievements</Heading>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "17px" }}>★</span>
                   <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -456,7 +456,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
             )}
             {showP2.has("achievements") && d.achievements && d.achievements.length > 0 && (
               <div style={{ marginBottom: 14 }}><Heading C={C}>Key Achievements</Heading>
-                {d.achievements.map((ach, i) => (
+                {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "17px" }}>★</span>
                     <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -679,7 +679,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
           {show.has("achievements") && d.achievements && d.achievements.length > 0 && (
             <div style={{ marginBottom: 14 }}>
               <HeadingLine C={C}>Key Achievements</HeadingLine>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "17px" }}>★</span>
                   <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -826,7 +826,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
             {showL.has("achievements") && d.achievements && d.achievements.length > 0 && (
               <div style={{ marginBottom: 14 }}>
                 <HeadingUnderline C={C}>Key Achievements</HeadingUnderline>
-                {d.achievements.map((ach, i) => (
+                {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                     <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "17px" }}>★</span>
                     <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>

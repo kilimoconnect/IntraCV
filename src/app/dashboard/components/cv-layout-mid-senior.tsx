@@ -169,7 +169,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
         {d.achievements && d.achievements.length > 0 && (
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <MainHeading C={C}>Key Achievements</MainHeading>
-            {d.achievements.map((ach, i) => (
+            {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
                 <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.primary }}>{i + 1}</span>
@@ -320,7 +320,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
           {d.achievements && d.achievements.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <MainHeading C={C}>Key Achievements</MainHeading>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
                   <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <span style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.primary }}>{i + 1}</span>
@@ -545,7 +545,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         {d.achievements && d.achievements.length > 0 && (
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <BoldHeading C={C}>Key Achievements</BoldHeading>
-            {d.achievements.map((ach, i) => (
+            {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                 <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                 <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -668,7 +668,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           {d.achievements && d.achievements.length > 0 && (
             <div>
               <BoldHeading C={C}>Key Achievements</BoldHeading>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                   <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
@@ -877,7 +877,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <div data-mid="achievements" style={{ marginBottom: 14 }}>
             <CardHeading C={C}>Key Achievements</CardHeading>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              {d.achievements.map((ach, i) => (
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", padding: "6px 10px", backgroundColor: C.cardBg, borderRadius: 4, border: `1px solid ${C.divider}` }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                   <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
@@ -990,7 +990,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div style={{ marginBottom: 14 }}>
               <CardHeading C={C}>Key Achievements</CardHeading>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                {d.achievements.map((ach, i) => (
+                {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", padding: "6px 10px", backgroundColor: C.cardBg, borderRadius: 4, border: `1px solid ${C.divider}` }}>
                     <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
                     <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
