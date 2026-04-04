@@ -119,15 +119,15 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
       {/* Watermark overlay for preview (not edit mode) */}
       {!editMode && (
         <div className="absolute inset-0 pointer-events-none">
-          {/* Fewer diagonal watermarks without stripes */}
-          {Array.from({ length: 3 }, (_, i) => (
+          {/* Dynamic watermarks covering all pages */}
+          {Array.from({ length: Math.max(3, pageCount * 2) }, (_, i) => (
             <div
               key={i}
               className="absolute font-bold text-slate-300 select-none"
               style={{
                 fontSize: `${Math.max(46, 0.06 * A4_W * scale)}px`,
                 opacity: 0.12,
-                transform: `rotate(-45deg) translate(${i * 180 - 200}px, ${i * 120 - 100}px)`,
+                transform: `rotate(-45deg) translate(${(i % 3) * 200 - 150}px, ${Math.floor(i / 3) * 180 - 100}px)`,
                 whiteSpace: "nowrap",
                 userSelect: "none",
                 WebkitUserSelect: "none",
