@@ -1040,6 +1040,15 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error("Payment gateway not configured. Contact support.");
       return;
     }
+
+    // Resolve email: aiData → cvData.personalInfo → block
+    const personalInfo = cvData?.personalInfo as Record<string, string> | undefined;
+    const customerEmail = aiData.email || personalInfo?.email || "";
+    if (!customerEmail) {
+      toast.error("Please add your email address to your profile before downloading.");
+      return;
+    }
+
     setPaymentProcessing(true);
     const txRef = generateTxRef(userId);
     try {
@@ -1050,8 +1059,8 @@ export default function CvStudio({ userId, cvData }: Props) {
         currency: DOWNLOAD_CURRENCY,
         payment_options: "card",
         customer: {
-          email: aiData.email || "",
-          name: aiData.fullName || "IntraCV User",
+          email: customerEmail,
+          name: aiData.fullName || personalInfo?.fullName || "IntraCV User",
         },
         customizations: {
           title: "IntraCV — Download CV",
