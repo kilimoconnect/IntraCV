@@ -115,6 +115,30 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
           {pageCount} page{pageCount > 1 ? "s" : ""}
         </span>
       </div>
+
+      {/* Watermark overlay for preview (not edit mode) */}
+      {!editMode && (
+        <div
+          className="absolute inset-0 pointer-events-none flex items-center justify-center"
+          style={{
+            background: "repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,0.03) 35px, rgba(0,0,0,0.03) 70px)",
+          }}
+        >
+          <div
+            className="font-bold text-slate-300 select-none"
+            style={{
+              fontSize: `${Math.max(48, 0.06 * A4_W * scale)}px`,
+              opacity: 0.18,
+              transform: "rotate(-45deg)",
+              whiteSpace: "nowrap",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+            }}
+          >
+            IntraCV Preview
+          </div>
+        </div>
+      )}
     </div>
   );
 }
