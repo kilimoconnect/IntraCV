@@ -94,8 +94,14 @@ function detectCategory(cvData: Record<string, unknown>): CareerCategory {
   if (certifications.length >= 3) score += 5;
   else if (certifications.length >= 1) score += 2;
 
-  if (score >= 60) return "executive";
-  if (score >= 25) return "mid-senior";
+  // Guard each category against missing data for its distinctive sections:
+  // - executive requires at least one of: board roles, publications, exec training
+  // - mid-senior requires at least: achievements OR 3+ roles
+  // Falls back down the chain when the data isn't there.
+  const hasExecSections   = boardRoles.length > 0 || publications.length > 0 || execTraining.length > 0;
+  const hasMidSeniorData  = achievements.length > 0 || experiences.length >= 3;
+  if (score >= 60) return hasExecSections ? "executive" : hasMidSeniorData ? "mid-senior" : "junior";
+  if (score >= 25) return hasMidSeniorData ? "mid-senior" : "junior";
   return "junior";
 }
 
