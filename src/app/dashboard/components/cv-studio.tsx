@@ -1259,14 +1259,61 @@ export default function CvStudio({ userId, cvData }: Props) {
 
   // ── Category Selection ──
   if (step === "select") {
+    // ── Recommendation reason from raw profile data ──
+    const _exps = Array.isArray(cvData.experiences) ? cvData.experiences as any[] : [];
+    const _boards = Array.isArray(cvData.boardRoles) ? cvData.boardRoles as any[] : [];
+    const _startYears = _exps
+      .map((e: any) => e?.startDate ? new Date(e.startDate).getFullYear() : null)
+      .filter((y): y is number => y !== null);
+    const _yearsSpan = _startYears.length > 0 ? new Date().getFullYear() - Math.min(..._startYears) : 0;
+    const _sortedExps = [..._exps].sort((a: any, b: any) => {
+      const aEnd = a?.endDate ? new Date(a.endDate).getTime() : Date.now();
+      const bEnd = b?.endDate ? new Date(b.endDate).getTime() : Date.now();
+      return bEnd - aEnd;
+    });
+    const _currentTitle = (_sortedExps[0] as any)?.title?.trim() || "";
+    const _recCat = CATEGORY_CARDS.find(c => c.id === detectedCategory)!;
+    const _recReasonParts: string[] = [];
+    if (_yearsSpan > 0) _recReasonParts.push(`${_yearsSpan}${detectedCategory === "executive" ? "+" : ""} years of experience`);
+    if (_currentTitle) _recReasonParts.push(`most recent: ${_currentTitle}`);
+    if (detectedCategory === "executive" && _boards.length > 0) _recReasonParts.push(`${_boards.length} board role${_boards.length > 1 ? "s" : ""}`);
+    if (_exps.length > 0) _recReasonParts.push(`${_exps.length} role${_exps.length !== 1 ? "s" : ""}`);
+    const _recReason = _recReasonParts.join(" · ");
+
     return (
       <div className="max-w-5xl mx-auto py-10 px-4">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Choose Your CV Layout</h2>
           <p className="text-sm text-slate-500 max-w-md mx-auto">
             Select the layout that best matches your career level. Each layout has a unique design optimized for your stage.
           </p>
         </div>
+
+        {_recCat && (
+          <div className={`mb-8 flex items-center justify-between gap-4 p-4 rounded-xl border-2 bg-gradient-to-r ${_recCat.bgGradient} ${_recCat.borderColor.split(" ")[0]}`}>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`shrink-0 p-2 rounded-lg bg-white shadow-sm ${_recCat.color}`}>
+                <_recCat.icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-slate-800">
+                  ✦ Recommended for you:{" "}
+                  <span className={_recCat.color}>{_recCat.label}</span>
+                  <span className="font-normal text-slate-500"> — {_recCat.subtitle}</span>
+                </div>
+                {_recReason && (
+                  <div className="text-xs text-slate-500 mt-0.5 truncate">{_recReason}</div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => { setSelectedCategory(detectedCategory); setStep("pick-layout"); }}
+              className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-lg bg-white shadow-sm border border-slate-200 ${_recCat.color} hover:shadow-md transition-shadow whitespace-nowrap`}
+            >
+              Use this →
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {CATEGORY_CARDS.map((cat) => {
