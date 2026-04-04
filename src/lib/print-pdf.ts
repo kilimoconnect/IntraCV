@@ -145,8 +145,10 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       // invisible height errors in SVG foreignObject after ~3 items, causing a
       // visible gap before the 4th item. Convert these rows to table layout,
       // which is perfectly reliable in foreignObject.
-      // Matches: flex container, alignItems:flex-start, exactly 2 children,
-      // first child is a circle badge (has borderRadius set).
+      // Matches:
+      //   A) Numbered circle badge rows — first child is a div with borderRadius.
+      //   B) Star/bullet span rows (★, •, etc.) — first child is a <span> with
+      //      no explicit width, used for achievement/bullet list items.
       clone.querySelectorAll<HTMLElement>("*").forEach((el) => {
         const s = el.style;
         if (s.display !== "flex" && s.display !== "inline-flex") return;
@@ -154,11 +156,19 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         const kids = Array.from(el.children) as HTMLElement[];
         if (kids.length !== 2) return;
         const [icon, text] = kids;
-        if (!icon.style.borderRadius) return; // only target circle badges
 
-        const gap = icon.style.marginRight || "8px"; // set by gap pass above
-        const iconW = parseInt(icon.style.width) || 18;
-        const gapW = parseInt(gap) || 8;
+        const isBadge = !!icon.style.borderRadius; // numbered circle (div)
+        // Single-character bullet span: <span>★</span>, <span>•</span>, etc.
+        const isBulletSpan =
+          icon.tagName === "SPAN" &&
+          !icon.style.width &&
+          (icon.textContent?.trim().length ?? 0) <= 3;
+
+        if (!isBadge && !isBulletSpan) return;
+
+        const gap = icon.style.marginRight || (isBadge ? "8px" : "6px");
+        const iconW = isBadge ? (parseInt(icon.style.width) || 18) : 16;
+        const gapW = parseInt(gap) || (isBadge ? 8 : 6);
 
         el.style.display = "table";
         el.style.width = "100%";
