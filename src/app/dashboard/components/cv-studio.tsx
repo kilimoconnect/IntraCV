@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Award, Briefcase, CheckCircle2, CreditCard, Download, GraduationCap, Loader2, Palette, PenLine, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Palette, PenLine, RefreshCw, Sparkles, Target, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -603,6 +603,14 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [showJobOptimizer, setShowJobOptimizer] = useState(false);
+  const [jobDescription, setJobDescription] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [jobAnalysis, setJobAnalysis] = useState<{ atsScore: number; missingSkills: string[]; weakAreas: string[] } | null>(null);
+  const [optimizing, setOptimizing] = useState(false);
+  const [coverLetter, setCoverLetter] = useState<string | null>(null);
+  const [showCoverLetter, setShowCoverLetter] = useState(false);
+  const [copiedCL, setCopiedCL] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
@@ -1033,6 +1041,57 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [aiData, selectedCategory]);
 
+  const handleAnalyzeJD = useCallback(async () => {
+    if (!aiData || !jobDescription.trim() || analyzing) return;
+    setAnalyzing(true);
+    setJobAnalysis(null);
+    try {
+      const res = await fetch("/api/ai/analyze-jd", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvData: aiData, jobDescription }),
+      });
+      if (!res.ok) throw new Error("Analysis failed");
+      const data = await res.json();
+      setJobAnalysis(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Analysis failed. Please try again.");
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [aiData, jobDescription, analyzing]);
+
+  const handleOptimizeForJob = useCallback(async () => {
+    if (!aiData || !jobDescription.trim() || optimizing) return;
+    setOptimizing(true);
+    try {
+      const res = await fetch("/api/ai/optimize-for-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvData: aiData, jobDescription, analysis: jobAnalysis, category: selectedCategory }),
+      });
+      if (!res.ok) throw new Error("Optimization failed");
+      const data = await res.json();
+      if (data.optimizedCvData) {
+        const fitted = fitContentToLayout(data.optimizedCvData as CategoryCVData, selectedCategory!);
+        setAiData(fitted);
+      }
+      if (data.coverLetter) {
+        setCoverLetter(data.coverLetter as string);
+        setShowCoverLetter(true);
+      }
+      toast.success("CV optimized! Cover letter generated below.");
+      setShowJobOptimizer(false);
+      setJobAnalysis(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Optimization failed. Please try again.");
+    } finally {
+      setOptimizing(false);
+    }
+  }, [aiData, jobDescription, jobAnalysis, selectedCategory, optimizing]);
+
   const handlePayAndDownload = useCallback(async () => {
     if (!aiData || paymentProcessing) return;
     const publicKey = process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY;
@@ -1334,6 +1393,18 @@ export default function CvStudio({ userId, cvData }: Props) {
               )}
             </button>
             <button
+              onClick={() => { setShowJobOptimizer(!showJobOptimizer); if (showJobOptimizer) setJobAnalysis(null); }}
+              className={`flex items-center gap-1 sm:gap-1.5 rounded-md border px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors ${
+                showJobOptimizer
+                  ? "border-violet-300 bg-violet-50 text-violet-700"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Optimize for Job</span>
+              <span className="sm:hidden">Optimize</span>
+            </button>
+            <button
               onClick={() => setShowPaymentModal(true)}
               disabled={downloadingPdf || paymentProcessing}
               className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
@@ -1442,6 +1513,187 @@ export default function CvStudio({ userId, cvData }: Props) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* ── Job Optimizer Panel ── */}
+      {showJobOptimizer && (
+        <div className="rounded-xl border border-violet-200 bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-violet-50 border-b border-violet-100">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-violet-600" />
+              <span className="text-sm font-semibold text-violet-800">Optimize CV for a Job</span>
+            </div>
+            <button onClick={() => { setShowJobOptimizer(false); setJobAnalysis(null); }} className="text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Step 1 — Paste JD */}
+            <div>
+              <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                Paste the job description:
+              </label>
+              <textarea
+                value={jobDescription}
+                onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }}
+                rows={5}
+                placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
+                className="w-full text-xs p-3 border border-slate-200 rounded-lg bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Analyze button */}
+            {!jobAnalysis && (
+              <button
+                onClick={() => void handleAnalyzeJD()}
+                disabled={analyzing || !jobDescription.trim()}
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-semibold py-2.5 transition-colors"
+              >
+                {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                {analyzing ? "Analyzing gap…" : "Analyze Gap"}
+              </button>
+            )}
+
+            {/* ── Analysis Results ── */}
+            {jobAnalysis && (
+              <div className="space-y-4">
+                {/* ATS Score */}
+                <div className="flex items-center gap-4 p-3 rounded-lg border bg-slate-50">
+                  <div className={`text-3xl font-black tabular-nums ${
+                    jobAnalysis.atsScore >= 75 ? "text-emerald-600" :
+                    jobAnalysis.atsScore >= 50 ? "text-amber-600" : "text-red-600"
+                  }`}>
+                    {jobAnalysis.atsScore}%
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <BarChart3 className="h-3.5 w-3.5 text-slate-500" />
+                      <span className="text-xs font-semibold text-slate-700">ATS Match Score</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all ${
+                          jobAnalysis.atsScore >= 75 ? "bg-emerald-500" :
+                          jobAnalysis.atsScore >= 50 ? "bg-amber-500" : "bg-red-500"
+                        }`}
+                        style={{ width: `${jobAnalysis.atsScore}%` }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1">
+                      {jobAnalysis.atsScore >= 75 ? "Strong match — good alignment with JD" :
+                       jobAnalysis.atsScore >= 50 ? "Moderate match — some gaps to address" :
+                       "Low match — significant optimization needed"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Missing Skills */}
+                {jobAnalysis.missingSkills.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-slate-700 mb-2">Missing Skills / Keywords</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {jobAnalysis.missingSkills.map((skill, i) => (
+                        <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Weak Areas */}
+                {jobAnalysis.weakAreas.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-slate-700 mb-2">Weak Areas</div>
+                    <ul className="space-y-1.5">
+                      {jobAnalysis.weakAreas.map((area, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                          {area}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => setJobAnalysis(null)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Re-analyze
+                  </button>
+                  <button
+                    onClick={() => void handleOptimizeForJob()}
+                    disabled={optimizing}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-xs font-semibold py-2 transition-colors"
+                  >
+                    {optimizing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {optimizing ? "Optimizing CV…" : "✔ Optimize for this Job"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Cover Letter Modal ── */}
+      {showCoverLetter && coverLetter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-violet-600" />
+                <h2 className="text-base font-bold text-slate-800">Your Cover Letter</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(coverLetter);
+                    setCopiedCL(true);
+                    setTimeout(() => setCopiedCL(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {copiedCL ? "Copied!" : "Copy"}
+                </button>
+                <button onClick={() => setShowCoverLetter(false)} className="text-slate-400 hover:text-slate-600">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-y-auto p-6 flex-1">
+              <div className="bg-slate-50 rounded-xl border border-slate-200 p-5">
+                <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">{coverLetter}</pre>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-100 shrink-0 flex items-center justify-between">
+              <p className="text-xs text-slate-400">AI-generated · Review before sending</p>
+              <button
+                onClick={() => setShowCoverLetter(false)}
+                className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── View Cover Letter banner (after optimization) ── */}
+      {coverLetter && !showCoverLetter && !showJobOptimizer && (
+        <button
+          onClick={() => setShowCoverLetter(true)}
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          View Generated Cover Letter
+        </button>
       )}
 
       <div className="relative">
