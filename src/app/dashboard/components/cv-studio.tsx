@@ -591,7 +591,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const supabase = createClient();
 
   const detectedCategory = detectCategory(cvData);
-  const [step, setStep] = useState<"select" | "analyze-jd" | "pick-layout" | "generating" | "preview" | "error">("select");
+  const [step, setStep] = useState<"analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("analyze-profile");
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<LayoutVariant>("A");
   const [aiData, setAiData] = useState<CategoryCVData | null>(null);
@@ -612,8 +612,32 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [copiedCL, setCopiedCL] = useState(false);
   const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
+  const [profileAnalysis, setProfileAnalysis] = useState<{
+    completenessScore: number;
+    strengths: string[];
+    gaps: string[];
+    atsScore?: number;
+    missingSkills?: string[];
+    weakAreas?: string[];
+  } | null>(null);
+  const [profileAnalyzing, setProfileAnalyzing] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
+
+  // Auto-run profile analysis on mount
+  useEffect(() => {
+    setProfileAnalyzing(true);
+    fetch("/api/ai/analyze-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cvData }),
+    })
+      .then((r) => r.json())
+      .then((data) => setProfileAnalysis(data))
+      .catch(() => toast.error("Profile analysis failed."))
+      .finally(() => setProfileAnalyzing(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-optimize when preview loads and user had entered a JD
   useEffect(() => {
@@ -1050,6 +1074,29 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [aiData, selectedCategory]);
 
+  const handleAnalyzeProfile = useCallback(async () => {
+    if (!jobDescription.trim() || profileAnalyzing) return;
+    setProfileAnalyzing(true);
+    try {
+      const res = await fetch("/api/ai/analyze-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cvData, jobDescription }),
+      });
+      if (!res.ok) throw new Error("Analysis failed");
+      const data = await res.json();
+      setProfileAnalysis(data);
+      if (data.atsScore !== undefined) {
+        setJobAnalysis({ atsScore: data.atsScore, missingSkills: data.missingSkills || [], weakAreas: data.weakAreas || [] });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Analysis failed. Please try again.");
+    } finally {
+      setProfileAnalyzing(false);
+    }
+  }, [cvData, jobDescription, profileAnalyzing]);
+
   const handleAnalyzeJD = useCallback(async () => {
     if (!aiData || !jobDescription.trim() || analyzing) return;
     setAnalyzing(true);
@@ -1196,7 +1243,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             return (
               <button
                 key={cat.id}
-                onClick={() => { setSelectedCategory(cat.id); setJobDescription(""); setJobAnalysis(null); setCoverLetter(null); setStep("analyze-jd"); }}
+                onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
                 className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all ${
                   isRecommended
                     ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
@@ -1251,140 +1298,178 @@ export default function CvStudio({ userId, cvData }: Props) {
     );
   }
 
-  // ── Job Description Analysis (before layout pick) ──
-  if (step === "analyze-jd" && selectedCategory) {
-    const cat = CATEGORY_CARDS.find((c) => c.id === selectedCategory)!;
-    const Icon = cat.icon;
-    const score = jobAnalysis?.atsScore ?? 0;
-    const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-600";
-    const barColor  = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500"  : "bg-red-500";
-    const scoreLabel = score >= 75 ? "Strong match — great alignment with the JD"
-                     : score >= 50 ? "Moderate match — a few gaps to address"
-                     : "Low match — CV needs significant tailoring";
+  // ── Profile Analysis (initial step, auto-runs) ──
+  if (step === "analyze-profile") {
+    const ps = profileAnalysis?.completenessScore ?? 0;
+    const psColor = ps >= 75 ? "text-emerald-600" : ps >= 50 ? "text-amber-600" : "text-red-600";
+    const psBar   = ps >= 75 ? "bg-emerald-500"   : ps >= 50 ? "bg-amber-500"   : "bg-red-500";
+    const jdScore = profileAnalysis?.atsScore;
+    const jdColor = jdScore !== undefined ? (jdScore >= 75 ? "text-emerald-600" : jdScore >= 50 ? "text-amber-600" : "text-red-600") : "";
+    const jdBar   = jdScore !== undefined ? (jdScore >= 75 ? "bg-emerald-500"   : jdScore >= 50 ? "bg-amber-500"   : "bg-red-500")   : "";
+    const hasJDResult = jdScore !== undefined;
 
     return (
-      <div className="max-w-2xl mx-auto py-10 px-4">
-        <button
-          onClick={() => { setStep("select"); setSelectedCategory(null); }}
-          className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to categories
-        </button>
-
+      <div className="max-w-2xl mx-auto py-10 px-4 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className={`p-2 rounded-lg bg-white shadow-sm border ${cat.borderColor.split(" ")[0]} ${cat.color}`}>
-            <Icon className="h-5 w-5" />
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600">
+            <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">{cat.label} CV</h2>
-            <p className="text-xs text-slate-500">Paste a job description so AI can tailor your CV from the start</p>
+            <h2 className="text-xl font-bold text-slate-800">Profile Analysis</h2>
+            <p className="text-xs text-slate-500">AI reviews your profile before generating your CV</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-          {/* Step label */}
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-violet-600" />
-            <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
-            <span className="ml-1 text-xs text-slate-400">(optional — skip to generate a general CV)</span>
-          </div>
+        {/* ── Profile card ── */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
 
-          {/* Textarea */}
-          <textarea
-            value={jobDescription}
-            onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }}
-            rows={6}
-            placeholder="Paste the full job description here — requirements, responsibilities, qualifications, company info…"
-            className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
-          />
-
-          {/* Analyze button (only when JD typed and not yet analyzed) */}
-          {jobDescription.trim() && !jobAnalysis && (
-            <button
-              onClick={() => void handleAnalyzeJD()}
-              disabled={analyzing}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 transition-colors"
-            >
-              {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-              {analyzing ? "Analyzing gap…" : "Analyze Gap"}
-            </button>
-          )}
-
-          {/* ── Analysis Results ── */}
-          {jobAnalysis && (
-            <div className="space-y-4 pt-1">
-              {/* ATS Score */}
-              <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50">
-                <div className={`text-4xl font-black tabular-nums ${scoreColor}`}>{score}%</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-700">ATS Match Score</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                    <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${score}%` }} />
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1">{scoreLabel}</p>
-                </div>
-              </div>
-
-              {/* Missing Skills */}
-              {jobAnalysis.missingSkills.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-700 mb-2">Missing Skills / Keywords</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {jobAnalysis.missingSkills.map((skill, i) => (
-                      <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">{skill}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Weak Areas */}
-              {jobAnalysis.weakAreas.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-700 mb-2">Weak Areas</p>
-                  <ul className="space-y-1.5">
-                    {jobAnalysis.weakAreas.map((area, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                        <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                        {area}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+          {/* Loading */}
+          {profileAnalyzing && !profileAnalysis && (
+            <div className="flex items-center gap-3 px-6 py-5 text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin text-indigo-600 shrink-0" />
+              <span className="text-sm">Analyzing your profile…</span>
             </div>
           )}
 
-          {/* ── Continue CTAs ── */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
-            <button
-              onClick={() => setStep("pick-layout")}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              {jobDescription.trim() ? "Skip — generate general CV" : "Continue without JD"}
-            </button>
+          {/* Completeness score */}
+          {profileAnalysis && (
+            <div className="flex items-center gap-4 px-6 py-5">
+              <div className={`text-4xl font-black tabular-nums shrink-0 ${psColor}`}>{ps}%</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-700">Profile Completeness</span>
+                </div>
+                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div className={`h-2 rounded-full ${psBar}`} style={{ width: `${ps}%` }} />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {ps >= 75 ? "Strong profile — ready to generate a great CV"
+                   : ps >= 50 ? "Good profile — a few gaps to address"
+                   : "Thin profile — consider adding more detail before generating"}
+                </p>
+              </div>
+            </div>
+          )}
 
-            {jobDescription.trim() ? (
+          {/* Strengths */}
+          {profileAnalysis && profileAnalysis.strengths.length > 0 && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-700 mb-2">Profile Strengths</p>
+              <ul className="space-y-1.5">
+                {profileAnalysis.strengths.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Gaps */}
+          {profileAnalysis && profileAnalysis.gaps.length > 0 && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-700 mb-2">Profile Gaps</p>
+              <ul className="space-y-1.5">
+                {profileAnalysis.gaps.map((g, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                    {g}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* ── JD Section ── */}
+          <div className="px-6 py-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-violet-600" />
+              <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
+              <span className="text-xs text-slate-400 font-normal ml-1">(optional)</span>
+            </div>
+
+            <textarea
+              value={jobDescription}
+              onChange={(e) => {
+                setJobDescription(e.target.value);
+                if (hasJDResult) setProfileAnalysis((prev) => prev ? { ...prev, atsScore: undefined, missingSkills: undefined, weakAreas: undefined } : null);
+                setJobAnalysis(null);
+              }}
+              rows={5}
+              placeholder="Paste the full job description here — AI will analyze your profile against it and tailor your CV…"
+              className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
+            />
+
+            {jobDescription.trim() && !hasJDResult && (
               <button
-                onClick={() => { setShouldAutoOptimize(true); setStep("pick-layout"); }}
-                disabled={!jobAnalysis}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-semibold py-2.5 transition-colors"
-                title={!jobAnalysis ? "Run Analyze Gap first" : ""}
+                onClick={() => void handleAnalyzeProfile()}
+                disabled={profileAnalyzing}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 transition-colors"
               >
-                <Sparkles className="h-4 w-4" />
-                Optimize for this Job →
+                {profileAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                {profileAnalyzing ? "Analyzing…" : "Analyze Profile vs Job Description"}
               </button>
-            ) : (
-              <button
-                onClick={() => setStep("pick-layout")}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 transition-colors"
-              >
-                <Sparkles className="h-4 w-4" />
-                Continue to Layout
-              </button>
+            )}
+
+            {/* JD Results */}
+            {hasJDResult && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-4 p-3 rounded-xl border bg-slate-50">
+                  <div className={`text-3xl font-black tabular-nums shrink-0 ${jdColor}`}>{jdScore}%</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-700 mb-1">ATS Match Score</p>
+                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className={`h-1.5 rounded-full ${jdBar}`} style={{ width: `${jdScore}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {profileAnalysis?.missingSkills && profileAnalysis.missingSkills.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Missing Skills / Keywords</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {profileAnalysis.missingSkills.map((s, i) => (
+                        <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {profileAnalysis?.weakAreas && profileAnalysis.weakAreas.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 mb-2">Weak Areas</p>
+                    <ul className="space-y-1.5">
+                      {profileAnalysis.weakAreas.map((a, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                          {a}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── CTA ── */}
+          <div className="px-6 py-5 bg-slate-50">
+            <button
+              onClick={() => {
+                if (hasJDResult) setShouldAutoOptimize(true);
+                setStep("select");
+              }}
+              disabled={profileAnalyzing && !profileAnalysis}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold py-3 transition-colors"
+            >
+              <Sparkles className="h-4 w-4" />
+              {hasJDResult ? "Generate Tailored CV →" : "Generate My CV →"}
+            </button>
+            {!profileAnalysis && profileAnalyzing && (
+              <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
             )}
           </div>
         </div>
@@ -1399,8 +1484,8 @@ export default function CvStudio({ userId, cvData }: Props) {
     const Icon = cat.icon;
     return (
       <div className="max-w-5xl mx-auto py-10 px-4">
-        <button onClick={() => setStep("analyze-jd")} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back
+        <button onClick={() => setStep("select")} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to categories
         </button>
 
         <div className="flex items-center gap-3 mb-2">
