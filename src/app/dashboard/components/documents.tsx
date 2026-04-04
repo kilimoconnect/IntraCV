@@ -14,6 +14,10 @@ import { ConfigRenderer, TwoPageConfigRenderer, ONE_PAGE_TEMPLATES, TWO_PAGE_TEM
 import type { CVTemplateData } from "@/components/cv-templates";
 import { CVEngine } from "@/components/cv-engine";
 import type { LayoutType } from "@/components/cv-engine";
+import CVLayoutJunior from "./cv-layout-junior";
+import CVLayoutMidSenior from "./cv-layout-mid-senior";
+import CVLayoutExecutive from "./cv-layout-executive";
+import type { CareerCategory, CategoryCVData, LayoutVariant, ThemeName } from "./cv-layout-types";
 
 interface DocumentsProps {
   userId: string;
@@ -27,12 +31,28 @@ interface ParsedCV {
   // Old template format
   configId?: string;
   templateType: string;
+  // Studio format
+  studioData?: CategoryCVData;
+  studioCategory?: CareerCategory;
+  studioVariant?: LayoutVariant;
+  studioTheme?: ThemeName;
 }
 
-// Parse saved CV JSON content — handles both old (templateConfigId) and new (engineStyleId) formats
+// Parse saved CV JSON content — handles old engine, template, and new studio formats
 function parseCvContent(raw: string): ParsedCV | null {
   try {
     const parsed = JSON.parse(raw);
+    // Studio format (saved from CV Studio payment flow)
+    if (parsed.studioData && parsed.studioCategory) {
+      return {
+        data: {} as CVTemplateData,
+        templateType: "studio",
+        studioData: parsed.studioData as CategoryCVData,
+        studioCategory: parsed.studioCategory as CareerCategory,
+        studioVariant: (parsed.studioVariant || "A") as LayoutVariant,
+        studioTheme: (parsed.studioTheme || "corporate") as ThemeName,
+      };
+    }
     // New engine format
     if (parsed.data && parsed.engineStyleId) {
       return {
@@ -98,13 +118,13 @@ export default function Documents({ userId }: DocumentsProps) {
     setDownloadingId(doc.id);
 
     // Wait for the preview to render
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 800));
 
     try {
       const container = document.getElementById(`cv-preview-${doc.id}`);
-      if (!container) { toast.error("Preview not ready"); return; }
+      if (!container) { toast.error("Preview not ready — please expand the document first"); return; }
 
-      const fullName = cv.data.personalInfo?.fullName || "CV";
+      const fullName = cv.studioData?.fullName || cv.data?.personalInfo?.fullName || "CV";
       const filename = `${fullName.replace(/\s+/g, "_")}_CV`;
       await downloadCvAsPdf(container, filename);
     } catch (err: any) {
@@ -178,7 +198,10 @@ export default function Documents({ userId }: DocumentsProps) {
                       <Badge variant={doc.doc_type === "cv" ? "default" : "secondary"} className="text-xs shrink-0">
                         {doc.doc_type === "cover_letter" ? "Cover Letter" : "CV"}
                       </Badge>
-                      {cv && isEngineCV && (
+                      {cv && cv.templateType === "studio" && (
+                        <Badge variant="outline" className="text-[10px] shrink-0 bg-indigo-50 text-indigo-700 border-indigo-200">CV Studio · {cv.studioCategory}</Badge>
+                      )}
+                    {cv && isEngineCV && (
                         <Badge variant="outline" className="text-[10px] shrink-0">{cv.engineStyleId} · {cv.engineLayoutType}</Badge>
                       )}
                       {cv && config && !isEngineCV && (
@@ -224,7 +247,15 @@ export default function Documents({ userId }: DocumentsProps) {
                 {/* Expanded content */}
                 {isExpanded && (
                   <div className="mt-4">
-                    {doc.doc_type === "cv" && cv && isEngineCV ? (
+                    {doc.doc_type === "cv" && cv && cv.templateType === "studio" && cv.studioData ? (
+                      <div className="border rounded-xl bg-slate-50 p-4 overflow-x-auto">
+                        <div id={`cv-preview-${doc.id}`} style={{ width: "794px", margin: "0 auto" }}>
+                          {cv.studioCategory === "junior" && <CVLayoutJunior data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}
+                          {cv.studioCategory === "mid-senior" && <CVLayoutMidSenior data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}
+                          {cv.studioCategory === "executive" && <CVLayoutExecutive data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}
+                        </div>
+                      </div>
+                    ) : doc.doc_type === "cv" && cv && isEngineCV ? (
                       <div className="border rounded-xl bg-slate-50 p-4 overflow-x-auto">
                         <div id={`cv-preview-${doc.id}`} style={{ width: "794px", margin: "0 auto" }}>
                           <CVEngine

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Award, Briefcase, Download, GraduationCap, Loader2, Palette, PenLine, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Award, Briefcase, CheckCircle2, CreditCard, Download, GraduationCap, Loader2, Palette, PenLine, RefreshCw, Sparkles, X } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -11,6 +11,9 @@ import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
 import { downloadCvAsPdf } from "@/lib/print-pdf";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { openFlutterwaveCheckout, generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
 
 interface Props {
   userId: string;
@@ -585,7 +588,7 @@ async function aiCondense(sectionType: string, content: unknown, maxChars?: numb
 // ─── Main Component ───
 
 export default function CvStudio({ userId, cvData }: Props) {
-  void userId;
+  const supabase = createClient();
 
   const detectedCategory = detectCategory(cvData);
   const [step, setStep] = useState<"select" | "pick-layout" | "generating" | "preview" | "error">("select");
@@ -598,6 +601,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
@@ -992,9 +997,28 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [cvData]);
 
-  const handleDownload = useCallback(async () => {
+  const saveDocumentToLibrary = useCallback(async () => {
+    if (!aiData || !selectedCategory) return;
+    const fullName = aiData.fullName || "My CV";
+    const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+    const title = `${fullName} — ${selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} CV (${month})`;
+    const content = JSON.stringify({
+      studioData: aiData,
+      studioCategory: selectedCategory,
+      studioVariant: selectedVariant,
+      studioTheme: selectedTheme,
+    });
+    await supabase.from("generated_documents").insert({
+      user_id: userId,
+      doc_type: "cv",
+      title,
+      content,
+    });
+  }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
+
+  const executePdfDownload = useCallback(async () => {
     const element = previewRef.current;
-    if (!element || !aiData || downloadingPdf) return;
+    if (!element || !aiData) return;
     setDownloadingPdf(true);
     try {
       const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
@@ -1003,10 +1027,79 @@ export default function CvStudio({ userId, cvData }: Props) {
       await downloadCvAsPdf(element, filename);
     } catch (err) {
       console.error("PDF export failed", err);
+      toast.error("PDF export failed. Please try again.");
     } finally {
       setDownloadingPdf(false);
     }
-  }, [aiData, selectedCategory, downloadingPdf]);
+  }, [aiData, selectedCategory]);
+
+  const handlePayAndDownload = useCallback(async () => {
+    if (!aiData || paymentProcessing) return;
+    const publicKey = process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY;
+    if (!publicKey) {
+      toast.error("Payment gateway not configured. Contact support.");
+      return;
+    }
+    setPaymentProcessing(true);
+    const txRef = generateTxRef(userId);
+    try {
+      await openFlutterwaveCheckout({
+        public_key: publicKey,
+        tx_ref: txRef,
+        amount: DOWNLOAD_AMOUNT,
+        currency: DOWNLOAD_CURRENCY,
+        payment_options: "card,mobilemoney,ussd",
+        customer: {
+          email: aiData.email || "",
+          name: aiData.fullName || "IntraCV User",
+        },
+        customizations: {
+          title: "IntraCV — Download CV",
+          description: `Download your ${selectedCategory} CV as a clean, watermark-free PDF`,
+        },
+        callback: async (response) => {
+          setShowPaymentModal(false);
+          if (response.status === "successful") {
+            try {
+              const verifyRes = await fetch("/api/payments/flutterwave/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  transaction_id: response.transaction_id,
+                  tx_ref: txRef,
+                  expected_amount: DOWNLOAD_AMOUNT,
+                  expected_currency: DOWNLOAD_CURRENCY,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.verified) {
+                await saveDocumentToLibrary();
+                await executePdfDownload();
+                toast.success(
+                  "CV downloaded! Your document is also saved in the Documents page.",
+                  { duration: 6000, icon: "🎉" }
+                );
+              } else {
+                toast.error(`Payment verification failed: ${verifyData.message || "Unknown error"}`);
+              }
+            } catch {
+              toast.error("Could not verify payment. Please contact support.");
+            }
+          } else {
+            toast.error("Payment was not completed.");
+          }
+          setPaymentProcessing(false);
+        },
+        onclose: () => {
+          setPaymentProcessing(false);
+          setShowPaymentModal(false);
+        },
+      });
+    } catch {
+      toast.error("Could not open payment window. Please try again.");
+      setPaymentProcessing(false);
+    }
+  }, [aiData, userId, selectedCategory, paymentProcessing, saveDocumentToLibrary, executePdfDownload]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -1232,8 +1325,8 @@ export default function CvStudio({ userId, cvData }: Props) {
               )}
             </button>
             <button
-              onClick={handleDownload}
-              disabled={downloadingPdf}
+              onClick={() => setShowPaymentModal(true)}
+              disabled={downloadingPdf || paymentProcessing}
               className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
             >
               {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
@@ -1292,6 +1385,56 @@ export default function CvStudio({ userId, cvData }: Props) {
           )}
         </div>
       )}
+      {/* ── Payment Modal ── */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-800">Download Your CV</h2>
+              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-slate-600">Watermark-free, professional PDF</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-slate-600">Saved to your Documents page for re-download anytime</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-slate-600">Secure payment via Flutterwave — card, mobile money & more</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-5 px-4 py-3 bg-indigo-50 rounded-xl border border-indigo-100">
+              <span className="text-sm font-medium text-slate-700">One-time download fee</span>
+              <span className="text-xl font-bold text-indigo-700">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toFixed(2)}</span>
+            </div>
+
+            <button
+              onClick={() => void handlePayAndDownload()}
+              disabled={paymentProcessing}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
+            >
+              {paymentProcessing ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
+              ) : (
+                <><CreditCard className="h-4 w-4" /> Pay &amp; Download</>  
+              )}
+            </button>
+
+            <p className="text-center text-[11px] text-slate-400 mt-3">
+              Powered by Flutterwave · Secure &amp; Encrypted
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="relative">
         <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
           {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
