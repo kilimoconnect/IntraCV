@@ -118,21 +118,16 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
 
       {/* Watermark overlay for preview (not edit mode) */}
       {!editMode && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,0.03) 35px, rgba(0,0,0,0.03) 70px)",
-          }}
-        >
-          {/* Repeated diagonal watermarks */}
-          {Array.from({ length: 6 }, (_, i) => (
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Fewer diagonal watermarks without stripes */}
+          {Array.from({ length: 3 }, (_, i) => (
             <div
               key={i}
               className="absolute font-bold text-slate-300 select-none"
               style={{
-                fontSize: `${Math.max(42, 0.055 * A4_W * scale)}px`,
-                opacity: 0.15,
-                transform: `rotate(-45deg) translate(${i * 120 - 250}px, ${i * 80 - 150}px)`,
+                fontSize: `${Math.max(46, 0.06 * A4_W * scale)}px`,
+                opacity: 0.12,
+                transform: `rotate(-45deg) translate(${i * 180 - 200}px, ${i * 120 - 100}px)`,
                 whiteSpace: "nowrap",
                 userSelect: "none",
                 WebkitUserSelect: "none",
