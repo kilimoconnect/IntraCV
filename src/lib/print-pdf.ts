@@ -76,31 +76,47 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       captureRoot.innerHTML = "";
       captureRoot.appendChild(clone);
 
-      // Fix: <ul>/<li> with display:list-item renders with different box heights
-      // inside SVG foreignObject, creating phantom gaps after single-line bullets.
-      // Replace every <ul>/<li> with plain <div> elements so the rendering context
-      // doesn't affect list-item box sizing.
+      // Fix: <ul>/<li> with display:list-item renders with inconsistent box heights
+      // inside SVG foreignObject, creating phantom gaps after ~6 bullets.
+      // Replace every <ul>/<li> with display:table rows directly — table layout is
+      // perfectly stable in foreignObject with no accumulated height errors.
       clone.querySelectorAll("ul").forEach((ul) => {
         const replacement = document.createElement("div");
-        replacement.style.cssText = `margin:0;padding-left:${(ul as HTMLElement).style.paddingLeft || "0px"};`;
+        replacement.style.margin = "0";
+        replacement.style.padding = "0";
         Array.from(ul.children).forEach((li) => {
-          // Empty bullets are invisible in normal <li> (no line box = height 0)
-          // but would become full-height divs — skip them entirely.
           if (!li.textContent?.trim()) return;
-          const div = document.createElement("div");
-          div.style.cssText = (li as HTMLElement).style.cssText;
-          div.style.display = "flex";
-          div.style.alignItems = "flex-start";
-          const bullet = document.createElement("span");
-          bullet.textContent = "\u25CF";
-          const liStyle = getComputedStyle(li);
-          bullet.style.cssText = `flex-shrink:0;margin-right:4px;font-size:7px;line-height:${(li as HTMLElement).style.lineHeight || "15px"};color:${liStyle.color};padding-top:1px;`;
-          const content = document.createElement("span");
-          content.style.flex = "1";
-          content.innerHTML = li.innerHTML;
-          div.appendChild(bullet);
-          div.appendChild(content);
-          replacement.appendChild(div);
+          const liEl = li as HTMLElement;
+          const liColor = getComputedStyle(li).color;
+          const liLineHeight = liEl.style.lineHeight || "15px";
+
+          const row = document.createElement("div");
+          row.style.display = "table";
+          row.style.width = "100%";
+          row.style.marginBottom = liEl.style.marginBottom || "1.5px";
+
+          const bulletCell = document.createElement("span");
+          bulletCell.textContent = "\u25CF";
+          bulletCell.style.display = "table-cell";
+          bulletCell.style.verticalAlign = "top";
+          bulletCell.style.width = "14px";
+          bulletCell.style.fontSize = "7px";
+          bulletCell.style.lineHeight = liLineHeight;
+          bulletCell.style.color = liColor;
+          bulletCell.style.paddingTop = "1px";
+
+          const textCell = document.createElement("span");
+          textCell.style.display = "table-cell";
+          textCell.style.verticalAlign = "top";
+          textCell.style.fontSize = liEl.style.fontSize || "10.5px";
+          textCell.style.lineHeight = liLineHeight;
+          textCell.style.color = liColor;
+          textCell.style.wordBreak = "break-word";
+          textCell.innerHTML = li.innerHTML;
+
+          row.appendChild(bulletCell);
+          row.appendChild(textCell);
+          replacement.appendChild(row);
         });
         ul.parentNode?.replaceChild(replacement, ul);
       });
