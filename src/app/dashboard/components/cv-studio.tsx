@@ -642,13 +642,6 @@ export default function CvStudio({ userId, cvData }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-optimize when preview loads and user had entered a JD
-  useEffect(() => {
-    if (step !== "preview" || !aiData || !shouldAutoOptimize) return;
-    setShouldAutoOptimize(false);
-    void handleOptimizeForJob();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, aiData]);
 
   const getFieldValue = useCallback((field: string): string => {
     if (!aiData) return "";
@@ -1032,14 +1025,50 @@ export default function CvStudio({ userId, cvData }: Props) {
       // ── Engine: fit content to layout geometry (sentence-safe truncation) ──
       const fitted = fitContentToLayout(filled, category);
 
-      setAiData(fitted);
+      // ── If JD is available, optimize inline (single generation phase) ──
+      if (shouldAutoOptimize && jobDescription.trim()) {
+        setShouldAutoOptimize(false);
+        try {
+          const optRes = await fetch("/api/ai/optimize-for-job", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              cvData: fitted,
+              jobDescription,
+              analysis: jobAnalysis,
+              category,
+              company,
+              companyAddress,
+              jobTitle,
+            }),
+          });
+          if (optRes.ok) {
+            const optData = asObject(await optRes.json());
+            const optimized = optData.optimizedCvData
+              ? fitContentToLayout(optData.optimizedCvData as CategoryCVData, category)
+              : fitted;
+            setAiData(optimized);
+            if (typeof optData.coverLetter === "string" && optData.coverLetter) {
+              setCoverLetter(optData.coverLetter);
+              setShowCoverLetter(true);
+            }
+          } else {
+            setAiData(fitted);
+          }
+        } catch {
+          setAiData(fitted);
+        }
+      } else {
+        setAiData(fitted);
+      }
+
       setStep("preview");
     } catch (err: unknown) {
       console.error("CV generation failed:", err);
       setError(err instanceof Error ? err.message : "Failed to generate CV");
       setStep("error");
     }
-  }, [cvData]);
+  }, [cvData, shouldAutoOptimize, jobDescription, jobAnalysis, company, companyAddress, jobTitle]);
 
   const saveDocumentToLibrary = useCallback(async () => {
     if (!aiData || !selectedCategory) return;
@@ -1581,10 +1610,12 @@ export default function CvStudio({ userId, cvData }: Props) {
       <div className="flex flex-col items-center justify-center gap-4 py-24">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         <p className="text-sm text-slate-500">
-          AI is generating your <span className="font-semibold">{cat?.label}</span> CV layout...
+          {shouldAutoOptimize
+            ? <>Building your <span className="font-semibold">tailored {cat?.label} CV</span> &amp; cover letter…</>
+            : <>Generating your <span className="font-semibold">{cat?.label} CV</span>…</>}
         </p>
         <p className="text-xs text-slate-400">
-          {shouldAutoOptimize ? "Generating base CV, then optimizing for the job description…" : "This may take 10–15 seconds"}
+          {shouldAutoOptimize ? "Optimizing for the job description — this may take 20–30 seconds" : "This may take 10–15 seconds"}
         </p>
       </div>
     );
