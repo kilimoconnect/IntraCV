@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Palette, PenLine, RefreshCw, Sparkles, Target, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
@@ -591,7 +591,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const supabase = createClient();
 
   const detectedCategory = detectCategory(cvData);
-  const [step, setStep] = useState<"select" | "pick-layout" | "generating" | "preview" | "error">("select");
+  const [step, setStep] = useState<"select" | "analyze-jd" | "pick-layout" | "generating" | "preview" | "error">("select");
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<LayoutVariant>("A");
   const [aiData, setAiData] = useState<CategoryCVData | null>(null);
@@ -611,8 +611,17 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [copiedCL, setCopiedCL] = useState(false);
+  const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
+
+  // Auto-optimize when preview loads and user had entered a JD
+  useEffect(() => {
+    if (step !== "preview" || !aiData || !shouldAutoOptimize) return;
+    setShouldAutoOptimize(false);
+    void handleOptimizeForJob();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, aiData]);
 
   const getFieldValue = useCallback((field: string): string => {
     if (!aiData) return "";
@@ -1187,7 +1196,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             return (
               <button
                 key={cat.id}
-                onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
+                onClick={() => { setSelectedCategory(cat.id); setJobDescription(""); setJobAnalysis(null); setCoverLetter(null); setStep("analyze-jd"); }}
                 className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all ${
                   isRecommended
                     ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
@@ -1242,6 +1251,147 @@ export default function CvStudio({ userId, cvData }: Props) {
     );
   }
 
+  // ── Job Description Analysis (before layout pick) ──
+  if (step === "analyze-jd" && selectedCategory) {
+    const cat = CATEGORY_CARDS.find((c) => c.id === selectedCategory)!;
+    const Icon = cat.icon;
+    const score = jobAnalysis?.atsScore ?? 0;
+    const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-600";
+    const barColor  = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500"  : "bg-red-500";
+    const scoreLabel = score >= 75 ? "Strong match — great alignment with the JD"
+                     : score >= 50 ? "Moderate match — a few gaps to address"
+                     : "Low match — CV needs significant tailoring";
+
+    return (
+      <div className="max-w-2xl mx-auto py-10 px-4">
+        <button
+          onClick={() => { setStep("select"); setSelectedCategory(null); }}
+          className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to categories
+        </button>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className={`p-2 rounded-lg bg-white shadow-sm border ${cat.borderColor.split(" ")[0]} ${cat.color}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">{cat.label} CV</h2>
+            <p className="text-xs text-slate-500">Paste a job description so AI can tailor your CV from the start</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+          {/* Step label */}
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-violet-600" />
+            <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
+            <span className="ml-1 text-xs text-slate-400">(optional — skip to generate a general CV)</span>
+          </div>
+
+          {/* Textarea */}
+          <textarea
+            value={jobDescription}
+            onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }}
+            rows={6}
+            placeholder="Paste the full job description here — requirements, responsibilities, qualifications, company info…"
+            className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
+          />
+
+          {/* Analyze button (only when JD typed and not yet analyzed) */}
+          {jobDescription.trim() && !jobAnalysis && (
+            <button
+              onClick={() => void handleAnalyzeJD()}
+              disabled={analyzing}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 transition-colors"
+            >
+              {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {analyzing ? "Analyzing gap…" : "Analyze Gap"}
+            </button>
+          )}
+
+          {/* ── Analysis Results ── */}
+          {jobAnalysis && (
+            <div className="space-y-4 pt-1">
+              {/* ATS Score */}
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50">
+                <div className={`text-4xl font-black tabular-nums ${scoreColor}`}>{score}%</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-700">ATS Match Score</span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${score}%` }} />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">{scoreLabel}</p>
+                </div>
+              </div>
+
+              {/* Missing Skills */}
+              {jobAnalysis.missingSkills.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-700 mb-2">Missing Skills / Keywords</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {jobAnalysis.missingSkills.map((skill, i) => (
+                      <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Weak Areas */}
+              {jobAnalysis.weakAreas.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-700 mb-2">Weak Areas</p>
+                  <ul className="space-y-1.5">
+                    {jobAnalysis.weakAreas.map((area, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                        {area}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Continue CTAs ── */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setStep("pick-layout")}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              {jobDescription.trim() ? "Skip — generate general CV" : "Continue without JD"}
+            </button>
+
+            {jobDescription.trim() ? (
+              <button
+                onClick={() => { setShouldAutoOptimize(true); setStep("pick-layout"); }}
+                disabled={!jobAnalysis}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-semibold py-2.5 transition-colors"
+                title={!jobAnalysis ? "Run Analyze Gap first" : ""}
+              >
+                <Sparkles className="h-4 w-4" />
+                Optimize for this Job →
+              </button>
+            ) : (
+              <button
+                onClick={() => setStep("pick-layout")}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+                Continue to Layout
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Layout Picker (within selected category) ──
   if (step === "pick-layout" && selectedCategory) {
     const cat = CATEGORY_CARDS.find((c) => c.id === selectedCategory)!;
@@ -1249,8 +1399,8 @@ export default function CvStudio({ userId, cvData }: Props) {
     const Icon = cat.icon;
     return (
       <div className="max-w-5xl mx-auto py-10 px-4">
-        <button onClick={() => { setStep("select"); setSelectedCategory(null); }} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back to categories
+        <button onClick={() => setStep("analyze-jd")} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back
         </button>
 
         <div className="flex items-center gap-3 mb-2">
@@ -1305,7 +1455,9 @@ export default function CvStudio({ userId, cvData }: Props) {
         <p className="text-sm text-slate-500">
           AI is generating your <span className="font-semibold">{cat?.label}</span> CV layout...
         </p>
-        <p className="text-xs text-slate-400">This may take 10-15 seconds</p>
+        <p className="text-xs text-slate-400">
+          {shouldAutoOptimize ? "Generating base CV, then optimizing for the job description…" : "This may take 10–15 seconds"}
+        </p>
       </div>
     );
   }
