@@ -1048,7 +1048,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         tx_ref: txRef,
         amount: DOWNLOAD_AMOUNT,
         currency: DOWNLOAD_CURRENCY,
-        payment_options: "card,mobilemoney,ussd",
+        payment_options: "card",
         customer: {
           email: aiData.email || "",
           name: aiData.fullName || "IntraCV User",
@@ -1407,7 +1407,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-slate-600">Secure payment via Flutterwave — card, mobile money & more</span>
+                <span className="text-sm text-slate-600">Secure card payment via Flutterwave — Visa, Mastercard & more</span>
               </div>
             </div>
 
