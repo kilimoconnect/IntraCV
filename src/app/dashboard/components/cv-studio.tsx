@@ -1425,7 +1425,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                 type="text"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                placeholder="e.g. 123 Main St, Dar es Salaam, Tanzania"
+                placeholder="e.g. 10 Downing St, London, UK"
                 className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
               />
             </div>
