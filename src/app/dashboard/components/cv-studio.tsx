@@ -605,6 +605,9 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showJobOptimizer, setShowJobOptimizer] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
+  const [company, setCompany] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [jobAnalysis, setJobAnalysis] = useState<{ atsScore: number; missingSkills: string[]; weakAreas: string[] } | null>(null);
   const [optimizing, setOptimizing] = useState(false);
@@ -1125,7 +1128,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       const res = await fetch("/api/ai/optimize-for-job", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvData: aiData, jobDescription, analysis: jobAnalysis, category: selectedCategory }),
+        body: JSON.stringify({ cvData: aiData, jobDescription, analysis: jobAnalysis, category: selectedCategory, company, companyAddress, jobTitle }),
       });
       if (!res.ok) throw new Error("Optimization failed");
       const data = await res.json();
@@ -1391,17 +1394,57 @@ export default function CvStudio({ userId, cvData }: Props) {
               <span className="text-xs text-slate-400 font-normal ml-1">(optional)</span>
             </div>
 
-            <textarea
-              value={jobDescription}
-              onChange={(e) => {
-                setJobDescription(e.target.value);
-                if (hasJDResult) setProfileAnalysis((prev) => prev ? { ...prev, atsScore: undefined, missingSkills: undefined, weakAreas: undefined } : null);
-                setJobAnalysis(null);
-              }}
-              rows={5}
-              placeholder="Paste the full job description here — AI will analyze your profile against it and tailor your CV…"
-              className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
-            />
+            {/* Company name + Job title (side by side) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Name</label>
+                <input
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="e.g. Acme Corp"
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Title</label>
+                <input
+                  type="text"
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder="e.g. Senior Product Manager"
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            {/* Company address */}
+            <div>
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Address</label>
+              <input
+                type="text"
+                value={companyAddress}
+                onChange={(e) => setCompanyAddress(e.target.value)}
+                placeholder="e.g. 123 Main St, Dar es Salaam, Tanzania"
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Job description */}
+            <div>
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description</label>
+              <textarea
+                value={jobDescription}
+                onChange={(e) => {
+                  setJobDescription(e.target.value);
+                  if (hasJDResult) setProfileAnalysis((prev) => prev ? { ...prev, atsScore: undefined, missingSkills: undefined, weakAreas: undefined } : null);
+                  setJobAnalysis(null);
+                }}
+                rows={5}
+                placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
+                className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
+              />
+            </div>
 
             {jobDescription.trim() && !hasJDResult && (
               <button

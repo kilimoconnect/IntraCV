@@ -3,13 +3,15 @@ import { openaiClient } from "@/lib/openai";
 
 export async function POST(req: NextRequest) {
   try {
-    const { cvData, jobDescription, analysis, category } = await req.json();
+    const { cvData, jobDescription, analysis, category, company, companyAddress, jobTitle } = await req.json();
     if (!cvData || !jobDescription?.trim()) {
       return NextResponse.json({ error: "cvData and jobDescription are required" }, { status: 400 });
     }
 
     const missingSkills: string[] = analysis?.missingSkills || [];
     const weakAreas: string[] = analysis?.weakAreas || [];
+    const companyName: string = company?.trim() || "the organization";
+    const roleTitle: string = jobTitle?.trim() || "the role";
 
     const prompt = `You are an expert CV writer and career coach specializing in ATS optimization.
 
@@ -35,13 +37,21 @@ OPTIMIZATION RULES:
 6. NEVER invent new jobs, qualifications, or degrees.
 7. Keep the exact same JSON schema — all fields, same keys, same nesting.
 
+COVER LETTER DETAILS:
+- Company: ${companyName}${companyAddress?.trim() ? `\n- Company Address: ${companyAddress.trim()}` : ""}
+- Role applied for: ${roleTitle}
+- Candidate name: use cvData.fullName
+- Candidate contact: use cvData.email and cvData.phone
+
 COVER LETTER RULES:
-- 3–4 paragraphs, professional and confident tone
-- Extract company name from JD if possible, otherwise use "the organization"
-- Reference specific JD requirements and match them to the candidate's real experience
-- Strong opening hook, strong closing with call to action
-- No placeholder brackets like [Company Name] or [Your Name] — use actual data
-- Plain text with \\n for paragraph breaks
+- Format: date at top, then company address block (if provided), then greeting, then 3–4 body paragraphs, then professional closing
+- Tone: professional, confident, tailored — NOT generic
+- Opening hook: reference the specific role and company by name, immediately connect to a key strength
+- Body: reference specific JD requirements and match them to the candidate's real experience and achievements
+- Closing: strong call to action, express genuine interest in the specific company
+- Sign-off: use candidate's actual full name
+- Plain text with \\n for line breaks and \\n\\n between paragraphs
+- NEVER use placeholder brackets — use the actual names and details provided above
 
 Return ONLY valid JSON:
 {
