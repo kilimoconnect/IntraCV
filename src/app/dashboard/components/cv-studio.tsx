@@ -1808,12 +1808,46 @@ export default function CvStudio({ userId, cvData }: Props) {
             </button>
           </div>
 
-          <div className="p-4 space-y-4">
-            {/* Step 1 — Paste JD */}
+          <div className="p-4 space-y-3">
+            {/* Company Name + Job Title */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Name</label>
+                <input
+                  type="text"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="e.g. Acme Corp"
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Title</label>
+                <input
+                  type="text"
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder="e.g. Senior Product Manager"
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            {/* Company Address */}
             <div>
-              <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                Paste the job description:
-              </label>
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Address</label>
+              <input
+                type="text"
+                value={companyAddress}
+                onChange={(e) => setCompanyAddress(e.target.value)}
+                placeholder="e.g. 123 Main St, Dar es Salaam, Tanzania"
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Job Description */}
+            <div>
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description</label>
               <textarea
                 value={jobDescription}
                 onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }}
