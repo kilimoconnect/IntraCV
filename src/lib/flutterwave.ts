@@ -65,5 +65,5 @@ export function generateTxRef(userId: string): string {
   return `IntraCV-${userId.slice(0, 8)}-${Date.now()}`;
 }
 
-export const DOWNLOAD_AMOUNT = Number(process.env.NEXT_PUBLIC_CV_DOWNLOAD_PRICE ?? 1);
-export const DOWNLOAD_CURRENCY = process.env.NEXT_PUBLIC_CV_DOWNLOAD_CURRENCY ?? "USD";
+export const DOWNLOAD_AMOUNT = Number(process.env.NEXT_PUBLIC_CV_DOWNLOAD_PRICE ?? 1000);
+export const DOWNLOAD_CURRENCY = process.env.NEXT_PUBLIC_CV_DOWNLOAD_CURRENCY ?? "TZS";
