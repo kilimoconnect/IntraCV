@@ -116,27 +116,42 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
         </span>
       </div>
 
-      {/* Watermark overlay for preview (not edit mode) */}
+      {/* Professional SVG pattern watermark */}
       {!editMode && (
-        <div className="absolute inset-0 pointer-events-none">
-          {/* Dynamic watermarks covering all pages */}
-          {Array.from({ length: Math.max(3, pageCount * 2) }, (_, i) => (
-            <div
-              key={i}
-              className="absolute font-bold text-slate-300 select-none"
-              style={{
-                fontSize: `${Math.max(46, 0.06 * A4_W * scale)}px`,
-                opacity: 0.12,
-                transform: `rotate(-45deg) translate(${(i % 3) * 200 - 150}px, ${Math.floor(i / 3) * 180 - 100}px)`,
-                whiteSpace: "nowrap",
-                userSelect: "none",
-                WebkitUserSelect: "none",
-              }}
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          width="100%"
+          height="100%"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ userSelect: "none" }}
+        >
+          <defs>
+            <pattern
+              id="wm-pattern"
+              x="0"
+              y="0"
+              width="260"
+              height="160"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(-45)"
             >
-              IntraCV Preview
-            </div>
-          ))}
-        </div>
+              <text
+                x="130"
+                y="90"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontFamily="system-ui, sans-serif"
+                fontSize="15"
+                fontWeight="600"
+                letterSpacing="2"
+                fill="rgba(100,116,139,0.18)"
+              >
+                IntraCV Preview
+              </text>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#wm-pattern)" />
+        </svg>
       )}
     </div>
   );
