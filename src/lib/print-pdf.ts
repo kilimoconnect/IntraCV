@@ -105,17 +105,40 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         ul.parentNode?.replaceChild(replacement, ul);
       });
 
-      // Fix: CSS `gap` on flex containers is unreliable inside SVG foreignObject
-      // (html-to-image's rendering context). It can add uneven spacing between
-      // items. Replace gap with explicit marginRight on the first child instead.
+      // Fix: CSS gap properties are unreliable inside SVG foreignObject.
+      // Browsers expand `gap: Xpx` into rowGap + columnGap, so we must clear
+      // all three. Convert only column-gap to explicit marginRight on first child.
+      // Also lock alignSelf on fixed-size children (icon badges) so they never
+      // stretch beyond their set height when alignItems: flex-start misbehaves.
       clone.querySelectorAll<HTMLElement>("*").forEach((el) => {
         const s = el.style;
-        const gapVal = s.gap || s.columnGap;
-        if (!gapVal) return;
-        s.gap = "";
-        s.columnGap = "";
-        const first = el.firstElementChild as HTMLElement | null;
-        if (first) first.style.marginRight = gapVal;
+
+        // Determine column-gap value before clearing (gap shorthand may be
+        // "Xpx" single-value or "Xpx Ypx" row-then-column)
+        const rawGap = s.gap || "";
+        const colGap = s.columnGap || (rawGap ? rawGap.trim().split(/\s+/).slice(-1)[0] : "");
+
+        if (rawGap || s.columnGap || s.rowGap) {
+          s.gap = "";
+          s.columnGap = "";
+          s.rowGap = "";          // ← was missing; rowGap stays set without this
+          if (colGap) {
+            const first = el.firstElementChild as HTMLElement | null;
+            if (first) first.style.marginRight = colGap;
+          }
+        }
+
+        // For flex containers, lock fixed-size children so they can't stretch.
+        // Icon/badge divs with explicit width+height must stay at that height.
+        if (s.display === "flex" || s.display === "inline-flex") {
+          Array.from(el.children).forEach((child) => {
+            const cs = (child as HTMLElement).style;
+            if (cs.width && cs.height) {
+              cs.alignSelf = "flex-start";
+              if (!cs.flexShrink) cs.flexShrink = "0";
+            }
+          });
+        }
       });
 
       // Two frames: first lets the browser lay out the clone,
