@@ -119,24 +119,28 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
       {/* Watermark overlay for preview (not edit mode) */}
       {!editMode && (
         <div
-          className="absolute inset-0 pointer-events-none flex items-center justify-center"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background: "repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(0,0,0,0.03) 35px, rgba(0,0,0,0.03) 70px)",
           }}
         >
-          <div
-            className="font-bold text-slate-300 select-none"
-            style={{
-              fontSize: `${Math.max(48, 0.06 * A4_W * scale)}px`,
-              opacity: 0.18,
-              transform: "rotate(-45deg)",
-              whiteSpace: "nowrap",
-              userSelect: "none",
-              WebkitUserSelect: "none",
-            }}
-          >
-            IntraCV Preview
-          </div>
+          {/* Repeated diagonal watermarks */}
+          {Array.from({ length: 6 }, (_, i) => (
+            <div
+              key={i}
+              className="absolute font-bold text-slate-300 select-none"
+              style={{
+                fontSize: `${Math.max(42, 0.055 * A4_W * scale)}px`,
+                opacity: 0.15,
+                transform: `rotate(-45deg) translate(${i * 120 - 250}px, ${i * 80 - 150}px)`,
+                whiteSpace: "nowrap",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+              }}
+            >
+              IntraCV Preview
+            </div>
+          ))}
         </div>
       )}
     </div>
