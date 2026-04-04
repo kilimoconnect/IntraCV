@@ -451,22 +451,6 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             </div>
           )}
 
-          {/* Projects */}
-          {d.projects && d.projects.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <BodySection C={C}>Strategic Projects</BodySection>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {d.projects.map((proj, i) => (
-                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
-                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{proj.name}</div>
-                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: "3px 0", wordWrap: "break-word" }}>{proj.description}</p>
-                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 500, wordWrap: "break-word" }}>{proj.tech}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Volunteer */}
           {d.volunteer && d.volunteer.length > 0 && (
             <div style={{ marginBottom: 16 }}>
@@ -851,20 +835,6 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               </div>
             </div>
           )}
-          {d.projects && d.projects.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <ExecBodyH C={C}>Strategic Projects</ExecBodyH>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {d.projects.map((proj, i) => (
-                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
-                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{proj.name}</div>
-                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: "3px 0", wordWrap: "break-word" }}>{proj.description}</p>
-                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary, fontWeight: 500, wordWrap: "break-word" }}>{proj.tech}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           {d.volunteer && d.volunteer.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Community & Volunteer</ExecBodyH>
@@ -1241,20 +1211,6 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                     {ref.company && <div data-cv-field={`ref.${i}.company`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, wordWrap: "break-word" }}>{ref.company}</div>}
                     {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, marginTop: 2 }}>☎ {ref.phone}</div>}
                     {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>✉ {ref.email}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {d.projects && d.projects.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <MinimalH C={C}>Strategic Projects</MinimalH>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {d.projects.map((proj, i) => (
-                  <div key={i} style={{ padding: "8px 10px", borderRadius: 4, borderLeft: `3px solid ${C.primary}`, border: `1px solid ${C.divider}` }}>
-                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{proj.name}</div>
-                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
-                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary }}>{proj.tech}</div>}
                   </div>
                 ))}
               </div>
