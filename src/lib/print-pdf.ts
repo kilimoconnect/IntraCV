@@ -105,6 +105,19 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         ul.parentNode?.replaceChild(replacement, ul);
       });
 
+      // Fix: CSS `gap` on flex containers is unreliable inside SVG foreignObject
+      // (html-to-image's rendering context). It can add uneven spacing between
+      // items. Replace gap with explicit marginRight on the first child instead.
+      clone.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        const s = el.style;
+        const gapVal = s.gap || s.columnGap;
+        if (!gapVal) return;
+        s.gap = "";
+        s.columnGap = "";
+        const first = el.firstElementChild as HTMLElement | null;
+        if (first) first.style.marginRight = gapVal;
+      });
+
       // Two frames: first lets the browser lay out the clone,
       // second ensures any MutationObserver / font rendering settles.
       await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
