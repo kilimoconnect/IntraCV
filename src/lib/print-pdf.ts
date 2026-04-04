@@ -141,6 +141,40 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         }
       });
 
+      // Fix: flex + alignItems:flex-start on icon-badge+text rows accumulates
+      // invisible height errors in SVG foreignObject after ~3 items, causing a
+      // visible gap before the 4th item. Convert these rows to table layout,
+      // which is perfectly reliable in foreignObject.
+      // Matches: flex container, alignItems:flex-start, exactly 2 children,
+      // first child is a circle badge (has borderRadius set).
+      clone.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        const s = el.style;
+        if (s.display !== "flex" && s.display !== "inline-flex") return;
+        if (s.alignItems !== "flex-start" && s.alignItems !== "start") return;
+        const kids = Array.from(el.children) as HTMLElement[];
+        if (kids.length !== 2) return;
+        const [icon, text] = kids;
+        if (!icon.style.borderRadius) return; // only target circle badges
+
+        const gap = icon.style.marginRight || "8px"; // set by gap pass above
+        const iconW = parseInt(icon.style.width) || 18;
+        const gapW = parseInt(gap) || 8;
+
+        el.style.display = "table";
+        el.style.width = "100%";
+        el.style.alignItems = "";
+
+        icon.style.display = "table-cell";
+        icon.style.verticalAlign = "top";
+        icon.style.width = `${iconW + gapW}px`;
+        icon.style.paddingRight = gap;
+        icon.style.marginRight = "";
+        icon.style.alignSelf = "";
+
+        text.style.display = "table-cell";
+        text.style.verticalAlign = "top";
+      });
+
       // Two frames: first lets the browser lay out the clone,
       // second ensures any MutationObserver / font rendering settles.
       await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
