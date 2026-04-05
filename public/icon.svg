@@ -1,48 +1,78 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4F46E5"/>
-      <stop offset="100%" style="stop-color:#7C3AED"/>
+      <stop offset="0%" stop-color="#0F0C2E"/>
+      <stop offset="100%" stop-color="#3D1275"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#A78BFA"/>
-      <stop offset="100%" style="stop-color:#C4B5FD"/>
+    <linearGradient id="card-shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#f0eeff" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="avatar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C4B5FD"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
     </linearGradient>
   </defs>
-  <!-- Rounded square background -->
-  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
-  <!-- Document shape -->
-  <rect x="120" y="72" width="272" height="368" rx="20" ry="20" fill="white" opacity="0.95"/>
-  <!-- Folded corner -->
-  <path d="M344 72 L392 72 L392 120 Z" fill="url(#accent)" opacity="0.6"/>
-  <!-- Profile circle -->
-  <circle cx="196" cy="148" r="32" fill="url(#accent)" opacity="0.7"/>
-  <!-- Name line -->
-  <rect x="244" y="132" width="124" height="14" rx="7" fill="#4F46E5" opacity="0.3"/>
-  <!-- Subtitle line -->
-  <rect x="244" y="158" width="88" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <!-- Divider -->
-  <rect x="148" y="200" width="216" height="3" rx="1.5" fill="#4F46E5" opacity="0.15"/>
-  <!-- Content lines -->
-  <rect x="148" y="222" width="216" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <rect x="148" y="246" width="184" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
-  <rect x="148" y="270" width="200" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <!-- Second section -->
-  <rect x="148" y="300" width="216" height="3" rx="1.5" fill="#4F46E5" opacity="0.15"/>
-  <rect x="148" y="320" width="176" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <rect x="148" y="344" width="216" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
-  <rect x="148" y="368" width="152" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <rect x="148" y="392" width="196" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
-  <!-- AI sparkle indicator -->
-  <g transform="translate(356, 396)">
-    <circle cx="0" cy="0" r="44" fill="white" opacity="0.25"/>
-    <circle cx="0" cy="0" r="34" fill="white" opacity="0.95"/>
-    <!-- Pen/wand -->
-    <path d="M-10 10 L7 -7 L11 -3 L-6 14 Z" fill="#4F46E5"/>
-    <path d="M7 -7 L13 -13 L17 -9 L11 -3 Z" fill="#7C3AED"/>
-    <!-- Sparkles -->
-    <circle cx="-14" cy="-12" r="2.5" fill="#F59E0B"/>
-    <circle cx="5" cy="-18" r="2" fill="#F59E0B"/>
-    <circle cx="-18" cy="2" r="1.5" fill="#F59E0B"/>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <!-- Subtle glow behind star -->
+  <circle cx="364" cy="128" r="80" fill="#7C3AED" opacity="0.18"/>
+
+  <!-- Back card (rotated, ghost) -->
+  <g transform="rotate(-7, 248, 262)">
+    <rect x="152" y="138" width="192" height="248" rx="20" fill="white" opacity="0.14"/>
   </g>
+
+  <!-- Front card -->
+  <rect x="130" y="114" width="200" height="260" rx="20" fill="url(#card-shine)"/>
+
+  <!-- Avatar circle -->
+  <circle cx="180" cy="178" r="30" fill="url(#avatar-fill)" opacity="0.25"/>
+  <!-- Avatar head -->
+  <circle cx="180" cy="170" r="14" fill="url(#avatar-fill)"/>
+  <!-- Avatar shoulders -->
+  <path d="M152,206 Q152,190 180,190 Q208,190 208,206 Z" fill="url(#avatar-fill)"/>
+
+  <!-- Name line -->
+  <rect x="222" y="162" width="88" height="12" rx="6" fill="#3730A3" opacity="0.28"/>
+  <!-- Title / role line -->
+  <rect x="222" y="184" width="62" height="9" rx="4.5" fill="#3730A3" opacity="0.16"/>
+
+  <!-- Divider -->
+  <rect x="150" y="224" width="162" height="2" rx="1" fill="#3730A3" opacity="0.1"/>
+
+  <!-- Section label dot + line -->
+  <circle cx="158" cy="248" r="4" fill="#7C3AED" opacity="0.4"/>
+  <rect x="170" y="243" width="142" height="9" rx="4.5" fill="#3730A3" opacity="0.22"/>
+
+  <rect x="150" y="266" width="162" height="9" rx="4.5" fill="#3730A3" opacity="0.14"/>
+
+  <!-- Divider 2 -->
+  <rect x="150" y="292" width="162" height="2" rx="1" fill="#3730A3" opacity="0.1"/>
+
+  <!-- Section label dot + line -->
+  <circle cx="158" cy="314" r="4" fill="#7C3AED" opacity="0.4"/>
+  <rect x="170" y="309" width="142" height="9" rx="4.5" fill="#3730A3" opacity="0.22"/>
+
+  <rect x="150" y="328" width="120" height="9" rx="4.5" fill="#3730A3" opacity="0.14"/>
+  <rect x="150" y="346" width="142" height="9" rx="4.5" fill="#3730A3" opacity="0.14"/>
+
+  <!-- 4-pointed sparkle star -->
+  <!-- Center (364, 128), outer R=50, inner r=17 -->
+  <path d="
+    M 364,78
+    L 376.0,116.0
+    L 414,128
+    L 376.0,140.0
+    L 364,178
+    L 352.0,140.0
+    L 314,128
+    L 352.0,116.0
+    Z" fill="white"/>
+
+  <!-- Two tiny accent dots (give it sparkle feel) -->
+  <circle cx="308" cy="94" r="7" fill="white" opacity="0.45"/>
+  <circle cx="408" cy="86" r="5" fill="white" opacity="0.3"/>
 </svg>
