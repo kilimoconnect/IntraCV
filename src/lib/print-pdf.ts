@@ -4,17 +4,23 @@
  * Font environment: Next.js self-hosted Inter via next/font/google.
  * No CORS issues. Fonts are available immediately via document.fonts.
  *
- * Key fixes in this version:
- *  1. Font metric stabilisation — forces Inter to render at integer px sizes
- *     to prevent sub-pixel baseline shifts that cause word-spacing artifacts
- *  2. Watermark exclusion — any element with class "no-pdf" is stripped
- *  3. Dynamic scale matched to devicePixelRatio (capped at 3)
- *  4. windowWidth/Height forced to A4 — prevents mobile breakpoints leaking in
- *  5. Three rAF frames — mobile needs extra time for font + layout settlement
- *  6. print-color-adjust:exact — preserves background colours and gradients
- *  7. PNG output — lossless, no JPEG fringing around text
- *  8. letter-spacing normalisation — html2canvas mis-measures Inter's tracked
- *     spacing at small sizes; we pin it to a stable value on the clone
+ * Root cause of text shifting fixed in this version:
+ *  → text-align:justify causes html2canvas to misplace word gaps and
+ *    push punctuation away from words ("Excel models ," "100 %").
+ *    All justified text is forced to left-align on the clone before capture.
+ *
+ * Full fix list:
+ *  1. text-align:justify → left on entire clone (ROOT CAUSE FIX)
+ *  2. Font metric stabilisation — integer px fontSize, unitless lineHeight
+ *  3. letter-spacing pinned to 0px where it was "normal"
+ *  4. word-spacing:normal (NOT 0px — conflicts with justify override)
+ *  5. Watermark/UI exclusion via class "no-pdf"
+ *  6. Dynamic scale matched to devicePixelRatio (capped at 3)
+ *  7. windowWidth/Height forced to A4 — prevents mobile breakpoints leaking
+ *  8. Three rAF frames — mobile needs extra time for layout settlement
+ *  9. print-color-adjust:exact — preserves background colours & gradients
+ * 10. PNG output — lossless, no JPEG fringing around text
+ * 11. Inter font weights explicitly awaited before capture
  */
 
 const A4_PX_W = 794;
@@ -22,13 +28,13 @@ const A4_PX_H = 1123;
 const A4_MM_W = 210;
 const A4_MM_H = 297;
 
-// Inter weights used in the CV. We explicitly check each is loaded before
-// capture — document.fonts.ready resolves when fonts are *scheduled*, not
-// necessarily when they are fully measured by the layout engine.
+// Inter weights used in the CV. Explicitly awaited before capture —
+// document.fonts.ready resolves when fonts are scheduled, not necessarily
+// when they are fully measured by the layout engine.
 const INTER_WEIGHTS = ["300", "400", "500", "600", "700"];
 
 /**
- * Waits until every Inter weight we care about is confirmed loaded.
+ * Waits until every Inter weight is confirmed loaded and measured.
  * Falls back gracefully if the FontFaceSet API is unavailable.
  */
 async function waitForInterFonts(): Promise<void> {
@@ -36,23 +42,37 @@ async function waitForInterFonts(): Promise<void> {
 
   await document.fonts.ready;
 
-  // Check each weight explicitly — some weights may still be in "loading"
-  // state even after document.fonts.ready resolves on slow mobile connections.
+  // Explicitly load each weight — some may still be in "loading" state
+  // even after document.fonts.ready resolves on slow mobile connections.
   const checks = INTER_WEIGHTS.map((weight) =>
     document.fonts.load(`${weight} 16px Inter`)
   );
-
   await Promise.all(checks);
 
-  // One additional frame after font load to let the layout engine
+  // One extra frame after font load so the layout engine can
   // recalculate all text metrics with the confirmed font data.
   await new Promise<void>((r) => requestAnimationFrame(() => r()));
 }
 
 /**
- * Recursively walks all elements inside the clone and applies font metric
- * stabilisation. This prevents Inter's sub-pixel rendering differences
- * between screen and canvas from causing word-spacing and baseline shifts.
+ * Strips all elements marked "no-pdf" from the clone before capture.
+ * Apply class "no-pdf" to: watermarks, download buttons, tooltips,
+ * preview banners, or any UI element that must not appear in the PDF.
+ */
+function stripNoPdfElements(root: HTMLElement): void {
+  root.querySelectorAll(".no-pdf").forEach((el) => el.remove());
+}
+
+/**
+ * Walks every element in the clone and stabilises font metrics so that
+ * html2canvas renders text identically to the browser's layout engine.
+ *
+ * Key fixes applied here:
+ *  - text-align:justify → left  (ROOT CAUSE of "Excel models ," artifacts)
+ *  - fontSize rounded to integer px
+ *  - lineHeight converted to unitless ratio
+ *  - letterSpacing pinned to "0px" when "normal"
+ *  - wordSpacing left as "normal" (not 0px)
  */
 function stabiliseFontMetrics(root: HTMLElement): void {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
@@ -60,19 +80,32 @@ function stabiliseFontMetrics(root: HTMLElement): void {
 
   while (node) {
     const el = node as HTMLElement;
+
     if (el.style !== undefined) {
       const computed = window.getComputedStyle(el);
 
-      // Round fontSize to nearest integer px — fractional sizes cause
-      // different sub-pixel rounding between screen renderer and canvas.
+      // ── ROOT CAUSE FIX ───────────────────────────────────────────────────
+      // justify tells the browser to stretch word gaps to fill the line width.
+      // html2canvas reads final character pixel positions but reconstructs
+      // text using its own drawing — the stretched gaps don't transfer, so
+      // words drift apart and punctuation floats ("100 %" "models ,").
+      // left-align uses natural word gaps that html2canvas reproduces exactly.
+      if (computed.textAlign === "justify") {
+        el.style.textAlign = "left";
+      }
+
+      // ── fontSize: round to integer px ────────────────────────────────────
+      // Fractional font sizes (e.g. 13.5px) are rounded differently by
+      // the screen renderer vs html2canvas, shifting the text baseline.
       const fs = parseFloat(computed.fontSize);
       if (!isNaN(fs)) {
         el.style.fontSize = `${Math.round(fs)}px`;
       }
 
-      // Normalise lineHeight to a unitless ratio — "normal" resolves
-      // differently in canvas vs the browser layout engine, causing the
-      // vertical baseline shift seen in the PDF.
+      // ── lineHeight: convert to unitless ratio ─────────────────────────────
+      // "normal" lineHeight resolves to ~1.2 in the browser but html2canvas
+      // uses a slightly different multiplier, causing vertical baseline drift.
+      // A unitless ratio is absolute and matches in both environments.
       const lh = computed.lineHeight;
       if (lh !== "normal") {
         const lhPx = parseFloat(lh);
@@ -82,36 +115,30 @@ function stabiliseFontMetrics(root: HTMLElement): void {
         }
       }
 
-      // Pin letter-spacing to 0 if it was "normal" — html2canvas interprets
-      // "normal" letter-spacing differently from the browser, adding phantom
-      // space between characters (visible as extra gaps between words in PDF).
+      // ── letterSpacing: pin to 0px when "normal" ───────────────────────────
+      // html2canvas interprets "normal" letter-spacing differently from the
+      // browser — it adds phantom space between characters, multiplying
+      // across a line and pushing words apart.
       const ls = computed.letterSpacing;
       if (ls === "normal" || ls === "0px") {
         el.style.letterSpacing = "0px";
       }
 
-      // Force word-spacing to normal — some Inter weights at small sizes
-      // accumulate rounding errors in word-spacing that multiply across
-      // a line, producing the "Six Sigma ," artifact seen in the PDF.
-      el.style.wordSpacing = "0px";
+      // ── wordSpacing: keep as "normal" (do NOT set to 0px) ─────────────────
+      // Setting 0px conflicts with the text-align:left override above.
+      // After justify is removed, "normal" is exactly what the browser uses
+      // and html2canvas reproduces correctly.
+      el.style.wordSpacing = "normal";
 
-      // Disable font smoothing differences between screen and canvas.
-      // Canvas always renders with antialiasing; forcing it on screen-side
-      // too means the metrics match.
+      // ── Font smoothing: force antialiased ─────────────────────────────────
+      // Canvas always renders with antialiasing. Matching it on the DOM side
+      // ensures font metrics are measured under the same conditions.
       (el.style as CSSStyleDeclaration & { webkitFontSmoothing?: string })
         .webkitFontSmoothing = "antialiased";
     }
 
     node = walker.nextNode();
   }
-}
-
-/**
- * Strips all elements marked with "no-pdf" from the clone.
- * Use this for watermarks, action buttons, tooltips, banners, etc.
- */
-function stripNoPdfElements(root: HTMLElement): void {
-  root.querySelectorAll(".no-pdf").forEach((el) => el.remove());
 }
 
 export async function downloadCvAsPdf(
@@ -123,7 +150,7 @@ export async function downloadCvAsPdf(
     import("jspdf"),
   ]);
 
-  // ── Overlay ───────────────────────────────────────────────────────────────
+  // ── Overlay: user sees "Generating PDF…" while we work ───────────────────
   const overlay = document.createElement("div");
   overlay.style.cssText = [
     "position:fixed",
@@ -138,7 +165,9 @@ export async function downloadCvAsPdf(
     '<p style="font-family:Inter,sans-serif;font-size:14px;color:#4f46e5;">Generating PDF\u2026</p>';
   document.body.appendChild(overlay);
 
-  // ── Capture container ─────────────────────────────────────────────────────
+  // ── Capture container: fixed at (0,0) at exact A4 pixel dimensions ────────
+  // Placing at top-left means html2canvas captures from a predictable
+  // coordinate regardless of how far the user has scrolled the page.
   const captureRoot = document.createElement("div");
   captureRoot.id = "cv-capture-root";
   captureRoot.style.cssText = [
@@ -154,7 +183,10 @@ export async function downloadCvAsPdf(
   ].join(";");
   document.body.appendChild(captureRoot);
 
-  // ── Global style: force colour fidelity inside capture root ───────────────
+  // ── Global style block injected into <head> ───────────────────────────────
+  // Forces colour fidelity and text alignment for everything inside the
+  // capture root. CSS specificity is maxed with !important so no rule
+  // from the CV template can override these values during capture.
   const resetStyle = document.createElement("style");
   resetStyle.textContent = `
     #cv-capture-root * {
@@ -163,6 +195,16 @@ export async function downloadCvAsPdf(
       color-adjust: exact !important;
       text-rendering: geometricPrecision !important;
       -webkit-font-smoothing: antialiased !important;
+      text-align: left !important;
+      word-spacing: normal !important;
+    }
+    #cv-capture-root h1,
+    #cv-capture-root h2,
+    #cv-capture-root h3,
+    #cv-capture-root h4,
+    #cv-capture-root h5,
+    #cv-capture-root h6 {
+      text-align: left !important;
     }
   `;
   document.head.appendChild(resetStyle);
@@ -192,10 +234,11 @@ export async function downloadCvAsPdf(
     for (let i = 0; i < sheets.length; i++) {
       if (i > 0) pdf.addPage();
 
-      // ── Clone ─────────────────────────────────────────────────────────────
+      // ── Deep-clone the page sheet into the capture container ──────────────
       const clone = sheets[i].cloneNode(true) as HTMLElement;
 
-      // Hard-reset all layout properties so no mobile responsive CSS bleeds in
+      // Hard-reset all layout-affecting properties with !important so no
+      // mobile responsive CSS or media query can bleed into the clone.
       clone.style.cssText = `
         position: relative !important;
         margin: 0 !important;
@@ -211,22 +254,25 @@ export async function downloadCvAsPdf(
         transform: none !important;
         transform-origin: top left !important;
         font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
+        text-align: left !important;
       `;
 
       captureRoot.innerHTML = "";
       captureRoot.appendChild(clone);
 
-      // Strip watermarks and UI-only elements before metric stabilisation
+      // Strip watermarks and UI-only elements BEFORE metric stabilisation
+      // so we don't walk elements that won't be in the PDF.
       stripNoPdfElements(clone);
 
-      // Stabilise font metrics on every element inside the clone.
-      // Must run after the clone is in the DOM so getComputedStyle works.
+      // Stabilise font metrics on every element in the clone.
+      // Must run AFTER the clone is in the DOM so getComputedStyle works —
+      // computed styles are unavailable on detached elements.
       stabiliseFontMetrics(clone);
 
       // Three rAF frames:
-      // 1 — browser schedules layout for clone
-      // 2 — layout applied, paint callbacks queued
-      // 3 — mobile extra: font metrics + flex/grid fully settled
+      // Frame 1 — browser schedules layout for the new clone
+      // Frame 2 — layout applied, paint callbacks queued
+      // Frame 3 — mobile extra: font metrics + flex/grid fully settled
       await new Promise<void>((resolve) =>
         requestAnimationFrame(() =>
           requestAnimationFrame(() =>
@@ -235,30 +281,41 @@ export async function downloadCvAsPdf(
         )
       );
 
-      // Dynamic scale — match device pixel density, cap at 3 to avoid
-      // out-of-memory on older high-DPR phones.
+      // Dynamic scale matched to actual device pixel density.
+      // scale:2 on a 3× DPR screen = lower-res than the display → blurry.
+      // Capped at 3 to prevent out-of-memory on older high-DPR phones.
       const scale = Math.min(window.devicePixelRatio * 1.5, 3);
 
       const canvas = await html2canvas(clone, {
         scale,
         useCORS: true,
-        allowTaint: false,       // false is correct — fonts are self-hosted
+        // allowTaint:false — Inter is self-hosted by Next.js,
+        // no cross-origin assets, so taint is not needed.
+        allowTaint: false,
         backgroundColor: "#ffffff",
         width: A4_PX_W,
         height: A4_PX_H,
-        windowWidth: A4_PX_W,   // prevents mobile breakpoints activating
+        // windowWidth/Height tells html2canvas what "viewport" to assume
+        // when evaluating CSS. Without this it uses window.innerWidth
+        // (~390px on iPhone), triggering every mobile breakpoint.
+        windowWidth: A4_PX_W,
         windowHeight: A4_PX_H,
         logging: false,
         scrollX: 0,
         scrollY: 0,
+        // Secondary safety net — any element still tagged no-pdf that
+        // wasn't caught by stripNoPdfElements is skipped here too.
         ignoreElements: (el: Element) => el.classList.contains("no-pdf"),
       });
 
-      // PNG — lossless, no JPEG colour fringing around text edges
+      // PNG over JPEG:
+      // JPEG introduces colour fringing around dark text on light backgrounds
+      // and loses coloured sidebar backgrounds. PNG is lossless.
       const imgData = canvas.toDataURL("image/png");
       pdf.addImage(imgData, "PNG", 0, 0, A4_MM_W, A4_MM_H, undefined, "FAST");
     }
   } finally {
+    // Always clean up DOM even if an error is thrown mid-loop.
     document.head.removeChild(resetStyle);
     document.body.removeChild(captureRoot);
     document.body.removeChild(overlay);
