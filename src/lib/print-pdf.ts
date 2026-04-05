@@ -94,24 +94,41 @@ function stabiliseFontMetrics(root: HTMLElement): void {
         el.style.textAlign = "left";
       }
 
+      // ── CSS zoom → transform:scale conversion ────────────────────────────
+      // html2canvas misplaces text inside elements that use CSS zoom (it reads
+      // character positions before zoom, then re-renders without it).
+      // Converting zoom to transform:scale lets html2canvas handle it correctly
+      // via its own transform matrix path.
+      const rawZoom = parseFloat((el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } }).style.zoom || "");
+      if (!isNaN(rawZoom) && rawZoom !== 1 && rawZoom > 0) {
+        (el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } }).style.zoom = "1";
+        el.style.transform = `scale(${rawZoom})`;
+        el.style.transformOrigin = "top left";
+      }
+
       // ── fontSize: round to integer px ────────────────────────────────────
-      // Fractional font sizes (e.g. 13.5px) are rounded differently by
+      // Fractional font sizes (e.g. 11.5px) are rounded differently by
       // the screen renderer vs html2canvas, shifting the text baseline.
+      // IMPORTANT: capture the ORIGINAL value before rounding — the lineHeight
+      // ratio must use the pre-rounded size or the visual spacing changes.
       const fs = parseFloat(computed.fontSize);
       if (!isNaN(fs)) {
         el.style.fontSize = `${Math.round(fs)}px`;
       }
 
-      // ── lineHeight: convert to unitless ratio ─────────────────────────────
+      // ── lineHeight: convert to unitless ratio using ORIGINAL fontSize ─────
       // "normal" lineHeight resolves to ~1.2 in the browser but html2canvas
       // uses a slightly different multiplier, causing vertical baseline drift.
-      // A unitless ratio is absolute and matches in both environments.
+      // BUG FIX: use the original pre-rounded `fs` (not computed.fontSize which
+      // now returns the rounded value) so the ratio preserves the real spacing.
       const lh = computed.lineHeight;
       if (lh !== "normal") {
         const lhPx = parseFloat(lh);
-        const fsPx = parseFloat(computed.fontSize);
-        if (!isNaN(lhPx) && !isNaN(fsPx) && fsPx > 0) {
-          el.style.lineHeight = `${(lhPx / fsPx).toFixed(4)}`;
+        // Use original `fs` — after el.style.fontSize is set, computed.fontSize
+        // returns the rounded value, which would shrink line spacing by ~4% on
+        // 11.5 px text and push every subsequent line further down the page.
+        if (!isNaN(lhPx) && !isNaN(fs) && fs > 0) {
+          el.style.lineHeight = `${(lhPx / fs).toFixed(4)}`;
         }
       }
 
@@ -207,6 +224,9 @@ export async function downloadCvAsPdf(
       text-align: left !important;
     }
   `;
+  /* Note: CSS zoom is NOT reset here with !important because it would
+     override the zoom→transform conversion done in stabiliseFontMetrics.
+     Zoom on inline styles is handled element-by-element above. */
   document.head.appendChild(resetStyle);
 
   let pdf: InstanceType<typeof jsPDF> | null = null;
@@ -281,10 +301,11 @@ export async function downloadCvAsPdf(
         )
       );
 
-      // Dynamic scale matched to actual device pixel density.
-      // scale:2 on a 3× DPR screen = lower-res than the display → blurry.
-      // Capped at 3 to prevent out-of-memory on older high-DPR phones.
-      const scale = Math.min(window.devicePixelRatio * 1.5, 3);
+      // Fixed scale:2 — gives crisp 1588×2246 px canvas (enough for A4 print)
+      // without the instability of DPR-based scaling (where a 3× Retina screen
+      // produced scale:3 → 4× larger canvas → different rounding paths in
+      // html2canvas text layout, adding to text drift on high-DPR devices).
+      const scale = 2;
 
       const canvas = await html2canvas(clone, {
         scale,
