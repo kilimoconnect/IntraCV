@@ -100,6 +100,12 @@ ${inlineCss}
   -webkit-print-color-adjust: exact !important;
   print-color-adjust: exact !important;
   color-adjust: exact !important;
+  /* word-wrap is the legacy name; overflow-wrap is the modern standard.
+     React sets word-wrap via inline styles, but some print engines only
+     honour overflow-wrap. Set both so text always wraps rather than
+     overflowing the sidebar or any other fixed-width container. */
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
 }
 html, body {
   margin: 0;
