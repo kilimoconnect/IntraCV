@@ -67,17 +67,29 @@ function stripNoPdfElements(root: HTMLElement): void {
 }
 
 /**
- * Walks every element in the clone and stabilises font metrics so that
- * html2canvas renders text identically to the browser's layout engine.
+ * Walks every element in the clone and applies the two fixes that are
+ * genuinely needed for html2canvas to render text correctly:
  *
- * Key fixes applied here:
- *  - text-align:justify → left  (ROOT CAUSE of "Excel models ," artifacts)
- *  - CSS zoom > 1 → reset to 1  (prevents right-edge content clipping)
- *  - CSS zoom < 1 → transform:scale (html2canvas handles transform correctly)
- *  - fontSize rounded to integer px (pre-rounding value used for lineHeight)
- *  - lineHeight converted to unitless ratio using pre-rounded fontSize
- *  - letterSpacing pinned to "0px" when "normal"
- *  - wordSpacing left as "normal" (not 0px)
+ *  1. text-align:justify → left
+ *     html2canvas reads final character pixel positions (which include the
+ *     stretched word gaps from justify) but reconstructs text using its own
+ *     Canvas fillText — the gaps don't transfer, so words drift and punctuation
+ *     floats ("100 %" "models ,"). Left-align uses natural gaps that reproduce.
+ *
+ *  2. CSS zoom → neutralise
+ *     html2canvas reads DOM positions (which include zoom scaling) but draws
+ *     text without re-applying the zoom, shifting every character. Inline zoom
+ *     is stripped here; the global CSS also forces zoom:1 !important as a
+ *     belt-and-suspenders safety net.
+ *
+ * Everything else (fontSize rounding, lineHeight conversion, letterSpacing
+ * pinning) was REMOVED because it made things worse:
+ *  - Rounding 10.5 px → 11 px widens every character by ~5%; across 90 chars
+ *    that is ~45 px of horizontal drift — the text "shifts" visibly.
+ *  - Converting lineHeight to a unitless ratio with the rounded fontSize
+ *    changes the computed line spacing and compounds the vertical drift.
+ *  - html2canvas 1.4.1 handles fractional font sizes and "normal" letterSpacing
+ *    correctly when zoom is not involved, so no special-casing is needed.
  */
 function stabiliseFontMetrics(root: HTMLElement): void {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
@@ -89,33 +101,18 @@ function stabiliseFontMetrics(root: HTMLElement): void {
     if (el.style !== undefined) {
       const computed = window.getComputedStyle(el);
 
-      // ── ROOT CAUSE FIX ───────────────────────────────────────────────────
-      // justify tells the browser to stretch word gaps to fill the line width.
-      // html2canvas reads final character pixel positions but reconstructs
-      // text using its own drawing — the stretched gaps don't transfer, so
-      // words drift apart and punctuation floats ("100 %" "models ,").
-      // left-align uses natural word gaps that html2canvas reproduces exactly.
+      // Fix 1 — text-align: justify → left ──────────────────────────────────
       if (computed.textAlign === "justify") {
         el.style.textAlign = "left";
       }
 
-      // ── CSS zoom handling ─────────────────────────────────────────────────
-      // html2canvas misplaces text inside zoomed elements (it reads character
-      // pixel positions from the DOM which include the zoom offset, but then
-      // renders text without applying the zoom factor).
-      //
-      // zoom < 1 (scale-down, e.g. content overflows the page):
-      //   Convert to transform:scale — html2canvas uses its own transform
-      //   matrix path which renders text at the correct scaled positions.
-      //   Parent overflow:hidden is fine: visual size (< natural) fits within.
-      //
-      // zoom > 1 (scale-up, from usePageFill sparse-content path):
-      //   Reset to 1. With zoom > 1 the fill div visually expands to
-      //   width × zoom, which EXCEEDS the parent container's overflow:hidden
-      //   boundary and clips the right edge of content (dates become
-      //   "Jan 2019 - Pr" instead of "Jan 2019 - Present"). Resetting to 1
-      //   keeps content at natural scale — minor extra whitespace at the
-      //   bottom of the page, but no clipping.
+      // Fix 2 — CSS zoom: strip it so html2canvas reads correct positions ────
+      // zoom < 1 (scale-down): replace with transform:scale so html2canvas
+      //   uses its transform matrix path and positions text correctly.
+      // zoom > 1 (scale-up from usePageFill sparse-content path): reset to 1.
+      //   transform:scale > 1 makes the fill div visually wider than 794 px,
+      //   clipping the right edge of content in the canvas. Plain zoom:1 keeps
+      //   content at natural scale with minor whitespace at the bottom instead.
       const rawZoom = parseFloat(
         (el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } })
           .style.zoom || ""
@@ -124,59 +121,10 @@ function stabiliseFontMetrics(root: HTMLElement): void {
         (el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } })
           .style.zoom = "1";
         if (rawZoom < 1) {
-          // Scale-down: use transform so html2canvas handles it correctly
           el.style.transform = `scale(${rawZoom})`;
           el.style.transformOrigin = "top left";
         }
-        // Scale-up (rawZoom > 1): zoom reset to 1 above — no further action.
       }
-
-      // ── fontSize: round to integer px ────────────────────────────────────
-      // Fractional font sizes (e.g. 11.5px) are rounded differently by
-      // the screen renderer vs html2canvas, shifting the text baseline.
-      // IMPORTANT: capture the ORIGINAL value before rounding — the lineHeight
-      // ratio must use the pre-rounded size or the visual spacing changes.
-      const fs = parseFloat(computed.fontSize);
-      if (!isNaN(fs)) {
-        el.style.fontSize = `${Math.round(fs)}px`;
-      }
-
-      // ── lineHeight: convert to unitless ratio using ORIGINAL fontSize ─────
-      // "normal" lineHeight resolves to ~1.2 in the browser but html2canvas
-      // uses a slightly different multiplier, causing vertical baseline drift.
-      // BUG FIX: use the original pre-rounded `fs` (not computed.fontSize which
-      // now returns the rounded value) so the ratio preserves the real spacing.
-      const lh = computed.lineHeight;
-      if (lh !== "normal") {
-        const lhPx = parseFloat(lh);
-        // Use original `fs` — after el.style.fontSize is set, computed.fontSize
-        // returns the rounded value, which would shrink line spacing by ~4% on
-        // 11.5 px text and push every subsequent line further down the page.
-        if (!isNaN(lhPx) && !isNaN(fs) && fs > 0) {
-          el.style.lineHeight = `${(lhPx / fs).toFixed(4)}`;
-        }
-      }
-
-      // ── letterSpacing: pin to 0px when "normal" ───────────────────────────
-      // html2canvas interprets "normal" letter-spacing differently from the
-      // browser — it adds phantom space between characters, multiplying
-      // across a line and pushing words apart.
-      const ls = computed.letterSpacing;
-      if (ls === "normal" || ls === "0px") {
-        el.style.letterSpacing = "0px";
-      }
-
-      // ── wordSpacing: keep as "normal" (do NOT set to 0px) ─────────────────
-      // Setting 0px conflicts with the text-align:left override above.
-      // After justify is removed, "normal" is exactly what the browser uses
-      // and html2canvas reproduces correctly.
-      el.style.wordSpacing = "normal";
-
-      // ── Font smoothing: force antialiased ─────────────────────────────────
-      // Canvas always renders with antialiasing. Matching it on the DOM side
-      // ensures font metrics are measured under the same conditions.
-      (el.style as CSSStyleDeclaration & { webkitFontSmoothing?: string })
-        .webkitFontSmoothing = "antialiased";
     }
 
     node = walker.nextNode();
@@ -239,6 +187,7 @@ export async function downloadCvAsPdf(
       -webkit-font-smoothing: antialiased !important;
       text-align: left !important;
       word-spacing: normal !important;
+      zoom: 1 !important;
     }
     #cv-capture-root h1,
     #cv-capture-root h2,
