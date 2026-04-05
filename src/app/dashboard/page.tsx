@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserCircle2, Wand2, BriefcaseBusiness, FolderOpen, Sparkles, Settings as SettingsIcon } from "lucide-react";
 import AppShell from "@/components/app-shell";
 import MyProfile from "./components/my-profile";
 import CvStudio from "./components/cv-studio";
@@ -13,13 +13,13 @@ import Documents from "./components/documents";
 import AiAssistant from "./components/ai-assistant";
 import SettingsPanel from "./components/settings";
 
-const TAB_LABELS: Record<string, string> = {
-  profile: "My Profile",
-  studio: "CV Studio",
-  interview: "Interview Prep",
-  documents: "Documents",
-  assistant: "AI Career Assistant",
-  settings: "Settings",
+const TAB_META: Record<string, { label: string; description: string; icon: React.ElementType; gradient: string }> = {
+  profile:   { label: "My Profile",          description: "View and manage your career profile data",          icon: UserCircle2,      gradient: "from-indigo-500 to-violet-600" },
+  studio:    { label: "CV Studio",           description: "Design and generate your professional CV",          icon: Wand2,            gradient: "from-violet-500 to-purple-600" },
+  interview: { label: "Interview Prep",      description: "Practice with AI-generated interview questions",    icon: BriefcaseBusiness,gradient: "from-blue-500 to-indigo-600" },
+  documents: { label: "Documents",           description: "Access and download your saved CVs and letters",   icon: FolderOpen,       gradient: "from-emerald-500 to-teal-600" },
+  assistant: { label: "AI Career Assistant", description: "Get personalised career advice powered by AI",      icon: Sparkles,         gradient: "from-amber-500 to-orange-600" },
+  settings:  { label: "Settings",            description: "Manage your account and CV preferences",           icon: SettingsIcon,     gradient: "from-slate-500 to-slate-700" },
 };
 
 export default function DashboardPageWrapper() {
@@ -234,10 +234,22 @@ function DashboardPage() {
 
   return (
     <AppShell activeNav={activeTab}>
-      {/* Tab Title */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold">{TAB_LABELS[activeTab] || "My Profile"}</h2>
-      </div>
+      {/* Tab Header */}
+      {(() => {
+        const meta = TAB_META[activeTab] || TAB_META.profile;
+        const Icon = meta.icon;
+        return (
+          <div className="mb-6 flex items-center gap-4">
+            <div className={`h-11 w-11 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shadow-sm shrink-0`}>
+              <Icon className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 leading-tight">{meta.label}</h2>
+              <p className="text-xs text-slate-500 mt-0.5">{meta.description}</p>
+            </div>
+          </div>
+        );
+      })()}
 
       {tabLoading ? (
         <div className="flex items-center justify-center py-24">

@@ -33,11 +33,11 @@ interface AnswerFeedback {
 }
 
 const QUESTION_TYPE_COLORS: Record<string, string> = {
-  behavioral: "bg-purple-100 text-purple-700",
-  technical: "bg-blue-100 text-blue-700",
-  situational: "bg-amber-100 text-amber-700",
-  competency: "bg-emerald-100 text-emerald-700",
-  "culture-fit": "bg-pink-100 text-pink-700",
+  behavioral:   "bg-purple-100 text-purple-700 border border-purple-200",
+  technical:    "bg-blue-100 text-blue-700 border border-blue-200",
+  situational:  "bg-amber-100 text-amber-700 border border-amber-200",
+  competency:   "bg-emerald-100 text-emerald-700 border border-emerald-200",
+  "culture-fit":"bg-pink-100 text-pink-700 border border-pink-200",
 };
 
 // ─── Speech helpers ───
@@ -218,58 +218,65 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-6">
+    <div className="space-y-5">
+      <div className="space-y-5">
         {/* Role Input */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Practice Interview Questions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Enter a job role to generate tailored interview questions. Paste a job description for even more targeted questions. Practice your answers by typing or using your microphone.
-            </p>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-200">
+              <Sparkles className="h-4.5 w-4.5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">Practice Interview Questions</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Generate tailored questions and get instant AI feedback on your answers</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Job Role *</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-600">Job Role <span className="text-red-400">*</span></Label>
                 <Input
                   value={simRole}
                   onChange={(e) => setSimRole(e.target.value)}
                   placeholder="e.g. Senior Software Engineer"
+                  className="rounded-xl border-slate-200 text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Company (optional)</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-600">Company <span className="text-slate-400">(optional)</span></Label>
                 <Input
                   value={simCompany}
                   onChange={(e) => setSimCompany(e.target.value)}
                   placeholder="e.g. Google"
+                  className="rounded-xl border-slate-200 text-sm"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Job Description (optional)</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-600">Job Description <span className="text-slate-400">(optional — for targeted questions)</span></Label>
               <Textarea
                 value={simJobDescription}
                 onChange={(e) => setSimJobDescription(e.target.value)}
-                rows={4}
-                placeholder="Paste the job description here for more targeted questions..."
-                className="text-sm"
+                rows={3}
+                placeholder="Paste the job description here..."
+                className="rounded-xl border-slate-200 text-sm resize-none"
               />
             </div>
-            <Button onClick={generateQuestions} disabled={generatingQuestions}>
+            <Button
+              onClick={generateQuestions}
+              disabled={generatingQuestions}
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm shadow-blue-200 text-white"
+            >
               {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
               Generate Questions
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Questions List */}
         {questions.length > 0 && (
           <div className="space-y-3">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">{questions.length} Questions Generated</p>
             {questions.map((q) => {
               const isExpanded = expandedQuestion === q.id;
               const feedback = feedbacks[q.id];
@@ -277,133 +284,140 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
               const isSpeaking = speakingId === q.id;
               const isListening = listeningId === q.id;
               return (
-                <Card key={q.id}>
-                  <CardContent className="py-4">
-                    <button
-                      onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
-                      className="w-full text-left flex items-start justify-between gap-3"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="secondary" className={QUESTION_TYPE_COLORS[q.type] || "bg-gray-100 text-gray-700"}>
-                            {q.type}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">Q{q.id}</span>
-                        </div>
-                        <p className="font-medium text-sm">{q.question}</p>
+                <div key={q.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
+                    className="w-full text-left px-5 py-4 flex items-start justify-between gap-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${QUESTION_TYPE_COLORS[q.type] || "bg-slate-100 text-slate-600 border border-slate-200"}`}>
+                          {q.type}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-medium">Q{q.id}</span>
                       </div>
-                      {isExpanded ? <ChevronUp className="h-4 w-4 mt-1 shrink-0" /> : <ChevronDown className="h-4 w-4 mt-1 shrink-0" />}
-                    </button>
+                      <p className="font-medium text-sm text-slate-800">{q.question}</p>
+                    </div>
+                    <div className={`shrink-0 h-6 w-6 rounded-full flex items-center justify-center mt-0.5 transition-colors ${isExpanded ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"}`}>
+                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </div>
+                  </button>
 
-                    {isExpanded && (
-                      <div className="mt-4 space-y-3">
-                        {/* Tip + Speaker */}
-                        <div className="bg-muted/50 rounded-lg p-3 flex items-start gap-2">
-                          <div className="flex-1">
-                            <p className="text-xs text-muted-foreground"><strong>Tip:</strong> {q.tips}</p>
-                          </div>
+                  {isExpanded && (
+                    <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
+                      {/* Tip + Speaker */}
+                      <div className="bg-indigo-50 rounded-xl p-3 flex items-start gap-3">
+                        <div className="flex-1">
+                          <p className="text-xs text-indigo-800"><span className="font-semibold">Tip:</span> {q.tips}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleSpeak(q.id, q.question); }}
+                          className={`shrink-0 h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${
+                            isSpeaking ? "bg-indigo-600 text-white" : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                          }`}
+                          title={isSpeaking ? "Stop reading" : "Read question aloud"}
+                        >
+                          {isSpeaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+
+                      {/* Answer area with mic */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-medium text-slate-600">Your Answer</Label>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); handleSpeak(q.id, q.question); }}
-                            className={`shrink-0 p-1.5 rounded-md transition-colors ${
-                              isSpeaking
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                            onClick={() => handleMic(q.id)}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                              isListening
+                                ? "bg-red-100 text-red-700 border border-red-200 animate-pulse"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
                             }`}
-                            title={isSpeaking ? "Stop reading" : "Read question aloud"}
                           >
-                            {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                            {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                            {isListening ? "Stop" : "Speak"}
                           </button>
                         </div>
-
-                        {/* Answer area with mic */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs">Your Answer</Label>
-                            <button
-                              type="button"
-                              onClick={() => handleMic(q.id)}
-                              className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                                isListening
-                                  ? "bg-red-100 text-red-700 animate-pulse"
-                                  : "bg-muted text-muted-foreground hover:text-foreground"
-                              }`}
-                              title={isListening ? "Stop recording" : "Speak your answer"}
-                            >
-                              {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                              {isListening ? "Stop" : "Speak"}
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <Textarea
-                              value={answers[q.id] || ""}
-                              onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                              rows={4}
-                              placeholder="Type your answer or tap the mic button to speak..."
-                              className={isListening ? "border-red-300 ring-1 ring-red-200" : ""}
-                            />
-                            {isListening && (
-                              <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-red-600 font-medium">
-                                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                Listening...
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <Button
-                          size="sm"
-                          onClick={() => submitAnswer(q.id)}
-                          disabled={isLoading || !(answers[q.id] || "").trim()}
-                        >
-                          {isLoading ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Star className="mr-2 h-3 w-3" />}
-                          Get AI Feedback
-                        </Button>
-
-                        {/* Feedback Display */}
-                        {feedback && (
-                          <div className="mt-3 space-y-3 border-t pt-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`text-lg font-bold px-3 py-1 rounded-lg ${
-                                feedback.score >= 8 ? "bg-green-100 text-green-700" :
-                                feedback.score >= 5 ? "bg-yellow-100 text-yellow-700" :
-                                "bg-red-100 text-red-700"
-                              }`}>
-                                {feedback.score}/10
-                              </div>
-                              <p className="text-sm text-muted-foreground">{feedback.overallFeedback}</p>
+                        <div className="relative">
+                          <Textarea
+                            value={answers[q.id] || ""}
+                            onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                            rows={4}
+                            placeholder="Type your answer or tap Speak to use your mic..."
+                            className={`rounded-xl text-sm resize-none ${isListening ? "border-red-300 ring-1 ring-red-200" : "border-slate-200"}`}
+                          />
+                          {isListening && (
+                            <div className="absolute bottom-2.5 right-3 flex items-center gap-1.5 text-[10px] text-red-600 font-medium">
+                              <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                              Listening…
                             </div>
+                          )}
+                        </div>
+                      </div>
 
+                      <Button
+                        size="sm"
+                        onClick={() => submitAnswer(q.id)}
+                        disabled={isLoading || !(answers[q.id] || "").trim()}
+                        className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 border-0 shadow-sm text-white"
+                      >
+                        {isLoading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Star className="mr-2 h-3.5 w-3.5" />}
+                        Get AI Feedback
+                      </Button>
+
+                      {/* Feedback Display */}
+                      {feedback && (
+                        <div className="mt-1 space-y-3 border-t border-slate-100 pt-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`text-xl font-extrabold px-4 py-2 rounded-xl ${
+                              feedback.score >= 8 ? "bg-emerald-100 text-emerald-700" :
+                              feedback.score >= 5 ? "bg-amber-100 text-amber-700" :
+                              "bg-red-100 text-red-700"
+                            }`}>
+                              {feedback.score}<span className="text-sm font-medium opacity-60">/10</span>
+                            </div>
+                            <p className="text-sm text-slate-600">{feedback.overallFeedback}</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {feedback.strengths.length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold text-green-700 mb-1">Strengths</p>
-                                <ul className="text-xs text-muted-foreground space-y-0.5">
-                                  {feedback.strengths.map((s, i) => <li key={i}>+ {s}</li>)}
+                              <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                                <p className="text-xs font-semibold text-emerald-700 mb-2">Strengths</p>
+                                <ul className="space-y-1">
+                                  {feedback.strengths.map((s, i) => (
+                                    <li key={i} className="flex gap-1.5 text-xs text-emerald-800">
+                                      <span className="mt-0.5 shrink-0">✓</span>{s}
+                                    </li>
+                                  ))}
                                 </ul>
                               </div>
                             )}
-
                             {feedback.improvements.length > 0 && (
-                              <div>
-                                <p className="text-xs font-semibold text-amber-700 mb-1">Improvements</p>
-                                <ul className="text-xs text-muted-foreground space-y-0.5">
-                                  {feedback.improvements.map((s, i) => <li key={i}>• {s}</li>)}
+                              <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
+                                <p className="text-xs font-semibold text-amber-700 mb-2">Improvements</p>
+                                <ul className="space-y-1">
+                                  {feedback.improvements.map((s, i) => (
+                                    <li key={i} className="flex gap-1.5 text-xs text-amber-800">
+                                      <span className="mt-0.5 shrink-0">→</span>{s}
+                                    </li>
+                                  ))}
                                 </ul>
-                              </div>
-                            )}
-
-                            {feedback.suggestedAnswer && (
-                              <div className="bg-blue-50 rounded-lg p-3">
-                                <p className="text-xs font-semibold text-blue-700 mb-1">Suggested Approach</p>
-                                <p className="text-xs text-blue-900">{feedback.suggestedAnswer}</p>
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+
+                          {feedback.suggestedAnswer && (
+                            <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                              <p className="text-xs font-semibold text-blue-700 mb-1.5">Suggested Approach</p>
+                              <p className="text-xs text-blue-900 leading-relaxed">{feedback.suggestedAnswer}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
