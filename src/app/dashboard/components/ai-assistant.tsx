@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Send, Bot, UserIcon, Trash2 } from "lucide-react";
+import { Loader2, Send, Sparkles, UserCircle2, Trash2, ArrowUpCircle } from "lucide-react";
 
 interface AiAssistantProps {
   userId: string;
@@ -49,7 +49,7 @@ function AssistantBubble({ content }: { content: string }) {
           <p className="font-semibold text-foreground mb-1.5">{sec.title}</p>
           <div className="space-y-2">
             {sec.items.map((item, ii) => (
-              <div key={ii} className="rounded-md border bg-background/60 px-3 py-2">
+              <div key={ii} className="rounded-lg border bg-white/60 px-3 py-2 shadow-sm">
                 <p className="font-medium text-foreground text-xs mb-0.5">{item.heading}</p>
                 <p className="text-muted-foreground text-xs leading-relaxed">{item.body}</p>
               </div>
@@ -61,10 +61,10 @@ function AssistantBubble({ content }: { content: string }) {
       {data.tips && data.tips.length > 0 && (
         <div>
           <p className="font-semibold text-foreground mb-1.5">Quick Tips</p>
-          <ul className="space-y-1">
+          <ul className="space-y-1.5">
             {data.tips.map((tip, ti) => (
               <li key={ti} className="flex gap-2 text-xs text-muted-foreground">
-                <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 shrink-0" />
                 {tip}
               </li>
             ))}
@@ -80,6 +80,13 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
 }
+
+const QUICK_PROMPTS = [
+  "How can I improve my CV?",
+  "Interview tips for tech roles",
+  "How to negotiate salary?",
+  "Career path advice",
+];
 
 export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
   const supabase = createClient();
@@ -116,7 +123,6 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
     setSending(true);
 
     try {
-      // Save user message
       await supabase.from("ai_chat_history").insert({
         user_id: userId, role: "user", content: userMsg.content,
       });
@@ -135,7 +141,6 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       const assistantMsg: ChatMessage = { role: "assistant", content: json.message };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // Save assistant message
       await supabase.from("ai_chat_history").insert({
         user_id: userId, role: "assistant", content: json.message,
       });
@@ -162,7 +167,12 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center animate-pulse">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading conversation...</p>
+        </div>
       </div>
     );
   }
@@ -171,31 +181,45 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold">AI Career Assistant</h3>
-          <p className="text-xs text-muted-foreground">Ask about career advice, interview tips, salary negotiation, and more.</p>
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+            <Sparkles className="h-4.5 w-4.5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-slate-800">AI Career Assistant</h3>
+            <p className="text-xs text-muted-foreground">Career advice, interview tips &amp; more</p>
+          </div>
         </div>
         {messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearHistory} className="text-muted-foreground">
-            <Trash2 className="mr-2 h-3 w-3" /> Clear
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearHistory}
+            className="text-slate-400 hover:text-red-500 hover:bg-red-50 text-xs gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Clear
           </Button>
         )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 scrollbar-thin scrollbar-thumb-slate-200">
         {messages.length === 0 && (
-          <div className="text-center py-12">
-            <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground text-sm">
-              Hi! I&apos;m your AI Career Assistant. Ask me anything about your career, job search, or interview preparation.
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <h4 className="font-semibold text-slate-700 mb-1">Your AI Career Coach</h4>
+            <p className="text-muted-foreground text-sm max-w-sm mb-6">
+              Ask me anything about your career, job search, or interview preparation. I&apos;m trained on your CV data.
             </p>
-            <div className="flex flex-wrap gap-2 justify-center mt-4">
-              {["How can I improve my CV?", "Interview tips for tech roles", "How to negotiate salary?", "Career path advice"].map((q) => (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {QUICK_PROMPTS.map((q) => (
                 <button
                   key={q}
-                  onClick={() => { setInput(q); }}
-                  className="text-xs border rounded-full px-3 py-1.5 hover:bg-accent transition-colors"
+                  onClick={() => setInput(q)}
+                  className="text-xs border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-full px-3 py-1.5 transition-colors font-medium"
                 >
                   {q}
                 </button>
@@ -205,36 +229,41 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
         )}
 
         {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+          <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Bot className="h-4 w-4 text-primary" />
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200 mt-0.5">
+                <Sparkles className="h-3.5 w-3.5 text-white" />
               </div>
             )}
-            <div className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
+            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm ${
               msg.role === "user"
-                ? "bg-primary text-primary-foreground text-sm"
-                : "bg-muted"
+                ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-sm rounded-tr-sm"
+                : "bg-white border border-slate-100 rounded-tl-sm"
             }`}>
               {msg.role === "user"
-                ? <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-                : <AssistantBubble content={msg.content} />}
+                ? <div className="whitespace-pre-wrap leading-relaxed text-sm">{msg.content}</div>
+                : <AssistantBubble content={msg.content} />
+              }
             </div>
             {msg.role === "user" && (
-              <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shrink-0">
-                <UserIcon className="h-4 w-4 text-primary-foreground" />
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                <UserCircle2 className="h-4 w-4 text-white" />
               </div>
             )}
           </div>
         ))}
 
         {sending && (
-          <div className="flex gap-3">
-            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Bot className="h-4 w-4 text-primary" />
+          <div className="flex gap-2.5 justify-start">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200 mt-0.5">
+              <Sparkles className="h-3.5 w-3.5 text-white" />
             </div>
-            <div className="bg-muted rounded-lg px-4 py-2.5">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+              <div className="flex gap-1 items-center">
+                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:0ms]" />
+                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:150ms]" />
+                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:300ms]" />
+              </div>
             </div>
           </div>
         )}
@@ -242,19 +271,31 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       </div>
 
       {/* Input */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-end bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-sm focus-within:border-indigo-300 focus-within:ring-1 focus-within:ring-indigo-200 transition-all">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask me anything about your career..."
           rows={1}
-          className="resize-none min-h-[40px]"
+          className="resize-none min-h-[36px] border-0 shadow-none focus-visible:ring-0 p-0 text-sm bg-transparent flex-1"
         />
-        <Button onClick={sendMessage} disabled={!input.trim() || sending} size="sm" className="h-10 px-3">
-          <Send className="h-4 w-4" />
-        </Button>
+        <button
+          onClick={sendMessage}
+          disabled={!input.trim() || sending}
+          className={`shrink-0 h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-150 ${
+            input.trim() && !sending
+              ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+              : "bg-slate-100 text-slate-300 cursor-not-allowed"
+          }`}
+        >
+          {sending
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <ArrowUpCircle className="h-4 w-4" />
+          }
+        </button>
       </div>
+      <p className="text-center text-[10px] text-slate-400 mt-1.5">Press Enter to send · Shift+Enter for new line</p>
     </div>
   );
 }
