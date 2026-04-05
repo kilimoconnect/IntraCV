@@ -184,18 +184,41 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
 
         const gap = icon.style.marginRight || (isBadge ? "8px" : "6px");
         const iconW = isBadge ? (parseInt(icon.style.width) || 18) : 16;
+        const iconH = isBadge ? (parseInt(icon.style.height) || 18) : 18;
         const gapW = parseInt(gap) || (isBadge ? 8 : 6);
 
         el.style.display = "table";
         el.style.width = "100%";
         el.style.alignItems = "";
 
-        icon.style.display = "table-cell";
-        icon.style.verticalAlign = "top";
-        icon.style.width = `${iconW + gapW}px`;
-        icon.style.paddingRight = gap;
-        icon.style.marginRight = "";
-        icon.style.alignSelf = "";
+        if (isBadge) {
+          // Wrap the badge in a new table-cell span so the badge itself stays
+          // as display:inline-block — this preserves borderRadius in foreignObject.
+          // Center the number via lineHeight=height + textAlign:center instead of flex.
+          const badgeCell = document.createElement("span");
+          badgeCell.style.display = "table-cell";
+          badgeCell.style.verticalAlign = "top";
+          badgeCell.style.width = `${iconW + gapW}px`;
+
+          icon.style.display = "inline-block";
+          icon.style.alignItems = "";
+          icon.style.justifyContent = "";
+          icon.style.lineHeight = `${iconH}px`;
+          icon.style.textAlign = "center";
+          icon.style.marginRight = "";
+          icon.style.alignSelf = "";
+
+          el.insertBefore(badgeCell, icon);
+          badgeCell.appendChild(icon);
+        } else {
+          // Bullet span: direct table-cell (no borderRadius to preserve)
+          icon.style.display = "table-cell";
+          icon.style.verticalAlign = "top";
+          icon.style.width = `${iconW + gapW}px`;
+          icon.style.paddingRight = gap;
+          icon.style.marginRight = "";
+          icon.style.alignSelf = "";
+        }
 
         text.style.display = "table-cell";
         text.style.verticalAlign = "top";
