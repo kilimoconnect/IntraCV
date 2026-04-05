@@ -1,324 +1,160 @@
 /**
- * Client-side CV PDF download via html2canvas + jsPDF.
+ * Client-side CV PDF download via the browser's native print engine.
  *
- * Font environment: Next.js self-hosted Inter via next/font/google.
- * No CORS issues. Fonts are available immediately via document.fonts.
+ * WHY NOT html2canvas?
+ * html2canvas re-implements the browser's layout and text-rendering in a
+ * Canvas 2D context. Its font-metric calculations differ slightly from the
+ * real layout engine: characters can be 3–5% wider or narrower, so long
+ * lines (90+ chars) wrap at different points. No amount of CSS patching
+ * fixes this — it is a fundamental limitation of re-implementing the browser.
  *
- * Root cause of text shifting fixed in this version:
- *  → text-align:justify causes html2canvas to misplace word gaps and
- *    push punctuation away from words ("Excel models ," "100 %").
- *    All justified text is forced to left-align on the clone before capture.
+ * THIS APPROACH: hidden <iframe> + window.print()
+ * The CV page HTML (with all its inline styles) is copied into a hidden
+ * iframe. The browser's own print engine renders it — the same engine that
+ * drew the canvas preview — so every line wraps identically, every colour is
+ * exact, and every CSS feature (flexbox, zoom, transform) works correctly.
+ * The user sees the system "Save as PDF" dialog, clicks Save, done.
  *
- * Full fix list:
- *  1. text-align:justify → left on entire clone (ROOT CAUSE FIX)
- *  2. Font metric stabilisation — integer px fontSize, unitless lineHeight
- *  3. letter-spacing pinned to 0px where it was "normal"
- *  4. word-spacing:normal (NOT 0px — conflicts with justify override)
- *  5. Watermark/UI exclusion via class "no-pdf"
- *  6. Fixed scale:2 — stable rounding paths, no DPR instability
- *  7. windowWidth/Height forced to A4 — prevents mobile breakpoints leaking
- *  8. Three rAF frames — mobile needs extra time for layout settlement
- *  9. print-color-adjust:exact — preserves background colours & gradients
- * 10. PNG output — lossless, no JPEG fringing around text
- * 11. Inter font weights explicitly awaited before capture
- * 12. CSS zoom > 1 reset to 1 — prevents right-edge clipping from overflow
- * 13. CSS zoom < 1 → transform:scale — html2canvas handles transform correctly
- * 14. lineHeight ratio uses pre-rounded fontSize — prevents vertical drift
+ * Font handling: all <style> blocks and <link> stylesheets from the main
+ * document are injected into the iframe so Inter and every other font/class
+ * is available. @page sets exact A4 dimensions with zero margins.
  */
 
-const A4_PX_W = 794;
-const A4_PX_H = 1123;
 const A4_MM_W = 210;
 const A4_MM_H = 297;
-
-// Inter weights used in the CV. Explicitly awaited before capture —
-// document.fonts.ready resolves when fonts are scheduled, not necessarily
-// when they are fully measured by the layout engine.
-const INTER_WEIGHTS = ["300", "400", "500", "600", "700"];
-
-/**
- * Waits until every Inter weight is confirmed loaded and measured.
- * Falls back gracefully if the FontFaceSet API is unavailable.
- */
-async function waitForInterFonts(): Promise<void> {
-  if (!("fonts" in document)) return;
-
-  await document.fonts.ready;
-
-  // Explicitly load each weight — some may still be in "loading" state
-  // even after document.fonts.ready resolves on slow mobile connections.
-  const checks = INTER_WEIGHTS.map((weight) =>
-    document.fonts.load(`${weight} 16px Inter`)
-  );
-  await Promise.all(checks);
-
-  // One extra frame after font load so the layout engine can
-  // recalculate all text metrics with the confirmed font data.
-  await new Promise<void>((r) => requestAnimationFrame(() => r()));
-}
-
-/**
- * Strips all elements marked "no-pdf" from the clone before capture.
- * Apply class "no-pdf" to: watermarks, download buttons, tooltips,
- * preview banners, or any UI element that must not appear in the PDF.
- */
-function stripNoPdfElements(root: HTMLElement): void {
-  root.querySelectorAll(".no-pdf").forEach((el) => el.remove());
-}
-
-/**
- * Walks every element in the clone and applies the two fixes that are
- * genuinely needed for html2canvas to render text correctly:
- *
- *  1. text-align:justify → left
- *     html2canvas reads final character pixel positions (which include the
- *     stretched word gaps from justify) but reconstructs text using its own
- *     Canvas fillText — the gaps don't transfer, so words drift and punctuation
- *     floats ("100 %" "models ,"). Left-align uses natural gaps that reproduce.
- *
- *  2. CSS zoom → neutralise
- *     html2canvas reads DOM positions (which include zoom scaling) but draws
- *     text without re-applying the zoom, shifting every character. Inline zoom
- *     is stripped here; the global CSS also forces zoom:1 !important as a
- *     belt-and-suspenders safety net.
- *
- * Everything else (fontSize rounding, lineHeight conversion, letterSpacing
- * pinning) was REMOVED because it made things worse:
- *  - Rounding 10.5 px → 11 px widens every character by ~5%; across 90 chars
- *    that is ~45 px of horizontal drift — the text "shifts" visibly.
- *  - Converting lineHeight to a unitless ratio with the rounded fontSize
- *    changes the computed line spacing and compounds the vertical drift.
- *  - html2canvas 1.4.1 handles fractional font sizes and "normal" letterSpacing
- *    correctly when zoom is not involved, so no special-casing is needed.
- */
-function stabiliseFontMetrics(root: HTMLElement): void {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-  let node: Node | null = walker.currentNode;
-
-  while (node) {
-    const el = node as HTMLElement;
-
-    if (el.style !== undefined) {
-      const computed = window.getComputedStyle(el);
-
-      // Fix 1 — text-align: justify → left ──────────────────────────────────
-      if (computed.textAlign === "justify") {
-        el.style.textAlign = "left";
-      }
-
-      // Fix 2 — CSS zoom: strip it so html2canvas reads correct positions ────
-      // zoom < 1 (scale-down): replace with transform:scale so html2canvas
-      //   uses its transform matrix path and positions text correctly.
-      // zoom > 1 (scale-up from usePageFill sparse-content path): reset to 1.
-      //   transform:scale > 1 makes the fill div visually wider than 794 px,
-      //   clipping the right edge of content in the canvas. Plain zoom:1 keeps
-      //   content at natural scale with minor whitespace at the bottom instead.
-      const rawZoom = parseFloat(
-        (el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } })
-          .style.zoom || ""
-      );
-      if (!isNaN(rawZoom) && rawZoom > 0 && rawZoom !== 1) {
-        (el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } })
-          .style.zoom = "1";
-        if (rawZoom < 1) {
-          el.style.transform = `scale(${rawZoom})`;
-          el.style.transformOrigin = "top left";
-        }
-      }
-    }
-
-    node = walker.nextNode();
-  }
-}
 
 export async function downloadCvAsPdf(
   element: HTMLElement,
   filename: string
 ): Promise<void> {
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
-    import("jspdf"),
-  ]);
+  // ── Gather CV page sheets ─────────────────────────────────────────────────
+  const sheets = Array.from(
+    element.querySelectorAll<HTMLElement>(".cv-page-sheet")
+  );
+  if (sheets.length === 0) {
+    throw new Error(
+      'No CV pages found. Ensure each page has the class "cv-page-sheet".'
+    );
+  }
 
-  // ── Overlay: user sees "Generating PDF…" while we work ───────────────────
-  const overlay = document.createElement("div");
-  overlay.style.cssText = [
-    "position:fixed",
-    "inset:0",
-    "background:#fff",
-    "z-index:99999",
-    "display:flex",
-    "align-items:center",
-    "justify-content:center",
-  ].join(";");
-  overlay.innerHTML =
-    '<p style="font-family:Inter,sans-serif;font-size:14px;color:#4f46e5;">Generating PDF\u2026</p>';
-  document.body.appendChild(overlay);
+  // ── Collect all CSS from the main document ────────────────────────────────
+  // Inline <style> blocks — includes Tailwind, next/font face declarations, etc.
+  let inlineCss = "";
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      inlineCss += Array.from(sheet.cssRules)
+        .map((r) => r.cssText)
+        .join("\n");
+    } catch {
+      // Cross-origin sheet — will be included via <link> below
+    }
+  }
 
-  // ── Capture container: fixed at (0,0) at exact A4 pixel dimensions ────────
-  // Placing at top-left means html2canvas captures from a predictable
-  // coordinate regardless of how far the user has scrolled the page.
-  const captureRoot = document.createElement("div");
-  captureRoot.id = "cv-capture-root";
-  captureRoot.style.cssText = [
+  // External <link rel="stylesheet"> hrefs (cross-origin sheets)
+  const linkTags = Array.from(
+    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
+  )
+    .map((l) => `<link rel="stylesheet" href="${l.href}">`)
+    .join("\n");
+
+  // ── Build the CV HTML ─────────────────────────────────────────────────────
+  // Strip "no-pdf" elements (watermarks, preview banners) before serialising.
+  const cleanSheets = sheets.map((s) => {
+    const clone = s.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll(".no-pdf").forEach((el) => el.remove());
+    return clone.outerHTML;
+  });
+
+  // ── Create hidden iframe ──────────────────────────────────────────────────
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = [
     "position:fixed",
-    "top:0",
-    "left:0",
-    `width:${A4_PX_W}px`,
-    `height:${A4_PX_H}px`,
-    "overflow:hidden",
-    "z-index:99998",
-    "background:#fff",
+    "top:-10000px",
+    "left:-10000px",
+    `width:${A4_MM_W}mm`,
+    `height:${A4_MM_H}mm`,
+    "border:none",
+    "visibility:hidden",
     "pointer-events:none",
   ].join(";");
-  document.body.appendChild(captureRoot);
+  document.body.appendChild(iframe);
 
-  // ── Global style block injected into <head> ───────────────────────────────
-  // Forces colour fidelity and text alignment for everything inside the
-  // capture root. CSS specificity is maxed with !important so no rule
-  // from the CV template can override these values during capture.
-  const resetStyle = document.createElement("style");
-  resetStyle.textContent = `
-    #cv-capture-root * {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      color-adjust: exact !important;
-      text-rendering: geometricPrecision !important;
-      -webkit-font-smoothing: antialiased !important;
-      text-align: left !important;
-      word-spacing: normal !important;
-      zoom: 1 !important;
-    }
-    #cv-capture-root h1,
-    #cv-capture-root h2,
-    #cv-capture-root h3,
-    #cv-capture-root h4,
-    #cv-capture-root h5,
-    #cv-capture-root h6 {
-      text-align: left !important;
-    }
-  `;
-  /* Note: CSS zoom is NOT reset here with !important because it would
-     override the zoom handling done in stabiliseFontMetrics.
-     Zoom on inline styles is handled element-by-element above. */
-  document.head.appendChild(resetStyle);
+  const iDoc = iframe.contentDocument!;
 
-  let pdf: InstanceType<typeof jsPDF> | null = null;
+  iDoc.open();
+  iDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${filename}</title>
+${linkTags}
+<style>
+${inlineCss}
 
+/* ── Print-specific overrides ── */
+@page {
+  size: ${A4_MM_W}mm ${A4_MM_H}mm;
+  margin: 0mm;
+}
+*, *::before, *::after {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+  color-adjust: exact !important;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  background: white;
+}
+.cv-page-sheet {
+  page-break-after: always;
+  break-after: page;
+  width: 794px !important;
+  min-width: 794px !important;
+  max-width: 794px !important;
+  height: 1123px !important;
+  min-height: 1123px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+}
+.no-pdf { display: none !important; }
+</style>
+</head>
+<body>${cleanSheets.join("\n")}</body>
+</html>`);
+  iDoc.close();
+
+  // ── Wait for fonts to be ready inside the iframe ──────────────────────────
   try {
-    // Wait for Inter to be fully measured — not just scheduled.
-    await waitForInterFonts();
-
-    const sheets = Array.from(
-      element.querySelectorAll<HTMLElement>(".cv-page-sheet")
-    );
-    if (sheets.length === 0) {
-      throw new Error(
-        'No CV pages found. Ensure each page has the class "cv-page-sheet".'
-      );
+    if ("fonts" in iDoc) {
+      await (iDoc as Document & { fonts: { ready: Promise<void> } }).fonts
+        .ready;
     }
-
-    pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-      compress: true,
-    });
-
-    for (let i = 0; i < sheets.length; i++) {
-      if (i > 0) pdf.addPage();
-
-      // ── Deep-clone the page sheet into the capture container ──────────────
-      const clone = sheets[i].cloneNode(true) as HTMLElement;
-
-      // Hard-reset all layout-affecting properties with !important so no
-      // mobile responsive CSS or media query can bleed into the clone.
-      clone.style.cssText = `
-        position: relative !important;
-        margin: 0 !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        width: ${A4_PX_W}px !important;
-        min-width: ${A4_PX_W}px !important;
-        max-width: ${A4_PX_W}px !important;
-        height: ${A4_PX_H}px !important;
-        min-height: ${A4_PX_H}px !important;
-        overflow: hidden !important;
-        zoom: 1 !important;
-        transform: none !important;
-        transform-origin: top left !important;
-        font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
-        text-align: left !important;
-      `;
-
-      captureRoot.innerHTML = "";
-      captureRoot.appendChild(clone);
-
-      // Strip watermarks and UI-only elements BEFORE metric stabilisation
-      // so we don't walk elements that won't be in the PDF.
-      stripNoPdfElements(clone);
-
-      // Stabilise font metrics on every element in the clone.
-      // Must run AFTER the clone is in the DOM so getComputedStyle works —
-      // computed styles are unavailable on detached elements.
-      stabiliseFontMetrics(clone);
-
-      // Three rAF frames:
-      // Frame 1 — browser schedules layout for the new clone
-      // Frame 2 — layout applied, paint callbacks queued
-      // Frame 3 — mobile extra: font metrics + flex/grid fully settled
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() =>
-            requestAnimationFrame(() => resolve())
-          )
-        )
-      );
-
-      // Fixed scale:2 — gives crisp 1588×2246 px canvas (enough for A4 print)
-      // without the instability of DPR-based scaling (where a 3× Retina screen
-      // produced scale:3 → 4× larger canvas → different rounding paths in
-      // html2canvas text layout, adding to text drift on high-DPR devices).
-      const scale = 2;
-
-      const canvas = await html2canvas(clone, {
-        scale,
-        useCORS: true,
-        // allowTaint:false — Inter is self-hosted by Next.js,
-        // no cross-origin assets, so taint is not needed.
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        width: A4_PX_W,
-        height: A4_PX_H,
-        // windowWidth/Height tells html2canvas what "viewport" to assume
-        // when evaluating CSS. Without this it uses window.innerWidth
-        // (~390px on iPhone), triggering every mobile breakpoint.
-        windowWidth: A4_PX_W,
-        windowHeight: A4_PX_H,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        // Secondary safety net — any element still tagged no-pdf that
-        // wasn't caught by stripNoPdfElements is skipped here too.
-        ignoreElements: (el: Element) => el.classList.contains("no-pdf"),
-      });
-
-      // PNG over JPEG:
-      // JPEG introduces colour fringing around dark text on light backgrounds
-      // and loses coloured sidebar backgrounds. PNG is lossless.
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, A4_MM_W, A4_MM_H, undefined, "FAST");
-    }
-  } finally {
-    // Always clean up DOM even if an error is thrown mid-loop.
-    document.head.removeChild(resetStyle);
-    document.body.removeChild(captureRoot);
-    document.body.removeChild(overlay);
+  } catch {
+    // Fallback if FontFaceSet is unavailable in iframe
   }
 
-  if (pdf) {
-    pdf.save(`${filename}.pdf`);
-  }
+  // Two extra frames so the iframe layout engine fully settles
+  await new Promise<void>((r) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => r()))
+  );
+
+  // ── Print ─────────────────────────────────────────────────────────────────
+  // focus() is required in some browsers before print() will work on the iframe
+  iframe.contentWindow?.focus();
+  iframe.contentWindow?.print();
+
+  // ── Cleanup ───────────────────────────────────────────────────────────────
+  // Delay removal so the browser has time to process the print job before the
+  // iframe is destroyed. The print dialog may still be open at this point.
+  setTimeout(() => {
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe);
+    }
+  }, 5000);
 }
 
 /** @deprecated Use downloadCvAsPdf instead */
