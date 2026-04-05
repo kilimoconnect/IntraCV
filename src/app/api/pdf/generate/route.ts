@@ -63,27 +63,41 @@ export async function POST(req: NextRequest) {
     // ── Choose Chromium executable ──────────────────────────────────────────
     let executablePath: string;
     let launchArgs: string[];
+    // @sparticuz/chromium v120+ uses "shell" headless mode (old headless API)
+    let headlessMode: boolean | "shell" = true;
 
     if (process.env.NODE_ENV === "production" || process.env.USE_CHROMIUM_LAMBDA) {
       // Vercel / AWS Lambda — use @sparticuz/chromium
-      const chromium = await import("@sparticuz/chromium");
-      executablePath = await chromium.default.executablePath();
-      launchArgs = chromium.default.args;
+      // The class exposes static methods: Chromium.args, Chromium.executablePath()
+      const { default: Chromium } = await import("@sparticuz/chromium");
+      executablePath = await Chromium.executablePath();
+      // Use puppeteer.defaultArgs to merge sparticuz args with puppeteer's own
+      // defaults (--disable-gpu, --no-first-run, etc.)
+      launchArgs = puppeteer.default.defaultArgs({
+        args: Chromium.args,
+        headless: "shell",
+      });
+      headlessMode = "shell"; // must match the --headless='shell' arg above
     } else {
       // Local development — use system Chrome
       executablePath = localChromePath();
-      launchArgs = [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ];
+      launchArgs = puppeteer.default.defaultArgs({
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu",
+        ],
+        headless: true,
+      });
+      headlessMode = true;
     }
 
     // ── Launch browser ───────────────────────────────────────────────────────
     browser = await puppeteer.default.launch({
       executablePath,
       args: launchArgs,
-      headless: true,
+      headless: headlessMode,
       defaultViewport: {
         width: 794,    // A4 at 96 dpi
         height: 1123,
