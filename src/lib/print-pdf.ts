@@ -1,188 +1,72 @@
 /**
- * CV PDF download — server-side headless Chrome generation.
+ * CV PDF download — client-side image capture via html-to-image + jsPDF.
+ *
+ * Why html-to-image instead of html2canvas?
+ *   html2canvas reimplements its own font renderer which differs from the
+ *   browser's, causing text to wrap at different points (the "text shift"
+ *   bug).  html-to-image uses the browser's own layout engine via SVG
+ *   foreignObject — the rendered pixels match the on-screen preview exactly.
  *
  * Flow:
- *  1. Build the CV HTML (page sheets + all page CSS, font URLs made absolute)
- *  2. POST to /api/pdf/generate (headless Chrome on the server)
- *  3. Receive the PDF binary and trigger a direct file download
- *
- * This works identically on desktop and mobile — it is just an API call
- * followed by a blob URL download, no print dialog, no mobile popup issues.
- *
- * If the server returns an error (e.g. Chromium not available in dev without
- * a local Chrome install) the function falls back to the iframe print path
- * so the developer experience is not broken.
+ *   1. For every .cv-page-sheet element, temporarily remove zoom (so the
+ *      element is at its natural 794 × 1123 px) and capture as a 2× PNG.
+ *   2. Pack the PNGs into an A4 jsPDF document.
+ *   3. Trigger a direct blob download — no server, no print dialog, works on
+ *      every device including iOS.
  */
 
-const A4_MM_W = 210;
-const A4_MM_H = 297;
+import { toPng } from "html-to-image";
+import { jsPDF } from "jspdf";
 
-/** Collect CSS from all loaded stylesheets, making relative URLs absolute */
-function collectPageStyles(): { inlineCss: string; linkTags: string } {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+/** A4 dimensions in mm */
+const A4_W_MM = 210;
+const A4_H_MM = 297;
 
-  let inlineCss = "";
-  for (const sheet of Array.from(document.styleSheets)) {
-    try {
-      inlineCss += Array.from(sheet.cssRules)
-        .map((r) => r.cssText)
-        .join("\n");
-    } catch {
-      /* cross-origin sheet — included via <link> below */
-    }
-  }
+/** Natural A4 pixel dimensions at 96 dpi */
+const A4_W_PX = 794;
+const A4_H_PX = 1123;
 
-  // Make all relative url(...) references absolute so headless Chrome
-  // (running on the server) can fetch font files and background images.
-  inlineCss = inlineCss.replace(
-    /url\((['"]?)(?!https?:\/\/|data:)([^)'"]+)\1\)/g,
-    (_match, q, path) =>
-      `url(${q}${origin}/${path.replace(/^\//, "")}${q})`
-  );
+/**
+ * Capture a single CV page as a 2× PNG data-URL.
+ * Any CSS zoom on the element is temporarily reset to 1 so html-to-image
+ * always sees exactly 794 × 1123 px, then the original zoom is restored.
+ */
+async function captureSheet(sheet: HTMLElement): Promise<string> {
+  const prevZoom = sheet.style.zoom;
+  const prevMinHeight = sheet.style.minHeight;
 
-  const linkTags = Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
-  )
-    .map((l) => `<link rel="stylesheet" href="${l.href}">`)
-    .join("\n");
+  // Temporarily lock dimensions to natural A4 size
+  sheet.style.zoom = "1";
+  sheet.style.minHeight = `${A4_H_PX}px`;
 
-  return { inlineCss, linkTags };
-}
+  // Force a layout pass before capturing
+  sheet.getBoundingClientRect();
 
-/** Clone and serialise CV page sheets, removing watermarks / UI elements */
-function serialiseSheets(sheets: HTMLElement[]): string {
-  return sheets
-    .map((s) => {
-      const clone = s.cloneNode(true) as HTMLElement;
-      clone.querySelectorAll(".no-pdf").forEach((el) => el.remove());
-      return clone.outerHTML;
-    })
-    .join("\n");
-}
-
-/** Build the complete HTML sent to the server (or used in the iframe fallback) */
-function buildPrintDocument(opts: {
-  filename: string;
-  inlineCss: string;
-  linkTags: string;
-  sheetsHtml: string;
-  autoprint?: boolean;
-}): string {
-  const autoprintScript = opts.autoprint
-    ? `<script>
-(function () {
-  function go() { window.print(); }
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () { setTimeout(go, 300); });
-  } else {
-    window.addEventListener("load", function () { setTimeout(go, 500); });
-  }
-})();
-<\/script>`
-    : "";
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=794,initial-scale=1">
-<title>${opts.filename}</title>
-${opts.linkTags}
-<style>
-${opts.inlineCss}
-
-/* ── Print overrides ── */
-@page { size: ${A4_MM_W}mm ${A4_MM_H}mm; margin: 0mm; }
-*, *::before, *::after {
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-  color-adjust: exact !important;
-  word-wrap: break-word !important;
-  overflow-wrap: break-word !important;
-}
-html, body { margin: 0; padding: 0; background: white; }
-.cv-page-sheet {
-  page-break-after: always;
-  break-after: page;
-  width: 794px !important;
-  min-width: 794px !important;
-  max-width: 794px !important;
-  height: 1123px !important;
-  min-height: 1123px !important;
-  overflow: hidden !important;
-  position: relative !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  margin: 0 !important;
-}
-.no-pdf { display: none !important; }
-</style>
-${autoprintScript}
-</head>
-<body>${opts.sheetsHtml}</body>
-</html>`;
-}
-
-/** Trigger a browser file download from a Blob */
-function triggerDownload(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${filename}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
-}
-
-/** Fallback: iframe print (desktop) or new-tab auto-print (mobile) */
-async function fallbackPrint(
-  html: string,
-  filename: string
-): Promise<void> {
-  const mobile =
-    window.matchMedia("(pointer: coarse)").matches ||
-    /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  if (mobile) {
-    const tab = window.open("", "_blank");
-    if (tab) {
-      // Re-inject autoprint script for mobile fallback
-      const mobileHtml = html.replace(
-        "</head>",
-        `<script>
-document.fonts.ready.then(function(){setTimeout(function(){window.print()},300)});
-<\/script></head>`
-      );
-      tab.document.open();
-      tab.document.write(mobileHtml);
-      tab.document.close();
-      return;
-    }
-  }
-
-  // Desktop iframe fallback
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;top:-10000px;left:-10000px;width:210mm;height:297mm;border:none;visibility:hidden;pointer-events:none;";
-  document.body.appendChild(iframe);
-  const iDoc = iframe.contentDocument!;
-  iDoc.open();
-  iDoc.write(html);
-  iDoc.close();
   try {
-    if ("fonts" in iDoc) {
-      await (iDoc as Document & { fonts: { ready: Promise<void> } }).fonts.ready;
-    }
-  } catch { /* ignore */ }
-  await new Promise<void>((r) =>
-    requestAnimationFrame(() => requestAnimationFrame(() => r()))
-  );
-  iframe.contentWindow?.focus();
-  iframe.contentWindow?.print();
-  setTimeout(() => {
-    if (document.body.contains(iframe)) document.body.removeChild(iframe);
-  }, 5000);
+    const dataUrl = await toPng(sheet, {
+      width: A4_W_PX,
+      height: A4_H_PX,
+      pixelRatio: 2,            // retina-quality output
+      skipAutoScale: true,
+      cacheBust: true,          // avoid stale cached resources
+      style: {
+        // Make sure .no-pdf elements are hidden in the capture
+        overflow: "hidden",
+      },
+      filter: (node) => {
+        // Exclude any element with the .no-pdf class
+        if (node instanceof Element) {
+          return !node.classList.contains("no-pdf");
+        }
+        return true;
+      },
+    });
+    return dataUrl;
+  } finally {
+    // Always restore original styles
+    sheet.style.zoom = prevZoom;
+    sheet.style.minHeight = prevMinHeight;
+  }
 }
 
 export async function downloadCvAsPdf(
@@ -199,36 +83,28 @@ export async function downloadCvAsPdf(
     );
   }
 
-  // ── 2. Build the print HTML ───────────────────────────────────────────────
-  const { inlineCss, linkTags } = collectPageStyles();
-  const sheetsHtml = serialiseSheets(sheets);
-  const html = buildPrintDocument({ filename, inlineCss, linkTags, sheetsHtml });
-
-  // ── 3. Try server-side generation first ──────────────────────────────────
-  try {
-    const res = await fetch("/api/pdf/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ html, filename }),
-    });
-
-    if (res.ok) {
-      const blob = await res.blob();
-      triggerDownload(blob, filename);
-      return;
-    }
-
-    console.warn(
-      "[pdf] server returned",
-      res.status,
-      "— falling back to client-side print"
-    );
-  } catch (err) {
-    console.warn("[pdf] server unreachable — falling back to client-side print:", err);
+  // ── 2. Capture each page as a PNG ─────────────────────────────────────────
+  const images: string[] = [];
+  for (const sheet of sheets) {
+    images.push(await captureSheet(sheet));
   }
 
-  // ── 4. Fallback: client-side iframe / new-tab print ───────────────────────
-  await fallbackPrint(html, filename);
+  // ── 3. Build PDF ──────────────────────────────────────────────────────────
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    compress: true,
+  });
+
+  images.forEach((imgData, i) => {
+    if (i > 0) pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, 0, A4_W_MM, A4_H_MM, undefined, "FAST");
+  });
+
+  // ── 4. Download ───────────────────────────────────────────────────────────
+  const safeName = filename.replace(/[^a-z0-9_\-]/gi, "_");
+  pdf.save(`${safeName}.pdf`);
 }
 
 /** @deprecated Use downloadCvAsPdf instead */
