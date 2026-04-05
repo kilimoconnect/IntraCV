@@ -76,16 +76,12 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
       // second ensures fonts and any paint callbacks settle.
       await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
-      // html2canvas offsets position:fixed elements by window.scrollY.
-      // Scroll to (0,0) before capture to neutralise this, then restore.
-      const savedScrollX = window.scrollX;
-      const savedScrollY = window.scrollY;
-      window.scrollTo(0, 0);
-
+      // Pass scrollX/scrollY:0 so html2canvas treats the position:fixed
+      // clone's viewport position (0,0) as its document position, regardless
+      // of how far the user has scrolled the page.
       const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: "#ffffff",
         width: A4_PX_W,
         height: A4_PX_H,
@@ -93,8 +89,6 @@ export async function downloadCvAsPdf(element: HTMLElement, filename: string): P
         scrollX: 0,
         scrollY: 0,
       });
-
-      window.scrollTo(savedScrollX, savedScrollY);
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       pdf.addImage(imgData, "JPEG", 0, 0, A4_MM_W, A4_MM_H, undefined, "FAST");
