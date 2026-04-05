@@ -1,78 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0F0C2E"/>
-      <stop offset="100%" stop-color="#3D1275"/>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1E1148"/>
+      <stop offset="100%" stop-color="#03020F"/>
+    </radialGradient>
+    <linearGradient id="star" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#C4B5FD"/>
     </linearGradient>
-    <linearGradient id="card-shine" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#f0eeff" stop-opacity="0.96"/>
-    </linearGradient>
-    <linearGradient id="avatar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#C4B5FD"/>
-      <stop offset="100%" stop-color="#8B5CF6"/>
-    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5B21B6" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#5B21B6" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
   <!-- Background -->
   <rect width="512" height="512" rx="108" fill="url(#bg)"/>
 
-  <!-- Subtle glow behind star -->
-  <circle cx="364" cy="128" r="80" fill="#7C3AED" opacity="0.18"/>
+  <!-- Central glow -->
+  <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
 
-  <!-- Back card (rotated, ghost) -->
-  <g transform="rotate(-7, 248, 262)">
-    <rect x="152" y="138" width="192" height="248" rx="20" fill="white" opacity="0.14"/>
-  </g>
-
-  <!-- Front card -->
-  <rect x="130" y="114" width="200" height="260" rx="20" fill="url(#card-shine)"/>
-
-  <!-- Avatar circle -->
-  <circle cx="180" cy="178" r="30" fill="url(#avatar-fill)" opacity="0.25"/>
-  <!-- Avatar head -->
-  <circle cx="180" cy="170" r="14" fill="url(#avatar-fill)"/>
-  <!-- Avatar shoulders -->
-  <path d="M152,206 Q152,190 180,190 Q208,190 208,206 Z" fill="url(#avatar-fill)"/>
-
-  <!-- Name line -->
-  <rect x="222" y="162" width="88" height="12" rx="6" fill="#3730A3" opacity="0.28"/>
-  <!-- Title / role line -->
-  <rect x="222" y="184" width="62" height="9" rx="4.5" fill="#3730A3" opacity="0.16"/>
-
-  <!-- Divider -->
-  <rect x="150" y="224" width="162" height="2" rx="1" fill="#3730A3" opacity="0.1"/>
-
-  <!-- Section label dot + line -->
-  <circle cx="158" cy="248" r="4" fill="#7C3AED" opacity="0.4"/>
-  <rect x="170" y="243" width="142" height="9" rx="4.5" fill="#3730A3" opacity="0.22"/>
-
-  <rect x="150" y="266" width="162" height="9" rx="4.5" fill="#3730A3" opacity="0.14"/>
-
-  <!-- Divider 2 -->
-  <rect x="150" y="292" width="162" height="2" rx="1" fill="#3730A3" opacity="0.1"/>
-
-  <!-- Section label dot + line -->
-  <circle cx="158" cy="314" r="4" fill="#7C3AED" opacity="0.4"/>
-  <rect x="170" y="309" width="142" height="9" rx="4.5" fill="#3730A3" opacity="0.22"/>
-
-  <rect x="150" y="328" width="120" height="9" rx="4.5" fill="#3730A3" opacity="0.14"/>
-  <rect x="150" y="346" width="142" height="9" rx="4.5" fill="#3730A3" opacity="0.14"/>
-
-  <!-- 4-pointed sparkle star -->
-  <!-- Center (364, 128), outer R=50, inner r=17 -->
+  <!--
+    4-pointed sparkle star with curved concave sides.
+    Center (256,256). Outer radii: vertical=195, horizontal=150. Inner corners at 45° r=50.
+    Outer: Top(256,61) Right(406,256) Bottom(256,451) Left(106,256)
+    Inner: NE(291,221) SE(291,291) SW(221,291) NW(221,221)
+    Each segment uses a quadratic bezier bowing inward toward center.
+  -->
   <path d="
-    M 364,78
-    L 376.0,116.0
-    L 414,128
-    L 376.0,140.0
-    L 364,178
-    L 352.0,140.0
-    L 314,128
-    L 352.0,116.0
-    Z" fill="white"/>
+    M 256,61
+    Q 267,181 291,221
+    Q 319,245 406,256
+    Q 319,267 291,291
+    Q 267,331 256,451
+    Q 245,331 221,291
+    Q 193,267 106,256
+    Q 193,245 221,221
+    Q 245,181 256,61
+    Z
+  " fill="url(#star)"/>
 
-  <!-- Two tiny accent dots (give it sparkle feel) -->
-  <circle cx="308" cy="94" r="7" fill="white" opacity="0.45"/>
-  <circle cx="408" cy="86" r="5" fill="white" opacity="0.3"/>
+  <!-- Constellation dots -->
+  <circle cx="78"  cy="95"  r="5" fill="white" opacity="0.30"/>
+  <circle cx="430" cy="78"  r="7" fill="white" opacity="0.22"/>
+  <circle cx="60"  cy="390" r="4" fill="white" opacity="0.18"/>
+  <circle cx="440" cy="415" r="6" fill="white" opacity="0.25"/>
+  <circle cx="438" cy="175" r="4" fill="white" opacity="0.20"/>
+  <circle cx="82"  cy="310" r="3" fill="white" opacity="0.15"/>
 </svg>
