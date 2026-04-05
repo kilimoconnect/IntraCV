@@ -63,34 +63,30 @@ export async function POST(req: NextRequest) {
     // ── Choose Chromium executable ──────────────────────────────────────────
     let executablePath: string;
     let launchArgs: string[];
-    // @sparticuz/chromium v120+ uses "shell" headless mode (old headless API)
-    let headlessMode: boolean | "shell" = true;
+    // headless: false here means "don't let puppeteer add its own --headless flag";
+    // @sparticuz/chromium already puts --headless='shell' inside Chromium.args.
+    // Adding puppeteer's flag too (--headless / --headless=new) causes a conflict
+    // that makes Chrome exit immediately.
+    let headlessMode: boolean | "shell" = false;
 
     if (process.env.NODE_ENV === "production" || process.env.USE_CHROMIUM_LAMBDA) {
       // Vercel / AWS Lambda — use @sparticuz/chromium
-      // The class exposes static methods: Chromium.args, Chromium.executablePath()
+      // Chromium is a class with static members: .args (string[]) and .executablePath()
       const { default: Chromium } = await import("@sparticuz/chromium");
       executablePath = await Chromium.executablePath();
-      // Use puppeteer.defaultArgs to merge sparticuz args with puppeteer's own
-      // defaults (--disable-gpu, --no-first-run, etc.)
-      launchArgs = puppeteer.default.defaultArgs({
-        args: Chromium.args,
-        headless: "shell",
-      });
-      headlessMode = "shell"; // must match the --headless='shell' arg above
+      // Use Chromium.args directly — it already contains --headless='shell'.
+      // Do NOT wrap with puppeteer.defaultArgs(); that merges in --headless which conflicts.
+      launchArgs = Chromium.args;
     } else {
       // Local development — use system Chrome
       executablePath = localChromePath();
-      launchArgs = puppeteer.default.defaultArgs({
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-        ],
-        headless: true,
-      });
-      headlessMode = true;
+      launchArgs = [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ];
+      headlessMode = true; // local Chrome: use puppeteer new-headless (--headless=new)
     }
 
     // ── Launch browser ───────────────────────────────────────────────────────
