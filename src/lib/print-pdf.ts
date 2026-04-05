@@ -10,17 +10,20 @@
  *    All justified text is forced to left-align on the clone before capture.
  *
  * Full fix list:
- *  1. text-align:justify → left on entire clone (ROOT CAUSE FIX)
+ *  1. text-align:justify → left on entire clone (ROOT CAUSE of word-gap drift)
  *  2. Font metric stabilisation — integer px fontSize, unitless lineHeight
  *  3. letter-spacing pinned to 0px where it was "normal"
  *  4. word-spacing:normal (NOT 0px — conflicts with justify override)
  *  5. Watermark/UI exclusion via class "no-pdf"
- *  6. Dynamic scale matched to devicePixelRatio (capped at 3)
+ *  6. Fixed scale:2 — stable rounding paths, no DPR instability
  *  7. windowWidth/Height forced to A4 — prevents mobile breakpoints leaking
  *  8. Three rAF frames — mobile needs extra time for layout settlement
  *  9. print-color-adjust:exact — preserves background colours & gradients
  * 10. PNG output — lossless, no JPEG fringing around text
  * 11. Inter font weights explicitly awaited before capture
+ * 12. CSS zoom > 1 reset to 1 — prevents right-edge clipping (canvas+overflow)
+ * 13. CSS zoom < 1 → transform:scale — html2canvas handles transform correctly
+ * 14. lineHeight ratio uses pre-rounded fontSize — prevents vertical drift
  */
 
 const A4_PX_W = 794;
@@ -94,16 +97,31 @@ function stabiliseFontMetrics(root: HTMLElement): void {
         el.style.textAlign = "left";
       }
 
-      // ── CSS zoom → transform:scale conversion ────────────────────────────
-      // html2canvas misplaces text inside elements that use CSS zoom (it reads
-      // character positions before zoom, then re-renders without it).
-      // Converting zoom to transform:scale lets html2canvas handle it correctly
-      // via its own transform matrix path.
+      // ── CSS zoom handling ─────────────────────────────────────────────────
+      // html2canvas misplaces text inside zoomed elements (reads DOM positions
+      // which include zoom, then re-draws without applying the zoom factor).
+      //
+      // zoom < 1 (scale-down, content overflows page):
+      //   Convert to transform:scale — html2canvas uses its own transform
+      //   matrix, rendering text at correct scaled positions.
+      //   The visual output (< natural size) fits within parent overflow:hidden.
+      //
+      // zoom > 1 (scale-up, from usePageFill sparse-content path):
+      //   Reset to 1. With zoom > 1 or transform:scale > 1, the fill div
+      //   visually expands beyond the parent's overflow:hidden AND beyond the
+      //   794px html2canvas canvas width, clipping the right edge of content
+      //   (dates "Jan 2019 - Present" become "Jan 2019 - Pr" in the PDF).
+      //   Resetting to 1 keeps content at natural scale — minor extra whitespace
+      //   at the bottom of the page, but no right-edge clipping.
       const rawZoom = parseFloat((el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } }).style.zoom || "");
-      if (!isNaN(rawZoom) && rawZoom !== 1 && rawZoom > 0) {
+      if (!isNaN(rawZoom) && rawZoom > 0 && rawZoom !== 1) {
         (el as HTMLElement & { style: CSSStyleDeclaration & { zoom?: string } }).style.zoom = "1";
-        el.style.transform = `scale(${rawZoom})`;
-        el.style.transformOrigin = "top left";
+        if (rawZoom < 1) {
+          // Scale-down: use transform so html2canvas handles it correctly
+          el.style.transform = `scale(${rawZoom})`;
+          el.style.transformOrigin = "top left";
+        }
+        // Scale-up (rawZoom > 1): zoom reset to 1 above — no transform applied.
       }
 
       // ── fontSize: round to integer px ────────────────────────────────────
