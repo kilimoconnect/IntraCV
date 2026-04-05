@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     });
 
     // ── Generate PDF ──────────────────────────────────────────────────────────
-    const pdfBuffer = await page.pdf({
+    const pdfUint8 = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
@@ -110,6 +110,9 @@ export async function POST(req: NextRequest) {
 
     await browser.close();
     browser = null;
+
+    // page.pdf() returns Uint8Array; NextResponse needs Buffer (a valid BodyInit)
+    const pdfBuffer = Buffer.from(pdfUint8);
 
     // ── Return as file download ───────────────────────────────────────────────
     const safeName = (filename || "cv").replace(/[^a-z0-9_\-]/gi, "_");
