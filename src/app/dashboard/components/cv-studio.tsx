@@ -1078,49 +1078,9 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [cvData, shouldAutoOptimize, jobDescription, jobAnalysis, company, companyAddress, jobTitle]);
 
-  const saveDocumentToLibrary = useCallback(async (): Promise<string | null> => {
-    if (!aiData || !selectedCategory) return null;
-    const fullName = aiData.fullName || "My CV";
-    const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
-    const title = `${fullName} — ${selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} CV (${month})`;
-    const content = JSON.stringify({
-      studioData: aiData,
-      studioCategory: selectedCategory,
-      studioVariant: selectedVariant,
-      studioTheme: selectedTheme,
-    });
-    // Generate ID client-side so we always have it even if .single() returns null
-    const id = crypto.randomUUID();
-    const { error } = await supabase.from("generated_documents").insert({
-      id,
-      user_id: userId,
-      doc_type: "cv",
-      title,
-      content,
-    });
-    if (error) {
-      console.error("[saveDoc] insert error:", error.message, error.code);
-      return null;
-    }
-    return id;
-  }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
-
-  const saveCoverLetterToLibrary = useCallback(async (text: string) => {
-    if (!aiData) return;
-    const fullName = aiData.fullName || "My CV";
-    const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
-    const title = `${fullName} — Cover Letter (${month})`;
-    await supabase.from("generated_documents").insert({
-      user_id: userId,
-      doc_type: "cover_letter",
-      title,
-      content: text,
-    });
-  }, [aiData, userId, supabase]);
-
-  const executePdfDownload = useCallback(async (docId: string | null) => {
+  const executePdfDownload = useCallback(async () => {
     const element = previewRef.current;
-    if (!element || !aiData) return;
+    if (!element || !aiData || !selectedCategory) return;
 
     // Set state synchronously before any await so React paints the overlay
     setDownloadingPdf(true);
@@ -1130,16 +1090,28 @@ export default function CvStudio({ userId, cvData }: Props) {
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
     try {
-      const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
-      const cat = selectedCategory ? `_${selectedCategory}` : "";
+      const fullName = aiData.fullName || "CV";
+      const safeName = fullName.replace(/\s+/g, "_");
+      const cat = `_${selectedCategory}`;
       const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+
+      const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+      const docTitle = `${fullName} — ${selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} CV (${month})`;
+      const docContent = JSON.stringify({
+        studioData: aiData,
+        studioCategory: selectedCategory,
+        studioVariant: selectedVariant,
+        studioTheme: selectedTheme,
+      });
 
       try {
         await printCvAsPdf(element, {
           filename,
           useApi2Pdf: true,
-          docId: docId ?? undefined,
           userId,
+          docTitle,
+          docContent,
+          coverLetter: coverLetter ?? undefined,
         });
       } catch (apiErr) {
         console.warn("[pdf] api2pdf failed, falling back to print dialog:", apiErr);
@@ -1155,7 +1127,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       setDownloadingPdf(false);
       setPdfGenerating(false);
     }
-  }, [aiData, selectedCategory, userId]);
+  }, [aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter, userId]);
 
   const handleAnalyzeProfile = useCallback(async () => {
     if (!jobDescription.trim() || profileAnalyzing) return;
@@ -1283,13 +1255,11 @@ export default function CvStudio({ userId, cvData }: Props) {
               if (verifyData.verified) {
                 setShowPaymentModal(false);
                 setCoverLetterUnlocked(true);
-                const docId = await saveDocumentToLibrary();
-                if (coverLetter) await saveCoverLetterToLibrary(coverLetter);
                 toast.success(
                   "Payment confirmed! Generating your PDF…",
                   { duration: 3000, icon: "🎉" }
                 );
-                await executePdfDownload(docId);
+                await executePdfDownload();
                 toast.success(
                   "Your CV and cover letter are saved — find them in the Documents page.",
                   { duration: 6000, icon: "📄" }
@@ -1314,7 +1284,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error("Could not open payment window. Please try again.");
       setPaymentProcessing(false);
     }
-  }, [aiData, userId, selectedCategory, paymentProcessing, coverLetter, saveDocumentToLibrary, saveCoverLetterToLibrary, executePdfDownload]);
+  }, [aiData, userId, selectedCategory, paymentProcessing, executePdfDownload]);
 
   // ── Category Selection ──
   if (step === "select") {

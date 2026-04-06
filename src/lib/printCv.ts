@@ -23,9 +23,12 @@ export interface PrintCvOptions {
   onComplete?: () => void;
   /** When true, calls /api/pdf/api2pdf instead of the iframe fallback */
   useApi2Pdf?: boolean;
-  /** Pass to associate the generated PDF with an existing document record */
-  docId?: string;
   userId?: string;
+  /** Document metadata — the route creates the record server-side */
+  docTitle?: string;
+  docContent?: string;
+  /** Cover letter text to store alongside the CV */
+  coverLetter?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,13 +164,24 @@ function buildPrintHtml(element: HTMLElement, filename: string): string {
 async function generateViaApi2Pdf(
   html: string,
   filename: string,
-  docId?: string,
-  userId?: string
+  opts: {
+    userId?: string;
+    docTitle?: string;
+    docContent?: string;
+    coverLetter?: string;
+  } = {}
 ): Promise<void> {
   const res = await fetch("/api/pdf/api2pdf", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html, filename, docId, userId }),
+    body: JSON.stringify({
+      html,
+      filename,
+      userId: opts.userId,
+      docTitle: opts.docTitle,
+      docContent: opts.docContent,
+      coverLetter: opts.coverLetter,
+    }),
   });
 
   if (!res.ok) {
@@ -233,7 +247,7 @@ export async function printCvAsPdf(
   element: HTMLElement,
   options: PrintCvOptions
 ): Promise<void> {
-  const { filename, onStart, onComplete, useApi2Pdf = false, docId, userId } = options;
+  const { filename, onStart, onComplete, useApi2Pdf = false, userId, docTitle, docContent, coverLetter } = options;
   onStart?.();
 
   try {
@@ -244,7 +258,7 @@ export async function printCvAsPdf(
     const html = buildPrintHtml(element, filename);
 
     if (useApi2Pdf) {
-      await generateViaApi2Pdf(html, filename, docId, userId);
+      await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter });
     } else {
       await printViaIframe(html, filename);
     }
