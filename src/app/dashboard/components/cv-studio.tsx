@@ -1102,22 +1102,27 @@ export default function CvStudio({ userId, cvData }: Props) {
     const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
     const cat = selectedCategory ? `_${selectedCategory}` : "";
     const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+
+    // Set state synchronously BEFORE the first await so React paints the
+    // loading overlay in the very next frame — not after the API call finishes.
+    setDownloadingPdf(true);
+    setPdfGenerating(true);
+
+    // One rAF lets the browser flush the state update and render the overlay
+    // before we block the thread with font-loading and the fetch.
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+
     try {
-      await printCvAsPdf(element, {
-        filename,
-        useApi2Pdf: true,
-        onStart: () => { setDownloadingPdf(true); setPdfGenerating(true); },
-        onComplete: () => { setDownloadingPdf(false); setPdfGenerating(false); },
-      });
+      await printCvAsPdf(element, { filename, useApi2Pdf: true });
     } catch {
       // api2pdf failed — fall back to iframe print dialog
       toast.error("Cloud PDF failed — opening print dialog as fallback.");
-      await printCvAsPdf(element, {
-        filename,
-        useApi2Pdf: false,
-        onStart: () => setDownloadingPdf(true),
-        onComplete: () => setDownloadingPdf(false),
-      });
+      try {
+        await printCvAsPdf(element, { filename, useApi2Pdf: false });
+      } catch { /* ignore fallback errors */ }
+    } finally {
+      setDownloadingPdf(false);
+      setPdfGenerating(false);
     }
   }, [aiData, selectedCategory]);
 
