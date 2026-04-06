@@ -607,6 +607,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showJobOptimizer, setShowJobOptimizer] = useState(false);
@@ -1101,11 +1102,23 @@ export default function CvStudio({ userId, cvData }: Props) {
     const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
     const cat = selectedCategory ? `_${selectedCategory}` : "";
     const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
-    await printCvAsPdf(element, {
-      filename,
-      onStart: () => setDownloadingPdf(true),
-      onComplete: () => setDownloadingPdf(false),
-    });
+    try {
+      await printCvAsPdf(element, {
+        filename,
+        useApi2Pdf: true,
+        onStart: () => { setDownloadingPdf(true); setPdfGenerating(true); },
+        onComplete: () => { setDownloadingPdf(false); setPdfGenerating(false); },
+      });
+    } catch {
+      // api2pdf failed — fall back to iframe print dialog
+      toast.error("Cloud PDF failed — opening print dialog as fallback.");
+      await printCvAsPdf(element, {
+        filename,
+        useApi2Pdf: false,
+        onStart: () => setDownloadingPdf(true),
+        onComplete: () => setDownloadingPdf(false),
+      });
+    }
   }, [aiData, selectedCategory]);
 
   const handleAnalyzeProfile = useCallback(async () => {
@@ -1813,6 +1826,45 @@ export default function CvStudio({ userId, cvData }: Props) {
           )}
         </div>
       )}
+      {/* ── PDF Generating Overlay ── */}
+      {pdfGenerating && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm px-6">
+          <div className="flex flex-col items-center gap-6 max-w-xs text-center">
+            {/* Animated document icon */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-2xl bg-indigo-50 border-2 border-indigo-100 flex items-center justify-center">
+                <svg className="w-10 h-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+              </div>
+              {/* Spinning ring */}
+              <div className="absolute inset-0 rounded-2xl border-2 border-indigo-400 border-t-transparent animate-spin" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">Generating your PDF…</h3>
+              <p className="text-sm text-slate-500">
+                Our cloud engine is rendering your CV. This usually takes 5–15 seconds.
+                Your download will start automatically.
+              </p>
+            </div>
+
+            {/* Progress dots */}
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }}
+                />
+              ))}
+            </div>
+
+            <p className="text-[11px] text-slate-400">Please keep this tab open</p>
+          </div>
+        </div>
+      )}
+
       {/* ── Payment Modal ── */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">

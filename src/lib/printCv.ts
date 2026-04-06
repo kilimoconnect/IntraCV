@@ -1,15 +1,18 @@
 "use client";
 
 /**
- * printCv.ts — iframe-based browser print PDF for IntraCV.
+ * printCv.ts
  *
- * Strategy: clone the CV element into a hidden iframe whose viewport is locked
- * to 794 px wide. This gives:
- *   ✓ Pixel-perfect layout (same engine that drew the preview)
- *   ✓ Selectable text
- *   ✓ Full CSS (coloured sidebar, gradients, backgrounds)
- *   ✓ Mobile — the viewport meta `width=794` prevents the browser reflowing
- *     the 794 px CV to 390 px (which turns 2 pages into 7+)
+ * Two PDF strategies, tried in order:
+ *
+ * 1. api2pdf  (after payment) — real Headless Chrome in the cloud.
+ *    Client serialises the CV HTML + all page styles → POST /api/pdf/api2pdf
+ *    → server calls api2pdf → returns binary PDF → browser saves directly.
+ *    No print dialog. Works on every device including iOS.
+ *
+ * 2. iframe print  (fallback / free tier) — hidden iframe with viewport locked
+ *    to 794 px so mobile browsers don't reflow the 794 px CV to 390 px.
+ *    Opens the OS print dialog.
  */
 
 const A4_PX_W = 794;
@@ -18,63 +21,40 @@ export interface PrintCvOptions {
   filename: string;
   onStart?: () => void;
   onComplete?: () => void;
+  /** When true, calls /api/pdf/api2pdf instead of the iframe fallback */
+  useApi2Pdf?: boolean;
 }
 
-export async function printCvAsPdf(
-  element: HTMLElement,
-  options: PrintCvOptions
-): Promise<void> {
-  const { filename, onStart, onComplete } = options;
-  onStart?.();
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared: build the self-contained print HTML from the live CV element
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPrintHtml(element: HTMLElement, filename: string): string {
+  // Clone so we never mutate the live DOM
+  const clone = element.cloneNode(true) as HTMLElement;
 
-  try {
-    // Wait for fonts so nothing renders as fallback glyphs
-    await document.fonts.ready;
-    // Let any pending React renders settle
-    await new Promise<void>((r) => setTimeout(r, 300));
+  // Strip preview transform:scale that CVCanvasPreview applies
+  clone.style.transform = "none";
+  clone.style.transformOrigin = "top left";
 
-    const originalTitle = document.title;
-    document.title = filename;
+  // Remove elements that must not appear in print
+  clone.querySelectorAll(".no-pdf").forEach((el) => el.remove());
 
-    // ── Clone the CV ─────────────────────────────────────────────────────────
-    const clone = element.cloneNode(true) as HTMLElement;
+  // Remove the <style> tag that adds the inter-page visual gap (24 px margin)
+  const gapStyle = clone.querySelector("style");
+  if (gapStyle) gapStyle.remove();
 
-    // Strip the preview scale-transform (previewRef has transform:scale(X))
-    clone.style.transform = "none";
-    clone.style.transformOrigin = "top left";
+  // Collect all live page styles (skip cross-origin sheets)
+  const styles = Array.from(document.styleSheets)
+    .flatMap((sheet) => {
+      try {
+        return Array.from(sheet.cssRules).map((r) => r.cssText);
+      } catch {
+        return [];
+      }
+    })
+    .join("\n");
 
-    // Remove UI-only elements (watermark, buttons, tooltips…)
-    clone.querySelectorAll(".no-pdf").forEach((el) => el.remove());
-
-    // Remove the inter-page gap that the preview adds (print has page breaks)
-    const gapStyle = clone.querySelector("style");
-    if (gapStyle) gapStyle.remove();
-
-    // ── Collect page styles ───────────────────────────────────────────────────
-    const styles = Array.from(document.styleSheets)
-      .flatMap((sheet) => {
-        try {
-          return Array.from(sheet.cssRules).map((r) => r.cssText);
-        } catch {
-          // Cross-origin sheets (CDN etc.) — skip safely
-          return [];
-        }
-      })
-      .join("\n");
-
-    // ── Build iframe ─────────────────────────────────────────────────────────
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText =
-      "position:fixed;top:0;left:0;width:794px;height:0;" +
-      "border:none;opacity:0;pointer-events:none;z-index:-1;";
-    document.body.appendChild(iframe);
-
-    await new Promise<void>((resolve) => {
-      iframe.onload = () => resolve();
-
-      const doc = iframe.contentDocument!;
-      doc.open();
-      doc.write(`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -99,14 +79,14 @@ export async function printCvAsPdf(
       text-size-adjust: 100%;
     }
 
-    /* Preserve colours, backgrounds, and gradients in print */
+    /* Preserve colours, backgrounds, gradients */
     * {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
       color-adjust: exact !important;
     }
 
-    /* Each sheet = exactly one A4 page */
+    /* Each .cv-page-sheet = one A4 page */
     .cv-page-sheet {
       width: 210mm !important;
       min-height: 297mm !important;
@@ -116,7 +96,6 @@ export async function printCvAsPdf(
       display: block !important;
       page-break-after: always !important;
       break-after: page !important;
-      /* Remove the preview inter-page gap */
       margin-top: 0 !important;
       margin-bottom: 0 !important;
     }
@@ -125,19 +104,16 @@ export async function printCvAsPdf(
       break-after: avoid !important;
     }
 
-    /* Sidebar must stretch the full page height */
     .cv-sidebar {
       min-height: 297mm !important;
       height: 100% !important;
     }
 
-    /* Prevent orphaned headings */
     h1, h2, h3, h4, h5, h6 {
       break-after: avoid !important;
       page-break-after: avoid !important;
     }
 
-    /* Keep each item together */
     .cv-experience-item,
     .cv-education-item,
     .cv-certification-item,
@@ -148,18 +124,14 @@ export async function printCvAsPdf(
 
     .no-pdf { display: none !important; }
 
-    /* ── Application styles (collected from live document) ── */
+    /* ── Live page styles ── */
     ${styles}
 
     /*
-     * CRITICAL: @page MUST come AFTER ${styles}.
-     * The collected application CSS may contain @page rules with non-zero
-     * margins (e.g. from Tailwind or Next.js base styles). Those rules come
-     * before this point so they get overridden here.
-     * margin:0mm is what suppresses Chrome's built-in print headers & footers
-     * (the date/time line at top and the URL/page-number line at bottom).
-     * If any @page rule with margin > 0 survives, Chrome uses that margin
-     * space to render its own header/footer, which overlaps and clips the CV.
+     * @page MUST be placed AFTER ${styles}.
+     * The collected styles may contain @page rules with non-zero margins.
+     * This override (with !important) ensures margin is always 0mm so
+     * Chrome does not render its own date/URL header-footer chrome.
      */
     @page {
       size: 210mm 297mm;
@@ -172,36 +144,103 @@ export async function printCvAsPdf(
         min-width: ${A4_PX_W}px !important;
       }
       .cv-page-sheet { width: 210mm !important; }
-
-      /* Repeat @page inside @media print for maximum browser compatibility */
-      @page {
-        size: 210mm 297mm;
-        margin: 0mm !important;
-      }
+      @page { size: 210mm 297mm; margin: 0mm !important; }
     }
   </style>
 </head>
 <body>${clone.outerHTML}</body>
-</html>`);
-      doc.close();
-    });
+</html>`;
+}
 
-    // Give the iframe time to load fonts and images before printing
-    await new Promise<void>((r) => setTimeout(r, 600));
+// ─────────────────────────────────────────────────────────────────────────────
+// Strategy 1 — api2pdf server-side generation
+// ─────────────────────────────────────────────────────────────────────────────
+async function generateViaApi2Pdf(html: string, filename: string): Promise<void> {
+  const res = await fetch("/api/pdf/api2pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ html, filename }),
+  });
 
-    iframe.contentWindow!.focus();
-    iframe.contentWindow!.print();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new Error(err.error || `api2pdf returned ${res.status}`);
+  }
 
-    // Clean up after the print dialog closes (1 s grace period)
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
-      }
-      document.title = originalTitle;
-      onComplete?.();
-    }, 1000);
+  // Trigger a direct browser download from the binary response
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filename}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Strategy 2 — iframe print fallback (shows OS print dialog)
+// ─────────────────────────────────────────────────────────────────────────────
+async function printViaIframe(html: string, filename: string): Promise<void> {
+  const originalTitle = document.title;
+  document.title = filename;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;top:0;left:0;width:794px;height:0;" +
+    "border:none;opacity:0;pointer-events:none;z-index:-1;";
+  document.body.appendChild(iframe);
+
+  await new Promise<void>((resolve) => {
+    iframe.onload = () => resolve();
+    const doc = iframe.contentDocument!;
+    doc.open();
+    doc.write(html);
+    doc.close();
+  });
+
+  // Let fonts/images finish loading inside the iframe
+  await new Promise<void>((r) => setTimeout(r, 600));
+
+  iframe.contentWindow!.focus();
+  iframe.contentWindow!.print();
+
+  setTimeout(() => {
+    if (document.body.contains(iframe)) document.body.removeChild(iframe);
+    document.title = originalTitle;
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public entry point
+// ─────────────────────────────────────────────────────────────────────────────
+export async function printCvAsPdf(
+  element: HTMLElement,
+  options: PrintCvOptions
+): Promise<void> {
+  const { filename, onStart, onComplete, useApi2Pdf = false } = options;
+  onStart?.();
+
+  try {
+    // Fonts must be ready before we serialise the DOM
+    await document.fonts.ready;
+    await new Promise<void>((r) => setTimeout(r, 300));
+
+    const html = buildPrintHtml(element, filename);
+
+    if (useApi2Pdf) {
+      await generateViaApi2Pdf(html, filename);
+    } else {
+      await printViaIframe(html, filename);
+    }
   } catch (err) {
-    console.error("[printCv] Print failed:", err);
+    console.error("[printCv] failed:", err);
+    // Re-throw so callers can show an error toast
+    throw err;
+  } finally {
     onComplete?.();
   }
 }
