@@ -1,48 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4F46E5"/>
-      <stop offset="100%" style="stop-color:#7C3AED"/>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1E1148"/>
+      <stop offset="100%" stop-color="#03020F"/>
+    </radialGradient>
+    <linearGradient id="star" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#C4B5FD"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#A78BFA"/>
-      <stop offset="100%" style="stop-color:#C4B5FD"/>
-    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5B21B6" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#5B21B6" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Rounded square background -->
-  <rect x="16" y="16" width="480" height="480" rx="96" ry="96" fill="url(#bg)"/>
-  <!-- Document shape -->
-  <rect x="120" y="72" width="272" height="368" rx="20" ry="20" fill="white" opacity="0.95"/>
-  <!-- Folded corner -->
-  <path d="M344 72 L392 72 L392 120 Z" fill="url(#accent)" opacity="0.6"/>
-  <!-- Profile circle -->
-  <circle cx="196" cy="148" r="32" fill="url(#accent)" opacity="0.7"/>
-  <!-- Name line -->
-  <rect x="244" y="132" width="124" height="14" rx="7" fill="#4F46E5" opacity="0.3"/>
-  <!-- Subtitle line -->
-  <rect x="244" y="158" width="88" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <!-- Divider -->
-  <rect x="148" y="200" width="216" height="3" rx="1.5" fill="#4F46E5" opacity="0.15"/>
-  <!-- Content lines -->
-  <rect x="148" y="222" width="216" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <rect x="148" y="246" width="184" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
-  <rect x="148" y="270" width="200" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <!-- Second section -->
-  <rect x="148" y="300" width="216" height="3" rx="1.5" fill="#4F46E5" opacity="0.15"/>
-  <rect x="148" y="320" width="176" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <rect x="148" y="344" width="216" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
-  <rect x="148" y="368" width="152" height="10" rx="5" fill="#4F46E5" opacity="0.2"/>
-  <rect x="148" y="392" width="196" height="10" rx="5" fill="#4F46E5" opacity="0.15"/>
-  <!-- AI sparkle indicator -->
-  <g transform="translate(356, 396)">
-    <circle cx="0" cy="0" r="44" fill="white" opacity="0.25"/>
-    <circle cx="0" cy="0" r="34" fill="white" opacity="0.95"/>
-    <!-- Pen/wand -->
-    <path d="M-10 10 L7 -7 L11 -3 L-6 14 Z" fill="#4F46E5"/>
-    <path d="M7 -7 L13 -13 L17 -9 L11 -3 Z" fill="#7C3AED"/>
-    <!-- Sparkles -->
-    <circle cx="-14" cy="-12" r="2.5" fill="#F59E0B"/>
-    <circle cx="5" cy="-18" r="2" fill="#F59E0B"/>
-    <circle cx="-18" cy="2" r="1.5" fill="#F59E0B"/>
-  </g>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <!-- Central glow -->
+  <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
+
+  <!--
+    4-pointed sparkle star with curved concave sides.
+    Center (256,256). Outer radii: vertical=195, horizontal=150. Inner corners at 45° r=50.
+    Outer: Top(256,61) Right(406,256) Bottom(256,451) Left(106,256)
+    Inner: NE(291,221) SE(291,291) SW(221,291) NW(221,221)
+    Each segment uses a quadratic bezier bowing inward toward center.
+  -->
+  <path d="
+    M 256,61
+    Q 267,181 291,221
+    Q 319,245 406,256
+    Q 319,267 291,291
+    Q 267,331 256,451
+    Q 245,331 221,291
+    Q 193,267 106,256
+    Q 193,245 221,221
+    Q 245,181 256,61
+    Z
+  " fill="url(#star)"/>
+
+  <!-- Constellation dots -->
+  <circle cx="78"  cy="95"  r="5" fill="white" opacity="0.30"/>
+  <circle cx="430" cy="78"  r="7" fill="white" opacity="0.22"/>
+  <circle cx="60"  cy="390" r="4" fill="white" opacity="0.18"/>
+  <circle cx="440" cy="415" r="6" fill="white" opacity="0.25"/>
+  <circle cx="438" cy="175" r="4" fill="white" opacity="0.20"/>
+  <circle cx="82"  cy="310" r="3" fill="white" opacity="0.15"/>
 </svg>
