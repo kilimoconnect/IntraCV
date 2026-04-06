@@ -10,7 +10,7 @@ import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
 import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
-import { downloadCvAsPdf } from "@/lib/print-pdf";
+import { printCvAsPdf } from "@/lib/printCv";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { openFlutterwaveCheckout, generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
@@ -1098,18 +1098,14 @@ export default function CvStudio({ userId, cvData }: Props) {
   const executePdfDownload = useCallback(async () => {
     const element = previewRef.current;
     if (!element || !aiData) return;
-    setDownloadingPdf(true);
-    try {
-      const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
-      const cat = selectedCategory ? `_${selectedCategory}` : "";
-      const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
-      await downloadCvAsPdf(element, filename);
-    } catch (err) {
-      console.error("PDF export failed", err);
-      toast.error("PDF export failed. Please try again.");
-    } finally {
-      setDownloadingPdf(false);
-    }
+    const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
+    const cat = selectedCategory ? `_${selectedCategory}` : "";
+    const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+    await printCvAsPdf(element, {
+      filename,
+      onStart: () => setDownloadingPdf(true),
+      onComplete: () => setDownloadingPdf(false),
+    });
   }, [aiData, selectedCategory]);
 
   const handleAnalyzeProfile = useCallback(async () => {
