@@ -1089,14 +1089,20 @@ export default function CvStudio({ userId, cvData }: Props) {
       studioVariant: selectedVariant,
       studioTheme: selectedTheme,
     });
-    const { data, error } = await supabase.from("generated_documents").insert({
+    // Generate ID client-side so we always have it even if .single() returns null
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("generated_documents").insert({
+      id,
       user_id: userId,
       doc_type: "cv",
       title,
       content,
-    }).select("id").single();
-    if (error) console.error("[saveDoc] insert error:", error.message, error.code);
-    return data?.id ?? null;
+    });
+    if (error) {
+      console.error("[saveDoc] insert error:", error.message, error.code);
+      return null;
+    }
+    return id;
   }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
 
   const saveCoverLetterToLibrary = useCallback(async (text: string) => {
