@@ -1259,6 +1259,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               });
               const verifyData = await verifyRes.json();
               if (verifyData.verified) {
+                setShowPaymentModal(false);
                 const docId = await saveDocumentToLibrary();
                 toast.success(
                   "Payment confirmed! Generating your PDF…",
