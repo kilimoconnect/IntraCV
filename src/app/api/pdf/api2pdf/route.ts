@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
 
     // ── Store in Supabase Storage and update document record ─────────────────
+    let storageStatus = "skipped";
     if (docId && userId) {
       try {
         const admin = createAdminSupabase();
@@ -119,26 +120,37 @@ export async function POST(req: NextRequest) {
           });
 
         if (uploadError) {
+          storageStatus = `upload-error: ${uploadError.message}`;
           console.error("[api2pdf] storage upload error:", uploadError.message);
         } else {
-          // Get the public URL
           const { data: urlData } = admin.storage
             .from("cv-pdfs")
             .getPublicUrl(storagePath);
 
           if (urlData?.publicUrl) {
-            await admin
+            const { error: updateError } = await admin
               .from("generated_documents")
               .update({ pdf_url: urlData.publicUrl })
               .eq("id", docId)
               .eq("user_id", userId);
+
+            if (updateError) {
+              storageStatus = `db-update-error: ${updateError.message}`;
+              console.error("[api2pdf] db update error:", updateError.message);
+            } else {
+              storageStatus = "ok";
+            }
+          } else {
+            storageStatus = "no-public-url";
           }
         }
       } catch (storageErr) {
-        // Non-fatal — still return the PDF to the user
+        storageStatus = `exception: ${storageErr instanceof Error ? storageErr.message : String(storageErr)}`;
         console.error("[api2pdf] Supabase storage error:", storageErr);
       }
     }
+
+    console.log(`[api2pdf] storage status: ${storageStatus} | docId=${docId} | userId=${userId}`);
 
     return new NextResponse(pdfBuffer, {
       status: 200,
@@ -146,6 +158,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
         "Content-Length": pdfBuffer.byteLength.toString(),
+        "X-Pdf-Stored": storageStatus,
       },
     });
   } catch (err: unknown) {

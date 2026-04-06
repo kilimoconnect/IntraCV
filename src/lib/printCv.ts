@@ -175,6 +175,10 @@ async function generateViaApi2Pdf(
     throw new Error(err.error || `api2pdf returned ${res.status}`);
   }
 
+  // Log storage result for debugging
+  const pdfStored = res.headers.get("X-Pdf-Stored");
+  console.log("[printCv] pdf storage status:", pdfStored);
+
   // Trigger a direct browser download from the binary response
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
