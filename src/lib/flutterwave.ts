@@ -56,9 +56,48 @@ export function loadFlutterwaveScript(): Promise<void> {
   return scriptLoading;
 }
 
-export async function openFlutterwaveCheckout(config: FlutterwaveConfig): Promise<void> {
+function nukeFlutterwaveModal() {
+  // Remove all iframes (Flutterwave injects one for checkout)
+  document.querySelectorAll("iframe").forEach((iframe) => {
+    const src = iframe.src || iframe.getAttribute("name") || "";
+    if (
+      src.includes("flutterwave") ||
+      src.includes("checkout") ||
+      src.includes("rave") ||
+      iframe.style.position === "fixed"
+    ) {
+      iframe.remove();
+    }
+  });
+  // Remove any full-screen fixed overlays that appeared (Flutterwave backdrop)
+  document.querySelectorAll("body > div").forEach((div) => {
+    const s = (div as HTMLElement).style;
+    if (
+      (s.position === "fixed" || s.position === "absolute") &&
+      (s.zIndex && parseInt(s.zIndex) > 999)
+    ) {
+      div.remove();
+    }
+  });
+}
+
+export async function openFlutterwaveCheckout(
+  config: FlutterwaveConfig
+): Promise<{ close: () => void }> {
   await loadFlutterwaveScript();
-  window.FlutterwaveCheckout(config);
+  const handler = window.FlutterwaveCheckout(config);
+  return {
+    close: () => {
+      // Try the SDK handler first
+      try { handler?.close?.(); } catch { /* ignore */ }
+      // Nuke the modal immediately, then again after short delays
+      // (Flutterwave may re-render the "Thanks" screen after callback)
+      nukeFlutterwaveModal();
+      setTimeout(nukeFlutterwaveModal, 300);
+      setTimeout(nukeFlutterwaveModal, 800);
+      setTimeout(nukeFlutterwaveModal, 1500);
+    },
+  };
 }
 
 export function generateTxRef(userId: string): string {

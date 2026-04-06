@@ -620,6 +620,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [optimizing, setOptimizing] = useState(false);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
+  const [coverLetterUnlocked, setCoverLetterUnlocked] = useState(false);
   const [copiedCL, setCopiedCL] = useState(false);
   const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
   const [profileAnalysis, setProfileAnalysis] = useState<{
@@ -1077,54 +1078,56 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [cvData, shouldAutoOptimize, jobDescription, jobAnalysis, company, companyAddress, jobTitle]);
 
-  const saveDocumentToLibrary = useCallback(async () => {
-    if (!aiData || !selectedCategory) return;
-    const fullName = aiData.fullName || "My CV";
-    const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
-    const title = `${fullName} — ${selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} CV (${month})`;
-    const content = JSON.stringify({
-      studioData: aiData,
-      studioCategory: selectedCategory,
-      studioVariant: selectedVariant,
-      studioTheme: selectedTheme,
-    });
-    await supabase.from("generated_documents").insert({
-      user_id: userId,
-      doc_type: "cv",
-      title,
-      content,
-    });
-  }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
-
   const executePdfDownload = useCallback(async () => {
     const element = previewRef.current;
-    if (!element || !aiData) return;
-    const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
-    const cat = selectedCategory ? `_${selectedCategory}` : "";
-    const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+    if (!element || !aiData || !selectedCategory) return;
 
-    // Set state synchronously BEFORE the first await so React paints the
-    // loading overlay in the very next frame — not after the API call finishes.
+    // Set state synchronously before any await so React paints the overlay
     setDownloadingPdf(true);
     setPdfGenerating(true);
 
-    // One rAF lets the browser flush the state update and render the overlay
-    // before we block the thread with font-loading and the fetch.
-    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    // Yield to the browser so the overlay renders before heavy work
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
     try {
-      await printCvAsPdf(element, { filename, useApi2Pdf: true });
-    } catch {
-      // api2pdf failed — fall back to iframe print dialog
-      toast.error("Cloud PDF failed — opening print dialog as fallback.");
+      const fullName = aiData.fullName || "CV";
+      const safeName = fullName.replace(/\s+/g, "_");
+      const cat = `_${selectedCategory}`;
+      const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
+
+      const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+      const docTitle = `${fullName} — ${selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} CV (${month})`;
+      const docContent = JSON.stringify({
+        studioData: aiData,
+        studioCategory: selectedCategory,
+        studioVariant: selectedVariant,
+        studioTheme: selectedTheme,
+      });
+
       try {
-        await printCvAsPdf(element, { filename, useApi2Pdf: false });
-      } catch { /* ignore fallback errors */ }
+        await printCvAsPdf(element, {
+          filename,
+          useApi2Pdf: true,
+          userId,
+          docTitle,
+          docContent,
+          coverLetter: coverLetter ?? undefined,
+        });
+      } catch (apiErr) {
+        console.warn("[pdf] api2pdf failed, falling back to print dialog:", apiErr);
+        toast.error("Cloud PDF failed — opening print dialog as fallback.");
+        try {
+          await printCvAsPdf(element, { filename, useApi2Pdf: false });
+        } catch (fallbackErr) {
+          console.error("Fallback print failed", fallbackErr);
+          toast.error("PDF export failed. Please try again.");
+        }
+      }
     } finally {
       setDownloadingPdf(false);
       setPdfGenerating(false);
     }
-  }, [aiData, selectedCategory]);
+  }, [aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter, userId]);
 
   const handleAnalyzeProfile = useCallback(async () => {
     if (!jobDescription.trim() || profileAnalyzing) return;
@@ -1219,7 +1222,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     setPaymentProcessing(true);
     const txRef = generateTxRef(userId);
     try {
-      await openFlutterwaveCheckout({
+      const flwHandler = await openFlutterwaveCheckout({
         public_key: publicKey,
         tx_ref: txRef,
         amount: DOWNLOAD_AMOUNT,
@@ -1234,6 +1237,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           description: `Download your ${selectedCategory} CV as a clean, watermark-free PDF`,
         },
         callback: async (response) => {
+          flwHandler.close(); // dismiss the "Thanks for your payment!" screen
           setShowPaymentModal(false);
           if (response.status === "successful") {
             try {
@@ -1249,11 +1253,16 @@ export default function CvStudio({ userId, cvData }: Props) {
               });
               const verifyData = await verifyRes.json();
               if (verifyData.verified) {
-                await saveDocumentToLibrary();
+                setShowPaymentModal(false);
+                setCoverLetterUnlocked(true);
+                toast.success(
+                  "Payment confirmed! Generating your PDF…",
+                  { duration: 3000, icon: "🎉" }
+                );
                 await executePdfDownload();
                 toast.success(
-                  "CV downloaded! Your document is also saved in the Documents page.",
-                  { duration: 6000, icon: "🎉" }
+                  "Your CV and cover letter are saved — find them in the Documents page.",
+                  { duration: 6000, icon: "📄" }
                 );
               } else {
                 toast.error(`Payment verification failed: ${verifyData.message || "Unknown error"}`);
@@ -1275,7 +1284,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error("Could not open payment window. Please try again.");
       setPaymentProcessing(false);
     }
-  }, [aiData, userId, selectedCategory, paymentProcessing, saveDocumentToLibrary, executePdfDownload]);
+  }, [aiData, userId, selectedCategory, paymentProcessing, executePdfDownload]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -1831,45 +1840,6 @@ export default function CvStudio({ userId, cvData }: Props) {
           )}
         </div>
       )}
-      {/* ── PDF Generating Overlay ── */}
-      {pdfGenerating && (
-        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm px-6">
-          <div className="flex flex-col items-center gap-6 max-w-xs text-center">
-            {/* Animated document icon */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-indigo-50 border-2 border-indigo-100 flex items-center justify-center">
-                <svg className="w-10 h-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                </svg>
-              </div>
-              {/* Spinning ring */}
-              <div className="absolute inset-0 rounded-2xl border-2 border-indigo-400 border-t-transparent animate-spin" />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-bold text-slate-800 mb-1">Generating your PDF…</h3>
-              <p className="text-sm text-slate-500">
-                Our cloud engine is rendering your CV. This usually takes 5–15 seconds.
-                Your download will start automatically.
-              </p>
-            </div>
-
-            {/* Progress dots */}
-            <div className="flex gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
-
-            <p className="text-[11px] text-slate-400">Please keep this tab open</p>
-          </div>
-        </div>
-      )}
-
       {/* ── Payment Modal ── */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -1920,6 +1890,33 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
+      {/* ── PDF Generating full-screen overlay ── */}
+      {pdfGenerating && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-5">
+            {/* Spinning ring */}
+            <div className="relative h-16 w-16">
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-base font-semibold text-slate-800">Generating your PDF…</p>
+              <p className="text-xs text-slate-500">This usually takes 5–15 seconds</p>
+            </div>
+            {/* Animated dots */}
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-2 w-2 rounded-full bg-indigo-400"
+                  style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Optimizing overlay banner */}
       {optimizing && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-violet-200 bg-violet-50 text-violet-700">
@@ -1929,7 +1926,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       )}
 
       {/* ── Cover Letter Modal ── */}
-      {showCoverLetter && coverLetter && (
+      {coverLetterUnlocked && showCoverLetter && coverLetter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -1972,8 +1969,8 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {/* ── View Cover Letter banner (after optimization) ── */}
-      {coverLetter && !showCoverLetter && !showJobOptimizer && (
+      {/* ── View Cover Letter banner (unlocked after payment) ── */}
+      {coverLetterUnlocked && coverLetter && !showCoverLetter && !showJobOptimizer && (
         <button
           onClick={() => setShowCoverLetter(true)}
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"

@@ -63,20 +63,12 @@ export async function POST(req: NextRequest) {
     // ── Choose Chromium executable ──────────────────────────────────────────
     let executablePath: string;
     let launchArgs: string[];
-    // headless: false here means "don't let puppeteer add its own --headless flag";
-    // @sparticuz/chromium already puts --headless='shell' inside Chromium.args.
-    // Adding puppeteer's flag too (--headless / --headless=new) causes a conflict
-    // that makes Chrome exit immediately.
-    let headlessMode: boolean | "shell" = false;
 
     if (process.env.NODE_ENV === "production" || process.env.USE_CHROMIUM_LAMBDA) {
       // Vercel / AWS Lambda — use @sparticuz/chromium
-      // Chromium is a class with static members: .args (string[]) and .executablePath()
-      const { default: Chromium } = await import("@sparticuz/chromium");
-      executablePath = await Chromium.executablePath();
-      // Use Chromium.args directly — it already contains --headless='shell'.
-      // Do NOT wrap with puppeteer.defaultArgs(); that merges in --headless which conflicts.
-      launchArgs = Chromium.args;
+      const chromium = await import("@sparticuz/chromium");
+      executablePath = await chromium.default.executablePath();
+      launchArgs = chromium.default.args;
     } else {
       // Local development — use system Chrome
       executablePath = localChromePath();
@@ -84,16 +76,14 @@ export async function POST(req: NextRequest) {
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
-        "--disable-gpu",
       ];
-      headlessMode = true; // local Chrome: use puppeteer new-headless (--headless=new)
     }
 
     // ── Launch browser ───────────────────────────────────────────────────────
     browser = await puppeteer.default.launch({
       executablePath,
       args: launchArgs,
-      headless: headlessMode,
+      headless: true,
       defaultViewport: {
         width: 794,    // A4 at 96 dpi
         height: 1123,
@@ -112,7 +102,7 @@ export async function POST(req: NextRequest) {
     });
 
     // ── Generate PDF ──────────────────────────────────────────────────────────
-    const pdfUint8 = await page.pdf({
+    const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
@@ -121,12 +111,9 @@ export async function POST(req: NextRequest) {
     await browser.close();
     browser = null;
 
-    // page.pdf() returns Uint8Array; NextResponse needs Buffer (a valid BodyInit)
-    const pdfBuffer = Buffer.from(pdfUint8);
-
     // ── Return as file download ───────────────────────────────────────────────
     const safeName = (filename || "cv").replace(/[^a-z0-9_\-]/gi, "_");
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

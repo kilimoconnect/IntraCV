@@ -5,13 +5,13 @@
  *
  * Two PDF strategies, tried in order:
  *
- * 1. api2pdf  (after payment) — real Headless Chrome in the cloud.
+ * 1. api2pdf  — real Headless Chrome in the cloud.
  *    Client serialises the CV HTML + all page styles → POST /api/pdf/api2pdf
- *    → server calls api2pdf → returns binary PDF → browser saves directly.
- *    No print dialog. Works on every device including iOS.
+ *    → server calls api2pdf → stores PDF in Supabase → returns binary PDF
+ *    → browser saves directly. No print dialog.
  *
- * 2. iframe print  (fallback / free tier) — hidden iframe with viewport locked
- *    to 794 px so mobile browsers don't reflow the 794 px CV to 390 px.
+ * 2. iframe print  (fallback) — hidden iframe with viewport locked to 794 px
+ *    so mobile browsers don't reflow the 794 px CV to 390 px.
  *    Opens the OS print dialog.
  */
 
@@ -23,6 +23,12 @@ export interface PrintCvOptions {
   onComplete?: () => void;
   /** When true, calls /api/pdf/api2pdf instead of the iframe fallback */
   useApi2Pdf?: boolean;
+  userId?: string;
+  /** Document metadata — the route creates the record server-side */
+  docTitle?: string;
+  docContent?: string;
+  /** Cover letter text to store alongside the CV */
+  coverLetter?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -155,17 +161,37 @@ function buildPrintHtml(element: HTMLElement, filename: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 // Strategy 1 — api2pdf server-side generation
 // ─────────────────────────────────────────────────────────────────────────────
-async function generateViaApi2Pdf(html: string, filename: string): Promise<void> {
+async function generateViaApi2Pdf(
+  html: string,
+  filename: string,
+  opts: {
+    userId?: string;
+    docTitle?: string;
+    docContent?: string;
+    coverLetter?: string;
+  } = {}
+): Promise<void> {
   const res = await fetch("/api/pdf/api2pdf", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html, filename }),
+    body: JSON.stringify({
+      html,
+      filename,
+      userId: opts.userId,
+      docTitle: opts.docTitle,
+      docContent: opts.docContent,
+      coverLetter: opts.coverLetter,
+    }),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Unknown error" }));
     throw new Error(err.error || `api2pdf returned ${res.status}`);
   }
+
+  // Log storage result for debugging
+  const pdfStored = res.headers.get("X-Pdf-Stored");
+  console.log("[printCv] pdf storage status:", pdfStored);
 
   // Trigger a direct browser download from the binary response
   const blob = await res.blob();
@@ -221,7 +247,7 @@ export async function printCvAsPdf(
   element: HTMLElement,
   options: PrintCvOptions
 ): Promise<void> {
-  const { filename, onStart, onComplete, useApi2Pdf = false } = options;
+  const { filename, onStart, onComplete, useApi2Pdf = false, userId, docTitle, docContent, coverLetter } = options;
   onStart?.();
 
   try {
@@ -232,7 +258,7 @@ export async function printCvAsPdf(
     const html = buildPrintHtml(element, filename);
 
     if (useApi2Pdf) {
-      await generateViaApi2Pdf(html, filename);
+      await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter });
     } else {
       await printViaIframe(html, filename);
     }

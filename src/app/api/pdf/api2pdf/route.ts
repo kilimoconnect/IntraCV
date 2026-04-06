@@ -1,16 +1,16 @@
 /**
  * POST /api/pdf/api2pdf
  *
- * Accepts the full CV HTML from the client, sends it to the api2pdf
- * Headless Chrome service, and streams the PDF back as a file download.
+ * Generates a PDF via api2pdf Headless Chrome, stores it in Supabase Storage,
+ * creates a generated_documents record (with pdf_url), and returns the binary PDF.
  *
- * api2pdf runs real Headless Chrome in the cloud — no Vercel timeout issues,
- * no cold-start, no binary bundling. It simply works.
+ * All DB/storage work uses the admin (service-role) Supabase client to bypass RLS.
  *
- * Required env var:  API2PDF_KEY  (get free key at portal.api2pdf.com)
+ * Required env vars: API2PDF_KEY, SUPABASE_SERVICE_ROLE_KEY
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -26,11 +26,19 @@ export async function POST(req: NextRequest) {
 
   let html: string;
   let filename: string;
+  let userId: string | undefined;
+  let docTitle: string | undefined;
+  let docContent: string | undefined;
+  let coverLetter: string | undefined;
 
   try {
     const body = await req.json();
     html = body.html;
     filename = body.filename || "CV";
+    userId = body.userId;
+    docTitle = body.docTitle;
+    docContent = body.docContent;
+    coverLetter = body.coverLetter;
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -39,7 +47,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "html field is required" }, { status: 400 });
   }
 
-  // Sanitise filename — keep only alphanumeric, dash, underscore, dot
   const safeName = filename.replace(/[^a-z0-9_\-\.]/gi, "_");
 
   try {
@@ -49,11 +56,11 @@ export async function POST(req: NextRequest) {
 
     const raw = await client.chromeHtmlToPdf(html, {
       filename: `${safeName}.pdf`,
-      inline: false,        // force download, not browser-open
+      inline: false,
       options: {
-        preferCSSPageSize: true,    // honour @page { size: 210mm 297mm }
-        printBackground: true,      // preserve coloured sidebar / gradients
-        displayHeaderFooter: false, // no Chrome header/footer chrome
+        preferCSSPageSize: true,
+        printBackground: true,
+        displayHeaderFooter: false,
         marginTop: "0mm",
         marginBottom: "0mm",
         marginLeft: "0mm",
@@ -61,8 +68,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // api2pdf returns Buffer when outputBinary:true, or a JSON result object.
-    // We did not set outputBinary, so narrow to the JSON shape.
     if (Buffer.isBuffer(raw)) {
       return NextResponse.json(
         { error: "Unexpected binary response from api2pdf" },
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = raw; // Api2PdfResult
+    const result = raw;
     const success = result.Success ?? result.success;
     const fileUrl = result.FileUrl ?? result.fileUrl;
     const apiError = result.Error ?? result.error;
@@ -90,8 +95,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Fetch the PDF from api2pdf's CDN and proxy it to the client ─────────
-    // FileUrl is valid for 24 hours — we fetch immediately and stream back
+    // ── Fetch PDF binary from api2pdf CDN ──────────────────────────────────
     const pdfRes = await fetch(fileUrl);
     if (!pdfRes.ok) {
       return NextResponse.json(
@@ -102,12 +106,82 @@ export async function POST(req: NextRequest) {
 
     const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
 
+    // ── Store in Supabase (admin client — bypasses RLS) ────────────────────
+    let storageStatus = "skipped";
+    if (userId) {
+      try {
+        const admin = createAdminSupabase();
+        const docId = crypto.randomUUID();
+        const storagePath = `${userId}/${docId}.pdf`;
+
+        // 1. Upload PDF to storage
+        const { error: uploadError } = await admin.storage
+          .from("cv-pdfs")
+          .upload(storagePath, pdfBuffer, {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+
+        if (uploadError) {
+          storageStatus = `upload-error: ${uploadError.message}`;
+          console.error("[api2pdf] upload error:", uploadError.message);
+        } else {
+          // 2. Get the public URL
+          const { data: urlData } = admin.storage
+            .from("cv-pdfs")
+            .getPublicUrl(storagePath);
+
+          const pdfUrl = urlData?.publicUrl || null;
+
+          // 3. Insert the document record with pdf_url already set
+          if (docTitle && docContent) {
+            const { error: insertError } = await admin
+              .from("generated_documents")
+              .insert({
+                id: docId,
+                user_id: userId,
+                doc_type: "cv",
+                title: docTitle,
+                content: docContent,
+                pdf_url: pdfUrl,
+              });
+
+            if (insertError) {
+              storageStatus = `db-insert-error: ${insertError.message}`;
+              console.error("[api2pdf] db insert error:", insertError.message);
+            } else {
+              storageStatus = "ok";
+            }
+          } else {
+            storageStatus = `uploaded-no-doc-meta`;
+          }
+
+          // 4. Also save cover letter if provided
+          if (coverLetter && storageStatus === "ok") {
+            const clTitle = (docTitle || "CV").replace(/CV \(/, "Cover Letter (");
+            await admin.from("generated_documents").insert({
+              user_id: userId,
+              doc_type: "cover_letter",
+              title: clTitle,
+              content: coverLetter,
+            });
+          }
+        }
+      } catch (storageErr) {
+        storageStatus = `exception: ${storageErr instanceof Error ? storageErr.message : String(storageErr)}`;
+        console.error("[api2pdf] Supabase error:", storageErr);
+      }
+    }
+
+    console.log(`[api2pdf] storage status: ${storageStatus} | userId=${userId}`);
+
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${safeName}.pdf"`,
         "Content-Length": pdfBuffer.byteLength.toString(),
+        "X-Pdf-Stored": storageStatus,
       },
     });
   } catch (err: unknown) {
