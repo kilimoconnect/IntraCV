@@ -61,7 +61,24 @@ export async function openFlutterwaveCheckout(
 ): Promise<{ close: () => void }> {
   await loadFlutterwaveScript();
   const handler = window.FlutterwaveCheckout(config);
-  return handler ?? { close: () => {} };
+  return {
+    close: () => {
+      // Try the SDK handler first
+      try { handler?.close?.(); } catch { /* ignore */ }
+      // Force-remove the Flutterwave iframe + backdrop from the DOM
+      document
+        .querySelectorAll('iframe[name="checkout"], iframe[src*="flutterwave"], div[id*="flwpugpaid498949850"]')
+        .forEach((el) => el.remove());
+      // Remove any remaining Flutterwave overlay divs
+      document
+        .querySelectorAll('div[style*="z-index"][style*="position: fixed"]')
+        .forEach((el) => {
+          if (el.querySelector('iframe') || el.innerHTML.includes('flutterwave')) {
+            el.remove();
+          }
+        });
+    },
+  };
 }
 
 export function generateTxRef(userId: string): string {
