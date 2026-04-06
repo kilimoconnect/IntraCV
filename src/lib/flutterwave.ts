@@ -56,9 +56,12 @@ export function loadFlutterwaveScript(): Promise<void> {
   return scriptLoading;
 }
 
-export async function openFlutterwaveCheckout(config: FlutterwaveConfig): Promise<void> {
+export async function openFlutterwaveCheckout(
+  config: FlutterwaveConfig
+): Promise<{ close: () => void }> {
   await loadFlutterwaveScript();
-  window.FlutterwaveCheckout(config);
+  const handler = window.FlutterwaveCheckout(config);
+  return handler ?? { close: () => {} };
 }
 
 export function generateTxRef(userId: string): string {

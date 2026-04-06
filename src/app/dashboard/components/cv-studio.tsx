@@ -1243,7 +1243,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     setPaymentProcessing(true);
     const txRef = generateTxRef(userId);
     try {
-      await openFlutterwaveCheckout({
+      const flwHandler = await openFlutterwaveCheckout({
         public_key: publicKey,
         tx_ref: txRef,
         amount: DOWNLOAD_AMOUNT,
@@ -1258,6 +1258,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           description: `Download your ${selectedCategory} CV as a clean, watermark-free PDF`,
         },
         callback: async (response) => {
+          flwHandler.close(); // dismiss the "Thanks for your payment!" screen
           setShowPaymentModal(false);
           if (response.status === "successful") {
             try {
