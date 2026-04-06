@@ -620,6 +620,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [optimizing, setOptimizing] = useState(false);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
+  const [coverLetterUnlocked, setCoverLetterUnlocked] = useState(false);
   const [copiedCL, setCopiedCL] = useState(false);
   const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
   const [profileAnalysis, setProfileAnalysis] = useState<{
@@ -1097,6 +1098,19 @@ export default function CvStudio({ userId, cvData }: Props) {
     return data?.id ?? null;
   }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
 
+  const saveCoverLetterToLibrary = useCallback(async (text: string) => {
+    if (!aiData) return;
+    const fullName = aiData.fullName || "My CV";
+    const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+    const title = `${fullName} — Cover Letter (${month})`;
+    await supabase.from("generated_documents").insert({
+      user_id: userId,
+      doc_type: "cover_letter",
+      title,
+      content: text,
+    });
+  }, [aiData, userId, supabase]);
+
   const executePdfDownload = useCallback(async (docId: string | null) => {
     const element = previewRef.current;
     if (!element || !aiData) return;
@@ -1260,12 +1274,18 @@ export default function CvStudio({ userId, cvData }: Props) {
               const verifyData = await verifyRes.json();
               if (verifyData.verified) {
                 setShowPaymentModal(false);
+                setCoverLetterUnlocked(true);
                 const docId = await saveDocumentToLibrary();
+                if (coverLetter) await saveCoverLetterToLibrary(coverLetter);
                 toast.success(
                   "Payment confirmed! Generating your PDF…",
                   { duration: 3000, icon: "🎉" }
                 );
                 await executePdfDownload(docId);
+                toast.success(
+                  "Your CV and cover letter are saved — find them in the Documents page.",
+                  { duration: 6000, icon: "📄" }
+                );
               } else {
                 toast.error(`Payment verification failed: ${verifyData.message || "Unknown error"}`);
               }
@@ -1286,7 +1306,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error("Could not open payment window. Please try again.");
       setPaymentProcessing(false);
     }
-  }, [aiData, userId, selectedCategory, paymentProcessing, saveDocumentToLibrary, executePdfDownload]);
+  }, [aiData, userId, selectedCategory, paymentProcessing, coverLetter, saveDocumentToLibrary, saveCoverLetterToLibrary, executePdfDownload]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -1928,7 +1948,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       )}
 
       {/* ── Cover Letter Modal ── */}
-      {showCoverLetter && coverLetter && (
+      {coverLetterUnlocked && showCoverLetter && coverLetter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
@@ -1971,8 +1991,8 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {/* ── View Cover Letter banner (after optimization) ── */}
-      {coverLetter && !showCoverLetter && !showJobOptimizer && (
+      {/* ── View Cover Letter banner (unlocked after payment) ── */}
+      {coverLetterUnlocked && coverLetter && !showCoverLetter && !showJobOptimizer && (
         <button
           onClick={() => setShowCoverLetter(true)}
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
