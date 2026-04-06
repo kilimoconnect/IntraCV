@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { downloadCvAsPdf } from "@/lib/print-pdf";
 import {
-  Loader2, FileText, Trash2, Copy, File, Download, Eye, EyeOff,
+  Loader2, FileText, Trash2, Copy, File, Download, Eye, EyeOff, RefreshCw,
 } from "lucide-react";
 import { ConfigRenderer, TwoPageConfigRenderer, ONE_PAGE_TEMPLATES, TWO_PAGE_TEMPLATES } from "@/components/cv-templates";
 import type { CVTemplateData } from "@/components/cv-templates";
@@ -174,7 +174,8 @@ export default function Documents({ userId }: DocumentsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Summary */}
+      {/* Summary + Refresh */}
+      <div className="flex items-center justify-between gap-4">
       <div className="flex gap-4">
         <div className="border rounded-lg px-4 py-3 text-center">
           <div className="text-2xl font-bold">{docs.length}</div>
@@ -188,6 +189,11 @@ export default function Documents({ userId }: DocumentsProps) {
           <div className="text-2xl font-bold">{coverLetters.length}</div>
           <div className="text-xs text-muted-foreground">Cover Letters</div>
         </div>
+      </div>
+        <Button variant="outline" size="sm" onClick={loadDocs} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Document List */}
@@ -210,6 +216,11 @@ export default function Documents({ userId }: DocumentsProps) {
                       <Badge variant={doc.doc_type === "cv" ? "default" : "secondary"} className="text-xs shrink-0">
                         {doc.doc_type === "cover_letter" ? "Cover Letter" : "CV"}
                       </Badge>
+                      {doc.doc_type === "cv" && (
+                        doc.pdf_url
+                          ? <Badge variant="outline" className="text-[10px] shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200">PDF ready</Badge>
+                          : <Badge variant="outline" className="text-[10px] shrink-0 bg-amber-50 text-amber-700 border-amber-200">PDF processing…</Badge>
+                      )}
                       {cv && cv.templateType === "studio" && (
                         <Badge variant="outline" className="text-[10px] shrink-0 bg-indigo-50 text-indigo-700 border-indigo-200">CV Studio · {cv.studioCategory}</Badge>
                       )}
