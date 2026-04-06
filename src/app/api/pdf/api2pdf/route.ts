@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     filename = body.filename || "CV";
     docId = body.docId;
     userId = body.userId;
+    console.log(`[api2pdf] invoked — docId=${docId} userId=${userId} filename=${filename}`);
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
