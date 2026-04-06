@@ -106,8 +106,6 @@ export async function printCvAsPdf(
       color-adjust: exact !important;
     }
 
-    @page { size: 210mm 297mm; margin: 0mm; }
-
     /* Each sheet = exactly one A4 page */
     .cv-page-sheet {
       width: 210mm !important;
@@ -150,16 +148,36 @@ export async function printCvAsPdf(
 
     .no-pdf { display: none !important; }
 
-    /* ── Application styles ── */
+    /* ── Application styles (collected from live document) ── */
     ${styles}
 
-    /* @media print overrides — applied last so they win */
+    /*
+     * CRITICAL: @page MUST come AFTER ${styles}.
+     * The collected application CSS may contain @page rules with non-zero
+     * margins (e.g. from Tailwind or Next.js base styles). Those rules come
+     * before this point so they get overridden here.
+     * margin:0mm is what suppresses Chrome's built-in print headers & footers
+     * (the date/time line at top and the URL/page-number line at bottom).
+     * If any @page rule with margin > 0 survives, Chrome uses that margin
+     * space to render its own header/footer, which overlaps and clips the CV.
+     */
+    @page {
+      size: 210mm 297mm;
+      margin: 0mm !important;
+    }
+
     @media print {
       html, body {
         width: ${A4_PX_W}px !important;
         min-width: ${A4_PX_W}px !important;
       }
       .cv-page-sheet { width: 210mm !important; }
+
+      /* Repeat @page inside @media print for maximum browser compatibility */
+      @page {
+        size: 210mm 297mm;
+        margin: 0mm !important;
+      }
     }
   </style>
 </head>
