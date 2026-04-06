@@ -10,7 +10,7 @@ import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
 import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
-import { downloadCvAsPdf } from "@/lib/print-pdf";
+import { printCvAsPdf } from "@/lib/printCv";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { openFlutterwaveCheckout, generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
@@ -607,6 +607,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showJobOptimizer, setShowJobOptimizer] = useState(false);
@@ -1076,8 +1077,8 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [cvData, shouldAutoOptimize, jobDescription, jobAnalysis, company, companyAddress, jobTitle]);
 
-  const saveDocumentToLibrary = useCallback(async () => {
-    if (!aiData || !selectedCategory) return;
+  const saveDocumentToLibrary = useCallback(async (): Promise<string | null> => {
+    if (!aiData || !selectedCategory) return null;
     const fullName = aiData.fullName || "My CV";
     const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
     const title = `${fullName} — ${selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} CV (${month})`;
@@ -1087,30 +1088,53 @@ export default function CvStudio({ userId, cvData }: Props) {
       studioVariant: selectedVariant,
       studioTheme: selectedTheme,
     });
-    await supabase.from("generated_documents").insert({
+    const { data } = await supabase.from("generated_documents").insert({
       user_id: userId,
       doc_type: "cv",
       title,
       content,
-    });
+    }).select("id").single();
+    return data?.id ?? null;
   }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
 
-  const executePdfDownload = useCallback(async () => {
+  const executePdfDownload = useCallback(async (docId: string | null) => {
     const element = previewRef.current;
     if (!element || !aiData) return;
+
+    // Set state synchronously before any await so React paints the overlay
     setDownloadingPdf(true);
+    setPdfGenerating(true);
+
+    // Yield to the browser so the overlay renders before heavy work
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+
     try {
       const safeName = (aiData.fullName || "CV").replace(/\s+/g, "_");
       const cat = selectedCategory ? `_${selectedCategory}` : "";
       const filename = `${safeName}${cat}_CV_${new Date().getFullYear()}`;
-      await downloadCvAsPdf(element, filename);
-    } catch (err) {
-      console.error("PDF export failed", err);
-      toast.error("PDF export failed. Please try again.");
+
+      try {
+        await printCvAsPdf(element, {
+          filename,
+          useApi2Pdf: true,
+          docId: docId ?? undefined,
+          userId,
+        });
+      } catch (apiErr) {
+        console.warn("[pdf] api2pdf failed, falling back to print dialog:", apiErr);
+        toast.error("Cloud PDF failed — opening print dialog as fallback.");
+        try {
+          await printCvAsPdf(element, { filename, useApi2Pdf: false });
+        } catch (fallbackErr) {
+          console.error("Fallback print failed", fallbackErr);
+          toast.error("PDF export failed. Please try again.");
+        }
+      }
     } finally {
       setDownloadingPdf(false);
+      setPdfGenerating(false);
     }
-  }, [aiData, selectedCategory]);
+  }, [aiData, selectedCategory, userId]);
 
   const handleAnalyzeProfile = useCallback(async () => {
     if (!jobDescription.trim() || profileAnalyzing) return;
@@ -1235,12 +1259,12 @@ export default function CvStudio({ userId, cvData }: Props) {
               });
               const verifyData = await verifyRes.json();
               if (verifyData.verified) {
-                await saveDocumentToLibrary();
-                await executePdfDownload();
+                const docId = await saveDocumentToLibrary();
                 toast.success(
-                  "CV downloaded! Your document is also saved in the Documents page.",
-                  { duration: 6000, icon: "🎉" }
+                  "Payment confirmed! Generating your PDF…",
+                  { duration: 3000, icon: "🎉" }
                 );
+                await executePdfDownload(docId);
               } else {
                 toast.error(`Payment verification failed: ${verifyData.message || "Unknown error"}`);
               }
@@ -1863,6 +1887,33 @@ export default function CvStudio({ userId, cvData }: Props) {
             <p className="text-center text-[11px] text-slate-400 mt-3">
               Powered by Flutterwave · Secure &amp; Encrypted
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── PDF Generating full-screen overlay ── */}
+      {pdfGenerating && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-5">
+            {/* Spinning ring */}
+            <div className="relative h-16 w-16">
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-base font-semibold text-slate-800">Generating your PDF…</p>
+              <p className="text-xs text-slate-500">This usually takes 5–15 seconds</p>
+            </div>
+            {/* Animated dots */}
+            <div className="flex items-center gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-2 w-2 rounded-full bg-indigo-400"
+                  style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}

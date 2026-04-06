@@ -111,6 +111,18 @@ export default function Documents({ userId }: DocumentsProps) {
   };
 
   const downloadCvPDF = async (doc: any) => {
+    // If a stored PDF URL exists, download it directly
+    if (doc.pdf_url) {
+      const a = document.createElement("a");
+      a.href = doc.pdf_url;
+      a.download = `${doc.title || "CV"}.pdf`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
+
     const cv = parseCvContent(doc.content);
     if (!cv) { toast.error("Could not parse CV data"); return; }
 
@@ -247,7 +259,17 @@ export default function Documents({ userId }: DocumentsProps) {
                 {/* Expanded content */}
                 {isExpanded && (
                   <div className="mt-4">
-                    {doc.doc_type === "cv" && cv && cv.templateType === "studio" && cv.studioData ? (
+                    {doc.pdf_url ? (
+                      /* ── Stored PDF viewer ── */
+                      <div className="border rounded-xl overflow-hidden bg-slate-50">
+                        <iframe
+                          src={doc.pdf_url}
+                          title={doc.title}
+                          className="w-full"
+                          style={{ height: "80vh", border: "none" }}
+                        />
+                      </div>
+                    ) : doc.doc_type === "cv" && cv && cv.templateType === "studio" && cv.studioData ? (
                       <div className="border rounded-xl bg-slate-50 p-4 overflow-x-auto">
                         <div id={`cv-preview-${doc.id}`} style={{ width: "794px", margin: "0 auto" }}>
                           {cv.studioCategory === "junior" && <CVLayoutJunior data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}

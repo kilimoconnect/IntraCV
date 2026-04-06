@@ -119,7 +119,7 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
       {/* Professional SVG pattern watermark */}
       {!editMode && (
         <svg
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none no-pdf"
           width="100%"
           height="100%"
           xmlns="http://www.w3.org/2000/svg"
