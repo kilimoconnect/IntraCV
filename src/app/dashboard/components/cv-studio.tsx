@@ -1089,12 +1089,13 @@ export default function CvStudio({ userId, cvData }: Props) {
       studioVariant: selectedVariant,
       studioTheme: selectedTheme,
     });
-    const { data } = await supabase.from("generated_documents").insert({
+    const { data, error } = await supabase.from("generated_documents").insert({
       user_id: userId,
       doc_type: "cv",
       title,
       content,
     }).select("id").single();
+    if (error) console.error("[saveDoc] insert error:", error.message, error.code);
     return data?.id ?? null;
   }, [aiData, selectedCategory, selectedVariant, selectedTheme, userId, supabase]);
 
