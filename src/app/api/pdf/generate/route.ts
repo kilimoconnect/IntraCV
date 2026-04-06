@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     // ── Return as file download ───────────────────────────────────────────────
     const safeName = (filename || "cv").replace(/[^a-z0-9_\-]/gi, "_");
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
