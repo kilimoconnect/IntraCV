@@ -239,14 +239,17 @@ function DashboardPage() {
         const meta = TAB_META[activeTab] || TAB_META.profile;
         const Icon = meta.icon;
         return (
-          <div className="mb-8 flex items-center gap-4 animate-fade-in-up">
-            <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shadow-lg shadow-indigo-200/30 shrink-0 ring-1 ring-white/20`}>
-              <Icon className="h-6 w-6 text-white drop-shadow-sm" />
+          <div className="mb-6 animate-fade-in-up">
+            <div className="flex items-center gap-4">
+              <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shadow-xl shrink-0 ring-2 ring-white/30`}>
+                <Icon className="h-7 w-7 text-white drop-shadow-sm" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-extrabold text-slate-900 leading-tight tracking-tight">{meta.label}</h2>
+                <p className="text-sm text-slate-500 mt-0.5">{meta.description}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-extrabold text-slate-900 leading-tight tracking-tight">{meta.label}</h2>
-              <p className="text-sm text-slate-500 mt-0.5">{meta.description}</p>
-            </div>
+            <div className="mt-4 h-px bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
           </div>
         );
       })()}

@@ -234,6 +234,14 @@
   display: none;
 }
 
+/* ─── Dark sidebar utility classes (Tailwind doesn't generate arbitrary opacity variants by default) ─── */
+.bg-white\/6 { background-color: rgba(255, 255, 255, 0.06); }
+.bg-white\/8 { background-color: rgba(255, 255, 255, 0.08); }
+.hover\:bg-white\/8:hover { background-color: rgba(255, 255, 255, 0.08); }
+.hover\:bg-white\/10:hover { background-color: rgba(255, 255, 255, 0.10); }
+.border-white\/8 { border-color: rgba(255, 255, 255, 0.08); }
+.border-white\/10 { border-color: rgba(255, 255, 255, 0.10); }
+
 /* ─── Modern UI Enhancements ─── */
 
 /* Subtle animated gradient background for dashboard */
