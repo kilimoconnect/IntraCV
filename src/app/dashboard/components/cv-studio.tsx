@@ -635,18 +635,69 @@ export default function CvStudio({ userId, cvData }: Props) {
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
-  // Auto-run profile analysis on mount
+  // ── Cached profile analysis: only re-run if CV data changed ──
   useEffect(() => {
-    setProfileAnalyzing(true);
-    fetch("/api/ai/analyze-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cvData }),
-    })
-      .then((r) => r.json())
-      .then((data) => setProfileAnalysis(data))
-      .catch(() => toast.error("Profile analysis failed."))
-      .finally(() => setProfileAnalyzing(false));
+    let cancelled = false;
+
+    async function loadOrRunAnalysis() {
+      // Build a simple hash of the CV data to detect changes
+      const dataStr = JSON.stringify(cvData);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dataStr));
+      const dataHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      // Check for cached analysis in the database
+      const { data: cached } = await supabase
+        .from("profile_analysis")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (cached && cached.data_hash === dataHash) {
+        // Data hasn't changed — use cached result
+        if (!cancelled) {
+          setProfileAnalysis({
+            completenessScore: cached.completeness_score,
+            strengths: cached.strengths,
+            gaps: cached.gaps,
+          });
+        }
+        return;
+      }
+
+      // Data changed or no cache — run fresh analysis
+      if (!cancelled) setProfileAnalyzing(true);
+      try {
+        const res = await fetch("/api/ai/analyze-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cvData }),
+        });
+        if (!res.ok) throw new Error("Analysis failed");
+        const data = await res.json();
+        if (cancelled) return;
+
+        setProfileAnalysis(data);
+
+        // Save to database for next time
+        await supabase.from("profile_analysis").upsert(
+          {
+            user_id: userId,
+            data_hash: dataHash,
+            completeness_score: data.completenessScore ?? 0,
+            strengths: data.strengths ?? [],
+            gaps: data.gaps ?? [],
+          },
+          { onConflict: "user_id" }
+        );
+      } catch {
+        if (!cancelled) toast.error("Profile analysis failed.");
+      } finally {
+        if (!cancelled) setProfileAnalyzing(false);
+      }
+    }
+
+    loadOrRunAnalysis();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
