@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#1E1148"/>
+      <stop offset="100%" stop-color="#03020F"/>
+    </radialGradient>
+    <linearGradient id="star" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#C4B5FD"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5B21B6" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#5B21B6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+
+  <!-- Central glow -->
+  <circle cx="256" cy="256" r="200" fill="url(#glow)"/>
+
+  <!--
+    4-pointed sparkle star with curved concave sides.
+    Center (256,256). Outer radii: vertical=195, horizontal=150. Inner corners at 45° r=50.
+    Outer: Top(256,61) Right(406,256) Bottom(256,451) Left(106,256)
+    Inner: NE(291,221) SE(291,291) SW(221,291) NW(221,221)
+    Each segment uses a quadratic bezier bowing inward toward center.
+  -->
+  <path d="
+    M 256,61
+    Q 267,181 291,221
+    Q 319,245 406,256
+    Q 319,267 291,291
+    Q 267,331 256,451
+    Q 245,331 221,291
+    Q 193,267 106,256
+    Q 193,245 221,221
+    Q 245,181 256,61
+    Z
+  " fill="url(#star)"/>
+
+  <!-- Constellation dots -->
+  <circle cx="78"  cy="95"  r="5" fill="white" opacity="0.30"/>
+  <circle cx="430" cy="78"  r="7" fill="white" opacity="0.22"/>
+  <circle cx="60"  cy="390" r="4" fill="white" opacity="0.18"/>
+  <circle cx="440" cy="415" r="6" fill="white" opacity="0.25"/>
+  <circle cx="438" cy="175" r="4" fill="white" opacity="0.20"/>
+  <circle cx="82"  cy="310" r="3" fill="white" opacity="0.15"/>
+</svg>
