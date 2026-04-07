@@ -1132,7 +1132,6 @@ export default function CvStudio({ userId, cvData }: Props) {
             setAiData(optimized);
             if (typeof optData.coverLetter === "string" && optData.coverLetter) {
               setCoverLetter(optData.coverLetter);
-              setShowCoverLetter(true);
             }
           } else {
             setAiData(fitted);
@@ -1264,7 +1263,6 @@ export default function CvStudio({ userId, cvData }: Props) {
       }
       if (data.coverLetter) {
         setCoverLetter(data.coverLetter as string);
-        setShowCoverLetter(true);
       }
       toast.success("CV optimized! Cover letter generated below.");
       setShowJobOptimizer(false);
