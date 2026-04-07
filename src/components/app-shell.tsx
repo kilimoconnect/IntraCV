@@ -30,11 +30,26 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [hasNewDocs, setHasNewDocs] = useState(false);
   const currentKey = activeNav || "profile";
 
   useEffect(() => {
     if (loadingKey && currentKey === loadingKey) setLoadingKey(null);
   }, [currentKey, loadingKey]);
+
+  // Check for new-docs badge flag
+  useEffect(() => {
+    const flag = localStorage.getItem("intracv-new-docs");
+    setHasNewDocs(flag === "true");
+  }, [currentKey]);
+
+  // Clear badge when visiting Documents
+  useEffect(() => {
+    if (currentKey === "documents") {
+      localStorage.removeItem("intracv-new-docs");
+      setHasNewDocs(false);
+    }
+  }, [currentKey]);
 
   const handleNav = (key: string, href: string) => {
     if (!user) { router.push("/login"); return; }
@@ -109,6 +124,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                       )}
                     </span>
                     <span className="truncate">{item.label}</span>
+                    {item.key === "documents" && hasNewDocs && !isActive && (
+                      <span className="ml-auto relative flex h-2.5 w-2.5 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
+                      </span>
+                    )}
                     {isActive && (
                       <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/70 shrink-0" />
                     )}
@@ -151,11 +172,19 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                       : "text-slate-500 hover:bg-slate-100"
                   }`}
                 >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Icon className="h-4 w-4" />
-                  )}
+                  <span className="relative">
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Icon className="h-4 w-4" />
+                    )}
+                    {item.key === "documents" && hasNewDocs && !isActive && (
+                      <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500" />
+                      </span>
+                    )}
+                  </span>
                   <span>{item.label.split(" ")[0]}</span>
                 </button>
               );

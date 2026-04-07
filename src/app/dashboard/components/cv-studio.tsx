@@ -1260,6 +1260,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   { duration: 3000, icon: "🎉" }
                 );
                 await executePdfDownload();
+                localStorage.setItem("intracv-new-docs", "true");
                 toast.success(
                   "Your CV and cover letter are saved — find them in the Documents page.",
                   { duration: 6000, icon: "📄" }
