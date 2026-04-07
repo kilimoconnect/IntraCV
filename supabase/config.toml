@@ -7,9 +7,6 @@
 
 # ── Edge Functions ─────────────────────────────────────────────────────────────
 
-[functions.cleanup-unconfirmed-users]
-# Run daily at 02:00 UTC
-# Cron format: minute hour day-of-month month day-of-week
-schedule = "0 2 * * *"
-# Secrets injected at runtime (set via: supabase secrets set CRON_SECRET=...)
-# CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY are all injected automatically
+# [functions.cleanup-unconfirmed-users]
+# Scheduled via pg_cron SQL migration (see supabase/migrations/20260407_cleanup_unconfirmed_cron.sql)
+# Upgrade CLI to v2.84+ to use the schedule key here instead.
