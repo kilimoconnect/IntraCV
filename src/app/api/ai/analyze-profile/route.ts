@@ -32,7 +32,7 @@ Return ONLY valid JSON in this exact structure:
 Rules:
 - completenessScore: factor in presence and quality of summary, experience, education, skills, achievements, certifications, references. 0=empty, 100=perfectly complete.
 - strengths: 3–5 specific strengths that will work well in a CV (e.g. "Progressive leadership across 3 companies spanning 12 years")
-- gaps: 3–5 specific, actionable gaps (e.g. "No quantified achievements — experience bullets need metrics", "Skills section is thin — only 4 skills listed")${hasJD ? `
+- gaps: 3–5 gaps that ONLY the user can fix manually — things the AI cannot auto-generate during CV creation. Focus on: missing data fields (LinkedIn URL, website, phone), entirely absent sections (no certifications listed, no languages, no references), or structural issues (only 1 experience entry for a 10-year career). DO NOT include gaps about phrasing, bullet point quality, metrics/quantification, writing style, or thin descriptions — those are fixed automatically by AI during CV generation.${hasJD ? `
 - atsScore: 0=no match at all, 100=perfect match. Be realistic and accurate.
 - missingSkills: 3–7 specific skills/tools/certifications from the JD not found in the profile
 - weakAreas: 3–5 specific weaknesses relative to JD requirements (e.g. "Summary doesn't mention cloud architecture which is core to the role")` : ""}
