@@ -1,5 +1,8 @@
 {
-  "buildCommand": "next build --no-turbopack",
+  "buildCommand": "next build",
+  "env": {
+    "TURBOPACK": "0"
+  },
   "functions": {
     "src/app/api/pdf/generate/route.ts": {
       "memory": 1024,
