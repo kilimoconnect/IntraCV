@@ -2057,9 +2057,9 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {/* ── Cover Letter banner — always visible when CV is generated ── */}
-      {aiData && !showCoverLetter && !showJobOptimizer && (
-        coverLetterUnlocked && coverLetter ? (
+      {/* ── Cover Letter banner — only when a cover letter was generated (job description provided) ── */}
+      {aiData && coverLetter && !showCoverLetter && !showJobOptimizer && (
+        coverLetterUnlocked ? (
           <button
             onClick={() => setShowCoverLetter(true)}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-purple-50 text-sm font-semibold text-violet-700 hover:from-violet-100 hover:to-purple-100 hover:border-violet-400 transition-all shadow-sm"
