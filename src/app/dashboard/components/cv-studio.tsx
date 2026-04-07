@@ -1887,8 +1887,16 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
 
         {/* Theme picker row */}
-        <div className="flex items-start gap-2">
-          <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 shrink-0 mt-1" />
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <Palette className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            <span className="text-[11px] font-medium text-slate-500">Tap a colour to change your CV theme</span>
+            {selectedTheme && (
+              <span className="ml-auto text-[11px] font-semibold text-indigo-600 capitalize">
+                {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap gap-1">
             {THEME_LIST.map((t) => (
               <button
@@ -1898,7 +1906,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   selectedTheme === t.name ? "border-slate-400 shadow-md ring-2 ring-slate-200" : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
                 }`}
                 style={{ backgroundColor: t.color }}
-                title={t.label}
+                title={`${t.label} — tap to apply`}
               >
                 {selectedTheme === t.name && (
                   <span className="absolute inset-0 flex items-center justify-center">
