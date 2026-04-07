@@ -1569,7 +1569,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-violet-600" />
               <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
-              <span className="text-xs text-red-400 font-normal ml-1">(required)</span>
+              <span className="text-xs text-slate-400 font-normal ml-1">(optional)</span>
             </div>
 
             {/* Company name + Job title (side by side) */}
@@ -1583,7 +1583,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="e.g. Acme Corp"
-                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${!company.trim() ? "border-red-200" : "border-slate-200"}`}
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(jobTitle.trim() || jobDescription.trim()) && !company.trim() ? "border-red-200" : "border-slate-200"}`}
                 />
               </div>
               <div>
@@ -1595,7 +1595,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                   placeholder="e.g. Senior Product Manager"
-                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${!jobTitle.trim() ? "border-red-200" : "border-slate-200"}`}
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(company.trim() || jobDescription.trim()) && !jobTitle.trim() ? "border-red-200" : "border-slate-200"}`}
                 />
               </div>
             </div>
@@ -1626,7 +1626,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                 }}
                 rows={5}
                 placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
-                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${!jobDescription.trim() ? "border-red-200" : "border-slate-200"}`}
+                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`}
               />
             </div>
 
@@ -1684,21 +1684,30 @@ export default function CvStudio({ userId, cvData }: Props) {
 
           {/* ── CTA ── */}
           <div className="px-6 py-5 bg-slate-50">
-            <button
-              onClick={() => {
-                if (!company.trim() || !jobTitle.trim() || !jobDescription.trim()) return;
-                setShouldAutoOptimize(true);
-                setStep("select");
-              }}
-              disabled={!company.trim() || !jobTitle.trim() || !jobDescription.trim() || (profileAnalyzing && !profileAnalysis)}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
-            >
-              <Sparkles className="h-4 w-4" />
-              Generate Tailored CV →
-            </button>
-            {(!company.trim() || !jobTitle.trim() || !jobDescription.trim()) && (
-              <p className="text-center text-xs text-red-400 mt-2">Company name, job title, and job description are required.</p>
-            )}
+            {(() => {
+              const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
+              const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
+              const incomplete = !!(hasAny && !hasAll);
+              return (
+                <>
+                  <button
+                    onClick={() => {
+                      if (incomplete) return;
+                      if (hasAll) setShouldAutoOptimize(true);
+                      setStep("select");
+                    }}
+                    disabled={incomplete || (profileAnalyzing && !profileAnalysis)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {hasAll ? "Generate Tailored CV →" : "Generate My CV →"}
+                  </button>
+                  {incomplete && (
+                    <p className="text-center text-xs text-red-400 mt-2">Please fill in all three: company name, job title, and job description.</p>
+                  )}
+                </>
+              );
+            })()}
             {company.trim() && jobTitle.trim() && jobDescription.trim() && !profileAnalysis && profileAnalyzing && (
               <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
             )}
