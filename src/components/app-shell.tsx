@@ -205,7 +205,8 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
         )}
 
         {/* ── Main Content ── */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6 pb-24 md:pb-8 overflow-y-auto">
+        {/* pb-24 on mobile only when bottom nav is visible; cv-builder manages its own bottom space */}
+        <main className={`flex-1 min-w-0 p-4 sm:p-6 md:pb-8 overflow-y-auto ${hideMobileNav ? "pb-6" : "pb-24"}`}>
           {children}
         </main>
       </div>

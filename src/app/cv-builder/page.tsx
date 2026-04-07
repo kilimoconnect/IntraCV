@@ -1338,56 +1338,83 @@ function CVBuilderPage() {
       <div className="max-w-6xl mx-auto px-3 sm:px-4">
         {/* ─── STEP: UPLOAD ─── */}
         {step === "upload" && (
-          <div className="max-w-xl mx-auto space-y-4 sm:space-y-6">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-bold">Upload Your CV</h2>
-              <p className="text-muted-foreground">Upload a PDF or Word document and our AI will extract all sections automatically</p>
-            </div>
+          <div className="min-h-[calc(100vh-10rem)] flex flex-col justify-center">
+            <div className="w-full max-w-lg mx-auto space-y-5 px-1">
 
-            <Card>
-              <CardContent className="pt-6">
-                <label
-                  htmlFor="cv-upload"
-                  className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 sm:p-12 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
-                >
-                  {uploading || extracting ? (
-                    <>
-                      <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                      <p className="font-medium">{uploading ? "Parsing document..." : "AI extracting sections..."}</p>
-                      <Progress value={extractionProgress} className="w-64 mt-4" />
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="font-medium">Click to upload PDF or Word document</p>
-                      <p className="text-sm text-muted-foreground mt-1">or drag and drop</p>
-                    </>
-                  )}
-                  <input
-                    id="cv-upload"
-                    type="file"
-                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={uploading || extracting}
-                  />
-                </label>
-              </CardContent>
-            </Card>
-
-            <div className="text-center">
-              <Button variant="outline" onClick={() => setStep("edit")}>
-                Or fill in manually
-              </Button>
-            </div>
-
-            {hasExistingData && (
-              <div className="text-center">
-                <Button variant="link" onClick={() => setStep("edit")}>
-                  Continue editing existing CV →
-                </Button>
+              {/* Header */}
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-200 mb-2">
+                  <Upload className="h-7 w-7 text-white" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Upload Your CV</h2>
+                <p className="text-sm sm:text-base text-muted-foreground max-w-sm mx-auto">
+                  Upload a PDF or Word document and our AI will extract all sections automatically
+                </p>
               </div>
-            )}
+
+              {/* Drop zone card */}
+              <Card className="border-2 shadow-sm">
+                <CardContent className="p-4 sm:p-6">
+                  <label
+                    htmlFor="cv-upload"
+                    className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 sm:p-12 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors gap-3"
+                  >
+                    {uploading || extracting ? (
+                      <>
+                        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                        <p className="font-medium text-sm sm:text-base text-center">
+                          {uploading ? "Parsing document…" : "AI extracting sections…"}
+                        </p>
+                        <Progress value={extractionProgress} className="w-full max-w-xs mt-1" />
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
+                          <Upload className="h-6 w-6 text-slate-500" />
+                        </div>
+                        <div className="text-center">
+                          <p className="font-semibold text-sm sm:text-base">Click to upload PDF or Word document</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">or drag and drop</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground/70">PDF, DOC, DOCX · max 4 MB</p>
+                      </>
+                    )}
+                    <input
+                      id="cv-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={uploading || extracting}
+                    />
+                  </label>
+                </CardContent>
+              </Card>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground font-medium">or</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* Manual entry button */}
+              <Button
+                variant="outline"
+                className="w-full h-11 rounded-xl font-medium"
+                onClick={() => setStep("edit")}
+              >
+                Fill in manually
+              </Button>
+
+              {hasExistingData && (
+                <div className="text-center">
+                  <Button variant="link" className="text-sm" onClick={() => setStep("edit")}>
+                    Continue editing existing CV →
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1602,7 +1629,7 @@ function CVBuilderPage() {
             </aside>
 
             {/* ── Mobile Tab Bar ── */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 px-2 py-2 pb-safe flex gap-1 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
               {SECTIONS.map((sec) => {
                 const Icon = sec.icon;
                 const isActive = activeTab === sec.key;
