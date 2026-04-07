@@ -47,32 +47,95 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email service not configured. Please contact support." }, { status: 500 });
     }
 
+    // Extract first name only
+    const firstName = (fullName || "").trim().split(" ")[0] || "there";
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin;
+
     const emailPayload = {
       sender: { name: FROM_NAME, email: FROM_EMAIL },
       to: [{ email, name: fullName || email }],
       subject: "Confirm your FuseCV account",
-      htmlContent: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; background: #ffffff;">
-          <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px 32px; text-align: center; border-radius: 16px 16px 0 0;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">FuseCV</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px;">AI-Powered CV Builder</p>
+      headers: {
+        "X-Entity-Ref-ID": email,
+      },
+      htmlContent: `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>Confirm your FuseCV account</title></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <!-- Preheader (hidden preview text in inbox) -->
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all">
+    One click to activate your account and start building your professional CV &#8203;&zwnj;&zwnj;
+  </div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+
+        <!-- Header -->
+        <tr><td style="border-radius:16px 16px 0 0;overflow:hidden;background:linear-gradient(135deg,#3730a3 0%,#4f46e5 40%,#7c3aed 100%);padding:40px 32px;text-align:center;position:relative">
+          <!-- Subtle diagonal stripe overlay -->
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 1px,transparent 1px,transparent 12px);pointer-events:none"></div>
+          <!-- Wordmark -->
+          <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.25)">
+              <span style="color:#ffffff;font-size:18px;font-weight:900;letter-spacing:-1px;line-height:1">F</span>
+            </div>
+            <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px">FuseCV</span>
           </div>
-          <div style="padding: 40px 32px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 16px 16px;">
-            <h2 style="color: #1e293b; font-size: 20px; font-weight: 700; margin: 0 0 8px;">Confirm your email address</h2>
-            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 32px;">
-              Hi ${fullName || "there"}, welcome to FuseCV! Click the button below to activate your account and start building your professional CV.
-            </p>
-            <a href="${confirmationUrl}"
-              style="display: inline-block; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; letter-spacing: 0.2px;">
-              Activate My Account →
-            </a>
-            <p style="color: #94a3b8; font-size: 12px; margin: 32px 0 0; line-height: 1.6;">
-              This link expires in 24 hours. If you didn't create a FuseCV account, you can safely ignore this email.
+          <p style="color:rgba(255,255,255,0.75);margin:0;font-size:13px;font-style:italic;letter-spacing:0.3px">Your AI-Powered CV Builder</p>
+        </td></tr>
+
+        <!-- Body -->
+        <tr><td style="background:#ffffff;padding:40px 32px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0">
+          <h2 style="color:#0f172a;font-size:22px;font-weight:700;margin:0 0 12px;letter-spacing:-0.3px">Confirm your email address</h2>
+          <p style="color:#475569;font-size:15px;line-height:1.75;margin:0 0 28px">
+            Hi <strong style="color:#1e293b">${firstName}</strong>, welcome to FuseCV!<br>
+            You're one step away from building a job-winning CV with AI. Tap the button below to activate your account.
+          </p>
+
+          <!-- CTA -->
+          <table cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+            <tr><td style="border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 4px 15px rgba(79,70,229,0.35)">
+              <a href="${confirmationUrl}" style="display:inline-block;padding:15px 36px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
+                Activate My Account &rarr;
+              </a>
+            </td></tr>
+          </table>
+
+          <!-- Fallback link -->
+          <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0 0 8px">
+            Button not working? Copy and paste this link into your browser:
+          </p>
+          <p style="margin:0 0 28px">
+            <a href="${confirmationUrl}" style="color:#6366f1;font-size:11px;word-break:break-all">${confirmationUrl}</a>
+          </p>
+
+          <div style="border-top:1px solid #f1f5f9;padding-top:20px">
+            <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0">
+              This link expires in <strong>24 hours</strong>. If you didn't create a FuseCV account, you can safely ignore this email.
             </p>
           </div>
-        </div>
-      `,
-      textContent: `Welcome to FuseCV!\n\nClick the link below to confirm your email address:\n\n${confirmationUrl}\n\nThis link expires in 24 hours.`,
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center">
+          <p style="color:#94a3b8;font-size:11px;margin:0 0 8px;line-height:1.6">
+            FuseCV &mdash; AI-Powered CV Builder &bull;
+            <a href="${siteUrl}" style="color:#94a3b8;text-decoration:underline">fusecv.com</a>
+          </p>
+          <p style="color:#cbd5e1;font-size:11px;margin:0;line-height:1.6">
+            <a href="${siteUrl}/privacy" style="color:#94a3b8;text-decoration:underline">Privacy Policy</a>
+            &nbsp;&bull;&nbsp;
+            <a href="${siteUrl}/unsubscribe?email=${encodeURIComponent(email)}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+      textContent: `Hi ${firstName},\n\nWelcome to FuseCV! Click the link below to confirm your email address and activate your account:\n\n${confirmationUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create a FuseCV account, you can safely ignore this email.\n\n— The FuseCV Team\n${siteUrl}`,
     };
 
     // Try up to 2 times
