@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 type Status = "idle" | "loading" | "done" | "error";
 
 export default function UnsubscribePage() {
+  return (
+    <Suspense fallback={<PageShell><div className="flex justify-center py-16"><Loader2 className="h-8 w-8 text-indigo-500 animate-spin" /></div></PageShell>}>
+      <UnsubscribeContent />
+    </Suspense>
+  );
+}
+
+function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
 
@@ -219,6 +227,20 @@ export default function UnsubscribePage() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 md:px-8 sticky top-0 z-50 shadow-sm">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image src="/icon.svg" alt="FuseCV" width={30} height={30} className="rounded-lg" />
+          <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">FuseCV</span>
+        </Link>
+      </header>
+      <div className="flex-1 flex items-center justify-center px-4">{children}</div>
     </div>
   );
 }
