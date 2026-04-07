@@ -723,10 +723,13 @@ export default function MyProfile({
         </>
       )}
       {/* Footer */}
-      <div className="pt-4 pb-2 text-center">
-        <Link href="/privacy" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors underline underline-offset-2">
-          Privacy Policy
-        </Link>
+      <div className="border-t border-slate-200 mt-4 pt-5 pb-2 text-center space-y-1">
+        <p className="text-xs text-slate-400">© {new Date().getFullYear()} FuseCV. All rights reserved.</p>
+        <p className="text-xs text-slate-400">
+          <Link href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Policy</Link>
+          {" · "}
+          <Link href="/unsubscribe" className="hover:text-indigo-600 transition-colors">Unsubscribe</Link>
+        </p>
       </div>
     </div>
   );
