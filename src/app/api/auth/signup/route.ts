@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       password,
       options: {
         data: { full_name: fullName || "" },
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: `${origin}/auth/confirm`,
       },
     });
 
