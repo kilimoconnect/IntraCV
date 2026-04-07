@@ -48,12 +48,18 @@ export async function POST(req: Request) {
         <!-- Header -->
         <tr><td style="border-radius:16px 16px 0 0;overflow:hidden;background:linear-gradient(135deg,#3730a3 0%,#4f46e5 40%,#7c3aed 100%);padding:40px 32px;text-align:center;position:relative">
           <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 1px,transparent 1px,transparent 12px);pointer-events:none"></div>
-          <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px">
-            <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.25)">
-              <span style="color:#ffffff;font-size:18px;font-weight:900;letter-spacing:-1px;line-height:1">F</span>
-            </div>
-            <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px">FuseCV</span>
-          </div>
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 8px">
+            <tr>
+              <td style="padding-right:10px;vertical-align:middle">
+                <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:10px;border:1px solid rgba(255,255,255,0.25);text-align:center;line-height:36px">
+                  <span style="color:#ffffff;font-size:18px;font-weight:900;letter-spacing:-1px">F</span>
+                </div>
+              </td>
+              <td style="vertical-align:middle">
+                <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px">FuseCV</span>
+              </td>
+            </tr>
+          </table>
           <p style="color:rgba(255,255,255,0.75);margin:0;font-size:13px;font-style:italic;letter-spacing:0.3px">Your AI-Powered CV Builder</p>
         </td></tr>
 
