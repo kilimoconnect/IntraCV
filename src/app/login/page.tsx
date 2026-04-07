@@ -20,15 +20,35 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      const res = await fetch("/api/auth/resend-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) setResent(true);
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setUnconfirmed(false);
+    setResent(false);
     setLoading(true);
     const { error } = await signIn(email, password);
     if (error) {
       if (error.message.toLowerCase().includes("email not confirmed")) {
-        setError("Please confirm your email address before signing in. Check your inbox for the confirmation link.");
+        setUnconfirmed(true);
+        setError("Your email isn't confirmed yet.");
       } else {
         setError(error.message);
       }
@@ -69,9 +89,27 @@ export default function LoginPage() {
           {/* Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-100 p-6 space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
-                {error}
+              <div className={`rounded-xl px-4 py-3 text-sm border ${unconfirmed ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-red-50 border-red-200 text-red-700"}`}>
+                <div className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${unconfirmed ? "bg-amber-500" : "bg-red-500"}`} />
+                  {error}
+                </div>
+                {unconfirmed && (
+                  <div className="mt-2 pl-3.5">
+                    {resent ? (
+                      <p className="text-xs text-emerald-700 font-medium">✓ Confirmation email resent — check your inbox</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resending}
+                        className="text-xs font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-900 disabled:opacity-60"
+                      >
+                        {resending ? "Resending…" : "Resend confirmation email"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
