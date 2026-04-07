@@ -1,6 +1,6 @@
 {
-  "name": "IntraCV",
-  "short_name": "IntraCV",
+  "name": "FuseCV",
+  "short_name": "FuseCV",
   "description": "AI-powered CV builder",
   "start_url": "/",
   "display": "standalone",

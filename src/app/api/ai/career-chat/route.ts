@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       ? `The user's saved profile data:\n${lines.join("\n")}`
       : "No profile data available yet.";
 
-    const systemPrompt = `You are an expert AI Career Assistant embedded in IntraCV. You help users with career advice, job search, interview preparation, salary negotiation, CV improvement, and professional development.
+    const systemPrompt = `You are an expert AI Career Assistant embedded in FuseCV. You help users with career advice, job search, interview preparation, salary negotiation, CV improvement, and professional development.
 
 ALWAYS respond with valid JSON matching this exact schema (no markdown, no text outside the JSON):
 {

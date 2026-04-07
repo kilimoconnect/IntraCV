@@ -37,13 +37,13 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
   }, [currentKey, loadingKey]);
 
   useEffect(() => {
-    const flag = localStorage.getItem("intracv-new-docs");
+    const flag = localStorage.getItem("fusecv-new-docs");
     setHasNewDocs(flag === "true");
   }, [currentKey]);
 
   useEffect(() => {
     if (currentKey === "documents") {
-      localStorage.removeItem("intracv-new-docs");
+      localStorage.removeItem("fusecv-new-docs");
       setHasNewDocs(false);
     }
   }, [currentKey]);
@@ -67,10 +67,10 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
         >
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
-            <Image src="/icon.svg" alt="IntraCV" width={30} height={30} className="relative rounded-lg" />
+            <Image src="/icon.svg" alt="FuseCV" width={30} height={30} className="relative rounded-lg" />
           </div>
           <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
-            IntraCV
+            FuseCV
           </span>
         </button>
 

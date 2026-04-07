@@ -42,13 +42,13 @@ export default function RegisterPage() {
             <div className="relative mb-3">
               <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
               <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <Image src="/icon.svg" alt="IntraCV" width={32} height={32} className="rounded-lg" />
+                <Image src="/icon.svg" alt="FuseCV" width={32} height={32} className="rounded-lg" />
               </div>
             </div>
             <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
               Get started free
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Create your IntraCV account in seconds</p>
+            <p className="text-sm text-slate-500 mt-1">Create your FuseCV account in seconds</p>
           </div>
 
           {/* Card */}

@@ -1302,10 +1302,10 @@ export default function CvStudio({ userId, cvData }: Props) {
         payment_options: "card",
         customer: {
           email: customerEmail,
-          name: aiData.fullName || personalInfo?.fullName || "IntraCV User",
+          name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
         },
         customizations: {
-          title: "IntraCV — Download CV",
+          title: "FuseCV — Download CV",
           description: `Download your ${selectedCategory} CV as a clean, watermark-free PDF`,
         },
         callback: async (response) => {
@@ -1332,7 +1332,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   { duration: 3000, icon: "🎉" }
                 );
                 await executePdfDownload();
-                localStorage.setItem("intracv-new-docs", "true");
+                localStorage.setItem("fusecv-new-docs", "true");
                 toast.success(
                   "Your CV and cover letter are saved — find them in the Documents page.",
                   { duration: 6000, icon: "📄" }

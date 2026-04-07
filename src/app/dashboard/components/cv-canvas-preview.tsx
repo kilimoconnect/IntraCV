@@ -146,7 +146,7 @@ export default function CVCanvasPreview({ children, previewRef, editMode, onCvCl
                 letterSpacing="2"
                 fill="rgba(100,116,139,0.18)"
               >
-                IntraCV Preview
+                FuseCV Preview
               </text>
             </pattern>
           </defs>

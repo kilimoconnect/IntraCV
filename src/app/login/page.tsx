@@ -53,13 +53,13 @@ export default function LoginPage() {
             <div className="relative mb-3">
               <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
               <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <Image src="/icon.svg" alt="IntraCV" width={32} height={32} className="rounded-lg" />
+                <Image src="/icon.svg" alt="FuseCV" width={32} height={32} className="rounded-lg" />
               </div>
             </div>
             <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
               Welcome back
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Sign in to your IntraCV account</p>
+            <p className="text-sm text-slate-500 mt-1">Sign in to your FuseCV account</p>
           </div>
 
           {/* Card */}
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 <div className="w-full border-t border-slate-100" />
               </div>
               <div className="relative text-center text-xs text-slate-400 bg-white px-3 mx-auto w-fit">
-                New to IntraCV?
+                New to FuseCV?
               </div>
             </div>
 

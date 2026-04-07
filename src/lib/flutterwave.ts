@@ -101,7 +101,7 @@ export async function openFlutterwaveCheckout(
 }
 
 export function generateTxRef(userId: string): string {
-  return `IntraCV-${userId.slice(0, 8)}-${Date.now()}`;
+  return `FuseCV-${userId.slice(0, 8)}-${Date.now()}`;
 }
 
 export const DOWNLOAD_AMOUNT = Number(process.env.NEXT_PUBLIC_CV_DOWNLOAD_PRICE ?? 1000);
