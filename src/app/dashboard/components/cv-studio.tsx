@@ -1569,29 +1569,33 @@ export default function CvStudio({ userId, cvData }: Props) {
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-violet-600" />
               <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
-              <span className="text-xs text-slate-400 font-normal ml-1">(optional)</span>
+              <span className="text-xs text-red-400 font-normal ml-1">(required)</span>
             </div>
 
             {/* Company name + Job title (side by side) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Name</label>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">
+                  Company Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="e.g. Acme Corp"
-                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${!company.trim() ? "border-red-200" : "border-slate-200"}`}
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Title</label>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">
+                  Job Title <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                   placeholder="e.g. Senior Product Manager"
-                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${!jobTitle.trim() ? "border-red-200" : "border-slate-200"}`}
                 />
               </div>
             </div>
@@ -1610,7 +1614,9 @@ export default function CvStudio({ userId, cvData }: Props) {
 
             {/* Job description */}
             <div>
-              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description</label>
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">
+                Job Description <span className="text-red-500">*</span>
+              </label>
               <textarea
                 value={jobDescription}
                 onChange={(e) => {
@@ -1620,7 +1626,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                 }}
                 rows={5}
                 placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
-                className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
+                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${!jobDescription.trim() ? "border-red-200" : "border-slate-200"}`}
               />
             </div>
 
@@ -1680,16 +1686,20 @@ export default function CvStudio({ userId, cvData }: Props) {
           <div className="px-6 py-5 bg-slate-50">
             <button
               onClick={() => {
-                if (jobDescription.trim()) setShouldAutoOptimize(true);
+                if (!company.trim() || !jobTitle.trim() || !jobDescription.trim()) return;
+                setShouldAutoOptimize(true);
                 setStep("select");
               }}
-              disabled={profileAnalyzing && !profileAnalysis}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
+              disabled={!company.trim() || !jobTitle.trim() || !jobDescription.trim() || (profileAnalyzing && !profileAnalysis)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
             >
               <Sparkles className="h-4 w-4" />
-              {jobDescription.trim() ? "Generate Tailored CV →" : "Generate My CV →"}
+              Generate Tailored CV →
             </button>
-            {!profileAnalysis && profileAnalyzing && (
+            {(!company.trim() || !jobTitle.trim() || !jobDescription.trim()) && (
+              <p className="text-center text-xs text-red-400 mt-2">Company name, job title, and job description are required.</p>
+            )}
+            {company.trim() && jobTitle.trim() && jobDescription.trim() && !profileAnalysis && profileAnalyzing && (
               <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
             )}
           </div>
