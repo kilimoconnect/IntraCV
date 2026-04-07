@@ -79,6 +79,7 @@ export default function Documents({ userId }: DocumentsProps) {
   const [loading, setLoading] = useState(true);
   const [docs, setDocs] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const loadDocs = useCallback(async () => {
@@ -103,6 +104,7 @@ export default function Documents({ userId }: DocumentsProps) {
       setDocs((prev) => prev.filter((d) => d.id !== id));
       toast.success("Document deleted");
     }
+    setDeleteConfirmId(null);
   };
 
   const copyContent = (text: string) => {
@@ -261,7 +263,7 @@ export default function Documents({ userId }: DocumentsProps) {
                         <Copy className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" onClick={() => deleteDoc(doc.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(doc.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -323,6 +325,39 @@ export default function Documents({ userId }: DocumentsProps) {
           );
         })}
       </div>
+
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-800">Delete Document?</h3>
+              <p className="text-sm text-slate-500">
+                This action cannot be undone. The document will be permanently removed.
+              </p>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setDeleteConfirmId(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => deleteDoc(deleteConfirmId)}
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
