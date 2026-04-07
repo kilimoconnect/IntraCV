@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, X, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -605,6 +606,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeName>("corporate");
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
+  const [navigatingToBuilder, setNavigatingToBuilder] = useState(false);
+  const router = useRouter();
   const [fixingOverflow, setFixingOverflow] = useState(false);
   const [autoFixAttempts, setAutoFixAttempts] = useState(0);
   const autoFixAttemptsRef = useRef(0);
@@ -1853,6 +1856,15 @@ export default function CvStudio({ userId, cvData }: Props) {
               <RefreshCw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">Regenerate</span>
               <span className="sm:hidden">Redo</span>
+            </button>
+            <button
+              onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
+              disabled={navigatingToBuilder}
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-70"
+            >
+              {navigatingToBuilder ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <UserPen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              <span className="hidden sm:inline">Edit Profile</span>
+              <span className="sm:hidden">Profile</span>
             </button>
             <button
               onClick={() => { setEditMode(!editMode); setInlineEditor(null); }}
