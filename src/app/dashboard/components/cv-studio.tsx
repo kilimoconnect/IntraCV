@@ -1574,6 +1574,9 @@ export default function CvStudio({ userId, cvData }: Props) {
                   : <UserPen className="h-3.5 w-3.5" />}
                 Edit Profile to fix these gaps
               </button>
+              <p className="text-center text-[11px] text-slate-400 mt-2">
+                You can also proceed as is — gaps won&apos;t stop CV generation.
+              </p>
             </div>
           )}
 
