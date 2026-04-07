@@ -53,7 +53,7 @@ export default function PrivacyPage() {
             FuseCV (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is an AI-powered CV and job application tool. Our service is available at{" "}
             <a href="https://fusecv.com" className="text-indigo-600 hover:underline font-medium">fusecv.com</a>.
             If you have any questions about this policy, contact us at{" "}
-            <a href="mailto:privacy@fusecv.com" className="text-indigo-600 hover:underline font-medium">privacy@fusecv.com</a>.
+            <a href="mailto:support@fusecv.com" className="text-indigo-600 hover:underline font-medium">support@fusecv.com</a>.
           </p>
         </Section>
 
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-3">
             To exercise any right, email us at{" "}
-            <a href="mailto:privacy@fusecv.com" className="text-indigo-600 hover:underline font-medium">privacy@fusecv.com</a>.
+            <a href="mailto:support@fusecv.com" className="text-indigo-600 hover:underline font-medium">support@fusecv.com</a>.
             We respond within 30 days.
           </p>
         </Section>
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
           <p>
             All data is encrypted in transit (TLS) and at rest. Access to production systems is restricted to authorised personnel only.
             While we implement industry-standard security measures, no system is 100% secure. If you discover a vulnerability, please report it responsibly to{" "}
-            <a href="mailto:security@fusecv.com" className="text-indigo-600 hover:underline font-medium">security@fusecv.com</a>.
+            <a href="mailto:support@fusecv.com" className="text-indigo-600 hover:underline font-medium">support@fusecv.com</a>.
           </p>
         </Section>
 
@@ -169,7 +169,7 @@ export default function PrivacyPage() {
           </p>
           <div className="mt-3 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-sm text-indigo-800 space-y-1">
             <p><strong>FuseCV Privacy Team</strong></p>
-            <p>Email: <a href="mailto:privacy@fusecv.com" className="hover:underline font-medium">privacy@fusecv.com</a></p>
+            <p>Email: <a href="mailto:support@fusecv.com" className="hover:underline font-medium">support@fusecv.com</a></p>
             <p>Website: <a href="https://fusecv.com" className="hover:underline font-medium">fusecv.com</a></p>
           </div>
         </Section>

@@ -107,8 +107,8 @@ function UnsubscribeContent() {
                   <h1 className="text-xl font-bold text-slate-800">Unsubscribe from FuseCV emails</h1>
                   <p className="text-sm text-slate-500 mt-2 leading-relaxed">
                     Use the unsubscribe link in any FuseCV email to be removed automatically, or contact us at{" "}
-                    <a href="mailto:privacy@fusecv.com" className="text-indigo-600 hover:underline font-medium">
-                      privacy@fusecv.com
+                    <a href="mailto:support@fusecv.com" className="text-indigo-600 hover:underline font-medium">
+                      support@fusecv.com
                     </a>.
                   </p>
                 </div>
@@ -199,8 +199,8 @@ function UnsubscribeContent() {
                   <h1 className="text-xl font-bold text-slate-800">Something went wrong</h1>
                   <p className="text-sm text-slate-500 mt-2 leading-relaxed">
                     We couldn&apos;t update your preferences right now. Please try again or contact us at{" "}
-                    <a href="mailto:privacy@fusecv.com" className="text-indigo-600 hover:underline font-medium">
-                      privacy@fusecv.com
+                    <a href="mailto:support@fusecv.com" className="text-indigo-600 hover:underline font-medium">
+                      support@fusecv.com
                     </a>.
                   </p>
                 </div>
