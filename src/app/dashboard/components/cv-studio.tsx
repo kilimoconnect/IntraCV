@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Palette, PenLine, RefreshCw, Sparkles, Target, X, Zap } from "lucide-react";
+import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -1970,15 +1970,22 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {/* ── View Cover Letter banner (unlocked after payment) ── */}
-      {coverLetterUnlocked && coverLetter && !showCoverLetter && !showJobOptimizer && (
-        <button
-          onClick={() => setShowCoverLetter(true)}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
-        >
-          <FileText className="h-3.5 w-3.5" />
-          View Generated Cover Letter
-        </button>
+      {/* ── View Cover Letter banner ── */}
+      {coverLetter && !showCoverLetter && !showJobOptimizer && (
+        coverLetterUnlocked ? (
+          <button
+            onClick={() => setShowCoverLetter(true)}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            View Generated Cover Letter
+          </button>
+        ) : (
+          <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400 cursor-default">
+            <Lock className="h-3.5 w-3.5" />
+            Cover Letter Included — Unlocks After Payment
+          </div>
+        )
       )}
 
       <div className="relative">
