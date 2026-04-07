@@ -15,7 +15,7 @@ import SettingsPanel from "./components/settings";
 const TAB_META: Record<string, { label: string; description: string; icon: React.ElementType; gradient: string }> = {
   profile:   { label: "My Profile",          description: "View and manage your career profile data",          icon: UserCircle2,      gradient: "from-indigo-500 to-violet-600" },
   studio:    { label: "CV Studio",           description: "Design and generate your professional CV",          icon: Wand2,            gradient: "from-violet-500 to-purple-600" },
-  interview: { label: "Interview Prep",      description: "Practice with AI-generated interview questions",    icon: BriefcaseBusiness,gradient: "from-blue-500 to-indigo-600" },
+  interview: { label: "Interview Preparation", description: "Practice with AI-generated interview questions",    icon: BriefcaseBusiness,gradient: "from-blue-500 to-indigo-600" },
   documents: { label: "Documents",           description: "Access and download your saved CVs and letters",   icon: FolderOpen,       gradient: "from-emerald-500 to-teal-600" },
   settings:  { label: "Settings",            description: "Manage your account and CV preferences",           icon: SettingsIcon,     gradient: "from-slate-500 to-slate-700" },
 };

@@ -13,7 +13,7 @@ import Image from "next/image";
 const NAV_ITEMS = [
   { key: "profile",   label: "My Profile",     href: "/dashboard?tab=profile",   icon: UserCircle2 },
   { key: "studio",    label: "CV Studio",       href: "/dashboard?tab=studio",    icon: Wand2 },
-  { key: "interview", label: "Interview Prep",  href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
+  { key: "interview", label: "Interview Preparation", href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
   { key: "documents", label: "Documents",       href: "/dashboard?tab=documents", icon: FolderOpen },
   { key: "settings",  label: "Settings",        href: "/dashboard?tab=settings",  icon: SettingsIcon },
 ];
