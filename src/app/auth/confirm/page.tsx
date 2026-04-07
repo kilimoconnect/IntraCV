@@ -36,6 +36,15 @@ export default function AuthConfirmPage() {
           setMessage(error.message);
           return;
         }
+        // Fire welcome email (best-effort, don't block redirect)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          fetch("/api/auth/welcome", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id }),
+          }).catch(() => {});
+        }
         setStatus("success");
         setTimeout(() => router.push("/cv-builder"), 1500);
         return;
@@ -50,6 +59,15 @@ export default function AuthConfirmPage() {
           setStatus("error");
           setMessage(error.message);
           return;
+        }
+        // Fire welcome email (best-effort, don't block redirect)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          fetch("/api/auth/welcome", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id }),
+          }).catch(() => {});
         }
         setStatus("success");
         setTimeout(() => router.push("/cv-builder"), 1500);
