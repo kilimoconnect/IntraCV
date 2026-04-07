@@ -92,12 +92,18 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
           <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%);pointer-events:none"></div>
 
           <!-- Wordmark -->
-          <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:24px">
-            <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.3)">
-              <span style="color:#ffffff;font-size:20px;font-weight:900;letter-spacing:-1px;line-height:1">F</span>
-            </div>
-            <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px">FuseCV</span>
-          </div>
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px">
+            <tr>
+              <td style="padding-right:10px;vertical-align:middle">
+                <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:10px;border:1px solid rgba(255,255,255,0.3);text-align:center;line-height:38px">
+                  <span style="color:#ffffff;font-size:20px;font-weight:900;letter-spacing:-1px">F</span>
+                </div>
+              </td>
+              <td style="vertical-align:middle">
+                <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px">FuseCV</span>
+              </td>
+            </tr>
+          </table>
 
           <!-- Hero copy -->
           <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;line-height:1.25">
@@ -138,12 +144,12 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
             <tr>
               <td width="48" valign="top" style="padding-right:16px">
-                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;text-align:center;line-height:44px;font-size:22px">🤖</div>
+                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);text-align:center;line-height:44px;font-size:22px">📄</div>
               </td>
               <td valign="top">
-                <p style="color:#0f172a;font-size:15px;font-weight:700;margin:0 0 4px">AI builds your CV in minutes</p>
+                <p style="color:#0f172a;font-size:15px;font-weight:700;margin:0 0 4px">Upload your old CV — or start from scratch</p>
                 <p style="color:#64748b;font-size:14px;line-height:1.65;margin:0">
-                  No staring at a blank page. Answer a few questions and FuseCV writes your experience, skills, and summary — professionally worded, perfectly formatted.
+                  Already have a CV? Upload it as a PDF or Word file and our AI reads every section — work history, education, skills, and more — and saves it all to your profile instantly. Prefer to start fresh? Fill in your details step by step. FuseCV guides you with smart recommendations on what to add, then turns everything into a polished, professional CV.
                 </p>
               </td>
             </tr>
@@ -153,7 +159,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
             <tr>
               <td width="48" valign="top" style="padding-right:16px">
-                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);display:flex;align-items:center;justify-content:center;text-align:center;line-height:44px;font-size:22px">🎯</div>
+                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#dcfce7,#bbf7d0);text-align:center;line-height:44px;font-size:22px">🎯</div>
               </td>
               <td valign="top">
                 <p style="color:#0f172a;font-size:15px;font-weight:700;margin:0 0 4px">Tailored CVs for every job</p>
@@ -168,7 +174,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
             <tr>
               <td width="48" valign="top" style="padding-right:16px">
-                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fef9c3,#fef08a);display:flex;align-items:center;justify-content:center;text-align:center;line-height:44px;font-size:22px">✍️</div>
+                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fef9c3,#fef08a);text-align:center;line-height:44px;font-size:22px">✍️</div>
               </td>
               <td valign="top">
                 <p style="color:#0f172a;font-size:15px;font-weight:700;margin:0 0 4px">Cover letters that actually get read</p>
@@ -183,7 +189,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:0">
             <tr>
               <td width="48" valign="top" style="padding-right:16px">
-                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fee2e2,#fecaca);display:flex;align-items:center;justify-content:center;text-align:center;line-height:44px;font-size:22px">🎤</div>
+                <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fee2e2,#fecaca);text-align:center;line-height:44px;font-size:22px">🎤</div>
               </td>
               <td valign="top">
                 <p style="color:#0f172a;font-size:15px;font-weight:700;margin:0 0 4px">Walk into interviews confident</p>
@@ -216,8 +222,8 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
                 <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">1</div>
               </td>
               <td valign="top">
-                <p style="color:#0f172a;font-size:14px;font-weight:700;margin:0 0 2px">Fill in your profile</p>
-                <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0">Add your work history, education, and skills. Takes about 5 minutes — do it once, reuse forever.</p>
+                <p style="color:#0f172a;font-size:14px;font-weight:700;margin:0 0 2px">Upload your CV or build your profile</p>
+                <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0">Upload an existing PDF or Word CV and AI extracts everything automatically, or fill in your details from scratch. Do it once — reuse forever.</p>
               </td>
             </tr>
           </table>
@@ -294,8 +300,8 @@ FuseCV fixes that.
 WHAT FUSECV DOES FOR YOU
 ─────────────────────────────────
 
-🤖 AI builds your CV in minutes
-No blank pages. FuseCV writes your experience, skills, and summary — professionally worded and perfectly formatted.
+📄 Upload your old CV — or start from scratch
+Already have a CV? Upload a PDF or Word file and AI extracts every section automatically. Or fill in your details step by step. FuseCV recommends what to add and builds a polished, professional CV from your profile.
 
 🎯 Tailored CVs for every job
 Paste any job description and FuseCV rewrites your CV to match the keywords recruiters and ATS systems scan for.
@@ -309,7 +315,7 @@ Our Interview Preparation tool generates role-specific questions and model answe
 ─────────────────────────────────
 GET STARTED IN 3 STEPS
 ─────────────────────────────────
-1. Fill in your profile (5 minutes, do it once)
+1. Upload your old CV (PDF/Word) or build your profile from scratch
 2. Paste a job description you want to apply for
 3. Download your tailored PDF and apply
 
