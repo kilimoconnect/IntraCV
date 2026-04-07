@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       to: [{ email, name: fullName || email }],
       subject: `You're in, ${firstName}! Here's how to land your next job faster 🚀`,
       headers: { "X-Entity-Ref-ID": `welcome-${userId}` },
-      htmlContent: buildWelcomeEmail(firstName, siteUrl),
+      htmlContent: buildWelcomeEmail(firstName, siteUrl, email),
       textContent: buildWelcomeText(firstName, siteUrl),
     };
 
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
 // ─── Email builders ────────────────────────────────────────────────────────────
 
-function buildWelcomeEmail(firstName: string, siteUrl: string): string {
+function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
