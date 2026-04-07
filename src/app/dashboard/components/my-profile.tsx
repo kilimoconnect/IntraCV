@@ -216,6 +216,7 @@ export default function MyProfile({
   const router = useRouter();
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
   const [isEditingCV, setIsEditingCV] = useState(false);
+  const [loadingSection, setLoadingSection] = useState<string | null>(null);
 
   const handleGenerateCV = () => {
     setIsGeneratingCV(true);
@@ -616,8 +617,15 @@ export default function MyProfile({
               </div>
               <div className="flex flex-wrap gap-2">
                 {missingRecommended.map(s => (
-                  <button key={s.key} onClick={() => router.push(`/cv-builder?tab=${s.key}`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 rounded-xl text-xs font-medium text-amber-700 hover:bg-amber-50 hover:border-amber-300 cursor-pointer transition-all shadow-sm">
-                    <Plus className="h-3 w-3" />
+                  <button
+                    key={s.key}
+                    disabled={loadingSection === s.key}
+                    onClick={() => { setLoadingSection(s.key); router.push(`/cv-builder?tab=${s.key}`); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 rounded-xl text-xs font-medium text-amber-700 hover:bg-amber-50 hover:border-amber-300 cursor-pointer transition-all shadow-sm disabled:opacity-70 disabled:cursor-default"
+                  >
+                    {loadingSection === s.key
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <Plus className="h-3 w-3" />}
                     {s.label}
                   </button>
                 ))}
