@@ -58,7 +58,13 @@ export interface CategoryCVData {
   awards?: { title: string; description?: string }[];
 }
 
-export type ThemeName = "corporate" | "ocean" | "forest" | "sunset" | "monochrome" | "royal" | "cherry" | "emerald" | "lavender" | "amber";
+export type ThemeName =
+  | "corporate" | "midnight" | "slate" | "monochrome"
+  | "ocean" | "teal" | "azure"
+  | "emerald" | "forest" | "sage"
+  | "royal" | "lavender" | "plum"
+  | "cherry" | "rose" | "coral"
+  | "amber" | "copper" | "burgundy" | "graphite";
 
 export interface ThemeColors {
   primary: string;
@@ -75,29 +81,66 @@ export interface ThemeColors {
 }
 
 export const themes: Record<ThemeName, ThemeColors> = {
-  corporate: { primary: "#4F46E5", primaryDark: "#3730A3", headerBg: "#1E293B", headerText: "#fff", sidebarBg: "#F8FAFC", text: "#1E293B", muted: "#64748B", divider: "#E2E8F0", pillBg: "#EEF2FF", pillBorder: "#C7D2FE", cardBg: "#FAFBFF" },
-  ocean:     { primary: "#0EA5E9", primaryDark: "#0369A1", headerBg: "#0C4A6E", headerText: "#fff", sidebarBg: "#F0F9FF", text: "#0F172A", muted: "#64748B", divider: "#BAE6FD", pillBg: "#E0F2FE", pillBorder: "#7DD3FC", cardBg: "#F0F9FF" },
-  forest:    { primary: "#16A34A", primaryDark: "#15803D", headerBg: "#14532D", headerText: "#fff", sidebarBg: "#F0FDF4", text: "#14532D", muted: "#6B7280", divider: "#D1FAE5", pillBg: "#DCFCE7", pillBorder: "#86EFAC", cardBg: "#F0FDF4" },
-  sunset:    { primary: "#EA580C", primaryDark: "#C2410C", headerBg: "#7C2D12", headerText: "#fff", sidebarBg: "#FFF7ED", text: "#451A03", muted: "#78716C", divider: "#FED7AA", pillBg: "#FFEDD5", pillBorder: "#FDBA74", cardBg: "#FFF7ED" },
-  monochrome:{ primary: "#374151", primaryDark: "#1F2937", headerBg: "#111827", headerText: "#fff", sidebarBg: "#F9FAFB", text: "#111827", muted: "#6B7280", divider: "#E5E7EB", pillBg: "#F3F4F6", pillBorder: "#D1D5DB", cardBg: "#F9FAFB" },
-  royal:     { primary: "#7C3AED", primaryDark: "#6D28D9", headerBg: "#4C1D95", headerText: "#fff", sidebarBg: "#F8F4FF", text: "#1F2937", muted: "#6B7280", divider: "#E9D5FF", pillBg: "#F3E8FF", pillBorder: "#D8B4FE", cardBg: "#FAF5FF" },
-  cherry:    { primary: "#E11D48", primaryDark: "#BE123C", headerBg: "#881337", headerText: "#fff", sidebarBg: "#FFF1F2", text: "#1F2937", muted: "#6B7280", divider: "#FECACA", pillBg: "#FEE2E2", pillBorder: "#FCA5A5", cardBg: "#FFF1F2" },
-  emerald:   { primary: "#10B981", primaryDark: "#059669", headerBg: "#047857", headerText: "#fff", sidebarBg: "#F0FDF4", text: "#1F2937", muted: "#6B7280", divider: "#A7F3D0", pillBg: "#D1FAE5", pillBorder: "#6EE7B7", cardBg: "#F0FDF4" },
-  lavender:  { primary: "#8B5CF6", primaryDark: "#7C3AED", headerBg: "#5B21B6", headerText: "#fff", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#DDD6FE", pillBg: "#EDE9FE", pillBorder: "#C4B5FD", cardBg: "#FAF5FF" },
-  amber:     { primary: "#F59E0B", primaryDark: "#D97706", headerBg: "#92400E", headerText: "#fff", sidebarBg: "#FFFBEB", text: "#1F2937", muted: "#6B7280", divider: "#FED7AA", pillBg: "#FEF3C7", pillBorder: "#FCD34D", cardBg: "#FFFBEB" },
+  // ── Dark & Professional ──────────────────────────────────────────────────
+  corporate:  { primary: "#4F46E5", primaryDark: "#3730A3", headerBg: "#0F172A", headerText: "#F8FAFC", sidebarBg: "#F8FAFC", text: "#0F172A", muted: "#64748B", divider: "#E2E8F0", pillBg: "#EEF2FF", pillBorder: "#C7D2FE", cardBg: "#FAFBFF" },
+  midnight:   { primary: "#6366F1", primaryDark: "#4338CA", headerBg: "#020617", headerText: "#E0E7FF", sidebarBg: "#F1F5F9", text: "#0F172A", muted: "#475569", divider: "#CBD5E1", pillBg: "#E0E7FF", pillBorder: "#A5B4FC", cardBg: "#F8FAFC" },
+  slate:      { primary: "#475569", primaryDark: "#334155", headerBg: "#1E293B", headerText: "#F1F5F9", sidebarBg: "#F8FAFC", text: "#1E293B", muted: "#64748B", divider: "#E2E8F0", pillBg: "#F1F5F9", pillBorder: "#CBD5E1", cardBg: "#F8FAFC" },
+  monochrome: { primary: "#18181B", primaryDark: "#09090B", headerBg: "#09090B", headerText: "#FAFAFA", sidebarBg: "#FAFAFA", text: "#09090B", muted: "#71717A", divider: "#E4E4E7", pillBg: "#F4F4F5", pillBorder: "#D4D4D8", cardBg: "#FAFAFA" },
+  graphite:   { primary: "#374151", primaryDark: "#1F2937", headerBg: "#111827", headerText: "#F9FAFB", sidebarBg: "#F9FAFB", text: "#111827", muted: "#6B7280", divider: "#E5E7EB", pillBg: "#F3F4F6", pillBorder: "#D1D5DB", cardBg: "#F9FAFB" },
+
+  // ── Blues & Teals ────────────────────────────────────────────────────────
+  ocean:      { primary: "#0284C7", primaryDark: "#075985", headerBg: "#082F49", headerText: "#E0F2FE", sidebarBg: "#F0F9FF", text: "#0C4A6E", muted: "#64748B", divider: "#BAE6FD", pillBg: "#E0F2FE", pillBorder: "#7DD3FC", cardBg: "#F0F9FF" },
+  teal:       { primary: "#0D9488", primaryDark: "#0F766E", headerBg: "#134E4A", headerText: "#CCFBF1", sidebarBg: "#F0FDFA", text: "#134E4A", muted: "#5F7A76", divider: "#99F6E4", pillBg: "#CCFBF1", pillBorder: "#5EEAD4", cardBg: "#F0FDFA" },
+  azure:      { primary: "#2563EB", primaryDark: "#1D4ED8", headerBg: "#1E3A5F", headerText: "#DBEAFE", sidebarBg: "#EFF6FF", text: "#1E3A5F", muted: "#6B7280", divider: "#BFDBFE", pillBg: "#DBEAFE", pillBorder: "#93C5FD", cardBg: "#EFF6FF" },
+
+  // ── Greens ───────────────────────────────────────────────────────────────
+  emerald:    { primary: "#059669", primaryDark: "#047857", headerBg: "#022C22", headerText: "#D1FAE5", sidebarBg: "#ECFDF5", text: "#064E3B", muted: "#6B7280", divider: "#A7F3D0", pillBg: "#D1FAE5", pillBorder: "#6EE7B7", cardBg: "#ECFDF5" },
+  forest:     { primary: "#15803D", primaryDark: "#166534", headerBg: "#14532D", headerText: "#F0FDF4", sidebarBg: "#F0FDF4", text: "#14532D", muted: "#6B7280", divider: "#BBF7D0", pillBg: "#DCFCE7", pillBorder: "#86EFAC", cardBg: "#F0FDF4" },
+  sage:       { primary: "#4D7C5F", primaryDark: "#3D6B4F", headerBg: "#1A3A2A", headerText: "#E8F5E9", sidebarBg: "#F1F8F3", text: "#1A3A2A", muted: "#6B8A7A", divider: "#C8E6C9", pillBg: "#E8F5E9", pillBorder: "#A5D6A7", cardBg: "#F5FAF6" },
+
+  // ── Purples ──────────────────────────────────────────────────────────────
+  royal:      { primary: "#7C3AED", primaryDark: "#6D28D9", headerBg: "#2E1065", headerText: "#F3E8FF", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#E9D5FF", pillBg: "#F3E8FF", pillBorder: "#D8B4FE", cardBg: "#FAF5FF" },
+  lavender:   { primary: "#8B5CF6", primaryDark: "#7C3AED", headerBg: "#3B0764", headerText: "#EDE9FE", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#DDD6FE", pillBg: "#EDE9FE", pillBorder: "#C4B5FD", cardBg: "#FAF5FF" },
+  plum:       { primary: "#9333EA", primaryDark: "#7E22CE", headerBg: "#581C87", headerText: "#F5D0FE", sidebarBg: "#FDF4FF", text: "#3B0764", muted: "#737373", divider: "#F0ABFC", pillBg: "#FAE8FF", pillBorder: "#E879F9", cardBg: "#FDF4FF" },
+
+  // ── Reds & Pinks ─────────────────────────────────────────────────────────
+  cherry:     { primary: "#DC2626", primaryDark: "#B91C1C", headerBg: "#450A0A", headerText: "#FEE2E2", sidebarBg: "#FEF2F2", text: "#1F2937", muted: "#6B7280", divider: "#FECACA", pillBg: "#FEE2E2", pillBorder: "#FCA5A5", cardBg: "#FEF2F2" },
+  rose:       { primary: "#E11D48", primaryDark: "#BE123C", headerBg: "#4C0519", headerText: "#FFE4E6", sidebarBg: "#FFF1F2", text: "#1F2937", muted: "#71717A", divider: "#FECDD3", pillBg: "#FFE4E6", pillBorder: "#FDA4AF", cardBg: "#FFF1F2" },
+  coral:      { primary: "#F97316", primaryDark: "#EA580C", headerBg: "#431407", headerText: "#FFEDD5", sidebarBg: "#FFF7ED", text: "#431407", muted: "#78716C", divider: "#FED7AA", pillBg: "#FFEDD5", pillBorder: "#FDBA74", cardBg: "#FFF7ED" },
+
+  // ── Warm & Rich ──────────────────────────────────────────────────────────
+  amber:      { primary: "#D97706", primaryDark: "#B45309", headerBg: "#451A03", headerText: "#FEF3C7", sidebarBg: "#FFFBEB", text: "#1F2937", muted: "#78716C", divider: "#FDE68A", pillBg: "#FEF3C7", pillBorder: "#FCD34D", cardBg: "#FFFBEB" },
+  copper:     { primary: "#B45930", primaryDark: "#9A4A25", headerBg: "#3C1A0B", headerText: "#FDE8D8", sidebarBg: "#FDF6F0", text: "#3C1A0B", muted: "#8B7355", divider: "#E8C4A8", pillBg: "#FDE8D8", pillBorder: "#D4A47C", cardBg: "#FDF8F4" },
+  burgundy:   { primary: "#881337", primaryDark: "#6B0F2B", headerBg: "#2D0A13", headerText: "#FDE4EA", sidebarBg: "#FDF2F4", text: "#2D0A13", muted: "#7A6B6E", divider: "#F5C6CE", pillBg: "#FDE4EA", pillBorder: "#F0A0B0", cardBg: "#FDF5F7" },
 };
 
 export const THEME_LIST: { name: ThemeName; label: string; color: string }[] = [
-  { name: "corporate",  label: "Corporate",  color: "#4F46E5" },
-  { name: "ocean",      label: "Ocean",      color: "#0EA5E9" },
-  { name: "forest",     label: "Forest",     color: "#16A34A" },
-  { name: "sunset",     label: "Sunset",     color: "#EA580C" },
-  { name: "monochrome", label: "Monochrome", color: "#374151" },
-  { name: "royal",      label: "Royal",      color: "#7C3AED" },
-  { name: "cherry",     label: "Cherry",     color: "#E11D48" },
-  { name: "emerald",    label: "Emerald",    color: "#10B981" },
-  { name: "lavender",   label: "Lavender",   color: "#8B5CF6" },
-  { name: "amber",      label: "Amber",      color: "#F59E0B" },
+  // Dark & Professional
+  { name: "corporate",  label: "Corporate",    color: "#4F46E5" },
+  { name: "midnight",   label: "Midnight",     color: "#6366F1" },
+  { name: "slate",      label: "Slate",        color: "#475569" },
+  { name: "monochrome", label: "Monochrome",   color: "#18181B" },
+  { name: "graphite",   label: "Graphite",     color: "#374151" },
+  // Blues & Teals
+  { name: "ocean",      label: "Ocean",        color: "#0284C7" },
+  { name: "teal",       label: "Teal",         color: "#0D9488" },
+  { name: "azure",      label: "Azure",        color: "#2563EB" },
+  // Greens
+  { name: "emerald",    label: "Emerald",      color: "#059669" },
+  { name: "forest",     label: "Forest",       color: "#15803D" },
+  { name: "sage",       label: "Sage",         color: "#4D7C5F" },
+  // Purples
+  { name: "royal",      label: "Royal",        color: "#7C3AED" },
+  { name: "lavender",   label: "Lavender",     color: "#8B5CF6" },
+  { name: "plum",       label: "Plum",         color: "#9333EA" },
+  // Reds & Pinks
+  { name: "cherry",     label: "Cherry",       color: "#DC2626" },
+  { name: "rose",       label: "Rose",         color: "#E11D48" },
+  { name: "coral",      label: "Coral",        color: "#F97316" },
+  // Warm & Rich
+  { name: "amber",      label: "Amber",        color: "#D97706" },
+  { name: "copper",     label: "Copper",       color: "#B45930" },
+  { name: "burgundy",   label: "Burgundy",     color: "#881337" },
 ];
 
 // A4 at 96 DPI
