@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/lib/supabase/auth-context";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,6 @@ import AppShell from "@/components/app-shell";
 import Image from "next/image";
 
 export default function RegisterPage() {
-  const { signUp } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,12 +21,21 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error } = await signUp(email, password, { full_name: fullName });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      setConfirmed(true);
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, fullName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Signup failed");
+      } else {
+        setConfirmed(true);
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
