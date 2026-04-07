@@ -20,6 +20,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ skipped: true });
     }
 
+    // Respect unsubscribe preference
+    if (user.user_metadata?.marketing_unsubscribed) {
+      return NextResponse.json({ skipped: true });
+    }
+
     const email = user.email!;
     const fullName = user.user_metadata?.full_name || "";
     const firstName = fullName.trim().split(" ")[0] || "there";
@@ -273,7 +278,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string): string {
           <p style="color:#cbd5e1;font-size:11px;margin:0;line-height:1.6">
             <a href="${siteUrl}/privacy" style="color:#94a3b8;text-decoration:underline">Privacy Policy</a>
             &nbsp;&bull;&nbsp;
-            <a href="${siteUrl}/unsubscribe?email=user" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a>
+            <a href="${siteUrl}/unsubscribe?email=${encodeURIComponent(email)}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a>
           </p>
         </td></tr>
 
