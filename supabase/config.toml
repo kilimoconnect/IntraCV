@@ -1,0 +1,15 @@
+# Supabase project configuration
+# https://supabase.com/docs/guides/cli/config
+
+[project]
+# Your Supabase project ID — found in: Dashboard → Project Settings → General
+# project_id = "your-project-id"
+
+# ── Edge Functions ─────────────────────────────────────────────────────────────
+
+[functions.cleanup-unconfirmed-users]
+# Run daily at 02:00 UTC
+# Cron format: minute hour day-of-month month day-of-week
+schedule = "0 2 * * *"
+# Secrets injected at runtime (set via: supabase secrets set CRON_SECRET=...)
+# CRON_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY are all injected automatically
