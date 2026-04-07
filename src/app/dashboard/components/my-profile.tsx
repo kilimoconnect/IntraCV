@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -721,6 +722,12 @@ export default function MyProfile({
           })}
         </>
       )}
+      {/* Footer */}
+      <div className="pt-4 pb-2 text-center">
+        <Link href="/privacy" className="text-xs text-slate-400 hover:text-indigo-600 transition-colors underline underline-offset-2">
+          Privacy Policy
+        </Link>
+      </div>
     </div>
   );
 }
