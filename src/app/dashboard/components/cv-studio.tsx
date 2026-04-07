@@ -1887,9 +1887,9 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
 
         {/* Theme picker row */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 shrink-0" />
-          <div className="flex gap-1">
+        <div className="flex items-start gap-2">
+          <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 shrink-0 mt-1" />
+          <div className="flex flex-wrap gap-1">
             {THEME_LIST.map((t) => (
               <button
                 key={t.name}
