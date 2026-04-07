@@ -4,13 +4,12 @@ import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, UserCircle2, Wand2, BriefcaseBusiness, FolderOpen, Sparkles, Settings as SettingsIcon } from "lucide-react";
+import { Loader2, UserCircle2, Wand2, BriefcaseBusiness, FolderOpen, Settings as SettingsIcon } from "lucide-react";
 import AppShell from "@/components/app-shell";
 import MyProfile from "./components/my-profile";
 import CvStudio from "./components/cv-studio";
 import InterviewPrep from "./components/interview-prep";
 import Documents from "./components/documents";
-import AiAssistant from "./components/ai-assistant";
 import SettingsPanel from "./components/settings";
 
 const TAB_META: Record<string, { label: string; description: string; icon: React.ElementType; gradient: string }> = {
@@ -18,7 +17,6 @@ const TAB_META: Record<string, { label: string; description: string; icon: React
   studio:    { label: "CV Studio",           description: "Design and generate your professional CV",          icon: Wand2,            gradient: "from-violet-500 to-purple-600" },
   interview: { label: "Interview Prep",      description: "Practice with AI-generated interview questions",    icon: BriefcaseBusiness,gradient: "from-blue-500 to-indigo-600" },
   documents: { label: "Documents",           description: "Access and download your saved CVs and letters",   icon: FolderOpen,       gradient: "from-emerald-500 to-teal-600" },
-  assistant: { label: "AI Career Assistant", description: "Get personalised career advice powered by AI",      icon: Sparkles,         gradient: "from-amber-500 to-orange-600" },
   settings:  { label: "Settings",            description: "Manage your account and CV preferences",           icon: SettingsIcon,     gradient: "from-slate-500 to-slate-700" },
 };
 
@@ -293,10 +291,6 @@ function DashboardPage() {
 
       {visibleTab === "documents" && (
         <Documents userId={user.id} />
-      )}
-
-      {visibleTab === "assistant" && (
-        <AiAssistant userId={user.id} cvData={cvData} />
       )}
 
       {visibleTab === "settings" && (

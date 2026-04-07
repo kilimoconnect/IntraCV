@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { Button } from "@/components/ui/button";
 import {
-  UserCircle2, Wand2, BriefcaseBusiness, FolderOpen, Sparkles, Settings as SettingsIcon,
+  UserCircle2, Wand2, BriefcaseBusiness, FolderOpen, Settings as SettingsIcon,
   LogOut, Loader2, ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
@@ -15,7 +15,6 @@ const NAV_ITEMS = [
   { key: "studio",    label: "CV Studio",       href: "/dashboard?tab=studio",    icon: Wand2 },
   { key: "interview", label: "Interview Prep",  href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
   { key: "documents", label: "Documents",       href: "/dashboard?tab=documents", icon: FolderOpen },
-  { key: "assistant", label: "AI Assistant",    href: "/dashboard?tab=assistant", icon: Sparkles },
   { key: "settings",  label: "Settings",        href: "/dashboard?tab=settings",  icon: SettingsIcon },
 ];
 
