@@ -13,6 +13,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
+    // Derive site URL from request origin so it works even without NEXT_PUBLIC_SITE_URL
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+
     const admin = createAdminSupabase();
 
     // Generate a signup confirmation link (creates the user + returns the link)
@@ -22,7 +25,7 @@ export async function POST(req: Request) {
       password,
       options: {
         data: { full_name: fullName || "" },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        redirectTo: `${origin}/auth/callback`,
       },
     });
 
