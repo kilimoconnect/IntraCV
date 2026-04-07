@@ -1886,36 +1886,50 @@ export default function CvStudio({ userId, cvData }: Props) {
           </div>
         </div>
 
-        {/* Theme picker row */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <Palette className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-            <span className="text-[11px] font-medium text-slate-500">Tap a colour to change your CV theme</span>
-            {selectedTheme && (
-              <span className="ml-auto text-[11px] font-semibold text-indigo-600 capitalize">
-                {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
-              </span>
-            )}
+        {/* Theme picker */}
+        <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">CV Theme</span>
+            </div>
+            <span
+              key={selectedTheme}
+              className="text-[11px] font-bold text-indigo-600 animate-fade-in-up"
+            >
+              {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
+            </span>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {THEME_LIST.map((t) => (
-              <button
-                key={t.name}
-                onClick={() => setSelectedTheme(t.name)}
-                className={`relative h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all duration-200 shrink-0 ${
-                  selectedTheme === t.name ? "border-slate-400 shadow-md ring-2 ring-slate-200" : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
-                }`}
-                style={{ backgroundColor: t.color }}
-                title={`${t.label} — tap to apply`}
-              >
-                {selectedTheme === t.name && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-1.5">
+            {THEME_LIST.map((t, i) => {
+              const active = selectedTheme === t.name;
+              return (
+                <button
+                  key={t.name}
+                  onClick={() => setSelectedTheme(t.name)}
+                  title={`${t.label} — tap to apply`}
+                  style={{
+                    backgroundColor: t.color,
+                    animationDelay: `${i * 30}ms`,
+                    transform: active ? "scale(1.25)" : "scale(1)",
+                    boxShadow: active ? `0 0 0 2px white, 0 0 0 4px ${t.color}` : "none",
+                  }}
+                  className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border transition-all duration-200 shrink-0 animate-fade-in-up
+                    ${active
+                      ? "border-transparent z-10"
+                      : "border-white/60 hover:scale-110 hover:z-10 hover:shadow-md"
+                    }`}
+                >
+                  {active && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+          <p className="text-[10px] text-slate-400 leading-none">Tap any swatch to instantly preview it on your CV</p>
         </div>
       </div>
 
