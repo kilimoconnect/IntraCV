@@ -2070,7 +2070,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         ) : (
           <div className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-400 cursor-default select-none">
             <Lock className="h-3.5 w-3.5" />
-            Cover Letter Included — Unlocks After Payment
+            Cover Letter Included — Download your CV to unlock it
           </div>
         )
       )}
