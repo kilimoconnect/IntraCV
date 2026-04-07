@@ -805,18 +805,32 @@ function CVBuilderPage() {
     }
     setSaving(true);
     try {
-      // 1. Personal Info — upsert (unique per user)
-      const { error: piErr } = await supabase.from("cv_personal_info").upsert({
-        user_id: user.id,
-        full_name: personalInfo.fullName,
-        email: personalInfo.email,
-        phone: personalInfo.phone,
-        location: personalInfo.location,
-        headline: personalInfo.headline,
-        linkedin: personalInfo.linkedin,
-        website: personalInfo.website,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      // 1. Personal Info — upsert (unique per user), sync to user_settings
+      const now = new Date().toISOString();
+      const [piRes2, settingsRes] = await Promise.all([
+        supabase.from("cv_personal_info").upsert({
+          user_id: user.id,
+          full_name: personalInfo.fullName,
+          email: personalInfo.email,
+          phone: personalInfo.phone,
+          location: personalInfo.location,
+          headline: personalInfo.headline,
+          linkedin: personalInfo.linkedin,
+          website: personalInfo.website,
+          updated_at: now,
+        }, { onConflict: "user_id" }),
+        supabase.from("user_settings").upsert({
+          user_id: user.id,
+          full_name: personalInfo.fullName,
+          phone: personalInfo.phone,
+          location: personalInfo.location,
+          headline: personalInfo.headline,
+          linkedin: personalInfo.linkedin,
+          website: personalInfo.website,
+          updated_at: now,
+        }, { onConflict: "user_id" }),
+      ]);
+      const piErr = piRes2.error || settingsRes.error;
       if (piErr) throw piErr;
 
       // 2. Summary — upsert (unique per user)

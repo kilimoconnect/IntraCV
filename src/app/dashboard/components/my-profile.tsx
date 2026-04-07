@@ -215,6 +215,7 @@ export default function MyProfile({
 }: MyProfileProps) {
   const router = useRouter();
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
+  const [isEditingCV, setIsEditingCV] = useState(false);
 
   const handleGenerateCV = () => {
     setIsGeneratingCV(true);
@@ -581,8 +582,9 @@ export default function MyProfile({
             {isGeneratingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {isGeneratingCV ? "Loading..." : "Generate CV"}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => router.push("/cv-builder")} className="w-full sm:w-auto rounded-xl border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm">
-            <Pencil className="mr-2 h-4 w-4" /> Edit CV
+          <Button size="sm" variant="outline" onClick={() => { setIsEditingCV(true); router.push("/cv-builder"); }} disabled={isEditingCV} className="w-full sm:w-auto rounded-xl border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm">
+            {isEditingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+            {isEditingCV ? "Loading..." : "Edit CV"}
           </Button>
         </div>
       </div>

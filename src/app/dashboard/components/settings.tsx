@@ -74,11 +74,23 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
   const loadSettings = useCallback(async () => {
     setLoadingProfile(true);
     try {
-      const { data } = await supabase.from("user_settings").select("*").eq("user_id", userId).single();
-      if (data) {
-        setProfile({ full_name: data.full_name || "", phone: data.phone || "", location: data.location || "", headline: data.headline || "", linkedin: data.linkedin || "", website: data.website || "" });
+      const [{ data: settings }, { data: pi }] = await Promise.all([
+        supabase.from("user_settings").select("*").eq("user_id", userId).single(),
+        supabase.from("cv_personal_info").select("*").eq("user_id", userId).single(),
+      ]);
+      // cv_personal_info is the authoritative source; fall back to user_settings
+      const src = pi || settings;
+      if (src) {
+        setProfile({
+          full_name: src.full_name || "",
+          phone: src.phone || "",
+          location: src.location || "",
+          headline: src.headline || "",
+          linkedin: src.linkedin || "",
+          website: src.website || "",
+        });
       }
-    } catch { /* table may not exist yet */ } finally { setLoadingProfile(false); }
+    } catch { /* tables may not exist yet */ } finally { setLoadingProfile(false); }
   }, [userId, supabase]);
 
   useEffect(() => { loadSettings(); }, [loadSettings]);
@@ -86,8 +98,22 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
   const saveProfile = async () => {
     setSavingProfile(true);
     try {
-      const { error } = await supabase.from("user_settings").upsert({ user_id: userId, ...profile, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
-      if (error) throw error;
+      const now = new Date().toISOString();
+      const [r1, r2] = await Promise.all([
+        supabase.from("user_settings").upsert({ user_id: userId, ...profile, updated_at: now }, { onConflict: "user_id" }),
+        supabase.from("cv_personal_info").upsert({
+          user_id: userId,
+          full_name: profile.full_name,
+          phone: profile.phone,
+          location: profile.location,
+          headline: profile.headline,
+          linkedin: profile.linkedin,
+          website: profile.website,
+          updated_at: now,
+        }, { onConflict: "user_id" }),
+      ]);
+      if (r1.error) throw r1.error;
+      if (r2.error) throw r2.error;
       toast.success("Profile saved");
     } catch (err: any) { toast.error(err.message || "Failed to save"); } finally { setSavingProfile(false); }
   };
