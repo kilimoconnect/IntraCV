@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     // Re-generate confirmation link for existing unconfirmed user
     const { data, error } = await admin.auth.admin.generateLink({
-      type: "signup",
+      type: "magiclink",
       email,
       options: { redirectTo: `${origin}/auth/confirm` },
     });
