@@ -1,5 +1,5 @@
 {
-  "buildCommand": "NEXT_PRIVATE_DISABLE_TURBOPACK=1 next build",
+  "buildCommand": "next build",
   "functions": {
     "src/app/api/pdf/generate/route.ts": {
       "memory": 1024,
