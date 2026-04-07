@@ -606,6 +606,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [fixingOverflow, setFixingOverflow] = useState(false);
+  const [autoFixAttempts, setAutoFixAttempts] = useState(0);
+  const autoFixAttemptsRef = useRef(0);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -938,6 +940,27 @@ export default function CvStudio({ userId, cvData }: Props) {
     } catch {}
     setFixingOverflow(false);
   }, [aiData, overflowSections, fixingOverflow]);
+
+  // Auto-trigger fix overflow up to 3 times; only show manual button after 3 failures
+  useEffect(() => {
+    if (overflowSections.size === 0) {
+      // Overflow resolved — reset counter
+      autoFixAttemptsRef.current = 0;
+      setAutoFixAttempts(0);
+      return;
+    }
+    if (fixingOverflow) return;
+    if (autoFixAttemptsRef.current >= 3) return; // all auto-attempts exhausted — show manual button
+    if (!aiData) return;
+
+    const t = setTimeout(async () => {
+      autoFixAttemptsRef.current += 1;
+      setAutoFixAttempts(autoFixAttemptsRef.current);
+      await handleAutoFixOverflow();
+    }, 800); // slight delay so the canvas has time to measure
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overflowSections.size, fixingOverflow, aiData]);
 
   const handleCvClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-cv-field]");
@@ -1819,15 +1842,19 @@ export default function CvStudio({ userId, cvData }: Props) {
               className={`flex items-center gap-1 sm:gap-1.5 rounded-md border px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors ${
                 editMode
                   ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                  : overflowSections.size > 0
-                    ? "border-amber-300 bg-amber-50 text-amber-700 animate-pulse"
+                  : overflowSections.size > 0 && autoFixAttempts >= 3
+                    ? "border-amber-300 bg-amber-50 text-amber-700"
+                    : overflowSections.size > 0
+                    ? "border-amber-200 bg-amber-50/50 text-amber-500"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {editMode ? <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <PenLine className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-              <span className="hidden sm:inline">{editMode ? "Done Editing" : overflowSections.size > 0 ? "Fix Overflow" : "Edit CV"}</span>
+              {editMode ? <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : (overflowSections.size > 0 && fixingOverflow) ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <PenLine className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              <span className="hidden sm:inline">
+                {editMode ? "Done Editing" : overflowSections.size > 0 && fixingOverflow ? "Auto-fixing…" : overflowSections.size > 0 && autoFixAttempts >= 3 ? "Fix Overflow" : "Edit CV"}
+              </span>
               <span className="sm:hidden">{editMode ? "Done" : "Edit"}</span>
-              {!editMode && overflowSections.size > 0 && (
+              {!editMode && overflowSections.size > 0 && autoFixAttempts >= 3 && (
                 <span className="ml-0.5 h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{overflowSections.size}</span>
               )}
             </button>
@@ -1878,16 +1905,27 @@ export default function CvStudio({ userId, cvData }: Props) {
             <div className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-center gap-2 text-xs text-amber-700">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} overflowing — AI can auto-delete excess bullet points to fix it.</span>
+                {fixingOverflow ? (
+                  <span>Auto-fixing overflow… (attempt {autoFixAttempts}/3)</span>
+                ) : autoFixAttempts < 3 ? (
+                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} overflowing — auto-fixing…</span>
+                ) : (
+                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} still overflowing after 3 attempts — fix manually or try AI fix.</span>
+                )}
               </div>
-              <button
-                onClick={handleAutoFixOverflow}
-                disabled={fixingOverflow}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-60 shrink-0"
-              >
-                {fixingOverflow ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                {fixingOverflow ? "Fixing…" : "AI Auto-Fix"}
-              </button>
+              {autoFixAttempts >= 3 && (
+                <button
+                  onClick={() => { autoFixAttemptsRef.current = 0; setAutoFixAttempts(0); handleAutoFixOverflow(); }}
+                  disabled={fixingOverflow}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-60 shrink-0"
+                >
+                  {fixingOverflow ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  {fixingOverflow ? "Fixing…" : "AI Auto-Fix"}
+                </button>
+              )}
+              {fixingOverflow && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500 shrink-0" />
+              )}
             </div>
           )}
         </div>
@@ -2021,18 +2059,18 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {/* ── View Cover Letter banner ── */}
-      {coverLetter && !showCoverLetter && !showJobOptimizer && (
-        coverLetterUnlocked ? (
+      {/* ── Cover Letter banner — always visible when CV is generated ── */}
+      {aiData && !showCoverLetter && !showJobOptimizer && (
+        coverLetterUnlocked && coverLetter ? (
           <button
             onClick={() => setShowCoverLetter(true)}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-violet-200 bg-violet-50 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-purple-50 text-sm font-semibold text-violet-700 hover:from-violet-100 hover:to-purple-100 hover:border-violet-400 transition-all shadow-sm"
           >
-            <FileText className="h-3.5 w-3.5" />
+            <FileText className="h-4 w-4" />
             View Generated Cover Letter
           </button>
         ) : (
-          <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400 cursor-default">
+          <div className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-400 cursor-default select-none">
             <Lock className="h-3.5 w-3.5" />
             Cover Letter Included — Unlocks After Payment
           </div>
