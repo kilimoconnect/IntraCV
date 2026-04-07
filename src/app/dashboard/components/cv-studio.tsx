@@ -1404,10 +1404,10 @@ export default function CvStudio({ userId, cvData }: Props) {
               <button
                 key={cat.id}
                 onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
-                className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all ${
+                className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all duration-200 ${
                   isRecommended
-                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
-                    : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
+                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} shadow-elevated hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
+                    : "bg-white border-slate-200 shadow-elevated hover:border-slate-300 hover:shadow-xl hover:-translate-y-0.5"
                 }`}
               >
                 {isRecommended && (
@@ -1441,10 +1441,10 @@ export default function CvStudio({ userId, cvData }: Props) {
                     </div>
                   </div>
 
-                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
                     isRecommended
-                      ? `border-slate-200 bg-white/80 ${cat.color} group-hover:bg-white`
-                      : "border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-white"
+                      ? `border-slate-200 bg-white/80 ${cat.color} group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm`
+                      : "border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm"
                   }`}>
                     <Sparkles className="h-4 w-4" />
                     {isRecommended ? "Generate" : "Select"}
@@ -1482,7 +1482,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
 
         {/* ── Profile card ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-elevated divide-y divide-slate-100 overflow-hidden">
 
           {/* Loading */}
           {profileAnalyzing && !profileAnalysis && (
@@ -1607,7 +1607,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               <button
                 onClick={() => void handleAnalyzeProfile()}
                 disabled={profileAnalyzing}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 text-white text-sm font-semibold py-2.5 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
               >
                 {profileAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 {profileAnalyzing ? "Analyzing…" : "Analyze Profile vs Job Description"}
@@ -1663,7 +1663,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                 setStep("select");
               }}
               disabled={profileAnalyzing && !profileAnalysis}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold py-3 transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
             >
               <Sparkles className="h-4 w-4" />
               {jobDescription.trim() ? "Generate Tailored CV →" : "Generate My CV →"}
@@ -1707,7 +1707,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               key={layout.variant}
               onClick={() => { setSelectedVariant(layout.variant); void handleGenerate(selectedCategory); }}
-              className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} transition-all hover:shadow-xl hover:-translate-y-1 overflow-hidden`}
+              className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} shadow-elevated transition-all duration-200 hover:shadow-xl hover:-translate-y-1 overflow-hidden`}
             >
               {/* Mini preview */}
               <div className="px-5 pt-5 pb-3">
@@ -1719,7 +1719,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               <div className="px-5 pb-5">
                 <div className={`text-sm font-bold ${cat.color} mb-1`}>{layout.name}</div>
                 <p className="text-[11px] text-slate-600 leading-relaxed mb-3">{layout.description}</p>
-                <div className={`flex items-center justify-center gap-2 py-2 rounded-lg bg-white/80 border border-slate-200 text-sm font-medium ${cat.color} group-hover:bg-white transition-colors`}>
+                <div className={`flex items-center justify-center gap-2 py-2 rounded-xl bg-white/80 border border-slate-200 text-sm font-medium ${cat.color} group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm transition-all duration-200`}>
                   <Sparkles className="h-4 w-4" />
                   Select & Generate
                 </div>
@@ -1783,7 +1783,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   return (
     <div className="flex flex-col gap-3 sm:gap-4">
       {/* Toolbar */}
-      <div className="flex flex-col gap-2 sm:gap-3 px-1 sm:px-2">
+      <div className="flex flex-col gap-2 sm:gap-3 px-3 sm:px-4 py-3 bg-white shadow-elevated rounded-2xl">
         {/* Top row: back + badge + actions */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -1834,7 +1834,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               onClick={() => setShowPaymentModal(true)}
               disabled={downloadingPdf || paymentProcessing}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-60"
             >
               {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               {downloadingPdf ? "Generating..." : "Download"}
@@ -1850,8 +1850,8 @@ export default function CvStudio({ userId, cvData }: Props) {
               <button
                 key={t.name}
                 onClick={() => setSelectedTheme(t.name)}
-                className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border-2 transition-all shrink-0 ${
-                  selectedTheme === t.name ? "border-slate-400 shadow-sm" : "border-slate-200 hover:border-slate-300"
+                className={`relative h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all duration-200 shrink-0 ${
+                  selectedTheme === t.name ? "border-slate-400 shadow-md ring-2 ring-slate-200" : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
                 }`}
                 style={{ backgroundColor: t.color }}
                 title={t.label}
@@ -1926,7 +1926,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               onClick={() => void handlePayAndDownload()}
               disabled={paymentProcessing}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl disabled:opacity-60"
             >
               {paymentProcessing ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>

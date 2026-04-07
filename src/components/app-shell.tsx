@@ -60,9 +60,9 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
   const userInitial = user?.email?.[0]?.toUpperCase() ?? "U";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-indigo-50/30">
+    <div className="min-h-screen bg-slate-50/50 bg-mesh">
       {/* ── Header ── */}
-      <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+      <header className="border-b border-slate-200/60 glass-card-strong sticky top-0 z-50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
             onClick={() => router.push(user ? "/dashboard" : "/")}
@@ -72,7 +72,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
               <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
               <Image src="/icon.svg" alt="IntraCV" width={30} height={30} className="relative rounded-lg" />
             </div>
-            <span className="text-lg font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
+            <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
               IntraCV
             </span>
           </button>
@@ -96,7 +96,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
       <div className="max-w-7xl mx-auto flex">
         {/* ── Desktop Sidebar ── */}
         {!hideSidebar && (
-          <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200/80 bg-white/70 backdrop-blur-sm min-h-[calc(100vh-3.5rem)] sticky top-14">
+          <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200/60 bg-white/80 backdrop-blur-xl min-h-[calc(100vh-3.5rem)] sticky top-14">
             {/* Nav items */}
             <nav className="flex-1 p-3 space-y-0.5">
               {NAV_ITEMS.map((item) => {
@@ -110,10 +110,10 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 text-left group ${
                       isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-200"
+                        ? "bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-200/50 ring-1 ring-indigo-500/20"
                         : isLoading
                         ? "bg-slate-100 text-slate-400"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        : "text-slate-600 hover:bg-indigo-50/50 hover:text-slate-900 nav-item-modern"
                     }`}
                   >
                     <span className={`shrink-0 transition-transform duration-150 ${isActive ? "" : "group-hover:scale-110"}`}>
@@ -141,7 +141,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
             {/* User footer */}
             {user && (
               <div className="p-3 border-t border-slate-200/80">
-                <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-slate-50">
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-slate-50 to-indigo-50/40 border border-slate-200/60">
                   <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {userInitial}
                   </div>
@@ -154,7 +154,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
 
         {/* ── Mobile Bottom Nav ── */}
         {!hideMobileNav && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50 px-1 py-1.5 flex gap-0.5 shadow-[0_-1px_12px_rgba(0,0,0,0.06)]">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 glass-card-strong border-t border-slate-200/60 z-50 px-1.5 py-2 flex gap-1 shadow-[0_-2px_16px_rgba(0,0,0,0.06)]">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = currentKey === item.key;

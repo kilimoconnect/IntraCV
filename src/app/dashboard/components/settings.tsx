@@ -39,9 +39,9 @@ function SectionCard({ icon, gradient, title, description, children }: {
   icon: React.ReactNode; gradient: string; title: string; description?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm shadow-slate-100 overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-        <div className={`h-8 w-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0`}>
+    <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200/60 shadow-elevated overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100/80 flex items-center gap-3 bg-gradient-to-r from-slate-50/80 to-transparent">
+        <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 shadow-sm`}>
           {icon}
         </div>
         <div>
@@ -66,7 +66,7 @@ function FieldRow({ label, icon, children }: { label: string; icon?: React.React
   );
 }
 
-const selectClass = "flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-300 focus-visible:border-indigo-300";
+const selectClass = "flex h-9 w-full rounded-xl border border-slate-200/80 bg-white px-3 py-1 text-sm text-slate-800 shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/40 focus-visible:border-indigo-400";
 
 export default function Settings({ userId, userEmail }: SettingsProps) {
   const supabase = createClient();
@@ -135,7 +135,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
   }
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className="space-y-5 max-w-2xl stagger-children">
 
       {/* Account */}
       <SectionCard icon={<Mail className="h-4 w-4 text-white" />} gradient="from-slate-500 to-slate-700" title="Account" description="Your login credentials">
@@ -169,7 +169,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           </FieldRow>
         </div>
         <div className="mt-5">
-          <Button onClick={saveProfile} disabled={savingProfile} className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 border-0 shadow-sm shadow-indigo-200 text-white">
+          <Button onClick={saveProfile} disabled={savingProfile} className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 border-0 shadow-sm hover:shadow-md shadow-indigo-200 text-white transition-all">
             {savingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Profile
           </Button>
@@ -237,7 +237,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           ))}
         </div>
 
-        <Button onClick={saveCvPreferences} disabled={savingPrefs} className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 border-0 shadow-sm shadow-violet-200 text-white">
+        <Button onClick={saveCvPreferences} disabled={savingPrefs} className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 border-0 shadow-sm hover:shadow-md shadow-violet-200 text-white transition-all">
           {savingPrefs ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Preferences
         </Button>
@@ -252,7 +252,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           <FieldRow label="Confirm Password">
             <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat password" className="rounded-xl border-slate-200 text-sm" />
           </FieldRow>
-          <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm shadow-blue-200 text-white">
+          <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm hover:shadow-md shadow-blue-200 text-white transition-all">
             {changingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
             Update Password
           </Button>

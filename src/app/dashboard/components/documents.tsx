@@ -159,15 +159,15 @@ export default function Documents({ userId }: DocumentsProps) {
 
   if (docs.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-16 text-center">
-          <File className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-1">No Documents Yet</h3>
-          <p className="text-sm text-muted-foreground">
-            Generated CVs and cover letters will appear here.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-24 animate-fade-in-up">
+        <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200/60 flex items-center justify-center mb-6 shadow-elevated">
+          <File className="h-10 w-10 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-800 mb-2">No Documents Yet</h3>
+        <p className="text-sm text-slate-500 max-w-xs text-center">
+          Generated CVs and cover letters will appear here once you create them in CV Studio.
+        </p>
+      </div>
     );
   }
 
@@ -177,29 +177,29 @@ export default function Documents({ userId }: DocumentsProps) {
   return (
     <div className="space-y-6">
       {/* Summary + Refresh */}
-      <div className="flex items-center justify-between gap-4">
-      <div className="flex gap-4">
-        <div className="border rounded-lg px-4 py-3 text-center">
-          <div className="text-2xl font-bold">{docs.length}</div>
-          <div className="text-xs text-muted-foreground">Total</div>
+      <div className="flex items-center justify-between gap-4 animate-fade-in-up">
+      <div className="flex gap-3">
+        <div className="stat-card rounded-2xl px-5 py-3 text-center min-w-[80px]">
+          <div className="text-2xl font-extrabold text-slate-800">{docs.length}</div>
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Total</div>
         </div>
-        <div className="border rounded-lg px-4 py-3 text-center">
-          <div className="text-2xl font-bold">{cvDocs.length}</div>
-          <div className="text-xs text-muted-foreground">CVs</div>
+        <div className="stat-card rounded-2xl px-5 py-3 text-center min-w-[80px]">
+          <div className="text-2xl font-extrabold text-indigo-600">{cvDocs.length}</div>
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">CVs</div>
         </div>
-        <div className="border rounded-lg px-4 py-3 text-center">
-          <div className="text-2xl font-bold">{coverLetters.length}</div>
-          <div className="text-xs text-muted-foreground">Cover Letters</div>
+        <div className="stat-card rounded-2xl px-5 py-3 text-center min-w-[80px]">
+          <div className="text-2xl font-extrabold text-violet-600">{coverLetters.length}</div>
+          <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Letters</div>
         </div>
       </div>
-        <Button variant="outline" size="sm" onClick={loadDocs} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={loadDocs} disabled={loading} className="rounded-xl shadow-sm hover:shadow-md transition-shadow">
           <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
       </div>
 
       {/* Document List */}
-      <div className="space-y-3">
+      <div className="space-y-3 stagger-children">
         {docs.map((doc) => {
           const cv = doc.doc_type === "cv" ? parseCvContent(doc.content) : null;
           const isEngineCV = cv?.engineStyleId != null;
@@ -328,8 +328,8 @@ export default function Documents({ userId }: DocumentsProps) {
 
       {/* ── Delete Confirmation Modal ── */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl shadow-elevated-lg w-full max-w-sm p-7 animate-fade-in-up">
             <div className="flex flex-col items-center text-center gap-3">
               <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
                 <Trash2 className="h-6 w-6 text-red-600" />
