@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
@@ -327,9 +327,6 @@ function CVBuilderPage() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Mobile tab bar auto-scroll
-  const tabBarRef = useRef<HTMLDivElement>(null);
-  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -581,17 +578,6 @@ function CVBuilderPage() {
       setActiveTab(tab);
     }
   }, [searchParams, loadingProfile, hasExistingData]);
-
-  // ─── Auto-scroll active tab into view on mobile ───
-  useEffect(() => {
-    const bar = tabBarRef.current;
-    const btn = tabRefs.current.get(activeTab);
-    if (!bar || !btn) return;
-    const barRect = bar.getBoundingClientRect();
-    const btnRect = btn.getBoundingClientRect();
-    const scrollLeft = bar.scrollLeft + (btnRect.left - barRect.left) - barRect.width / 2 + btnRect.width / 2;
-    bar.scrollTo({ left: scrollLeft, behavior: "smooth" });
-  }, [activeTab]);
 
   // ─── File Upload + AI Extract ───
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1652,83 +1638,120 @@ function CVBuilderPage() {
               </div>
             </aside>
 
-            {/* ── Mobile Tab Bar ── */}
+            {/* ── Mobile Bottom Nav Bar ── */}
             <div
-              ref={tabBarRef}
-              className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide"
-              style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
+              className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex items-center gap-2 px-3"
+              style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))', paddingTop: '10px' }}
             >
-              {SECTIONS.map((sec) => {
-                const Icon = sec.icon;
-                const isActive = activeTab === sec.key;
-                const hasIssues = sectionsWithIssues.has(sec.key);
-                // Short display labels for the cramped tab bar
-                const SHORT_LABELS: Record<string, string> = {
-                  personal: "Info", summary: "Summary", experience: "Exp.",
-                  education: "Edu.", skills: "Skills", certifications: "Certs",
-                  achievements: "Achieve.", awards: "Awards", memberships: "Members",
-                  projects: "Projects", boardRoles: "Board", execTraining: "Training",
-                  publications: "Pubs", tools: "Tools", volunteer: "Volunteer",
-                  languages: "Lang.", referees: "Refs", declaration: "Decl.",
-                };
-                return (
-                  <button
-                    key={sec.key}
-                    ref={(el) => { if (el) tabRefs.current.set(sec.key, el); else tabRefs.current.delete(sec.key); }}
-                    onClick={() => setActiveTab(sec.key)}
-                    className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium shrink-0 transition-colors ${
-                      isActive ? "bg-primary text-primary-foreground" : hasIssues ? "text-red-600 bg-red-50" : "text-muted-foreground"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {SHORT_LABELS[sec.key] ?? sec.label.split(" ")[0]}
-                    {hasIssues && !isActive && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500" />}
-                  </button>
-                );
-              })}
-              {hiddenSections.length > 0 && (
+              {/* Prev */}
+              <button
+                onClick={() => safeIdx > 0 && setActiveTab(SECTIONS[safeIdx - 1].key)}
+                disabled={safeIdx === 0}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-500 disabled:opacity-30 shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+
+              {/* Current section — tap to open full section list */}
+              <button
+                onClick={() => setShowMobileAddSection(true)}
+                className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-left min-w-0"
+              >
+                {(() => { const Icon = SECTIONS[safeIdx].icon; return <Icon className="h-4 w-4 shrink-0 text-primary" />; })()}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-slate-800 truncate">{SECTIONS[safeIdx].label}</p>
+                  <p className="text-[10px] text-slate-400">{safeIdx + 1} of {SECTIONS.length}</p>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              </button>
+
+              {/* Next or Save on last section */}
+              {safeIdx < SECTIONS.length - 1 ? (
                 <button
-                  onClick={() => setShowMobileAddSection(true)}
-                  className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium shrink-0 transition-colors text-primary border border-dashed border-primary/40 bg-primary/5"
+                  onClick={() => setActiveTab(SECTIONS[safeIdx + 1].key)}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-500 shrink-0"
                 >
-                  <Plus className="h-4 w-4" />
-                  Add
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={async () => { const ok = await saveToDatabase(); if (ok) router.push("/dashboard"); }}
+                  disabled={saving}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-600 text-white disabled:opacity-50 shrink-0"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 </button>
               )}
             </div>
 
-            {/* ── Mobile Add Section Sheet ── */}
+            {/* ── Mobile Section Picker Sheet ── */}
             {showMobileAddSection && (
               <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end">
-                {/* Backdrop */}
                 <div className="absolute inset-0 bg-black/40" onClick={() => setShowMobileAddSection(false)} />
-                {/* Sheet */}
-                <div className="relative bg-white rounded-t-2xl max-h-[70vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
-                  <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-                    <h3 className="font-semibold text-sm">Add Section</h3>
+                <div className="relative bg-white rounded-t-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-200">
+                  {/* Handle */}
+                  <div className="flex justify-center pt-2 pb-1 shrink-0">
+                    <div className="w-10 h-1 rounded-full bg-slate-300" />
+                  </div>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+                    <h3 className="font-semibold text-sm text-slate-800">All Sections</h3>
                     <button onClick={() => setShowMobileAddSection(false)} className="text-muted-foreground p-1">
                       <XCircle className="h-5 w-5" />
                     </button>
                   </div>
-                  <div className="p-3 space-y-1">
-                    {hiddenSections.map((sec) => {
+                  {/* Vertical section list */}
+                  <div className="overflow-y-auto flex-1 p-3 space-y-1">
+                    {/* Active / visible sections */}
+                    {SECTIONS.map((sec) => {
                       const Icon = sec.icon;
+                      const isActive = sec.key === activeTab;
+                      const hasIssues = sectionsWithIssues.has(sec.key);
+                      const filled = sectionHasContent(sec.key);
                       return (
                         <button
                           key={sec.key}
-                          onClick={() => {
-                            setManuallyShown((prev) => new Set(prev).add(sec.key));
-                            setActiveTab(sec.key);
-                            setShowMobileAddSection(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+                          onClick={() => { setActiveTab(sec.key); setShowMobileAddSection(false); }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left ${
+                            isActive
+                              ? "bg-primary text-primary-foreground"
+                              : hasIssues
+                              ? "bg-red-50 text-red-700"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
                         >
                           <Icon className="h-5 w-5 shrink-0" />
                           <span className="flex-1">{sec.label}</span>
-                          <Plus className="h-4 w-4 shrink-0 text-primary" />
+                          {isActive && <Check className="h-4 w-4 shrink-0" />}
+                          {!isActive && filled && <Check className="h-4 w-4 shrink-0 text-emerald-500" />}
+                          {!isActive && hasIssues && <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />}
                         </button>
                       );
                     })}
+                    {/* Hidden / not-yet-added sections */}
+                    {hiddenSections.length > 0 && (
+                      <>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-4 pt-3 pb-1">Add more sections</p>
+                        {hiddenSections.map((sec) => {
+                          const Icon = sec.icon;
+                          return (
+                            <button
+                              key={sec.key}
+                              onClick={() => {
+                                setManuallyShown((prev) => new Set(prev).add(sec.key));
+                                setActiveTab(sec.key);
+                                setShowMobileAddSection(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left text-slate-400 border border-dashed border-slate-200 hover:bg-slate-50 hover:text-slate-600"
+                            >
+                              <Icon className="h-5 w-5 shrink-0" />
+                              <span className="flex-1">{sec.label}</span>
+                              <Plus className="h-4 w-4 shrink-0 text-primary" />
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2353,8 +2376,8 @@ function CVBuilderPage() {
                 </CardContent>
               </Card>
 
-              {/* ── Footer Navigation ── */}
-              <div className="flex items-center justify-between mt-6 pb-20 md:pb-0">
+              {/* ── Footer Navigation (desktop only) ── */}
+              <div className="hidden md:flex items-center justify-between mt-6">
                 <Button
                   variant="outline"
                   onClick={() => safeIdx > 0 && setActiveTab(SECTIONS[safeIdx - 1].key)}
@@ -2374,6 +2397,8 @@ function CVBuilderPage() {
                   </Button>
                 )}
               </div>
+              {/* Spacer for mobile bottom bar */}
+              <div className="h-20 md:hidden" />
             </div>
           </div>
         </div>
