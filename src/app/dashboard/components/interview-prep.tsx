@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -169,6 +170,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   // Sessions list
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const router = useRouter();
   const [loadingSessions, setLoadingSessions] = useState(true);
 
   // Active session form
@@ -185,9 +187,6 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
   // Usage / payment state
   const [usage, setUsage] = useState<UsageState>({ generated: 0, paidQuota: 0, totalAllowed: FREE_QUOTA, remaining: FREE_QUOTA });
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [pendingGenerate, setPendingGenerate] = useState<"generate" | "add" | null>(null);
 
   // Delete confirm state
   const [confirmDeleteSession, setConfirmDeleteSession] = useState<SessionRow | null>(null);
@@ -330,8 +329,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     if (!simJobDescription.trim()) { toast.error("Please enter a job description"); return; }
     const u = currentUsage ?? usage;
     if (u.remaining <= 0) {
-      setPendingGenerate("generate");
-      setShowPaymentModal(true);
+      navigateToUpgrade("generate");
       return;
     }
     setGeneratingQuestions(true);
@@ -349,8 +347,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
       });
       const json = await res.json();
       if (res.status === 402 || json.error === "quota_exceeded") {
-        setPendingGenerate("generate");
-        setShowPaymentModal(true);
+        navigateToUpgrade("generate");
         return;
       }
       if (!res.ok) throw new Error(json.error);
@@ -443,46 +440,18 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   };
 
   // ─── Flutterwave payment to unlock 20 more questions ───
-  const handlePayForQuestions = useCallback(async () => {
-    const email = cvData?.personalInfo?.email || "";
-    if (!email) {
-      toast.error("Please add your email to your profile before paying.");
-      return;
-    }
-
-    setPaymentProcessing(true);
-    try {
-      // Store pending action in sessionStorage so the callback page can signal back
-      sessionStorage.setItem("interview_pending_action", pendingGenerate || "generate");
-
-      const redirectUrl = `${window.location.origin}/interview-payment/callback`;
-      const res = await fetch("/api/payments/interview-initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          name: cvData?.personalInfo?.fullName || "IntraCV User",
-          redirectUrl,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.link) throw new Error(data.error || "Failed to create payment link");
-
-      // Redirect user to Flutterwave hosted checkout (no inline modal = no browser dialog)
-      window.location.href = data.link;
-    } catch (err: any) {
-      toast.error(err.message || "Could not open payment page. Please try again.");
-      setPaymentProcessing(false);
-    }
-  }, [cvData, pendingGenerate]);
+  const navigateToUpgrade = useCallback((action: "generate" | "add") => {
+    const email = encodeURIComponent(cvData?.personalInfo?.email || "");
+    const name = encodeURIComponent(cvData?.personalInfo?.fullName || "IntraCV User");
+    router.push(`/interview-payment/upgrade?action=${action}&email=${email}&name=${name}`);
+  }, [router, cvData]);
 
   // ─── Add More Questions to current session ───
   const addMoreQuestionsCore = async (currentUsage?: UsageState) => {
     if (!currentSessionId) return;
     const u = currentUsage ?? usage;
     if (u.remaining <= 0) {
-      setPendingGenerate("add");
-      setShowPaymentModal(true);
+      navigateToUpgrade("add");
       return;
     }
     setAddingMore(true);
@@ -504,8 +473,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
       });
       const json = await res.json();
       if (res.status === 402 || json.error === "quota_exceeded") {
-        setPendingGenerate("add");
-        setShowPaymentModal(true);
+        navigateToUpgrade("add");
         return;
       }
       if (!res.ok) throw new Error(json.error);
@@ -792,7 +760,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               </div>
               <Button
                 size="sm"
-                onClick={() => setShowPaymentModal(true)}
+                onClick={() => navigateToUpgrade("generate")}
                 className="shrink-0 h-7 px-3 text-xs rounded-lg bg-amber-600 hover:bg-amber-700 text-white border-0"
               >
                 Unlock
@@ -996,96 +964,6 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
           </div>
         )}
       </div>
-
-      {/* ── Payment Modal ── */}
-      <Dialog open={showPaymentModal} onOpenChange={(o) => { if (!o && !paymentProcessing) { setShowPaymentModal(false); setPendingGenerate(null); } }}>
-        <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden">
-          {/* Compact gradient header */}
-          <div className="bg-gradient-to-br from-indigo-600 to-violet-600 px-5 pt-5 pb-5 text-white relative">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
-            <div className="relative flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold leading-tight">Unlock More Questions</h2>
-                <p className="text-xs text-indigo-100 mt-0.5">Your free questions have been used up</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-5 space-y-4">
-            {/* Price + count inline */}
-            <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">One-time top-up</p>
-                <p className="text-xl font-extrabold text-slate-800">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</p>
-              </div>
-              <div className="h-12 w-12 rounded-xl bg-indigo-50 border border-indigo-100 flex flex-col items-center justify-center">
-                <span className="text-lg font-extrabold text-indigo-600 leading-none">{PAID_BATCH}</span>
-                <span className="text-[9px] text-indigo-400 font-medium">questions</span>
-              </div>
-            </div>
-
-            {/* 2-column features */}
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                `+${PAID_BATCH} questions added`,
-                "Works across all sessions",
-                "AI-personalised questions",
-                "Top up any time",
-              ].map((f, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <span className="h-4 w-4 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-bold flex items-center justify-center shrink-0">✓</span>
-                  {f}
-                </div>
-              ))}
-            </div>
-
-            {/* Compact comparison table */}
-            <div className="rounded-xl overflow-hidden border border-slate-200 text-xs">
-              <div className="grid grid-cols-3 bg-slate-50 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                <div className="px-3 py-1.5">Plan</div>
-                <div className="px-3 py-1.5 text-center border-l border-slate-200">Qty</div>
-                <div className="px-3 py-1.5 text-center border-l border-slate-200">Price</div>
-              </div>
-              <div className="grid grid-cols-3 bg-white border-t border-slate-100 text-slate-500">
-                <div className="px-3 py-2">Free</div>
-                <div className="px-3 py-2 text-center border-l border-slate-100">{FREE_QUOTA}</div>
-                <div className="px-3 py-2 text-center border-l border-slate-100">—</div>
-              </div>
-              <div className="grid grid-cols-3 bg-indigo-50 border-t border-indigo-100 text-indigo-700 font-semibold">
-                <div className="px-3 py-2">Top-Up</div>
-                <div className="px-3 py-2 text-center border-l border-indigo-100">+{PAID_BATCH}</div>
-                <div className="px-3 py-2 text-center border-l border-indigo-100">{DOWNLOAD_AMOUNT.toLocaleString()}</div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2.5 pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 rounded-xl border-slate-200 text-slate-500 text-xs"
-                onClick={() => { setShowPaymentModal(false); setPendingGenerate(null); }}
-                disabled={paymentProcessing}
-              >
-                Maybe Later
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0 font-semibold text-xs"
-                onClick={handlePayForQuestions}
-                disabled={paymentProcessing}
-              >
-                {paymentProcessing
-                  ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Processing…</>
-                  : <><Sparkles className="mr-1.5 h-3.5 w-3.5" />Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</>}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* ── Delete Session Confirmation ── */}
       <Dialog open={!!confirmDeleteSession} onOpenChange={(o) => { if (!o) setConfirmDeleteSession(null); }}>
