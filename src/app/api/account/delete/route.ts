@@ -23,6 +23,7 @@ const CV_TABLES = [
   "cv_volunteer",
   "generated_documents",
   "user_settings",
+  "interview_sessions",
 ];
 
 export async function DELETE() {
