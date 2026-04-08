@@ -4,7 +4,7 @@ import { openaiClient } from "@/lib/openai";
 export async function POST(req: NextRequest) {
   try {
     const openai = openaiClient();
-    const { jobRole, company, jobDescription, action, question, answer } = await req.json();
+    const { jobRole, company, jobDescription, action, question, answer, existingQuestions, count, startId } = await req.json();
 
     // Generate interview questions
     if (action === "generate") {
@@ -12,24 +12,31 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Job role is required" }, { status: 400 });
       }
 
+      const numToGenerate = Math.max(1, Math.min(20, count || 5));
+      const idOffset = startId || 1;
+
       const jdContext = jobDescription
         ? `\n\nThe job description is:\n"""\n${jobDescription.slice(0, 3000)}\n"""\n\nUse the specific requirements, responsibilities, and qualifications from this job description to tailor the questions. Reference specific skills, tools, or responsibilities mentioned in the JD.`
         : "";
 
-      const prompt = `Generate 5 realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}
+      const existingContext = existingQuestions?.length
+        ? `\n\nALREADY ASKED (do NOT repeat or rephrase these):\n${existingQuestions.map((q: any, i: number) => `${i + 1}. ${q.question}`).join("\n")}\n`
+        : "";
 
-Include a mix of:
+      const prompt = `Generate ${numToGenerate} realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}${existingContext}
+
+${!existingQuestions?.length ? `Include a mix of:
 - 1 behavioral question (STAR method)
 - 1 technical/role-specific question
 - 1 situational question
 - 1 competency-based question
-- 1 culture-fit or motivational question
+- 1 culture-fit or motivational question` : `Include a variety of question types (behavioral, technical, situational, competency, culture-fit). Do not repeat any already-asked questions.`}
 
-Return ONLY valid JSON with this structure:
+Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
 {
   "questions": [
     {
-      "id": 1,
+      "id": ${idOffset},
       "question": "The interview question text",
       "type": "behavioral" | "technical" | "situational" | "competency" | "culture-fit",
       "tips": "Brief tip on how to approach this question"

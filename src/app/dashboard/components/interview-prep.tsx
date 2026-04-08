@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Loader2, Sparkles, ChevronDown, ChevronUp, Star,
   Mic, MicOff, Volume2, VolumeX, Plus, CheckCircle2,
-  BriefcaseBusiness, Clock,
+  BriefcaseBusiness, Clock, PlusCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -95,6 +95,7 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
   const [simCompany, setSimCompany] = useState("");
   const [simJobDescription, setSimJobDescription] = useState("");
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
+  const [addingMore, setAddingMore] = useState(false);
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [feedbacks, setFeedbacks] = useState<Record<number, AnswerFeedback>>({});
@@ -258,6 +259,39 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
       toast.error(err.message || "Failed to generate questions");
     } finally {
       setGeneratingQuestions(false);
+    }
+  };
+
+  // ─── Add More Questions to current session ───
+  const addMoreQuestions = async () => {
+    if (!currentSessionId) return;
+    setAddingMore(true);
+    try {
+      const nextId = questions.length > 0 ? Math.max(...questions.map((q) => q.id)) + 1 : 1;
+      const res = await fetch("/api/ai/interview-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobRole: simRole,
+          company: simCompany,
+          jobDescription: simJobDescription || undefined,
+          action: "generate",
+          count: 5,
+          startId: nextId,
+          existingQuestions: questions,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      const newQs: InterviewQuestion[] = json.questions || [];
+      const merged = [...questions, ...newQs];
+      setQuestions(merged);
+      setExpandedQuestion(newQs[0]?.id ?? null);
+      await saveSession({ questions: merged as any }, currentSessionId);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add more questions");
+    } finally {
+      setAddingMore(false);
     }
   };
 
@@ -435,7 +469,7 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {currentSessionId
-                    ? "Edit role details and regenerate, or answer the questions below"
+                    ? "Answer the questions below or add more to this session"
                     : "Fill in the role details and generate tailored questions"}
                 </p>
               </div>
@@ -480,14 +514,16 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
                 className="rounded-xl border-slate-200 text-sm resize-none"
               />
             </div>
-            <Button
-              onClick={generateQuestions}
-              disabled={generatingQuestions}
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm shadow-blue-200 text-white"
-            >
-              {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {currentSessionId ? "Regenerate as New Session" : "Generate Questions"}
-            </Button>
+            {!currentSessionId && (
+              <Button
+                onClick={generateQuestions}
+                disabled={generatingQuestions}
+                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm shadow-blue-200 text-white"
+              >
+                {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                Generate Questions
+              </Button>
+            )}
           </div>
         </div>
 
@@ -496,9 +532,23 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{questions.length} Questions</p>
-              <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-500 border-0">
-                {Object.keys(feedbacks).length}/{questions.length} answered
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[11px] bg-slate-100 text-slate-500 border-0">
+                  {Object.keys(feedbacks).length}/{questions.length} answered
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={addMoreQuestions}
+                  disabled={addingMore || !currentSessionId}
+                  className="h-7 px-2.5 text-xs rounded-lg border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700"
+                >
+                  {addingMore
+                    ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                    : <PlusCircle className="mr-1.5 h-3 w-3" />}
+                  Add 5 More
+                </Button>
+              </div>
             </div>
 
             {questions.map((q) => {
