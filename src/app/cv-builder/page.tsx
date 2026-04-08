@@ -797,11 +797,11 @@ function CVBuilderPage() {
   };
 
 
-  // ─── Save all sections to DB ───
-  const saveToDatabase = async () => {
+  // ─── Save all sections to DB — returns true on success, false on failure ───
+  const saveToDatabase = async (): Promise<boolean> => {
     if (!user) {
       toast.error("You must be logged in to save");
-      return;
+      return false;
     }
     setSaving(true);
     try {
@@ -1062,10 +1062,11 @@ function CVBuilderPage() {
         toast.success("CV saved successfully!");
       }
       setHasExistingData(true);
-      router.push("/dashboard");
+      return true;
     } catch (err: any) {
       console.error("Save error:", err);
       toast.error("Failed to save: " + (err.message || err));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -1489,8 +1490,8 @@ function CVBuilderPage() {
                       return;
                     }
 
-                    await saveToDatabase();
-                    router.push("/dashboard");
+                    const ok = await saveToDatabase();
+                    if (ok) router.push("/dashboard");
                   }}
                   className="flex items-center gap-2"
                 >
@@ -1629,7 +1630,7 @@ function CVBuilderPage() {
                 <Button
                   size="sm"
                   className="w-full mt-2 bg-green-600 hover:bg-green-700"
-                  onClick={saveToDatabase}
+                  onClick={async () => { const ok = await saveToDatabase(); if (ok) router.push("/dashboard"); }}
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -2340,7 +2341,7 @@ function CVBuilderPage() {
                     Next <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button onClick={saveToDatabase} disabled={saving} className="bg-green-600 hover:bg-green-700">
+                  <Button onClick={async () => { const ok = await saveToDatabase(); if (ok) router.push("/dashboard"); }} disabled={saving} className="bg-green-600 hover:bg-green-700">
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {saving ? "Saving..." : "Confirm & Save"}
                   </Button>
