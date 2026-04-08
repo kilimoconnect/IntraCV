@@ -4,7 +4,7 @@ import { openaiClient } from "@/lib/openai";
 export async function POST(req: NextRequest) {
   try {
     const openai = openaiClient();
-    const { jobRole, company, jobDescription, action, question, answer, existingQuestions, count, startId } = await req.json();
+    const { jobRole, company, jobDescription, action, question, answer, existingQuestions, count, startId, profileContext } = await req.json();
 
     // Generate interview questions
     if (action === "generate") {
@@ -19,11 +19,15 @@ export async function POST(req: NextRequest) {
         ? `\n\nThe job description is:\n"""\n${jobDescription.slice(0, 3000)}\n"""\n\nUse the specific requirements, responsibilities, and qualifications from this job description to tailor the questions. Reference specific skills, tools, or responsibilities mentioned in the JD.`
         : "";
 
+      const profileCtx = profileContext
+        ? `\n\nCANDIDATE PROFILE (use this to personalise questions — reference their actual experience, skills, and background):\n${profileContext}\n`
+        : "";
+
       const existingContext = existingQuestions?.length
         ? `\n\nALREADY ASKED (do NOT repeat or rephrase these):\n${existingQuestions.map((q: any, i: number) => `${i + 1}. ${q.question}`).join("\n")}\n`
         : "";
 
-      const prompt = `Generate ${numToGenerate} realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}${existingContext}
+      const prompt = `Generate ${numToGenerate} realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}${profileCtx}${existingContext}
 
 ${!existingQuestions?.length ? `Include a mix of:
 - 1 behavioral question (STAR method)

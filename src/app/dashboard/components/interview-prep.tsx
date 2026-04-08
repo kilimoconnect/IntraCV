@@ -6,16 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Loader2, Sparkles, ChevronDown, ChevronUp, Star,
   Mic, MicOff, Volume2, VolumeX, Plus, CheckCircle2,
-  BriefcaseBusiness, Clock, PlusCircle,
+  BriefcaseBusiness, Clock, PlusCircle, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 interface InterviewPrepProps {
   userId: string;
+  cvData?: any;
 }
 
 interface InterviewQuestion {
@@ -54,6 +58,29 @@ const QUESTION_TYPE_COLORS: Record<string, string> = {
   "culture-fit": "bg-pink-100 text-pink-700 border border-pink-200",
 };
 
+// ─── Build a concise profile summary for AI context ───
+function buildProfileContext(cv: any): string {
+  const lines: string[] = [];
+  const pi = cv.personalInfo;
+  if (pi?.headline) lines.push(`Headline: ${pi.headline}`);
+  if (cv.summary) lines.push(`Summary: ${cv.summary.slice(0, 400)}`);
+  const exps = (cv.experiences || []).slice(0, 4);
+  if (exps.length) {
+    lines.push("Experience:");
+    exps.forEach((e: any) => {
+      const title = e.title || e.jobTitle || "";
+      const co = e.company || e.employer || "";
+      const dates = [e.startDate, e.endDate].filter(Boolean).join("–");
+      lines.push(`  - ${title}${co ? ` at ${co}` : ""}${dates ? ` (${dates})` : ""}`);
+    });
+  }
+  const skills = (cv.skills || []).map((s: any) => s.name || s).filter(Boolean).slice(0, 15);
+  if (skills.length) lines.push(`Skills: ${skills.join(", ")}`);
+  const certs = (cv.certifications || []).map((c: any) => c.name || c).filter(Boolean).slice(0, 5);
+  if (certs.length) lines.push(`Certifications: ${certs.join(", ")}`);
+  return lines.join("\n");
+}
+
 function formatDate(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -84,7 +111,7 @@ function stopSpeaking() {
   if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
 }
 
-export default function InterviewPrep({ userId }: InterviewPrepProps) {
+export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   // Sessions list
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -101,6 +128,11 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
   const [feedbacks, setFeedbacks] = useState<Record<number, AnswerFeedback>>({});
   const [loadingFeedback, setLoadingFeedback] = useState<Record<number, boolean>>({});
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+
+  // Delete confirm state
+  const [confirmDeleteSession, setConfirmDeleteSession] = useState<SessionRow | null>(null);
+  const [confirmDeleteQuestion, setConfirmDeleteQuestion] = useState<InterviewQuestion | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Save state
   const [saving, setSaving] = useState(false);
@@ -227,6 +259,7 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
           jobRole: simRole, company: simCompany,
           jobDescription: simJobDescription || undefined,
           action: "generate",
+          profileContext: cvData ? buildProfileContext(cvData) : undefined,
         }),
       });
       const json = await res.json();
@@ -262,6 +295,60 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
     }
   };
 
+  // ─── Delete Session ───
+  const deleteSession = async (session: SessionRow) => {
+    setDeleting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("interview_sessions")
+        .delete()
+        .eq("id", session.id)
+        .eq("user_id", userId);
+      if (error) throw error;
+      setSessions((prev) => prev.filter((s) => s.id !== session.id));
+      // If deleting the active session, clear the view
+      if (session.id === currentSessionId) {
+        const remaining = sessions.filter((s) => s.id !== session.id);
+        if (remaining.length > 0) {
+          applySession(remaining[0]);
+        } else {
+          startNewSession();
+        }
+      }
+      toast.success("Session deleted");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete session");
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteSession(null);
+    }
+  };
+
+  // ─── Delete Question from current session ───
+  const deleteQuestion = async (question: InterviewQuestion) => {
+    if (!currentSessionId) return;
+    setDeleting(true);
+    try {
+      const updatedQs = questions.filter((q) => q.id !== question.id);
+      const updatedAnswers = { ...answers };
+      const updatedFeedbacks = { ...feedbacks };
+      delete updatedAnswers[question.id];
+      delete updatedFeedbacks[question.id];
+      setQuestions(updatedQs);
+      setAnswers(updatedAnswers);
+      setFeedbacks(updatedFeedbacks);
+      if (expandedQuestion === question.id) setExpandedQuestion(updatedQs[0]?.id ?? null);
+      await saveSession({ questions: updatedQs as any, answers: updatedAnswers as any, feedbacks: updatedFeedbacks as any }, currentSessionId);
+      toast.success("Question removed");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete question");
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteQuestion(null);
+    }
+  };
+
   // ─── Add More Questions to current session ───
   const addMoreQuestions = async () => {
     if (!currentSessionId) return;
@@ -279,6 +366,7 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
           count: 5,
           startId: nextId,
           existingQuestions: questions,
+          profileContext: cvData ? buildProfileContext(cvData) : undefined,
         }),
       });
       const json = await res.json();
@@ -411,44 +499,52 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
             const total = (s.questions || []).length;
             const avg = avgScore(s.feedbacks || {});
             return (
-              <button
+              <div
                 key={s.id}
-                onClick={() => switchSession(s)}
-                className={`w-full text-left px-4 py-3 transition-colors ${
-                  isActive ? "bg-indigo-50" : "hover:bg-slate-50"
-                }`}
+                className={`group relative transition-colors ${isActive ? "bg-indigo-50" : "hover:bg-slate-50"}`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-medium truncate ${isActive ? "text-indigo-700" : "text-slate-800"}`}>
-                      {s.job_role || "Untitled"}
-                    </p>
-                    {s.company && (
-                      <p className="text-[11px] text-slate-500 truncate mt-0.5">{s.company}</p>
+                <button
+                  onClick={() => switchSession(s)}
+                  className="w-full text-left px-4 py-3 pr-10"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-medium truncate ${isActive ? "text-indigo-700" : "text-slate-800"}`}>
+                        {s.job_role || "Untitled"}
+                      </p>
+                      {s.company && (
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">{s.company}</p>
+                      )}
+                    </div>
+                    {avg !== null && (
+                      <span className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-lg ${
+                        avg >= 8 ? "bg-emerald-100 text-emerald-700" :
+                        avg >= 5 ? "bg-amber-100 text-amber-700" :
+                        "bg-red-100 text-red-700"
+                      }`}>
+                        {avg}/10
+                      </span>
                     )}
                   </div>
-                  {avg !== null && (
-                    <span className={`shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-lg ${
-                      avg >= 8 ? "bg-emerald-100 text-emerald-700" :
-                      avg >= 5 ? "bg-amber-100 text-amber-700" :
-                      "bg-red-100 text-red-700"
-                    }`}>
-                      {avg}/10
+                  <div className="flex items-center gap-2 mt-1.5">
+                    {total > 0 && (
+                      <span className="text-[11px] text-slate-400">{answered}/{total} answered</span>
+                    )}
+                    <span className="text-[11px] text-slate-400 flex items-center gap-0.5 ml-auto">
+                      <Clock className="h-2.5 w-2.5" />
+                      {formatDate(s.updated_at)}
                     </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  {total > 0 && (
-                    <span className="text-[11px] text-slate-400">
-                      {answered}/{total} answered
-                    </span>
-                  )}
-                  <span className="text-[11px] text-slate-400 flex items-center gap-0.5 ml-auto">
-                    <Clock className="h-2.5 w-2.5" />
-                    {formatDate(s.updated_at)}
-                  </span>
-                </div>
-              </button>
+                  </div>
+                </button>
+                {/* Delete session button */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteSession(s); }}
+                  className="absolute right-2 top-3 opacity-0 group-hover:opacity-100 h-6 w-6 rounded-md flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                  title="Delete session"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -582,9 +678,18 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
                       </div>
                       <p className="font-medium text-sm text-slate-800">{q.question}</p>
                     </div>
-                    <div className={`shrink-0 h-6 w-6 rounded-full flex items-center justify-center mt-0.5 transition-colors ${isExpanded ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"}`}>
+                    <div className="flex items-center gap-1.5 mt-0.5 shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmDeleteQuestion(q); }}
+                      className="h-6 w-6 rounded-full flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Delete question"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <div className={`h-6 w-6 rounded-full flex items-center justify-center transition-colors ${isExpanded ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"}`}>
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </div>
+                  </div>
                   </button>
 
                   {isExpanded && (
@@ -713,6 +818,59 @@ export default function InterviewPrep({ userId }: InterviewPrepProps) {
           </div>
         )}
       </div>
+
+      {/* ── Delete Session Confirmation ── */}
+      <Dialog open={!!confirmDeleteSession} onOpenChange={(o) => { if (!o) setConfirmDeleteSession(null); }}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Delete session?</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              <span className="font-medium text-slate-700">{confirmDeleteSession?.job_role}</span>
+              {confirmDeleteSession?.company ? ` at ${confirmDeleteSession.company}` : ""} — all questions, answers, and feedback will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setConfirmDeleteSession(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white border-0"
+              onClick={() => confirmDeleteSession && deleteSession(confirmDeleteSession)}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-2 h-3.5 w-3.5" />}
+              Delete session
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Question Confirmation ── */}
+      <Dialog open={!!confirmDeleteQuestion} onOpenChange={(o) => { if (!o) setConfirmDeleteQuestion(null); }}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Remove this question?</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500 line-clamp-3">
+              "{confirmDeleteQuestion?.question}"
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setConfirmDeleteQuestion(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white border-0"
+              onClick={() => confirmDeleteQuestion && deleteQuestion(confirmDeleteQuestion)}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-2 h-3.5 w-3.5" />}
+              Remove question
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

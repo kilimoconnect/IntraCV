@@ -286,7 +286,7 @@ function DashboardPage() {
       )}
 
       {visibleTab === "interview" && (
-        <InterviewPrep userId={user.id} />
+        <InterviewPrep userId={user.id} cvData={cvData} />
       )}
 
       {visibleTab === "documents" && (
