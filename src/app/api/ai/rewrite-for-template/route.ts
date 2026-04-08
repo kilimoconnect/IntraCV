@@ -282,126 +282,69 @@ async function blockTagline(cvData: any): Promise<string> {
   return raw.length > taglineMaxChars ? trimToWord(raw, taglineMaxChars) : raw;
 }
 
-async function blockExperience(exps: any[], toolsByCompany?: Map<string, string[]>): Promise<any[]> {
+async function blockExperience(exps: any[]): Promise<any[]> {
   const top = exps.slice(0, S.experience.roles);
   const { bulletMinChars, bulletMaxChars, role1Bullets, role2Bullets } = S.experience;
 
   const rolesData = top.map((e, i) => {
     const count = i === 0 ? role1Bullets : role2Bullets;
     const dates = [e.startDate, e.endDate].filter(Boolean).join(" – ") || "";
-    const company = e.company || e.company_name || "";
-    const approvedTools = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    // Pre-scrub: remove unapproved tool names from description before AI sees them
-    const cleanDesc = scrubDescriptionTools(e.description || "", approvedTools);
-    const toolsBlock = approvedTools.length > 0
-      ? `\n  APPROVED TOOLS (the only software/systems you may name): ${approvedTools.join(", ")}`
-      : `\n  APPROVED TOOLS: none — do not name any software, system, or tool`;
     return `Role ${i+1}:
   Title: ${e.title || e.job_title || ""}
-  Company: ${company}
+  Company: ${e.company || e.company_name || ""}
   Dates: ${dates}
-  Description: ${cleanDesc}${toolsBlock}
+  Description: ${e.description || ""}
   Write exactly ${count} achievement bullets. Target ${bulletMinChars}-${bulletMaxChars} chars per bullet.`;
   }).join("\n\n");
 
   const r = await ai(`Rewrite the following work experience into polished CV bullets.
     ${rolesData}
-
-    TOOL RULE (CRITICAL — no exceptions):
-    Each role has an "APPROVED TOOLS FOR THIS ROLE" list. You MUST follow it exactly:
-    - You may only name a software, system, or platform if it appears on that role's approved list.
-    - If a tool name appears in the description but is NOT on the approved list, describe the action WITHOUT naming the tool (e.g. "using payroll software" → "overseeing payroll disbursements").
-    - NEVER invent, guess, or carry over tool names from other roles or the description.
-
-    Other rules:
+    Rules:
     - Past tense action verbs; include quantified results (KPIs, %, $) where possible
+    - Only reference software or tools that are explicitly mentioned in the description above — do not invent tool names
     - IMPORTANT: Always reformat dates to month and year only: "May 2020 – Feb 2022"
     - Use 3-letter month abbreviations: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
     - Format: "Month YYYY – Month YYYY" — if only years available use "2020 – 2022"
     - Never include days or ordinal suffixes
     Return JSON: {"experience": [{"role": "", "company": "", "dates": "", "bullets": []}]}`);
 
-  // All tool names across the entire profile (used by post-processor to know what to strip)
-  const allProfileTools = toolsByCompany
-    ? Array.from(toolsByCompany.values()).flat()
-    : [];
-
-  return (r.experience || []).map((exp: any, i: number) => {
-    const company = exp.company || top[i]?.company || "";
-    const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    const sanitizedBullets = (exp.bullets || []).map((b: string) =>
-      stripUnapprovedTools(String(b), approved, allProfileTools)
-    );
-    return {
-      role: exp.role || "",
-      company,
-      dates: exp.dates || "",
-      location: top[i]?.location || "",
-      bullets: sanitizedBullets,
-    };
-  });
+  return (r.experience || []).map((exp: any, i: number) => ({
+    role: exp.role || "",
+    company: exp.company || top[i]?.company || "",
+    dates: exp.dates || "",
+    location: top[i]?.location || "",
+    bullets: exp.bullets || [],
+  }));
 }
 
-async function blockHistory(exps: any[], toolsByCompany?: Map<string, string[]>): Promise<any[]> {
+async function blockHistory(exps: any[]): Promise<any[]> {
   const pool = exps.slice(2, 2 + S.history.roles);
   const { maxBulletChars, bulletsPerRole } = S.history;
 
-  // Check if we have few roles to expand content
   const roleCount = pool.length;
-  let bulletCount: number = bulletsPerRole;
+  let bulletCount = bulletsPerRole;
   let minBulletChars = 80;
-
-  if (roleCount <= 2) {
-    // If only 1-2 roles, add more bullets and longer descriptions
-    bulletCount = roleCount === 1 ? 8 : 6;
-    minBulletChars = 100;
-  }
-
-  // Pre-scrub descriptions + annotate each history role with its approved tools
-  const rolesWithTools = pool.map((e: any) => {
-    const company = e.company || e.company_name || "";
-    const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    const cleanDesc = scrubDescriptionTools(e.description || "", approved);
-    return { ...e, description: cleanDesc, _approvedTools: approved.length > 0 ? approved.join(", ") : null };
-  });
-
-  const toolsNote = rolesWithTools.some((e: any) => e._approvedTools)
-    ? `\nAPPROVED TOOLS PER ROLE (only name tools listed here — never invent any):\n` +
-      rolesWithTools.map((e: any) => `- ${e.company || "Unknown"}: ${e._approvedTools ?? "none"}`).join("\n")
-    : `\nDo not name any specific software, system, or platform in the bullets.`;
+  if (roleCount <= 2) { bulletCount = roleCount === 1 ? 8 : 6; minBulletChars = 100; }
 
   const r = await ai(`Write condensed history for these roles.
     ROLES: ${JSON.stringify(pool)}
     Each role gets exactly ${bulletCount} bullets.
     Target length: ${minBulletChars}-${maxBulletChars} chars per bullet.
-    If there are only ${roleCount} roles, make the bullets more detailed and comprehensive to fill space.
-    ${toolsNote}
+    If there are only ${roleCount} roles, make the bullets more detailed to fill space.
+    Only reference software or tools explicitly mentioned in each role's description — do not invent tool names.
     IMPORTANT: Always reformat dates to month and year only: "May 2020 – Feb 2022"
     Use 3-letter month abbreviations: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
-    Format: "Month YYYY – Month YYYY"
-    If only years available, use "2020 – 2022"
+    Format: "Month YYYY – Month YYYY" — if only years available use "2020 – 2022"
     Never include days or ordinal suffixes
-    Never return dates in any other format
-    Return JSON: {"history": [{"role": "", "company": "", "dates": "", "location": "", "bullets": []}]}`)
+    Return JSON: {"history": [{"role": "", "company": "", "dates": "", "location": "", "bullets": []}]}`);
 
-  const allProfileTools = toolsByCompany
-    ? Array.from(toolsByCompany.values()).flat()
-    : [];
-
-  return (r.history || []).map((h: any, i: number) => {
-    const company = h.company || pool[i]?.company || "";
-    const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    const sanitizedBullets = (h.bullets || []).map((b: string) =>
-      stripUnapprovedTools(String(b), approved, allProfileTools)
-    );
-    return {
-      role: h.role || "",
-      company,
-      dates: h.dates || "",
-      location: h.location || pool[i]?.location || "",
-      bullets: sanitizedBullets,
-    };
-  });
+  return (r.history || []).map((h: any, i: number) => ({
+    role: h.role || "",
+    company: h.company || pool[i]?.company || "",
+    dates: h.dates || "",
+    location: h.location || pool[i]?.location || "",
+    bullets: h.bullets || [],
+  }));
 }
 
 async function blockProjects(cvData: any): Promise<any[]> {
@@ -514,167 +457,18 @@ function formatDateRange(start?: string, end?: string): string {
   return left || right;
 }
 
-/** Normalise tools from either string[] or {name,company}[] → {name,company}[] */
-function normalizeToolObjects(items: any): { name: string; company: string }[] {
+/** Normalise tools from either string[] or {name,company}[] → plain string[] of names. */
+function normalizeToolNames(items: any): string[] {
   if (!Array.isArray(items)) return [];
   return items
-    .map((t: any) => typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" })
-    .filter((t) => t.name.trim().length > 0);
-}
-
-/**
- * Build a map from company name → tool names for fast lookup in experience generation.
- * Tools with no company ("") are treated as usable by any role.
- */
-function buildToolsByCompany(items: any): Map<string, string[]> {
-  const toolObjs = normalizeToolObjects(items);
-  const map = new Map<string, string[]>();
-  for (const t of toolObjs) {
-    const key = t.company.trim().toLowerCase();
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(t.name);
-  }
-  return map;
-}
-
-/** Get tools relevant to a specific company — company-matched first, then generic (no company). */
-function toolsForCompany(map: Map<string, string[]>, companyName: string): string[] {
-  const key = companyName.trim().toLowerCase();
-  const specific = map.get(key) || [];
-  const generic = map.get("") || [];
-  return [...specific, ...generic];
-}
-
-/**
- * Infer tool→company associations from experience description text.
- * Used as a fallback when the user hasn't assigned companies to tools,
- * or when the DB schema cache hasn't propagated the company column yet.
- * If a tool name appears verbatim in a role's description, it's associated
- * with that company. Tools not found in any description are treated as generic.
- */
-function inferToolsByCompanyFromDesc(tools: any[], experiences: any[]): Map<string, string[]> {
-  const toolNames = (tools || [])
-    .map((t: any) => typeof t === "string" ? t : t?.name || "")
+    .map((t: any) => typeof t === "string" ? t.trim() : (t?.name || "").trim())
     .filter(Boolean);
-
-  const map = new Map<string, string[]>();
-  const assigned = new Set<string>();
-
-  for (const exp of (experiences || [])) {
-    const company = (exp.company || exp.company_name || "").trim();
-    const desc = (exp.description || "").toLowerCase();
-    const key = company.toLowerCase();
-    for (const name of toolNames) {
-      if (desc.includes(name.toLowerCase())) {
-        if (!map.has(key)) map.set(key, []);
-        if (!map.get(key)!.includes(name)) map.get(key)!.push(name);
-        assigned.add(name.toLowerCase());
-      }
-    }
-  }
-
-  // Tools not found in any description → generic (available to all roles)
-  const generic = toolNames.filter(t => !assigned.has(t.toLowerCase()));
-  if (generic.length > 0) map.set("", [...(map.get("") || []), ...generic]);
-
-  return map;
-}
-
-/**
- * Merge two tool maps. User-defined assignments take priority;
- * description-inferred assignments fill in gaps.
- */
-function mergeToolMaps(
-  userDefined: Map<string, string[]>,
-  inferred: Map<string, string[]>,
-): Map<string, string[]> {
-  // If user-defined has any non-empty company assignments, trust it entirely
-  const hasUserAssignments = Array.from(userDefined.keys()).some(k => k !== "");
-  if (hasUserAssignments) return userDefined;
-  // Else fall back to description-inferred
-  return inferred;
-}
-
-// Common business software names that may appear in CV descriptions but aren't profile tools.
-// Used to scrub hallucinated/unregistered tool names from raw descriptions before AI sees them.
-const COMMON_SOFTWARE_NAMES = new Set([
-  "sap","oracle","excel","microsoft excel","word","powerpoint","power point","outlook","teams",
-  "quickbooks","xero","sage","adp","paychex","workday","successfactors","bamboohr",
-  "salesforce","hubspot","zoho","dynamics","netsuite","peoplesoft","kronos","ultiproon",
-  "tableau","power bi","qlik","looker","domo","ssrs","crystal reports",
-  "jira","confluence","trello","asana","monday","notion","clickup","basecamp",
-  "github","gitlab","bitbucket","jenkins","docker","kubernetes",
-  "aws","azure","gcp","google cloud","google analytics","google ads",
-  "cch","cch axcess","taxjar","avalara","lacerte","proseries","drake","ultratax",
-  "six sigma","lean","iso","iso 9001","iso 27001","ifrs","gaap","coso",
-  "sun system","sunsystem","sun systems","tally","pastel","syspro","navision",
-  "myob","freshbooks","wave","zoho books","farm erp","epicor","infor","sap b1",
-  "sap s4","sap hana","sap r3","sap fico","sap mm","sap sd",
-]);
-
-/**
- * Scrub unapproved tool names from a raw description string BEFORE sending to AI.
- * Replaces with generic placeholder so the AI never sees the tool name and cannot repeat it.
- *
- * Targets:
- * 1. All profile tool names not in the approved set
- * 2. Common software names from COMMON_SOFTWARE_NAMES not in approved set
- */
-function scrubDescriptionTools(desc: string, approvedTools: string[]): string {
-  if (!desc) return desc;
-  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
-
-  let result = desc;
-
-  // Replace all known software names that are NOT approved
-  const allKnown = Array.from(COMMON_SOFTWARE_NAMES);
-  for (const name of allKnown) {
-    if (approvedLower.has(name)) continue;  // keep if approved
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`\\b${escaped}\\b`, "gi");
-    result = result.replace(re, "[software]");
-  }
-
-  return result;
-}
-
-/**
- * Post-process a generated bullet: strip any profile-known tool name that is NOT
- * in the approved set. This is a safety net on top of the pre-scrub.
- */
-function stripUnapprovedTools(
-  bullet: string,
-  approvedTools: string[],
-  allProfileTools: string[],
-): string {
-  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
-  const unapproved = allProfileTools.filter(t => !approvedLower.has(t.toLowerCase()));
-  if (unapproved.length === 0) return bullet;
-
-  let result = bullet;
-  for (const tool of unapproved) {
-    const escaped = tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(
-      `(\\s+(?:using|with|via|through|on|in)\\s+)${escaped}\\b` +
-      `|(\\busing\\s+)${escaped}\\b` +
-      `|\\b${escaped}\\b`,
-      "gi",
-    );
-    result = result.replace(re, (_match, prep1, prep2) => {
-      if (prep1) return prep1 + "dedicated software";
-      if (prep2) return prep2 + "dedicated software";
-      return "dedicated software";
-    });
-  }
-  return result;
 }
 
 async function blockTools(cvData: any): Promise<string[]> {
-  // Only use real tools from database — never mix in skills or other sections
-  const toolObjs = normalizeToolObjects(cvData.tools);
-  if (toolObjs.length === 0) return [];
+  const sourceNames = normalizeToolNames(cvData.tools);
+  if (sourceNames.length === 0) return [];
 
-  const sourceNames = toolObjs.map((t) => t.name);
   const { maxLabelChars } = S.tools;
   const r = await ai(`Polish these tools/software for a professional CV.
     SOURCE: ${JSON.stringify(sourceNames)}
@@ -1028,18 +822,12 @@ export async function POST(req: NextRequest) {
 
       // Build company → tools map.
       // Prefer user-defined assignments; fall back to description-inferred if none set.
-      const userDefinedMap = buildToolsByCompany(cvData.tools);
-      const inferredMap = inferToolsByCompanyFromDesc(cvData.tools, cvData.experiences || []);
-      const toolsByCompany = mergeToolMaps(userDefinedMap, inferredMap);
-      console.log("[tools-map] user-defined keys:", [...userDefinedMap.keys()].join(", ") || "(none)");
-      console.log("[tools-map] active map:", [...toolsByCompany.entries()].map(([k, v]) => `${k || "generic"}:[${v.join(",")}]`).join(" | "));
-
       // ── Common blocks (all categories) ──
       const commonBlocksPromise = Promise.all([
         blockProfile(cvData),
         (isExecutive || isMidSenior) ? blockTagline(cvData) : Promise.resolve(""),
-        blockExperience(cvData.experiences || [], toolsByCompany),
-        blockHistory(cvData.experiences || [], toolsByCompany),
+        blockExperience(cvData.experiences || []),
+        blockHistory(cvData.experiences || []),
         (!isJunior || (cvData.projects || []).length > 0) ? blockProjects(cvData) : Promise.resolve([]),
         blockEducation(cvData.education || []),
         (async () => {

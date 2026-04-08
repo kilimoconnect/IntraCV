@@ -1,52 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
 
-const COMMON_SOFTWARE_NAMES = new Set([
-  "sap","oracle","excel","microsoft excel","word","powerpoint","power point","outlook","teams",
-  "quickbooks","xero","sage","adp","paychex","workday","successfactors","bamboohr",
-  "salesforce","hubspot","zoho","dynamics","netsuite","peoplesoft","kronos",
-  "tableau","power bi","qlik","looker","domo","ssrs","crystal reports",
-  "jira","confluence","trello","asana","monday","notion","clickup","basecamp",
-  "github","gitlab","bitbucket","jenkins","docker","kubernetes",
-  "aws","azure","gcp","google cloud","google analytics","google ads",
-  "cch","cch axcess","taxjar","avalara","lacerte","proseries","drake","ultratax",
-  "six sigma","lean","iso","iso 9001","iso 27001","ifrs","gaap","coso",
-  "sun system","sunsystem","sun systems","tally","pastel","syspro","navision",
-  "myob","freshbooks","wave","zoho books","farm erp","epicor","infor","sap b1",
-  "sap s4","sap hana","sap r3","sap fico","sap mm","sap sd",
-]);
-
-/** Scrub unapproved tool names from a description before sending to AI. */
-function scrubDescInline(desc: string, approvedTools: string[]): string {
-  if (!desc) return desc;
-  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
-  let result = desc;
-  for (const name of COMMON_SOFTWARE_NAMES) {
-    if (approvedLower.has(name)) continue;
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    result = result.replace(new RegExp(`\\b${escaped}\\b`, "gi"), "[software]");
-  }
-  return result;
-}
-
-/** Remove profile tool names that are NOT approved for this company from a bullet string. */
-function stripUnapprovedToolsInline(bullet: string, approvedTools: string[], allProfileTools: string[]): string {
-  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
-  const unapproved = allProfileTools.filter(t => !approvedLower.has(t.toLowerCase()));
-  if (unapproved.length === 0) return bullet;
-  let result = bullet;
-  for (const tool of unapproved) {
-    const escaped = tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(
-      `(\\s+(?:using|with|via|through|on|in)\\s+)${escaped}\\b|(\\busing\\s+)${escaped}\\b|\\b${escaped}\\b`,
-      "gi",
-    );
-    result = result.replace(re, (_m, prep1, prep2) =>
-      prep1 ? prep1 + "dedicated software" : prep2 ? prep2 + "dedicated software" : "dedicated software"
-    );
-  }
-  return result;
-}
 
 // ═══════════════════════════════════════════════════════════════
 // LAYOUT CONSTANTS — mirrors config-renderer.tsx
@@ -348,63 +302,6 @@ function genExperience(cvData: any, tr: string, jd: string, p: Plan) {
   const bpj = p.expTargetBulletsPerJob;
   const wpb = p.expTargetWordsPerBullet;
 
-  // Build company → tools lookup — prefer user-defined assignments, fall back to description-inferred
-  const toolObjs: { name: string; company: string }[] = (cvData.tools || []).map((t: any) =>
-    typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" }
-  ).filter((t: any) => t.name.trim());
-
-  const toolsByCompany = new Map<string, string[]>();
-  for (const t of toolObjs) {
-    const key = t.company.trim().toLowerCase();
-    if (!toolsByCompany.has(key)) toolsByCompany.set(key, []);
-    toolsByCompany.get(key)!.push(t.name);
-  }
-
-  // If no user-defined company assignments, infer from description text
-  const hasUserAssignments = Array.from(toolsByCompany.keys()).some(k => k !== "");
-  if (!hasUserAssignments) {
-    const toolNames = toolObjs.map(t => t.name);
-    for (const exp of rawExps) {
-      const company = (exp.company || exp.employer || "").trim();
-      const desc = (exp.description || "").toLowerCase();
-      const key = company.toLowerCase();
-      for (const name of toolNames) {
-        if (desc.includes(name.toLowerCase())) {
-          if (!toolsByCompany.has(key)) toolsByCompany.set(key, []);
-          if (!toolsByCompany.get(key)!.includes(name)) toolsByCompany.get(key)!.push(name);
-        }
-      }
-    }
-    // Remove generic bucket if we now have specific assignments
-    if (Array.from(toolsByCompany.keys()).some(k => k !== "")) {
-      const stillGeneric = toolNames.filter(t =>
-        !Array.from(toolsByCompany.entries()).some(([k, v]) => k !== "" && v.includes(t))
-      );
-      toolsByCompany.set("", stillGeneric);
-    }
-  }
-
-  const _approvedFor = (company: string) => {
-    const key = company.trim().toLowerCase();
-    return [...(toolsByCompany.get(key) || []), ...(toolsByCompany.get("") || [])];
-  };
-
-  // Pre-scrub descriptions + annotate each role with approved tools
-  const expWithTools = rawExps.map((e: any) => {
-    const company = e.company || e.employer || "";
-    const relevant = _approvedFor(company);
-    const cleanDesc = scrubDescInline(e.description || "", relevant);
-    return { ...e, description: cleanDesc, _toolsHint: relevant.length > 0 ? relevant.join(", ") : null };
-  });
-
-  // Per-company approved tools block
-  const toolsInstructions = expWithTools.some((e: any) => e._toolsHint)
-    ? `\nAPPROVED TOOLS PER COMPANY — CRITICAL RULE: You may ONLY name a software, system, or platform if it appears on that company's approved list below. If a tool name appears in the raw description but is NOT on the list, describe the action WITHOUT naming the tool.\n` +
-      expWithTools.map((e: any) =>
-        `- ${e.company || "Unknown"}: ${e._toolsHint ?? "NONE — do not name any tools for this role"}`
-      ).join("\n")
-    : `\nDo not name any specific software, system, or platform in any bullet. Describe actions without tool names.`;
-
   return callAI(`You are a CV experience writer. Rewrite professional experience to PERFECTLY fill the allocated space.
 
 SPACE ANALYSIS:
@@ -415,7 +312,6 @@ RAW EXPERIENCE:
 ${JSON.stringify(rawExps, null, 2)}
 TARGET ROLE: ${tr || "Not specified"}
 JOB DESCRIPTION: ${jd || "Not provided"}
-${toolsInstructions}
 
 RULES:
 1. Return ALL ${jobCount} positions from the raw data
@@ -426,9 +322,9 @@ RULES:
 6. Include quantified results where possible ($, %, time, count)
 7. Keep title, company, location, dates EXACTLY as provided
 8. NEVER fabricate — enhance wording, expand on existing details
-9. When expanding: add context about scope, team size, processes, technologies, impact
+9. When expanding: add context about scope, team size, processes, and business impact
 10. When condensing: merge similar points, keep strongest achievements
-11. TOOL RULE: strictly follow the APPROVED TOOLS PER COMPANY block above — no exceptions
+11. Only reference software or tools explicitly mentioned in the raw description — do not invent tool names
 
 Return ONLY JSON: { "experiences": [{ "title": "", "company": "", "location": "", "startDate": "", "endDate": "", "description": "" }] }`);
 }
@@ -627,56 +523,15 @@ export async function POST(req: NextRequest) {
 
     const trimmedSkills = (skillsData?.skills || cvData.skills || []).slice(0, plan.skillTargetCount);
 
-    // Build company → approved tools map for post-processing (same logic as genExperience)
-    const _toolObjs: { name: string; company: string }[] = (cvData.tools || []).map((t: any) =>
-      typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" }
-    ).filter((t: any) => t.name.trim());
-    const _postMap = new Map<string, string[]>();
-    for (const t of _toolObjs) {
-      const key = t.company.trim().toLowerCase();
-      if (!_postMap.has(key)) _postMap.set(key, []);
-      _postMap.get(key)!.push(t.name);
-    }
-    // Fall back to description-based inference if no user-defined company assignments
-    if (!Array.from(_postMap.keys()).some(k => k !== "")) {
-      const tNames = _toolObjs.map(t => t.name);
-      const allExpsForInfer = cvData.experiences || cvData.experience || [];
-      for (const exp of allExpsForInfer) {
-        const co = (exp.company || exp.employer || "").trim();
-        const desc = (exp.description || "").toLowerCase();
-        const key = co.toLowerCase();
-        for (const name of tNames) {
-          if (desc.includes(name.toLowerCase())) {
-            if (!_postMap.has(key)) _postMap.set(key, []);
-            if (!_postMap.get(key)!.includes(name)) _postMap.get(key)!.push(name);
-          }
-        }
-      }
-      const stillGeneric = tNames.filter(t => !Array.from(_postMap.entries()).some(([k, v]) => k !== "" && v.includes(t)));
-      _postMap.set("", stillGeneric);
-    }
-    const _allProfileTools = Array.from(_postMap.values()).flat();
-    const _approvedFor = (company: string) => {
-      const key = company.trim().toLowerCase();
-      return [...(_postMap.get(key) || []), ...(_postMap.get("") || [])];
-    };
-
     // Cap roles to maxRoles before trimming bullets
     const allExps = (expData?.experiences || cvData.experiences || cvData.experience || []);
     const cappedExps = allExps.slice(0, plan.maxRoles);
     const trimmedExps = cappedExps.map((e: any) => {
       if (!e.description) return e;
-      const company = e.company || e.employer || "";
-      const approved = _approvedFor(company);
       const bullets = e.description.split("\n").filter((l: string) => l.trim());
-      const trimmed = bullets.slice(0, plan.expTargetBulletsPerJob).map((b: string) => {
-        const clean = b.trim();
-        // Strip unapproved profile tool names, then sentence-safe length trim
-        const sanitized = _allProfileTools.length > 0
-          ? stripUnapprovedToolsInline(clean, approved, _allProfileTools)
-          : clean;
-        return trimAtSentence(sanitized, plan.expTargetWordsPerBullet * 6);
-      });
+      const trimmed = bullets.slice(0, plan.expTargetBulletsPerJob).map((b: string) =>
+        trimAtSentence(b.trim(), plan.expTargetWordsPerBullet * 6)
+      );
       return { ...e, description: trimmed.join("\n") };
     });
     const trimmedAch = (achData?.keyAchievements || []).slice(0, plan.achTargetCount).map((a: string) => {
