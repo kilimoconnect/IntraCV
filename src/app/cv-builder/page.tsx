@@ -2262,15 +2262,9 @@ function CVBuilderPage() {
                         <div key={i} className={`flex gap-2 items-center ${!tool.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
                           <Input
                             className={`flex-1 ${!tool.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`}
-                            placeholder="Tool / Software name *"
+                            placeholder="e.g. SAP ERP, Microsoft Excel, Figma *"
                             value={tool.name}
                             onChange={(e) => { const t = [...tools]; t[i] = { ...t[i], name: e.target.value }; setTools(t); }}
-                          />
-                          <Input
-                            className="flex-1 text-sm"
-                            placeholder="Used at company (optional)"
-                            value={tool.company}
-                            onChange={(e) => { const t = [...tools]; t[i] = { ...t[i], company: e.target.value }; setTools(t); }}
                           />
                           <Button variant="ghost" size="sm" onClick={() => setTools(tools.filter((_, j) => j !== i))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
