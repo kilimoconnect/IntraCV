@@ -907,10 +907,11 @@ export async function POST(req: NextRequest) {
           const lRes = await ai(`Format these languages with proper proficiency labels for a CV.
             SOURCE: ${JSON.stringify(rawLangs)}
             Use standard proficiency: Native, Fluent, Advanced, Intermediate, Basic.
+            If proficiency is not specified or unclear, default to "Fluent".
             Return JSON: {"languages":[{"name":"","label":"","level":80}]}`);
           return (lRes.languages || rawLangs).slice(0, S.languages.max).map((l: any) => ({
             name: trimToWord(l.name || l.language_name || "", S.languages.maxNameChars),
-            label: trimToWord(l.label || l.proficiency || "", S.languages.maxLabelChars),
+            label: trimToWord(l.label || l.proficiency || "Fluent", S.languages.maxLabelChars),
             level: l.level ?? 80
           }));
         })(),

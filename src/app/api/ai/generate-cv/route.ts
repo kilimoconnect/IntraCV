@@ -397,6 +397,7 @@ RULES:
 - Total items across ALL categories: ~${p.addlTargetItems}
 - Keep items concise (each value ≤ 60 characters)
 - Prioritize items relevant to the target role
+- For languages: if proficiency is not stated, default to "Fluent"
 
 Return ONLY JSON:
 {
@@ -557,7 +558,10 @@ export async function POST(req: NextRequest) {
       keyAchievements: trimmedAch,
       education: trimmedEdu,
       certifications: trimmedCerts,
-      languages: addlData?.languages || cvData.languages || [],
+      languages: (addlData?.languages || cvData.languages || []).map((l: any) =>
+        typeof l === "string" ? { name: l, proficiency: "Fluent" } :
+        { ...l, proficiency: l.proficiency?.trim() || "Fluent" }
+      ),
       tools: addlData?.tools || cvData.tools || [],
       memberships: addlData?.memberships || cvData.memberships || [],
       volunteer: addlData?.volunteer || cvData.volunteer || [],
