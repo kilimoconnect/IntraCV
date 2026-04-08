@@ -663,7 +663,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${QUESTION_TYPE_COLORS[q.type] || "bg-slate-100 text-slate-600 border border-slate-200"}`}>
-                          {q.type}
+                          {q.type ? q.type.charAt(0).toUpperCase() + q.type.slice(1) : ""}
                         </span>
                         <span className="text-[11px] text-slate-400 font-medium">Q{q.id}</span>
                         {feedback && (
