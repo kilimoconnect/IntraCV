@@ -290,15 +290,17 @@ async function blockExperience(exps: any[], toolsByCompany?: Map<string, string[
     const count = i === 0 ? role1Bullets : role2Bullets;
     const dates = [e.startDate, e.endDate].filter(Boolean).join(" – ") || "";
     const company = e.company || e.company_name || "";
-    const relevantTools = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    const toolsBlock = relevantTools.length > 0
-      ? `\n  APPROVED TOOLS FOR THIS ROLE (the ONLY software/systems you may name): ${relevantTools.join(", ")}`
-      : `\n  APPROVED TOOLS FOR THIS ROLE: none — do not name any software or system`;
+    const approvedTools = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
+    // Pre-scrub: remove unapproved tool names from description before AI sees them
+    const cleanDesc = scrubDescriptionTools(e.description || "", approvedTools);
+    const toolsBlock = approvedTools.length > 0
+      ? `\n  APPROVED TOOLS (the only software/systems you may name): ${approvedTools.join(", ")}`
+      : `\n  APPROVED TOOLS: none — do not name any software, system, or tool`;
     return `Role ${i+1}:
   Title: ${e.title || e.job_title || ""}
   Company: ${company}
   Dates: ${dates}
-  Description: ${e.description || ""}${toolsBlock}
+  Description: ${cleanDesc}${toolsBlock}
   Write exactly ${count} achievement bullets. Target ${bulletMinChars}-${bulletMaxChars} chars per bullet.`;
   }).join("\n\n");
 
@@ -355,11 +357,12 @@ async function blockHistory(exps: any[], toolsByCompany?: Map<string, string[]>)
     minBulletChars = 100;
   }
 
-  // Annotate each history role with its approved tools
+  // Pre-scrub descriptions + annotate each history role with its approved tools
   const rolesWithTools = pool.map((e: any) => {
     const company = e.company || e.company_name || "";
     const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    return { ...e, _approvedTools: approved.length > 0 ? approved.join(", ") : null };
+    const cleanDesc = scrubDescriptionTools(e.description || "", approved);
+    return { ...e, description: cleanDesc, _approvedTools: approved.length > 0 ? approved.join(", ") : null };
   });
 
   const toolsNote = rolesWithTools.some((e: any) => e._approvedTools)
@@ -592,14 +595,52 @@ function mergeToolMaps(
   return inferred;
 }
 
+// Common business software names that may appear in CV descriptions but aren't profile tools.
+// Used to scrub hallucinated/unregistered tool names from raw descriptions before AI sees them.
+const COMMON_SOFTWARE_NAMES = new Set([
+  "sap","oracle","excel","microsoft excel","word","powerpoint","power point","outlook","teams",
+  "quickbooks","xero","sage","adp","paychex","workday","successfactors","bamboohr",
+  "salesforce","hubspot","zoho","dynamics","netsuite","peoplesoft","kronos","ultiproon",
+  "tableau","power bi","qlik","looker","domo","ssrs","crystal reports",
+  "jira","confluence","trello","asana","monday","notion","clickup","basecamp",
+  "github","gitlab","bitbucket","jenkins","docker","kubernetes",
+  "aws","azure","gcp","google cloud","google analytics","google ads",
+  "cch","cch axcess","taxjar","avalara","lacerte","proseries","drake","ultratax",
+  "six sigma","lean","iso","iso 9001","iso 27001","ifrs","gaap","coso",
+  "sun system","sunsystem","sun systems","tally","pastel","syspro","navision",
+  "myob","freshbooks","wave","zoho books","farm erp","epicor","infor","sap b1",
+  "sap s4","sap hana","sap r3","sap fico","sap mm","sap sd",
+]);
+
 /**
- * Post-process a single bullet: remove any profile tool name that is NOT
- * in the approved set for this role.
+ * Scrub unapproved tool names from a raw description string BEFORE sending to AI.
+ * Replaces with generic placeholder so the AI never sees the tool name and cannot repeat it.
  *
- * Strategy: replace "[preposition] [UNAPPROVED_TOOL]" with just the verb phrase,
- * or replace the tool name alone with "management software" / "reporting software"
- * depending on context. Only named tools from the profile are targeted — generic
- * phrases like "analytics tools" or "compliance software" are left untouched.
+ * Targets:
+ * 1. All profile tool names not in the approved set
+ * 2. Common software names from COMMON_SOFTWARE_NAMES not in approved set
+ */
+function scrubDescriptionTools(desc: string, approvedTools: string[]): string {
+  if (!desc) return desc;
+  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
+
+  let result = desc;
+
+  // Replace all known software names that are NOT approved
+  const allKnown = Array.from(COMMON_SOFTWARE_NAMES);
+  for (const name of allKnown) {
+    if (approvedLower.has(name)) continue;  // keep if approved
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`\\b${escaped}\\b`, "gi");
+    result = result.replace(re, "[software]");
+  }
+
+  return result;
+}
+
+/**
+ * Post-process a generated bullet: strip any profile-known tool name that is NOT
+ * in the approved set. This is a safety net on top of the pre-scrub.
  */
 function stripUnapprovedTools(
   bullet: string,
@@ -607,14 +648,12 @@ function stripUnapprovedTools(
   allProfileTools: string[],
 ): string {
   const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
-  // Only strip tools that are in the profile but NOT approved for this role
   const unapproved = allProfileTools.filter(t => !approvedLower.has(t.toLowerCase()));
   if (unapproved.length === 0) return bullet;
 
   let result = bullet;
   for (const tool of unapproved) {
     const escaped = tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    // Match the tool name as a whole word, case-insensitive
     const re = new RegExp(
       `(\\s+(?:using|with|via|through|on|in)\\s+)${escaped}\\b` +
       `|(\\busing\\s+)${escaped}\\b` +
@@ -622,7 +661,6 @@ function stripUnapprovedTools(
       "gi",
     );
     result = result.replace(re, (_match, prep1, prep2) => {
-      // If preceded by "using / with / via / through / on / in", drop tool name only
       if (prep1) return prep1 + "dedicated software";
       if (prep2) return prep2 + "dedicated software";
       return "dedicated software";

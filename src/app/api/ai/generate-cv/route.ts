@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
 
+const COMMON_SOFTWARE_NAMES = new Set([
+  "sap","oracle","excel","microsoft excel","word","powerpoint","power point","outlook","teams",
+  "quickbooks","xero","sage","adp","paychex","workday","successfactors","bamboohr",
+  "salesforce","hubspot","zoho","dynamics","netsuite","peoplesoft","kronos",
+  "tableau","power bi","qlik","looker","domo","ssrs","crystal reports",
+  "jira","confluence","trello","asana","monday","notion","clickup","basecamp",
+  "github","gitlab","bitbucket","jenkins","docker","kubernetes",
+  "aws","azure","gcp","google cloud","google analytics","google ads",
+  "cch","cch axcess","taxjar","avalara","lacerte","proseries","drake","ultratax",
+  "six sigma","lean","iso","iso 9001","iso 27001","ifrs","gaap","coso",
+  "sun system","sunsystem","sun systems","tally","pastel","syspro","navision",
+  "myob","freshbooks","wave","zoho books","farm erp","epicor","infor","sap b1",
+  "sap s4","sap hana","sap r3","sap fico","sap mm","sap sd",
+]);
+
+/** Scrub unapproved tool names from a description before sending to AI. */
+function scrubDescInline(desc: string, approvedTools: string[]): string {
+  if (!desc) return desc;
+  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
+  let result = desc;
+  for (const name of COMMON_SOFTWARE_NAMES) {
+    if (approvedLower.has(name)) continue;
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`\\b${escaped}\\b`, "gi"), "[software]");
+  }
+  return result;
+}
+
 /** Remove profile tool names that are NOT approved for this company from a bullet string. */
 function stripUnapprovedToolsInline(bullet: string, approvedTools: string[], allProfileTools: string[]): string {
   const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
@@ -361,11 +389,12 @@ function genExperience(cvData: any, tr: string, jd: string, p: Plan) {
     return [...(toolsByCompany.get(key) || []), ...(toolsByCompany.get("") || [])];
   };
 
-  // Annotate each role with company-matched tools
+  // Pre-scrub descriptions + annotate each role with approved tools
   const expWithTools = rawExps.map((e: any) => {
     const company = e.company || e.employer || "";
     const relevant = _approvedFor(company);
-    return { ...e, _toolsHint: relevant.length > 0 ? relevant.join(", ") : null };
+    const cleanDesc = scrubDescInline(e.description || "", relevant);
+    return { ...e, description: cleanDesc, _toolsHint: relevant.length > 0 ? relevant.join(", ") : null };
   });
 
   // Per-company approved tools block
