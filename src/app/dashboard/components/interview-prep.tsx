@@ -16,6 +16,20 @@ import {
   BriefcaseBusiness, Clock, PlusCircle, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  loadFlutterwaveScript, openFlutterwaveCheckout, generateTxRef,
+  DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY,
+} from "@/lib/flutterwave";
+
+const FREE_QUOTA = 5;
+const PAID_BATCH = 20;
+
+interface UsageState {
+  generated: number;
+  paidQuota: number;
+  totalAllowed: number;
+  remaining: number;
+}
 
 interface InterviewPrepProps {
   userId: string;
@@ -129,6 +143,12 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   const [loadingFeedback, setLoadingFeedback] = useState<Record<number, boolean>>({});
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
 
+  // Usage / payment state
+  const [usage, setUsage] = useState<UsageState>({ generated: 0, paidQuota: 0, totalAllowed: FREE_QUOTA, remaining: FREE_QUOTA });
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [pendingGenerate, setPendingGenerate] = useState<"generate" | "add" | null>(null);
+
   // Delete confirm state
   const [confirmDeleteSession, setConfirmDeleteSession] = useState<SessionRow | null>(null);
   const [confirmDeleteQuestion, setConfirmDeleteQuestion] = useState<InterviewQuestion | null>(null);
@@ -144,10 +164,12 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   const [listeningId, setListeningId] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
 
-  // ─── Load all sessions on mount ───
+  // ─── Load all sessions + usage on mount ───
   useEffect(() => {
     if (!userId) { setLoadingSessions(false); return; }
     const supabase = createClient();
+
+    // Load sessions
     supabase
       .from("interview_sessions")
       .select("*")
@@ -159,6 +181,21 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
         setSessions(rows);
         if (rows.length > 0) applySession(rows[0]);
         setLoadingSessions(false);
+      });
+
+    // Load usage
+    supabase
+      .from("profiles")
+      .select("interview_questions_generated, interview_questions_paid_quota")
+      .eq("id", userId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          const generated = data.interview_questions_generated ?? 0;
+          const paidQuota = data.interview_questions_paid_quota ?? 0;
+          const totalAllowed = FREE_QUOTA + paidQuota;
+          setUsage({ generated, paidQuota, totalAllowed, remaining: Math.max(0, totalAllowed - generated) });
+        }
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -247,8 +284,14 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   }, [saveSession]);
 
   // ─── Generate Questions ───
-  const generateQuestions = async () => {
-    if (!simRole.trim()) { toast.error("Please enter a job role"); return; }
+  // Core generate — accepts optional pre-verified usage to skip re-check
+  const generateQuestionsCore = async (currentUsage?: UsageState) => {
+    const u = currentUsage ?? usage;
+    if (u.remaining <= 0) {
+      setPendingGenerate("generate");
+      setShowPaymentModal(true);
+      return;
+    }
     setGeneratingQuestions(true);
     setQuestions([]); setAnswers({}); setFeedbacks({});
     try {
@@ -263,10 +306,16 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
         }),
       });
       const json = await res.json();
+      if (res.status === 402 || json.error === "quota_exceeded") {
+        setPendingGenerate("generate");
+        setShowPaymentModal(true);
+        return;
+      }
       if (!res.ok) throw new Error(json.error);
       const qs: InterviewQuestion[] = json.questions || [];
       setQuestions(qs);
       setExpandedQuestion(qs[0]?.id ?? null);
+      if (json.usage) setUsage(json.usage);
 
       // INSERT a new session row
       const supabase = createClient();
@@ -294,6 +343,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
       setGeneratingQuestions(false);
     }
   };
+
+  const generateQuestions = () => generateQuestionsCore();
 
   // ─── Delete Session ───
   const deleteSession = async (session: SessionRow) => {
@@ -349,9 +400,89 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     }
   };
 
+  // ─── Flutterwave payment to unlock 20 more questions ───
+  const handlePayForQuestions = useCallback(async () => {
+    const publicKey = process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY;
+    if (!publicKey) { toast.error("Payment gateway not configured."); return; }
+
+    // Need user email from cvData or profile
+    const email = cvData?.personalInfo?.email || "";
+    if (!email) {
+      toast.error("Please add your email to your profile before paying.");
+      return;
+    }
+
+    setPaymentProcessing(true);
+    const txRef = generateTxRef(userId);
+
+    try {
+      await loadFlutterwaveScript();
+      const flwHandler = await openFlutterwaveCheckout({
+        public_key: publicKey,
+        tx_ref: txRef,
+        amount: DOWNLOAD_AMOUNT,
+        currency: DOWNLOAD_CURRENCY,
+        payment_options: "card",
+        customer: { email, name: cvData?.personalInfo?.fullName || "IntraCV User" },
+        customizations: {
+          title: "IntraCV — Interview Questions",
+          description: `Unlock ${PAID_BATCH} more interview questions`,
+        },
+        callback: async (response) => {
+          flwHandler.close();
+          if (response.status === "successful") {
+            try {
+              const verifyRes = await fetch("/api/payments/interview-unlock", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  transaction_id: response.transaction_id,
+                  tx_ref: txRef,
+                  expected_amount: DOWNLOAD_AMOUNT,
+                  expected_currency: DOWNLOAD_CURRENCY,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.verified && verifyData.usage) {
+                setUsage(verifyData.usage);
+                toast.success(`Payment confirmed! You have ${verifyData.usage.remaining} questions available.`, { icon: "🎉" });
+                setShowPaymentModal(false);
+                // Auto-proceed with the pending generate action
+                if (pendingGenerate === "generate") {
+                  setPendingGenerate(null);
+                  setTimeout(() => generateQuestionsCore(verifyData.usage), 100);
+                } else if (pendingGenerate === "add") {
+                  setPendingGenerate(null);
+                  setTimeout(() => addMoreQuestionsCore(verifyData.usage), 100);
+                }
+              } else {
+                toast.error(verifyData.message || "Payment verification failed.");
+              }
+            } catch {
+              toast.error("Could not verify payment. Contact support.");
+            }
+          } else {
+            toast.error("Payment was not completed.");
+          }
+          setPaymentProcessing(false);
+        },
+        onclose: () => { setPaymentProcessing(false); setShowPaymentModal(false); },
+      });
+    } catch {
+      toast.error("Could not open payment window. Please try again.");
+      setPaymentProcessing(false);
+    }
+  }, [userId, cvData, pendingGenerate]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Add More Questions to current session ───
-  const addMoreQuestions = async () => {
+  const addMoreQuestionsCore = async (currentUsage?: UsageState) => {
     if (!currentSessionId) return;
+    const u = currentUsage ?? usage;
+    if (u.remaining <= 0) {
+      setPendingGenerate("add");
+      setShowPaymentModal(true);
+      return;
+    }
     setAddingMore(true);
     try {
       const nextId = questions.length > 0 ? Math.max(...questions.map((q) => q.id)) + 1 : 1;
@@ -370,11 +501,17 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
         }),
       });
       const json = await res.json();
+      if (res.status === 402 || json.error === "quota_exceeded") {
+        setPendingGenerate("add");
+        setShowPaymentModal(true);
+        return;
+      }
       if (!res.ok) throw new Error(json.error);
       const newQs: InterviewQuestion[] = json.questions || [];
       const merged = [...questions, ...newQs];
       setQuestions(merged);
       setExpandedQuestion(newQs[0]?.id ?? null);
+      if (json.usage) setUsage(json.usage);
       await saveSession({ questions: merged as any }, currentSessionId);
     } catch (err: any) {
       toast.error(err.message || "Failed to add more questions");
@@ -382,6 +519,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
       setAddingMore(false);
     }
   };
+
+  const addMoreQuestions = () => addMoreQuestionsCore();
 
   // ─── Submit Answer for Feedback ───
   const submitAnswer = async (questionId: number) => {
@@ -623,6 +762,43 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
           </div>
         </div>
 
+        {/* ── Usage indicator ── */}
+        {(() => {
+          const { generated, paidQuota, remaining } = usage;
+          const isOnFree = generated < FREE_QUOTA;
+          const freeLeft = Math.max(0, FREE_QUOTA - generated);
+          const paidLeft = paidQuota > 0 ? Math.max(0, paidQuota - Math.max(0, generated - FREE_QUOTA)) : 0;
+          if (remaining > 0) {
+            return (
+              <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs border ${
+                isOnFree
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                  : "bg-blue-50 border-blue-200 text-blue-700"
+              }`}>
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                {isOnFree
+                  ? `${freeLeft} free question${freeLeft !== 1 ? "s" : ""} remaining`
+                  : `${paidLeft} paid question${paidLeft !== 1 ? "s" : ""} remaining`}
+              </div>
+            );
+          }
+          return (
+            <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
+              <div className="flex items-center gap-2 text-xs text-amber-800">
+                <Star className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <span>Free questions used up · Unlock <strong>{PAID_BATCH} more</strong> for {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</span>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setShowPaymentModal(true)}
+                className="shrink-0 h-7 px-3 text-xs rounded-lg bg-amber-600 hover:bg-amber-700 text-white border-0"
+              >
+                Unlock
+              </Button>
+            </div>
+          );
+        })()}
+
         {/* Questions */}
         {questions.length > 0 && (
           <div className="space-y-3">
@@ -818,6 +994,38 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
           </div>
         )}
       </div>
+
+      {/* ── Payment Modal ── */}
+      <Dialog open={showPaymentModal} onOpenChange={(o) => { if (!o && !paymentProcessing) { setShowPaymentModal(false); setPendingGenerate(null); } }}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Unlock more questions</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              Your {FREE_QUOTA} free questions have been used.
+              Pay <strong className="text-slate-700">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</strong> to unlock <strong className="text-slate-700">{PAID_BATCH} more questions</strong>. The count persists across all sessions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-xs text-indigo-800 space-y-1">
+            <p className="font-semibold">What you get:</p>
+            <p>• {PAID_BATCH} additional questions across any session</p>
+            <p>• Add more any time you run out</p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setShowPaymentModal(false); setPendingGenerate(null); }} disabled={paymentProcessing}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handlePayForQuestions}
+              disabled={paymentProcessing}
+              className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0"
+            >
+              {paymentProcessing ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+              Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Delete Session Confirmation ── */}
       <Dialog open={!!confirmDeleteSession} onOpenChange={(o) => { if (!o) setConfirmDeleteSession(null); }}>

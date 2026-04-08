@@ -1,10 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
+
+const FREE_QUOTA = 5;
+const PAID_BATCH = 20;
+
+async function getUsage(userId: string) {
+  const admin = createAdminSupabase();
+  const { data } = await admin
+    .from("profiles")
+    .select("interview_questions_generated, interview_questions_paid_quota")
+    .eq("id", userId)
+    .single();
+  const generated = data?.interview_questions_generated ?? 0;
+  const paidQuota = data?.interview_questions_paid_quota ?? 0;
+  const totalAllowed = FREE_QUOTA + paidQuota;
+  const remaining = Math.max(0, totalAllowed - generated);
+  return { generated, paidQuota, totalAllowed, remaining };
+}
+
+async function incrementGenerated(userId: string, count: number) {
+  const admin = createAdminSupabase();
+  await admin.rpc("add_interview_generated", { uid: userId, n: count });
+}
 
 export async function POST(req: NextRequest) {
   try {
     const openai = openaiClient();
-    const { jobRole, company, jobDescription, action, question, answer, existingQuestions, count, startId, profileContext } = await req.json();
+    const body = await req.json();
+    const { jobRole, company, jobDescription, action, question, answer,
+            existingQuestions, count, startId, profileContext } = body;
+
+    // ─── Auth (required for generate; optional for feedback) ───
+    const serverSupabase = await createServerSupabase();
+    const { data: { user } } = await serverSupabase.auth.getUser();
 
     // Generate interview questions
     if (action === "generate") {
@@ -12,7 +42,26 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Job role is required" }, { status: 400 });
       }
 
-      const numToGenerate = Math.max(1, Math.min(20, count || 5));
+      const requested = Math.max(1, Math.min(20, count || 5));
+
+      // ── Quota check ──
+      if (user) {
+        const usage = await getUsage(user.id);
+        if (usage.remaining <= 0) {
+          return NextResponse.json({
+            error: "quota_exceeded",
+            usage: { generated: usage.generated, paidQuota: usage.paidQuota, remaining: 0, freeQuota: FREE_QUOTA, paidBatch: PAID_BATCH },
+          }, { status: 402 });
+        }
+      }
+
+      // Cap to remaining quota
+      let actualCount = requested;
+      if (user) {
+        const u2 = await getUsage(user.id);
+        actualCount = Math.min(requested, u2.remaining);
+      }
+
       const idOffset = startId || 1;
 
       const jdContext = jobDescription
@@ -27,7 +76,7 @@ export async function POST(req: NextRequest) {
         ? `\n\nALREADY ASKED (do NOT repeat or rephrase these):\n${existingQuestions.map((q: any, i: number) => `${i + 1}. ${q.question}`).join("\n")}\n`
         : "";
 
-      const prompt = `Generate ${numToGenerate} realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}${profileCtx}${existingContext}
+      const prompt = `Generate ${actualCount} realistic interview questions for a "${jobRole}" position${company ? ` at ${company}` : ""}.${jdContext}${profileCtx}${existingContext}
 
 ${!existingQuestions?.length ? `Include a mix of:
 - 1 behavioral question (STAR method)
@@ -58,16 +107,21 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
       });
 
       const content = completion.choices[0]?.message?.content;
-      if (!content) {
-        return NextResponse.json({ error: "No response from AI" }, { status: 500 });
-      }
+      if (!content) return NextResponse.json({ error: "No response from AI" }, { status: 500 });
 
-      // Strip markdown fences if present (model may wrap JSON in ```json ... ```)
       const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
       const parsed = JSON.parse(cleaned);
       const questions = Array.isArray(parsed) ? parsed : parsed.questions || parsed[Object.keys(parsed)[0]] || [];
 
-      return NextResponse.json({ questions });
+      // ── Increment lifetime counter ──
+      if (user && questions.length > 0) {
+        await incrementGenerated(user.id, questions.length);
+      }
+
+      // Return usage info so client can refresh display
+      const updatedUsage = user ? await getUsage(user.id) : null;
+
+      return NextResponse.json({ questions, usage: updatedUsage });
     }
 
     // Provide feedback on an answer
@@ -100,9 +154,7 @@ Provide feedback in this JSON format:
       });
 
       const content = completion.choices[0]?.message?.content;
-      if (!content) {
-        return NextResponse.json({ error: "No response from AI" }, { status: 500 });
-      }
+      if (!content) return NextResponse.json({ error: "No response from AI" }, { status: 500 });
 
       const cleanedFb = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
       const feedback = JSON.parse(cleanedFb);
