@@ -1,21 +1,21 @@
--- Interview sessions: one saved session per user (upsert on each generate/answer)
+-- Interview sessions: multiple sessions per user, grouped by session
 CREATE TABLE IF NOT EXISTS public.interview_sessions (
-  id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id       uuid REFERENCES auth.users ON DELETE CASCADE NOT NULL,
-  job_role      text NOT NULL DEFAULT '',
-  company       text DEFAULT '',
+  id              uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id         uuid REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+  job_role        text NOT NULL DEFAULT '',
+  company         text DEFAULT '',
   job_description text DEFAULT '',
-  questions     jsonb DEFAULT '[]'::jsonb,
-  answers       jsonb DEFAULT '{}'::jsonb,
-  feedbacks     jsonb DEFAULT '{}'::jsonb,
-  created_at    timestamptz DEFAULT now(),
-  updated_at    timestamptz DEFAULT now(),
-  UNIQUE (user_id)
+  questions       jsonb DEFAULT '[]'::jsonb,
+  answers         jsonb DEFAULT '{}'::jsonb,
+  feedbacks       jsonb DEFAULT '{}'::jsonb,
+  created_at      timestamptz DEFAULT now(),
+  updated_at      timestamptz DEFAULT now()
+  -- No UNIQUE(user_id) — many sessions per user
 );
 
 ALTER TABLE public.interview_sessions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage own interview session"
+CREATE POLICY "Users can manage own interview sessions"
   ON public.interview_sessions FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
