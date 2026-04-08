@@ -174,7 +174,7 @@ function DashboardPage() {
       setPublications((pubRes.data || []).map((p: any) => ({
         title: p.title || "", publisher: p.publisher || "", year: p.year || "", type: p.type || "publication",
       })));
-      setTools((toolRes.data || []).map((t: any) => t.name || "").filter(Boolean));
+      setTools((toolRes.data || []).map((t: any) => ({ name: t.name || "", company: t.company || "" })).filter((t: any) => t.name));
       setVolunteer((volRes.data || []).map((v: any) => v.description || "").filter(Boolean));
     } catch (err) {
       console.error("Failed to load dashboard data:", err);

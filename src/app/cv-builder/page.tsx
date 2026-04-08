@@ -397,7 +397,7 @@ function CVBuilderPage() {
   const [execTraining, setExecTraining] = useState<ExecTraining[]>([]);
   const [publications, setPublications] = useState<Publication[]>([]);
   const [declaration, setDeclaration] = useState({ declaration: "", place: "", date: "" });
-  const [tools, setTools] = useState<string[]>([]);
+  const [tools, setTools] = useState<{ name: string; company: string }[]>([]);
   const [volunteer, setVolunteer] = useState<string[]>([]);
 
 
@@ -543,7 +543,7 @@ function CVBuilderPage() {
       }
       if (toolRes.data && toolRes.data.length > 0) {
         found = true;
-        setTools(toolRes.data.map((t: any) => t.name || "").filter(Boolean));
+        setTools(toolRes.data.map((t: any) => ({ name: t.name || "", company: t.company || "" })).filter((t: any) => t.name));
       }
       if (volRes.data && volRes.data.length > 0) {
         found = true;
@@ -768,7 +768,7 @@ function CVBuilderPage() {
           })));
       }
       if (d.tools?.length) {
-        setTools(d.tools.map((t: any) => typeof t === "string" ? t : t.name || "").filter(Boolean));
+        setTools(d.tools.map((t: any) => typeof t === "string" ? { name: t, company: "" } : { name: t.name || "", company: t.company || "" }).filter((t: any) => t.name));
       }
       if (d.volunteer?.length) {
         setVolunteer(d.volunteer.map((v: any) => typeof v === "string" ? v : v.description || "").filter(Boolean));
@@ -1027,9 +1027,9 @@ function CVBuilderPage() {
 
       await saveSection("tools", async () => {
         await supabase.from("cv_tools").delete().eq("user_id", user.id);
-        if (tools.filter(Boolean).length > 0) {
+        if (tools.filter((t) => t.name?.trim()).length > 0) {
           const { error } = await supabase.from("cv_tools").insert(
-            tools.filter(Boolean).map((t, i) => ({ user_id: user.id, name: t, sort_order: i }))
+            tools.filter((t) => t.name?.trim()).map((t, i) => ({ user_id: user.id, name: t.name.trim(), company: t.company?.trim() || null, sort_order: i }))
           );
           if (error) throw error;
         }
@@ -1314,7 +1314,7 @@ function CVBuilderPage() {
   boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) sectionsWithIssues.add("boardRoles"); });
   execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) sectionsWithIssues.add("execTraining"); });
   publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) sectionsWithIssues.add("publications"); });
-  tools.forEach((t) => { if (!t?.trim()) sectionsWithIssues.add("tools"); });
+  tools.forEach((t) => { if (!t?.name?.trim()) sectionsWithIssues.add("tools"); });
   volunteer.forEach((v) => { if (!v?.trim()) sectionsWithIssues.add("volunteer"); });
 
   // ─── Career Categorization ───
@@ -1470,7 +1470,7 @@ function CVBuilderPage() {
                     boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) incompleteItems.push({ section: "Board Roles", key: "boardRoles", count: 0 }); });
                     execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) incompleteItems.push({ section: "Exec Training", key: "execTraining", count: 0 }); });
                     publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) incompleteItems.push({ section: "Publications", key: "publications", count: 0 }); });
-                    tools.forEach((t) => { if (!t?.trim()) incompleteItems.push({ section: "Tools", key: "tools", count: 0 }); });
+                    tools.forEach((t) => { if (!t?.name?.trim()) incompleteItems.push({ section: "Tools", key: "tools", count: 0 }); });
                     volunteer.forEach((v) => { if (!v?.trim()) incompleteItems.push({ section: "Volunteer", key: "volunteer", count: 0 }); });
 
                     if (incompleteItems.length > 0) {
@@ -2249,14 +2249,25 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No tools or software added yet</p>
                       )}
                       {tools.map((tool, i) => (
-                        <div key={i} className={`flex gap-2 items-center ${!tool?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!tool?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="e.g. SAP ERP, Microsoft Excel, Figma *" value={tool} onChange={(e) => { const t = [...tools]; t[i] = e.target.value; setTools(t); }} />
+                        <div key={i} className={`flex gap-2 items-center ${!tool.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
+                          <Input
+                            className={`flex-1 ${!tool.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`}
+                            placeholder="Tool / Software name *"
+                            value={tool.name}
+                            onChange={(e) => { const t = [...tools]; t[i] = { ...t[i], name: e.target.value }; setTools(t); }}
+                          />
+                          <Input
+                            className="flex-1 text-sm"
+                            placeholder="Used at company (optional)"
+                            value={tool.company}
+                            onChange={(e) => { const t = [...tools]; t[i] = { ...t[i], company: e.target.value }; setTools(t); }}
+                          />
                           <Button variant="ghost" size="sm" onClick={() => setTools(tools.filter((_, j) => j !== i))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setTools([...tools, ""])}>
+                      <Button variant="outline" className="w-full" onClick={() => setTools([...tools, { name: "", company: "" }])}>
                         <Plus className="mr-2 h-4 w-4" /> Add Tool
                       </Button>
                     </div>

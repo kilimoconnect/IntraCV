@@ -282,25 +282,31 @@ async function blockTagline(cvData: any): Promise<string> {
   return raw.length > taglineMaxChars ? trimToWord(raw, taglineMaxChars) : raw;
 }
 
-async function blockExperience(exps: any[]): Promise<any[]> {
+async function blockExperience(exps: any[], toolsByCompany?: Map<string, string[]>): Promise<any[]> {
   const top = exps.slice(0, S.experience.roles);
   const { bulletMinChars, bulletMaxChars, role1Bullets, role2Bullets } = S.experience;
 
   const rolesData = top.map((e, i) => {
     const count = i === 0 ? role1Bullets : role2Bullets;
     const dates = [e.startDate, e.endDate].filter(Boolean).join(" – ") || "";
+    const company = e.company || e.company_name || "";
+    const relevantTools = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
+    const toolsHint = relevantTools.length > 0
+      ? `\n  Tools used at this company: ${relevantTools.join(", ")} — reference these naturally in bullets where truly relevant. Do NOT invent tools not on this list.`
+      : "";
     return `Role ${i+1}:
   Title: ${e.title || e.job_title || ""}
-  Company: ${e.company || e.company_name || ""}
+  Company: ${company}
   Dates: ${dates}
-  Description: ${e.description || ""}
+  Description: ${e.description || ""}${toolsHint}
   Write exactly ${count} achievement bullets. Target ${bulletMinChars}-${bulletMaxChars} chars per bullet.`;
   }).join("\n\n");
 
   const r = await ai(`Rewrite the following work experience into polished CV bullets.
     ${rolesData}
-    Rules: 
+    Rules:
     - past tense action verbs, include quantified results (KPIs, %, $) where possible
+    - Only mention tools that appear in the "Tools used at this company" hint — never invent or add tools not provided
     - IMPORTANT: Always reformat dates to month and year only: "May 2020 – Feb 2022"
     - Use 3-letter month abbreviations: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
     - Format: "Month YYYY – Month YYYY"
@@ -464,21 +470,53 @@ function formatDateRange(start?: string, end?: string): string {
   return left || right;
 }
 
+/** Normalise tools from either string[] or {name,company}[] → {name,company}[] */
+function normalizeToolObjects(items: any): { name: string; company: string }[] {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((t: any) => typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" })
+    .filter((t) => t.name.trim().length > 0);
+}
+
+/**
+ * Build a map from company name → tool names for fast lookup in experience generation.
+ * Tools with no company ("") are treated as usable by any role.
+ */
+function buildToolsByCompany(items: any): Map<string, string[]> {
+  const toolObjs = normalizeToolObjects(items);
+  const map = new Map<string, string[]>();
+  for (const t of toolObjs) {
+    const key = t.company.trim().toLowerCase();
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(t.name);
+  }
+  return map;
+}
+
+/** Get tools relevant to a specific company — company-matched first, then generic (no company). */
+function toolsForCompany(map: Map<string, string[]>, companyName: string): string[] {
+  const key = companyName.trim().toLowerCase();
+  const specific = map.get(key) || [];
+  const generic = map.get("") || [];
+  return [...specific, ...generic];
+}
+
 async function blockTools(cvData: any): Promise<string[]> {
   // Only use real tools from database — never mix in skills or other sections
-  const sourceTools = normalizeStringArray(cvData.tools);
-  if (sourceTools.length === 0) return [];
+  const toolObjs = normalizeToolObjects(cvData.tools);
+  if (toolObjs.length === 0) return [];
 
+  const sourceNames = toolObjs.map((t) => t.name);
   const { maxLabelChars } = S.tools;
   const r = await ai(`Polish these tools/software for a professional CV.
-    SOURCE: ${JSON.stringify(sourceTools)}
-    Return EXACTLY ${sourceTools.length} tool(s) — do NOT add or invent extra tools.
+    SOURCE: ${JSON.stringify(sourceNames)}
+    Return EXACTLY ${sourceNames.length} tool(s) — do NOT add or invent extra tools.
     Each label must be ${maxLabelChars} characters or fewer.
     Use official product/platform names where possible.
     Return JSON: {"tools": [""]}`);
 
   return (r.tools || [])
-    .slice(0, sourceTools.length)
+    .slice(0, sourceNames.length)
     .map((tool: any) => trimToWord(String(tool || "").trim(), maxLabelChars))
     .filter(Boolean);
 }
@@ -820,11 +858,14 @@ export async function POST(req: NextRequest) {
     return await slotRulesStore.run(slotRules, async () => {
       const pi = cvData.personalInfo || {};
 
+      // Build company → tools map once so blockExperience can use it
+      const toolsByCompany = buildToolsByCompany(cvData.tools);
+
       // ── Common blocks (all categories) ──
       const commonBlocksPromise = Promise.all([
         blockProfile(cvData),
         (isExecutive || isMidSenior) ? blockTagline(cvData) : Promise.resolve(""),
-        blockExperience(cvData.experiences || []),
+        blockExperience(cvData.experiences || [], toolsByCompany),
         blockHistory(cvData.experiences || []),
         (!isJunior || (cvData.projects || []).length > 0) ? blockProjects(cvData) : Promise.resolve([]),
         blockEducation(cvData.education || []),

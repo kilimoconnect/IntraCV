@@ -502,11 +502,35 @@ export default function MyProfile({
     },
     {
       key: "tools", label: "Tools & Software", icon: Wrench, hasContent: sectionHasContent.tools,
-      render: () => tools.length > 0 ? (
-        <div className="flex flex-wrap gap-2">{tools.map((tool: string, i: number) => (
-          <Badge key={i} variant="secondary">{tool}</Badge>
-        ))}</div>
-      ) : <p className="text-muted-foreground italic">No tools added</p>,
+      render: () => {
+        if (tools.length === 0) return <p className="text-muted-foreground italic">No tools added</p>;
+        // Group by company
+        const grouped: Record<string, string[]> = {};
+        tools.forEach((t: any) => {
+          const name = typeof t === "string" ? t : t.name || "";
+          const company = typeof t === "string" ? "" : (t.company || "");
+          const key = company || "_none";
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(name);
+        });
+        const companies = Object.keys(grouped).sort((a, b) => a === "_none" ? 1 : b === "_none" ? -1 : a.localeCompare(b));
+        return (
+          <div className="space-y-3">
+            {companies.map((company) => (
+              <div key={company}>
+                {company !== "_none" && (
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">{company}</p>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  {grouped[company].map((name, i) => (
+                    <Badge key={i} variant="secondary">{name}</Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      },
     },
     {
       key: "volunteer", label: "Volunteer Experience", icon: Heart, hasContent: sectionHasContent.volunteer,

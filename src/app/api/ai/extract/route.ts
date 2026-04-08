@@ -123,13 +123,19 @@ function validateDates(data: any): any {
   }
 
   // Remove empty strings from simple arrays
-  for (const key of ["memberships", "keyAchievements", "tools", "volunteer", "interests"]) {
+  for (const key of ["memberships", "keyAchievements", "volunteer", "interests"]) {
     if (Array.isArray(data[key])) {
       data[key] = data[key].filter((item: any) => {
         if (typeof item === "string") return item.trim().length > 0;
         return true;
       });
     }
+  }
+  // Tools are now objects { name, company } — filter out entries with no name
+  if (Array.isArray(data.tools)) {
+    data.tools = data.tools
+      .map((t: any) => typeof t === "string" ? { name: t, company: "" } : t)
+      .filter((t: any) => t?.name?.trim?.().length > 0);
   }
 
   // Fix declaration: use current date instead of old CV date
@@ -474,7 +480,7 @@ Return ONLY valid JSON with this exact structure (use empty strings/arrays for m
   "awards": [
     { "title": "", "description": "" }
   ],
-  "tools": [""],
+  "tools": [{ "name": "", "company": "" }],
   "volunteer": [""],
   "interests": [""],
   "internships": [
@@ -565,7 +571,11 @@ AWARDS:
 TOOLS:
 - Extract software, platforms, systems, and tools from dedicated "Tools", "Software", "Technical Tools" sections.
 - Examples: "SAP", "Salesforce", "JIRA", "Microsoft Excel", "QuickBooks".
+- For each tool, identify which company the candidate used it at by cross-referencing the experience section.
+  If a tool appears under or immediately after a specific role/company, set "company" to that company name.
+  If a tool is listed generically with no clear company link, set "company" to "" (empty string).
 - Do NOT duplicate items that are already in the skills array.
+- Return as objects: { "name": "SAP", "company": "Acme Corp" }
 
 VOLUNTEER:
 - Extract community service, volunteer work, or pro-bono activities as descriptive strings.

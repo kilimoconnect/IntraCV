@@ -301,6 +301,33 @@ function genExperience(cvData: any, tr: string, jd: string, p: Plan) {
   const bpj = p.expTargetBulletsPerJob;
   const wpb = p.expTargetWordsPerBullet;
 
+  // Build company → tools lookup from profile tools (support both string[] and {name,company}[])
+  const toolObjs: { name: string; company: string }[] = (cvData.tools || []).map((t: any) =>
+    typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" }
+  ).filter((t: any) => t.name.trim());
+
+  const toolsByCompany = new Map<string, string[]>();
+  for (const t of toolObjs) {
+    const key = t.company.trim().toLowerCase();
+    if (!toolsByCompany.has(key)) toolsByCompany.set(key, []);
+    toolsByCompany.get(key)!.push(t.name);
+  }
+
+  // Annotate each role with company-matched tools
+  const expWithTools = rawExps.map((e: any) => {
+    const company = e.company || e.employer || "";
+    const key = company.trim().toLowerCase();
+    const specific = toolsByCompany.get(key) || [];
+    const generic = toolsByCompany.get("") || [];
+    const relevant = [...specific, ...generic];
+    return { ...e, _toolsHint: relevant.length > 0 ? relevant.join(", ") : null };
+  });
+
+  const toolsInstructions = expWithTools.some((e: any) => e._toolsHint)
+    ? `\nTOOLS BY COMPANY (only reference tools listed here — never invent tools):\n` +
+      expWithTools.map((e: any) => e._toolsHint ? `- ${e.company || "Unknown"}: ${e._toolsHint}` : null).filter(Boolean).join("\n")
+    : "";
+
   return callAI(`You are a CV experience writer. Rewrite professional experience to PERFECTLY fill the allocated space.
 
 SPACE ANALYSIS:
@@ -311,6 +338,7 @@ RAW EXPERIENCE:
 ${JSON.stringify(rawExps, null, 2)}
 TARGET ROLE: ${tr || "Not specified"}
 JOB DESCRIPTION: ${jd || "Not provided"}
+${toolsInstructions}
 
 RULES:
 1. Return ALL ${jobCount} positions from the raw data
@@ -323,6 +351,7 @@ RULES:
 8. NEVER fabricate — enhance wording, expand on existing details
 9. When expanding: add context about scope, team size, processes, technologies, impact
 10. When condensing: merge similar points, keep strongest achievements
+11. Only mention tools from the TOOLS BY COMPANY list above — do not invent tool names
 
 Return ONLY JSON: { "experiences": [{ "title": "", "company": "", "location": "", "startDate": "", "endDate": "", "description": "" }] }`);
 }
