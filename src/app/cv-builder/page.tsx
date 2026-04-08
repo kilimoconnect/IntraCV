@@ -1953,12 +1953,14 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No skills added yet</p>
                       )}
                       {skills.map((skill) => (
-                        <div key={skill.id} className={`flex gap-2 items-center ${!skill.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!skill.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Skill name *" value={skill.name} onChange={(e) => setSkills(skills.map((s) => s.id === skill.id ? { ...s, name: e.target.value } : s))} />
-                          <Input className="w-40" placeholder="Category" value={skill.category} onChange={(e) => setSkills(skills.map((s) => s.id === skill.id ? { ...s, category: e.target.value } : s))} />
-                          <Button variant="ghost" size="sm" onClick={() => setSkills(skills.filter((s) => s.id !== skill.id))}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                        <div key={skill.id} className={`rounded-lg border p-3 space-y-2 ${!skill.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <Input className={`flex-1 ${!skill.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Skill name *" value={skill.name} onChange={(e) => setSkills(skills.map((s) => s.id === skill.id ? { ...s, name: e.target.value } : s))} />
+                            <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setSkills(skills.filter((s) => s.id !== skill.id))}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                          <Input placeholder="Category (e.g. Leadership, Technical)" value={skill.category} onChange={(e) => setSkills(skills.map((s) => s.id === skill.id ? { ...s, category: e.target.value } : s))} />
                         </div>
                       ))}
                       <Button variant="outline" className="w-full" onClick={() => setSkills([...skills, { id: uid(), name: "", category: "" }])}>
@@ -1974,13 +1976,17 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No certifications added yet</p>
                       )}
                       {certifications.map((cert) => (
-                        <div key={cert.id} className={`flex gap-2 items-center ${!cert.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!cert.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Name *" value={cert.name} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, name: e.target.value } : c))} />
-                          <Input className="w-40" placeholder="Issuer" value={cert.issuer} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, issuer: e.target.value } : c))} />
-                          <Input className="w-24" placeholder="Year" value={cert.year} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, year: e.target.value } : c))} />
-                          <Button variant="ghost" size="sm" onClick={() => setCertifications(certifications.filter((c) => c.id !== cert.id))}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                        <div key={cert.id} className={`rounded-lg border p-3 space-y-2 ${!cert.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <Input className={`flex-1 ${!cert.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Certification name *" value={cert.name} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, name: e.target.value } : c))} />
+                            <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setCertifications(certifications.filter((c) => c.id !== cert.id))}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input placeholder="Issuing organisation" value={cert.issuer} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, issuer: e.target.value } : c))} />
+                            <Input placeholder="Year" value={cert.year} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, year: e.target.value } : c))} />
+                          </div>
                         </div>
                       ))}
                       <Button variant="outline" className="w-full" onClick={() => setCertifications([...certifications, { id: uid(), name: "", issuer: "", year: "" }])}>
@@ -1996,12 +2002,14 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No languages added yet</p>
                       )}
                       {languages.map((lang) => (
-                        <div key={lang.id} className={`flex gap-2 items-center ${!lang.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Language *" value={lang.name} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, name: e.target.value } : l))} />
-                          <Input className="w-28 sm:w-48" placeholder="Proficiency" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
-                          <Button variant="ghost" size="sm" onClick={() => setLanguages(languages.filter((l) => l.id !== lang.id))}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                        <div key={lang.id} className={`rounded-lg border p-3 space-y-2 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <Input className={`flex-1 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Language *" value={lang.name} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, name: e.target.value } : l))} />
+                            <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setLanguages(languages.filter((l) => l.id !== lang.id))}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                          <Input placeholder="Proficiency (e.g. Fluent, Native, Conversational)" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
                         </div>
                       ))}
                       <Button variant="outline" className="w-full" onClick={() => setLanguages([...languages, { id: uid(), name: "", proficiency: "" }])}>
@@ -2071,9 +2079,9 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No achievements added yet</p>
                       )}
                       {keyAchievements.map((ach) => (
-                        <div key={ach.id} className={`flex gap-2 items-center ${!ach.achievement?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!ach.achievement?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Key achievement or accomplishment *" value={ach.achievement} onChange={(e) => setKeyAchievements(keyAchievements.map((a) => a.id === ach.id ? { ...a, achievement: e.target.value } : a))} />
-                          <Button variant="ghost" size="sm" onClick={() => setKeyAchievements(keyAchievements.filter((a) => a.id !== ach.id))}>
+                        <div key={ach.id} className={`flex gap-2 items-center rounded-lg border p-2 ${!ach.achievement?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                          <Input className={`flex-1 border-0 shadow-none focus-visible:ring-0 ${!ach.achievement?.trim() ? "placeholder:text-red-400" : ""}`} placeholder="Key achievement or accomplishment *" value={ach.achievement} onChange={(e) => setKeyAchievements(keyAchievements.map((a) => a.id === ach.id ? { ...a, achievement: e.target.value } : a))} />
+                          <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setKeyAchievements(keyAchievements.filter((a) => a.id !== ach.id))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
@@ -2120,9 +2128,9 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No memberships added yet</p>
                       )}
                       {memberships.map((mem) => (
-                        <div key={mem.id} className={`flex gap-2 items-center ${!mem.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
-                          <Input className={`flex-1 ${!mem.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Professional membership or affiliation *" value={mem.name} onChange={(e) => setMemberships(memberships.map((m) => m.id === mem.id ? { ...m, name: e.target.value } : m))} />
-                          <Button variant="ghost" size="sm" onClick={() => setMemberships(memberships.filter((m) => m.id !== mem.id))}>
+                        <div key={mem.id} className={`flex gap-2 items-center rounded-lg border p-2 ${!mem.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                          <Input className={`flex-1 border-0 shadow-none focus-visible:ring-0 ${!mem.name?.trim() ? "placeholder:text-red-400" : ""}`} placeholder="Professional membership or affiliation *" value={mem.name} onChange={(e) => setMemberships(memberships.map((m) => m.id === mem.id ? { ...m, name: e.target.value } : m))} />
+                          <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setMemberships(memberships.filter((m) => m.id !== mem.id))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
@@ -2310,14 +2318,14 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No tools or software added yet</p>
                       )}
                       {tools.map((tool, i) => (
-                        <div key={i} className={`flex gap-2 items-center ${!tool.name?.trim() ? "bg-red-50/30 border border-red-300 rounded-lg p-1.5" : ""}`}>
+                        <div key={i} className={`flex gap-2 items-center rounded-lg border p-2 ${!tool.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
                           <Input
-                            className={`flex-1 ${!tool.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`}
+                            className={`flex-1 border-0 shadow-none focus-visible:ring-0 ${!tool.name?.trim() ? "placeholder:text-red-400" : ""}`}
                             placeholder="e.g. SAP ERP, Microsoft Excel, Figma *"
                             value={tool.name}
                             onChange={(e) => { const t = [...tools]; t[i] = { ...t[i], name: e.target.value }; setTools(t); }}
                           />
-                          <Button variant="ghost" size="sm" onClick={() => setTools(tools.filter((_, j) => j !== i))}>
+                          <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setTools(tools.filter((_, j) => j !== i))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
