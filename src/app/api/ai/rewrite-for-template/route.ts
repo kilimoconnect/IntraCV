@@ -319,13 +319,25 @@ async function blockExperience(exps: any[], toolsByCompany?: Map<string, string[
     - Never include days or ordinal suffixes
     Return JSON: {"experience": [{"role": "", "company": "", "dates": "", "bullets": []}]}`);
 
-  return (r.experience || []).map((exp: any, i: number) => ({
-    role: exp.role || "",
-    company: exp.company || "",
-    dates: exp.dates || "",
-    location: top[i]?.location || "",
-    bullets: exp.bullets || []
-  }));
+  // All tool names across the entire profile (used by post-processor to know what to strip)
+  const allProfileTools = toolsByCompany
+    ? Array.from(toolsByCompany.values()).flat()
+    : [];
+
+  return (r.experience || []).map((exp: any, i: number) => {
+    const company = exp.company || top[i]?.company || "";
+    const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
+    const sanitizedBullets = (exp.bullets || []).map((b: string) =>
+      stripUnapprovedTools(String(b), approved, allProfileTools)
+    );
+    return {
+      role: exp.role || "",
+      company,
+      dates: exp.dates || "",
+      location: top[i]?.location || "",
+      bullets: sanitizedBullets,
+    };
+  });
 }
 
 async function blockHistory(exps: any[], toolsByCompany?: Map<string, string[]>): Promise<any[]> {
@@ -369,13 +381,24 @@ async function blockHistory(exps: any[], toolsByCompany?: Map<string, string[]>)
     Never return dates in any other format
     Return JSON: {"history": [{"role": "", "company": "", "dates": "", "location": "", "bullets": []}]}`)
 
-  return (r.history || []).map((h: any, i: number) => ({
-    role: h.role || "",
-    company: h.company || "",
-    dates: h.dates || "",
-    location: h.location || pool[i]?.location || "",
-    bullets: h.bullets || []
-  }));
+  const allProfileTools = toolsByCompany
+    ? Array.from(toolsByCompany.values()).flat()
+    : [];
+
+  return (r.history || []).map((h: any, i: number) => {
+    const company = h.company || pool[i]?.company || "";
+    const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
+    const sanitizedBullets = (h.bullets || []).map((b: string) =>
+      stripUnapprovedTools(String(b), approved, allProfileTools)
+    );
+    return {
+      role: h.role || "",
+      company,
+      dates: h.dates || "",
+      location: h.location || pool[i]?.location || "",
+      bullets: sanitizedBullets,
+    };
+  });
 }
 
 async function blockProjects(cvData: any): Promise<any[]> {
@@ -517,6 +540,45 @@ function toolsForCompany(map: Map<string, string[]>, companyName: string): strin
   const specific = map.get(key) || [];
   const generic = map.get("") || [];
   return [...specific, ...generic];
+}
+
+/**
+ * Post-process a single bullet: remove any profile tool name that is NOT
+ * in the approved set for this role.
+ *
+ * Strategy: replace "[preposition] [UNAPPROVED_TOOL]" with just the verb phrase,
+ * or replace the tool name alone with "management software" / "reporting software"
+ * depending on context. Only named tools from the profile are targeted — generic
+ * phrases like "analytics tools" or "compliance software" are left untouched.
+ */
+function stripUnapprovedTools(
+  bullet: string,
+  approvedTools: string[],
+  allProfileTools: string[],
+): string {
+  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
+  // Only strip tools that are in the profile but NOT approved for this role
+  const unapproved = allProfileTools.filter(t => !approvedLower.has(t.toLowerCase()));
+  if (unapproved.length === 0) return bullet;
+
+  let result = bullet;
+  for (const tool of unapproved) {
+    const escaped = tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Match the tool name as a whole word, case-insensitive
+    const re = new RegExp(
+      `(\\s+(?:using|with|via|through|on|in)\\s+)${escaped}\\b` +
+      `|(\\busing\\s+)${escaped}\\b` +
+      `|\\b${escaped}\\b`,
+      "gi",
+    );
+    result = result.replace(re, (_match, prep1, prep2) => {
+      // If preceded by "using / with / via / through / on / in", drop tool name only
+      if (prep1) return prep1 + "dedicated software";
+      if (prep2) return prep2 + "dedicated software";
+      return "dedicated software";
+    });
+  }
+  return result;
 }
 
 async function blockTools(cvData: any): Promise<string[]> {

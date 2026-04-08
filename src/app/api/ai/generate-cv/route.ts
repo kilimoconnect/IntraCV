@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
 
+/** Remove profile tool names that are NOT approved for this company from a bullet string. */
+function stripUnapprovedToolsInline(bullet: string, approvedTools: string[], allProfileTools: string[]): string {
+  const approvedLower = new Set(approvedTools.map(t => t.toLowerCase()));
+  const unapproved = allProfileTools.filter(t => !approvedLower.has(t.toLowerCase()));
+  if (unapproved.length === 0) return bullet;
+  let result = bullet;
+  for (const tool of unapproved) {
+    const escaped = tool.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(
+      `(\\s+(?:using|with|via|through|on|in)\\s+)${escaped}\\b|(\\busing\\s+)${escaped}\\b|\\b${escaped}\\b`,
+      "gi",
+    );
+    result = result.replace(re, (_m, prep1, prep2) =>
+      prep1 ? prep1 + "dedicated software" : prep2 ? prep2 + "dedicated software" : "dedicated software"
+    );
+  }
+  return result;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // LAYOUT CONSTANTS — mirrors config-renderer.tsx
 // ═══════════════════════════════════════════════════════════════
@@ -552,15 +571,38 @@ export async function POST(req: NextRequest) {
     };
 
     const trimmedSkills = (skillsData?.skills || cvData.skills || []).slice(0, plan.skillTargetCount);
+
+    // Build company → approved tools map for post-processing
+    const _toolObjs: { name: string; company: string }[] = (cvData.tools || []).map((t: any) =>
+      typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" }
+    ).filter((t: any) => t.name.trim());
+    const _toolsByCompany = new Map<string, string[]>();
+    for (const t of _toolObjs) {
+      const key = t.company.trim().toLowerCase();
+      if (!_toolsByCompany.has(key)) _toolsByCompany.set(key, []);
+      _toolsByCompany.get(key)!.push(t.name);
+    }
+    const _allProfileTools = Array.from(_toolsByCompany.values()).flat();
+    const _approvedFor = (company: string) => {
+      const key = company.trim().toLowerCase();
+      return [...(_toolsByCompany.get(key) || []), ...(_toolsByCompany.get("") || [])];
+    };
+
     // Cap roles to maxRoles before trimming bullets
     const allExps = (expData?.experiences || cvData.experiences || cvData.experience || []);
     const cappedExps = allExps.slice(0, plan.maxRoles);
     const trimmedExps = cappedExps.map((e: any) => {
       if (!e.description) return e;
+      const company = e.company || e.employer || "";
+      const approved = _approvedFor(company);
       const bullets = e.description.split("\n").filter((l: string) => l.trim());
       const trimmed = bullets.slice(0, plan.expTargetBulletsPerJob).map((b: string) => {
-        // Sentence-safe bullet trim — max 2 lines at ~100 chars/line
-        return trimAtSentence(b.trim(), plan.expTargetWordsPerBullet * 6);
+        const clean = b.trim();
+        // Strip unapproved profile tool names, then sentence-safe length trim
+        const sanitized = _allProfileTools.length > 0
+          ? stripUnapprovedToolsInline(clean, approved, _allProfileTools)
+          : clean;
+        return trimAtSentence(sanitized, plan.expTargetWordsPerBullet * 6);
       });
       return { ...e, description: trimmed.join("\n") };
     });
