@@ -954,89 +954,90 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
       {/* ── Payment Modal ── */}
       <Dialog open={showPaymentModal} onOpenChange={(o) => { if (!o && !paymentProcessing) { setShowPaymentModal(false); setPendingGenerate(null); } }}>
-        <DialogContent className="max-w-lg rounded-2xl p-0 overflow-hidden">
-          {/* Header gradient */}
-          <div className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 px-6 pt-6 pb-8 text-white relative">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-            <div className="relative">
-              <div className="h-11 w-11 rounded-2xl bg-white/20 flex items-center justify-center mb-3">
-                <Sparkles className="h-5 w-5 text-white" />
+        <DialogContent className="max-w-sm rounded-2xl p-0 overflow-hidden">
+          {/* Compact gradient header */}
+          <div className="bg-gradient-to-br from-indigo-600 to-violet-600 px-5 pt-5 pb-5 text-white relative">
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+            <div className="relative flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Sparkles className="h-4 w-4 text-white" />
               </div>
-              <h2 className="text-lg font-bold">Unlock More Interview Questions</h2>
-              <p className="text-sm text-indigo-100 mt-1">You&apos;ve used all your free questions. Keep practising with a question top-up.</p>
-            </div>
-          </div>
-
-          {/* Pricing card */}
-          <div className="px-6 -mt-4 relative">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Question Top-Up</p>
-                <p className="text-2xl font-extrabold text-slate-800 mt-0.5">
-                  {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">one-time · {PAID_BATCH} questions</p>
-              </div>
-              <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex flex-col items-center justify-center border border-indigo-100 shrink-0">
-                <span className="text-xl font-extrabold text-indigo-600">{PAID_BATCH}</span>
-                <span className="text-[10px] text-indigo-400 font-medium leading-tight">questions</span>
+                <h2 className="text-sm font-bold leading-tight">Unlock More Questions</h2>
+                <p className="text-xs text-indigo-100 mt-0.5">Your free questions have been used up</p>
               </div>
             </div>
           </div>
 
-          {/* Features */}
-          <div className="px-6 py-4 space-y-2.5">
-            {[
-              { icon: "✓", label: `${PAID_BATCH} new questions added to your account` },
-              { icon: "✓", label: "Use across any session — existing sessions are unaffected" },
-              { icon: "✓", label: "AI-personalised to your target role and company" },
-              { icon: "✓", label: "Top up again any time you run out" },
-            ].map((f, i) => (
-              <div key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
-                <span className="h-4.5 w-4.5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">{f.icon}</span>
-                {f.label}
+          <div className="p-5 space-y-4">
+            {/* Price + count inline */}
+            <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
+              <div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">One-time top-up</p>
+                <p className="text-xl font-extrabold text-slate-800">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</p>
               </div>
-            ))}
-          </div>
+              <div className="h-12 w-12 rounded-xl bg-indigo-50 border border-indigo-100 flex flex-col items-center justify-center">
+                <span className="text-lg font-extrabold text-indigo-600 leading-none">{PAID_BATCH}</span>
+                <span className="text-[9px] text-indigo-400 font-medium">questions</span>
+              </div>
+            </div>
 
-          {/* Free vs Paid comparison */}
-          <div className="mx-6 mb-4 rounded-xl overflow-hidden border border-slate-200 text-xs">
-            <div className="grid grid-cols-3 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider">
-              <div className="px-3 py-2">Plan</div>
-              <div className="px-3 py-2 text-center border-l border-slate-200">Questions</div>
-              <div className="px-3 py-2 text-center border-l border-slate-200">Price</div>
+            {/* 2-column features */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                `+${PAID_BATCH} questions added`,
+                "Works across all sessions",
+                "AI-personalised questions",
+                "Top up any time",
+              ].map((f, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="h-4 w-4 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-bold flex items-center justify-center shrink-0">✓</span>
+                  {f}
+                </div>
+              ))}
             </div>
-            <div className="grid grid-cols-3 bg-white border-t border-slate-200 text-slate-600">
-              <div className="px-3 py-2.5 font-medium">Free</div>
-              <div className="px-3 py-2.5 text-center border-l border-slate-100">{FREE_QUOTA}</div>
-              <div className="px-3 py-2.5 text-center border-l border-slate-100">Free</div>
-            </div>
-            <div className="grid grid-cols-3 bg-indigo-50 border-t border-slate-200 text-indigo-700 font-semibold">
-              <div className="px-3 py-2.5">Top-Up</div>
-              <div className="px-3 py-2.5 text-center border-l border-indigo-100">+{PAID_BATCH}</div>
-              <div className="px-3 py-2.5 text-center border-l border-indigo-100">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</div>
-            </div>
-          </div>
 
-          {/* Actions */}
-          <div className="px-6 pb-6 flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 rounded-xl border-slate-200 text-slate-600"
-              onClick={() => { setShowPaymentModal(false); setPendingGenerate(null); }}
-              disabled={paymentProcessing}
-            >
-              Maybe Later
-            </Button>
-            <Button
-              className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0 shadow-sm shadow-indigo-200 font-semibold"
-              onClick={handlePayForQuestions}
-              disabled={paymentProcessing}
-            >
-              {paymentProcessing
-                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing…</>
-                : <><Sparkles className="mr-2 h-4 w-4" />Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</>}
-            </Button>
+            {/* Compact comparison table */}
+            <div className="rounded-xl overflow-hidden border border-slate-200 text-xs">
+              <div className="grid grid-cols-3 bg-slate-50 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                <div className="px-3 py-1.5">Plan</div>
+                <div className="px-3 py-1.5 text-center border-l border-slate-200">Qty</div>
+                <div className="px-3 py-1.5 text-center border-l border-slate-200">Price</div>
+              </div>
+              <div className="grid grid-cols-3 bg-white border-t border-slate-100 text-slate-500">
+                <div className="px-3 py-2">Free</div>
+                <div className="px-3 py-2 text-center border-l border-slate-100">{FREE_QUOTA}</div>
+                <div className="px-3 py-2 text-center border-l border-slate-100">—</div>
+              </div>
+              <div className="grid grid-cols-3 bg-indigo-50 border-t border-indigo-100 text-indigo-700 font-semibold">
+                <div className="px-3 py-2">Top-Up</div>
+                <div className="px-3 py-2 text-center border-l border-indigo-100">+{PAID_BATCH}</div>
+                <div className="px-3 py-2 text-center border-l border-indigo-100">{DOWNLOAD_AMOUNT.toLocaleString()}</div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2.5 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 rounded-xl border-slate-200 text-slate-500 text-xs"
+                onClick={() => { setShowPaymentModal(false); setPendingGenerate(null); }}
+                disabled={paymentProcessing}
+              >
+                Maybe Later
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0 font-semibold text-xs"
+                onClick={handlePayForQuestions}
+                disabled={paymentProcessing}
+              >
+                {paymentProcessing
+                  ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Processing…</>
+                  : <><Sparkles className="mr-1.5 h-3.5 w-3.5" />Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</>}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
