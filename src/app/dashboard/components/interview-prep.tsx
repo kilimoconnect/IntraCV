@@ -997,33 +997,90 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
       {/* ── Payment Modal ── */}
       <Dialog open={showPaymentModal} onOpenChange={(o) => { if (!o && !paymentProcessing) { setShowPaymentModal(false); setPendingGenerate(null); } }}>
-        <DialogContent className="max-w-sm rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base">Unlock more questions</DialogTitle>
-            <DialogDescription className="text-sm text-slate-500">
-              Your {FREE_QUOTA} free questions have been used.
-              Pay <strong className="text-slate-700">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</strong> to unlock <strong className="text-slate-700">{PAID_BATCH} more questions</strong>. The count persists across all sessions.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-xs text-indigo-800 space-y-1">
-            <p className="font-semibold">What you get:</p>
-            <p>• {PAID_BATCH} additional questions across any session</p>
-            <p>• Add more any time you run out</p>
+        <DialogContent className="max-w-lg rounded-2xl p-0 overflow-hidden">
+          {/* Header gradient */}
+          <div className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 px-6 pt-6 pb-8 text-white relative">
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+            <div className="relative">
+              <div className="h-11 w-11 rounded-2xl bg-white/20 flex items-center justify-center mb-3">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-lg font-bold">Unlock More Interview Questions</h2>
+              <p className="text-sm text-indigo-100 mt-1">You&apos;ve used all your free questions. Keep practising with a question top-up.</p>
+            </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setShowPaymentModal(false); setPendingGenerate(null); }} disabled={paymentProcessing}>
-              Cancel
+
+          {/* Pricing card */}
+          <div className="px-6 -mt-4 relative">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Question Top-Up</p>
+                <p className="text-2xl font-extrabold text-slate-800 mt-0.5">
+                  {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">one-time · {PAID_BATCH} questions</p>
+              </div>
+              <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex flex-col items-center justify-center border border-indigo-100 shrink-0">
+                <span className="text-xl font-extrabold text-indigo-600">{PAID_BATCH}</span>
+                <span className="text-[10px] text-indigo-400 font-medium leading-tight">questions</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="px-6 py-4 space-y-2.5">
+            {[
+              { icon: "✓", label: `${PAID_BATCH} new questions added to your account` },
+              { icon: "✓", label: "Use across any session — existing sessions are unaffected" },
+              { icon: "✓", label: "AI-personalised to your target role and company" },
+              { icon: "✓", label: "Top up again any time you run out" },
+            ].map((f, i) => (
+              <div key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
+                <span className="h-4.5 w-4.5 rounded-full bg-emerald-100 text-emerald-600 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">{f.icon}</span>
+                {f.label}
+              </div>
+            ))}
+          </div>
+
+          {/* Free vs Paid comparison */}
+          <div className="mx-6 mb-4 rounded-xl overflow-hidden border border-slate-200 text-xs">
+            <div className="grid grid-cols-3 bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider">
+              <div className="px-3 py-2">Plan</div>
+              <div className="px-3 py-2 text-center border-l border-slate-200">Questions</div>
+              <div className="px-3 py-2 text-center border-l border-slate-200">Price</div>
+            </div>
+            <div className="grid grid-cols-3 bg-white border-t border-slate-200 text-slate-600">
+              <div className="px-3 py-2.5 font-medium">Free</div>
+              <div className="px-3 py-2.5 text-center border-l border-slate-100">{FREE_QUOTA}</div>
+              <div className="px-3 py-2.5 text-center border-l border-slate-100">Free</div>
+            </div>
+            <div className="grid grid-cols-3 bg-indigo-50 border-t border-slate-200 text-indigo-700 font-semibold">
+              <div className="px-3 py-2.5">Top-Up</div>
+              <div className="px-3 py-2.5 text-center border-l border-indigo-100">+{PAID_BATCH}</div>
+              <div className="px-3 py-2.5 text-center border-l border-indigo-100">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="px-6 pb-6 flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl border-slate-200 text-slate-600"
+              onClick={() => { setShowPaymentModal(false); setPendingGenerate(null); }}
+              disabled={paymentProcessing}
+            >
+              Maybe Later
             </Button>
             <Button
-              size="sm"
+              className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0 shadow-sm shadow-indigo-200 font-semibold"
               onClick={handlePayForQuestions}
               disabled={paymentProcessing}
-              className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0"
             >
-              {paymentProcessing ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
-              Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}
+              {paymentProcessing
+                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing…</>
+                : <><Sparkles className="mr-2 h-4 w-4" />Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</>}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
