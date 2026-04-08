@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, X, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -605,6 +606,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [selectedTheme, setSelectedTheme] = useState<ThemeName>("corporate");
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
+  const [navigatingToBuilder, setNavigatingToBuilder] = useState(false);
+  const router = useRouter();
   const [fixingOverflow, setFixingOverflow] = useState(false);
   const [autoFixAttempts, setAutoFixAttempts] = useState(0);
   const autoFixAttemptsRef = useRef(0);
@@ -637,18 +640,69 @@ export default function CvStudio({ userId, cvData }: Props) {
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
 
-  // Auto-run profile analysis on mount
+  // ── Cached profile analysis: only re-run if CV data changed ──
   useEffect(() => {
-    setProfileAnalyzing(true);
-    fetch("/api/ai/analyze-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cvData }),
-    })
-      .then((r) => r.json())
-      .then((data) => setProfileAnalysis(data))
-      .catch(() => toast.error("Profile analysis failed."))
-      .finally(() => setProfileAnalyzing(false));
+    let cancelled = false;
+
+    async function loadOrRunAnalysis() {
+      // Build a simple hash of the CV data to detect changes
+      const dataStr = JSON.stringify(cvData);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dataStr));
+      const dataHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      // Check for cached analysis in the database
+      const { data: cached } = await supabase
+        .from("profile_analysis")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (cached && cached.data_hash === dataHash) {
+        // Data hasn't changed — use cached result
+        if (!cancelled) {
+          setProfileAnalysis({
+            completenessScore: cached.completeness_score,
+            strengths: cached.strengths,
+            gaps: cached.gaps,
+          });
+        }
+        return;
+      }
+
+      // Data changed or no cache — run fresh analysis
+      if (!cancelled) setProfileAnalyzing(true);
+      try {
+        const res = await fetch("/api/ai/analyze-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cvData }),
+        });
+        if (!res.ok) throw new Error("Analysis failed");
+        const data = await res.json();
+        if (cancelled) return;
+
+        setProfileAnalysis(data);
+
+        // Save to database for next time
+        await supabase.from("profile_analysis").upsert(
+          {
+            user_id: userId,
+            data_hash: dataHash,
+            completeness_score: data.completenessScore ?? 0,
+            strengths: data.strengths ?? [],
+            gaps: data.gaps ?? [],
+          },
+          { onConflict: "user_id" }
+        );
+      } catch {
+        if (!cancelled) toast.error("Profile analysis failed.");
+      } finally {
+        if (!cancelled) setProfileAnalyzing(false);
+      }
+    }
+
+    loadOrRunAnalysis();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -890,23 +944,26 @@ export default function CvStudio({ userId, cvData }: Props) {
     setFixingOverflow(false);
   }, [aiData, overflowSections, fixingOverflow]);
 
-  // Auto-fix overflow up to 3 times before showing manual button
+  // Auto-trigger fix overflow up to 3 times; only show manual button after 3 failures
   useEffect(() => {
     if (overflowSections.size === 0) {
+      // Overflow resolved — reset counter
       autoFixAttemptsRef.current = 0;
       setAutoFixAttempts(0);
       return;
     }
     if (fixingOverflow) return;
-    if (autoFixAttemptsRef.current >= 3) return;
+    if (autoFixAttemptsRef.current >= 3) return; // all auto-attempts exhausted — show manual button
     if (!aiData) return;
+
     const t = setTimeout(async () => {
       autoFixAttemptsRef.current += 1;
       setAutoFixAttempts(autoFixAttemptsRef.current);
       await handleAutoFixOverflow();
-    }, 800);
+    }, 800); // slight delay so the canvas has time to measure
     return () => clearTimeout(t);
-  }, [overflowSections.size, fixingOverflow, aiData, handleAutoFixOverflow]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overflowSections.size, fixingOverflow, aiData]);
 
   const handleCvClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-cv-field]");
@@ -1078,7 +1135,6 @@ export default function CvStudio({ userId, cvData }: Props) {
             setAiData(optimized);
             if (typeof optData.coverLetter === "string" && optData.coverLetter) {
               setCoverLetter(optData.coverLetter);
-              setShowCoverLetter(true);
             }
           } else {
             setAiData(fitted);
@@ -1210,7 +1266,6 @@ export default function CvStudio({ userId, cvData }: Props) {
       }
       if (data.coverLetter) {
         setCoverLetter(data.coverLetter as string);
-        setShowCoverLetter(true);
       }
       toast.success("CV optimized! Cover letter generated below.");
       setShowJobOptimizer(false);
@@ -1250,10 +1305,10 @@ export default function CvStudio({ userId, cvData }: Props) {
         payment_options: "card",
         customer: {
           email: customerEmail,
-          name: aiData.fullName || personalInfo?.fullName || "IntraCV User",
+          name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
         },
         customizations: {
-          title: "IntraCV — Download CV",
+          title: "FuseCV — Download CV",
           description: `Download your ${selectedCategory} CV as a clean, watermark-free PDF`,
         },
         callback: async (response) => {
@@ -1280,6 +1335,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   { duration: 3000, icon: "🎉" }
                 );
                 await executePdfDownload();
+                localStorage.setItem("fusecv-new-docs", "true");
                 toast.success(
                   "Your CV and cover letter are saved — find them in the Documents page.",
                   { duration: 6000, icon: "📄" }
@@ -1372,10 +1428,10 @@ export default function CvStudio({ userId, cvData }: Props) {
               <button
                 key={cat.id}
                 onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
-                className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all ${
+                className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all duration-200 ${
                   isRecommended
-                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
-                    : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5"
+                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} shadow-elevated hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
+                    : "bg-white border-slate-200 shadow-elevated hover:border-slate-300 hover:shadow-xl hover:-translate-y-0.5"
                 }`}
               >
                 {isRecommended && (
@@ -1409,10 +1465,10 @@ export default function CvStudio({ userId, cvData }: Props) {
                     </div>
                   </div>
 
-                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
                     isRecommended
-                      ? `border-slate-200 bg-white/80 ${cat.color} group-hover:bg-white`
-                      : "border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-white"
+                      ? `border-slate-200 bg-white/80 ${cat.color} group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm`
+                      : "border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm"
                   }`}>
                     <Sparkles className="h-4 w-4" />
                     {isRecommended ? "Generate" : "Select"}
@@ -1450,7 +1506,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
 
         {/* ── Profile card ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y divide-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-elevated divide-y divide-slate-100 overflow-hidden">
 
           {/* Loading */}
           {profileAnalyzing && !profileAnalysis && (
@@ -1522,23 +1578,27 @@ export default function CvStudio({ userId, cvData }: Props) {
             {/* Company name + Job title (side by side) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Name</label>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">
+                  Company Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="e.g. Acme Corp"
-                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(jobTitle.trim() || jobDescription.trim()) && !company.trim() ? "border-red-200" : "border-slate-200"}`}
                 />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Title</label>
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">
+                  Job Title <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={jobTitle}
                   onChange={(e) => setJobTitle(e.target.value)}
                   placeholder="e.g. Senior Product Manager"
-                  className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(company.trim() || jobDescription.trim()) && !jobTitle.trim() ? "border-red-200" : "border-slate-200"}`}
                 />
               </div>
             </div>
@@ -1557,7 +1617,9 @@ export default function CvStudio({ userId, cvData }: Props) {
 
             {/* Job description */}
             <div>
-              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description</label>
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">
+                Job Description <span className="text-red-500">*</span>
+              </label>
               <textarea
                 value={jobDescription}
                 onChange={(e) => {
@@ -1567,7 +1629,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                 }}
                 rows={5}
                 placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
-                className="w-full text-xs p-3 border border-slate-200 rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition"
+                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`}
               />
             </div>
 
@@ -1575,7 +1637,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               <button
                 onClick={() => void handleAnalyzeProfile()}
                 disabled={profileAnalyzing}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold py-2.5 transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 text-white text-sm font-semibold py-2.5 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
               >
                 {profileAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 {profileAnalyzing ? "Analyzing…" : "Analyze Profile vs Job Description"}
@@ -1625,18 +1687,31 @@ export default function CvStudio({ userId, cvData }: Props) {
 
           {/* ── CTA ── */}
           <div className="px-6 py-5 bg-slate-50">
-            <button
-              onClick={() => {
-                if (jobDescription.trim()) setShouldAutoOptimize(true);
-                setStep("select");
-              }}
-              disabled={profileAnalyzing && !profileAnalysis}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold py-3 transition-colors"
-            >
-              <Sparkles className="h-4 w-4" />
-              {jobDescription.trim() ? "Generate Tailored CV →" : "Generate My CV →"}
-            </button>
-            {!profileAnalysis && profileAnalyzing && (
+            {(() => {
+              const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
+              const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
+              const incomplete = !!(hasAny && !hasAll);
+              return (
+                <>
+                  <button
+                    onClick={() => {
+                      if (incomplete) return;
+                      if (hasAll) setShouldAutoOptimize(true);
+                      setStep("select");
+                    }}
+                    disabled={incomplete || (profileAnalyzing && !profileAnalysis)}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {hasAll ? "Generate Tailored CV →" : "Generate My CV →"}
+                  </button>
+                  {incomplete && (
+                    <p className="text-center text-xs text-red-400 mt-2">Please fill in all three: company name, job title, and job description.</p>
+                  )}
+                </>
+              );
+            })()}
+            {company.trim() && jobTitle.trim() && jobDescription.trim() && !profileAnalysis && profileAnalyzing && (
               <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
             )}
           </div>
@@ -1675,7 +1750,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               key={layout.variant}
               onClick={() => { setSelectedVariant(layout.variant); void handleGenerate(selectedCategory); }}
-              className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} transition-all hover:shadow-xl hover:-translate-y-1 overflow-hidden`}
+              className={`group relative text-left rounded-2xl border-2 bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} shadow-elevated transition-all duration-200 hover:shadow-xl hover:-translate-y-1 overflow-hidden`}
             >
               {/* Mini preview */}
               <div className="px-5 pt-5 pb-3">
@@ -1687,7 +1762,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               <div className="px-5 pb-5">
                 <div className={`text-sm font-bold ${cat.color} mb-1`}>{layout.name}</div>
                 <p className="text-[11px] text-slate-600 leading-relaxed mb-3">{layout.description}</p>
-                <div className={`flex items-center justify-center gap-2 py-2 rounded-lg bg-white/80 border border-slate-200 text-sm font-medium ${cat.color} group-hover:bg-white transition-colors`}>
+                <div className={`flex items-center justify-center gap-2 py-2 rounded-xl bg-white/80 border border-slate-200 text-sm font-medium ${cat.color} group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm transition-all duration-200`}>
                   <Sparkles className="h-4 w-4" />
                   Select & Generate
                 </div>
@@ -1751,7 +1826,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   return (
     <div className="flex flex-col gap-3 sm:gap-4">
       {/* Toolbar */}
-      <div className="flex flex-col gap-2 sm:gap-3 px-1 sm:px-2">
+      <div className="flex flex-col gap-2 sm:gap-3 px-3 sm:px-4 py-3 bg-white shadow-elevated rounded-2xl">
         {/* Top row: back + badge + actions */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -1783,26 +1858,39 @@ export default function CvStudio({ userId, cvData }: Props) {
               <span className="sm:hidden">Redo</span>
             </button>
             <button
+              onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
+              disabled={navigatingToBuilder}
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-70"
+            >
+              {navigatingToBuilder ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <UserPen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              <span className="hidden sm:inline">Edit Profile</span>
+              <span className="sm:hidden">Profile</span>
+            </button>
+            <button
               onClick={() => { setEditMode(!editMode); setInlineEditor(null); }}
               className={`flex items-center gap-1 sm:gap-1.5 rounded-md border px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors ${
                 editMode
                   ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                  : overflowSections.size > 0
-                    ? "border-amber-300 bg-amber-50 text-amber-700 animate-pulse"
+                  : overflowSections.size > 0 && autoFixAttempts >= 3
+                    ? "border-amber-300 bg-amber-50 text-amber-700"
+                    : overflowSections.size > 0
+                    ? "border-amber-200 bg-amber-50/50 text-amber-500"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {editMode ? <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <PenLine className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-              <span className="hidden sm:inline">{editMode ? "Done Editing" : fixingOverflow && overflowSections.size > 0 ? "Auto-fixing…" : overflowSections.size > 0 ? "Fix Overflow" : "Edit CV"}</span>
+              {editMode ? <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : (overflowSections.size > 0 && fixingOverflow) ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <PenLine className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+              <span className="hidden sm:inline">
+                {editMode ? "Done Editing" : overflowSections.size > 0 && fixingOverflow ? "Auto-fixing…" : overflowSections.size > 0 && autoFixAttempts >= 3 ? "Fix Overflow" : "Edit CV"}
+              </span>
               <span className="sm:hidden">{editMode ? "Done" : "Edit"}</span>
-              {!editMode && overflowSections.size > 0 && (
+              {!editMode && overflowSections.size > 0 && autoFixAttempts >= 3 && (
                 <span className="ml-0.5 h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{overflowSections.size}</span>
               )}
             </button>
             <button
               onClick={() => setShowPaymentModal(true)}
               disabled={downloadingPdf || paymentProcessing}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-md bg-indigo-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white hover:bg-indigo-700 disabled:opacity-60"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-60"
             >
               {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               {downloadingPdf ? "Generating..." : "Download"}
@@ -1810,28 +1898,50 @@ export default function CvStudio({ userId, cvData }: Props) {
           </div>
         </div>
 
-        {/* Theme picker row */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          <Palette className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-600 shrink-0" />
-          <div className="flex gap-1">
-            {THEME_LIST.map((t) => (
-              <button
-                key={t.name}
-                onClick={() => setSelectedTheme(t.name)}
-                className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border-2 transition-all shrink-0 ${
-                  selectedTheme === t.name ? "border-slate-400 shadow-sm" : "border-slate-200 hover:border-slate-300"
-                }`}
-                style={{ backgroundColor: t.color }}
-                title={t.label}
-              >
-                {selectedTheme === t.name && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
-                  </span>
-                )}
-              </button>
-            ))}
+        {/* Theme picker */}
+        <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">CV Theme</span>
+            </div>
+            <span
+              key={selectedTheme}
+              className="text-[11px] font-bold text-indigo-600 animate-fade-in-up"
+            >
+              {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
+            </span>
           </div>
+          <div className="flex flex-wrap gap-1.5">
+            {THEME_LIST.map((t, i) => {
+              const active = selectedTheme === t.name;
+              return (
+                <button
+                  key={t.name}
+                  onClick={() => setSelectedTheme(t.name)}
+                  title={`${t.label} — tap to apply`}
+                  style={{
+                    backgroundColor: t.color,
+                    animationDelay: `${i * 30}ms`,
+                    transform: active ? "scale(1.25)" : "scale(1)",
+                    boxShadow: active ? `0 0 0 2px white, 0 0 0 4px ${t.color}` : "none",
+                  }}
+                  className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border transition-all duration-200 shrink-0 animate-fade-in-up
+                    ${active
+                      ? "border-transparent z-10"
+                      : "border-white/60 hover:scale-110 hover:z-10 hover:shadow-md"
+                    }`}
+                >
+                  {active && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-slate-400 leading-none">Tap any swatch to instantly preview it on your CV</p>
         </div>
       </div>
 
@@ -1847,22 +1957,25 @@ export default function CvStudio({ userId, cvData }: Props) {
               <div className="flex items-center gap-2 text-xs text-amber-700">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                 {fixingOverflow ? (
-                  <span>Auto-fixing… (attempt {autoFixAttempts} of 3)</span>
+                  <span>Auto-fixing overflow… (attempt {autoFixAttempts}/3)</span>
                 ) : autoFixAttempts < 3 ? (
                   <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} overflowing — auto-fixing…</span>
                 ) : (
-                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} still overflowing — try AI fix or edit manually.</span>
+                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} still overflowing after 3 attempts — fix manually or try AI fix.</span>
                 )}
               </div>
               {autoFixAttempts >= 3 && (
                 <button
-                  onClick={handleAutoFixOverflow}
+                  onClick={() => { autoFixAttemptsRef.current = 0; setAutoFixAttempts(0); handleAutoFixOverflow(); }}
                   disabled={fixingOverflow}
                   className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-60 shrink-0"
                 >
                   {fixingOverflow ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                   {fixingOverflow ? "Fixing…" : "AI Auto-Fix"}
                 </button>
+              )}
+              {fixingOverflow && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500 shrink-0" />
               )}
             </div>
           )}
@@ -1902,7 +2015,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               onClick={() => void handlePayAndDownload()}
               disabled={paymentProcessing}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl disabled:opacity-60"
             >
               {paymentProcessing ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
@@ -1997,9 +2110,9 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {/* ── Cover Letter banner — always visible when CV is generated ── */}
-      {aiData && !showCoverLetter && !showJobOptimizer && (
-        coverLetterUnlocked && coverLetter ? (
+      {/* ── Cover Letter banner — only when a cover letter was generated (job description provided) ── */}
+      {aiData && coverLetter && !showCoverLetter && !showJobOptimizer && (
+        coverLetterUnlocked ? (
           <button
             onClick={() => setShowCoverLetter(true)}
             className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-purple-50 text-sm font-semibold text-violet-700 hover:from-violet-100 hover:to-purple-100 hover:border-violet-400 transition-all shadow-sm"
@@ -2010,7 +2123,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         ) : (
           <div className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/80 text-xs font-medium text-slate-400 cursor-default select-none">
             <Lock className="h-3.5 w-3.5" />
-            Cover Letter Included — Unlocks After Payment
+            Cover Letter Included — Download your CV to unlock it
           </div>
         )
       )}

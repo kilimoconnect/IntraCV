@@ -133,9 +133,9 @@ function categorizeProfile(
     executive: "Executive",
   };
   const colors: Record<CareerCategory, string> = {
-    junior: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    "mid-senior": "bg-amber-50 text-amber-700 border-amber-200",
-    executive: "bg-purple-50 text-purple-700 border-purple-200",
+    junior: "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border-emerald-200/80 shadow-sm shadow-emerald-100/50",
+    "mid-senior": "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border-amber-200/80 shadow-sm shadow-amber-100/50",
+    executive: "bg-gradient-to-r from-purple-50 to-violet-50 text-purple-700 border-purple-200/80 shadow-sm shadow-purple-100/50",
   };
 
   // ── Required & recommended sections per category ──
@@ -215,6 +215,8 @@ export default function MyProfile({
 }: MyProfileProps) {
   const router = useRouter();
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
+  const [isEditingCV, setIsEditingCV] = useState(false);
+  const [loadingSection, setLoadingSection] = useState<string | null>(null);
 
   const handleGenerateCV = () => {
     setIsGeneratingCV(true);
@@ -558,38 +560,39 @@ export default function MyProfile({
   const emptySections = allSections.filter(s => !s.hasContent);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 stagger-children">
       {/* Header: Badges + Actions */}
       <div className="space-y-3 sm:space-y-0 sm:flex sm:justify-between sm:items-center">
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-3">
           {experiences.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-xl border border-blue-200/80 shadow-sm shadow-blue-100/50">
               <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">{yearsOfExperience} yrs</span>
+              <span className="text-sm font-semibold">{yearsOfExperience} yrs experience</span>
             </div>
           )}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium ${categoryResult.color}`}>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold ${categoryResult.color}`}>
             <Briefcase className="h-4 w-4" />
-            {categoryResult.label}
+            {categoryResult.label} Level
           </div>
         </div>
         
         {/* Actions row */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <Button size="sm" variant="default" onClick={handleGenerateCV} disabled={isGeneratingCV} className="w-full sm:w-auto">
+          <Button size="sm" variant="default" onClick={handleGenerateCV} disabled={isGeneratingCV} className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-200/40 rounded-xl border-0">
             {isGeneratingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             {isGeneratingCV ? "Loading..." : "Generate CV"}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => router.push("/cv-builder")} className="w-full sm:w-auto">
-            <Pencil className="mr-2 h-4 w-4" /> Edit CV
+          <Button size="sm" variant="outline" onClick={() => { setIsEditingCV(true); router.push("/cv-builder"); }} disabled={isEditingCV} className="w-full sm:w-auto rounded-xl border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm">
+            {isEditingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+            {isEditingCV ? "Loading..." : "Edit CV"}
           </Button>
         </div>
       </div>
 
       {/* Missing Sections Warning */}
       {(missingRequired.length > 0 || missingRecommended.length > 0) && (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border border-slate-200/60 rounded-2xl overflow-hidden shadow-elevated">
           {missingRequired.length > 0 && (
             <div className="bg-red-50 border-b border-red-200 px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
@@ -598,7 +601,7 @@ export default function MyProfile({
               </div>
               <div className="flex flex-wrap gap-2">
                 {missingRequired.map(s => (
-                  <button key={s.key} onClick={() => router.push(`/cv-builder?tab=${s.key}`)} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-red-200 rounded-md text-xs font-medium text-red-700 hover:bg-red-100 cursor-pointer transition-colors">
+                  <button key={s.key} onClick={() => router.push(`/cv-builder?tab=${s.key}`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 rounded-xl text-xs font-medium text-red-700 hover:bg-red-50 hover:border-red-300 cursor-pointer transition-all shadow-sm">
                     <XCircle className="h-3 w-3" />
                     {s.label}
                   </button>
@@ -614,8 +617,15 @@ export default function MyProfile({
               </div>
               <div className="flex flex-wrap gap-2">
                 {missingRecommended.map(s => (
-                  <button key={s.key} onClick={() => router.push(`/cv-builder?tab=${s.key}`)} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-amber-200 rounded-md text-xs font-medium text-amber-700 hover:bg-amber-100 cursor-pointer transition-colors">
-                    <Plus className="h-3 w-3" />
+                  <button
+                    key={s.key}
+                    disabled={loadingSection === s.key}
+                    onClick={() => { setLoadingSection(s.key); router.push(`/cv-builder?tab=${s.key}`); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 rounded-xl text-xs font-medium text-amber-700 hover:bg-amber-50 hover:border-amber-300 cursor-pointer transition-all shadow-sm disabled:opacity-70 disabled:cursor-default"
+                  >
+                    {loadingSection === s.key
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <Plus className="h-3 w-3" />}
                     {s.label}
                   </button>
                 ))}
@@ -626,10 +636,13 @@ export default function MyProfile({
       )}
 
       {/* Personal Info — always first */}
-      <Card className={!personalInfo?.fullName ? "opacity-40" : ""}>
+      <Card className={`shadow-elevated rounded-2xl border-slate-200/60 overflow-hidden ${!personalInfo?.fullName ? "opacity-40" : ""}`}>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-primary" /> Personal Information
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow-sm">
+              <User className="h-4 w-4 text-white" />
+            </div>
+            Personal Information
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -670,11 +683,14 @@ export default function MyProfile({
           : sec.key === "referees" ? referees.length
           : 0;
         return (
-          <Card key={sec.key}>
+          <Card key={sec.key} className="shadow-elevated rounded-2xl border-slate-200/60 overflow-hidden">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Icon className="h-5 w-5 text-primary" /> {sec.label}
-                {count > 0 && <Badge variant="secondary" className="ml-auto">{count}</Badge>}
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow-sm">
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                {sec.label}
+                {count > 0 && <Badge variant="secondary" className="ml-auto rounded-lg">{count}</Badge>}
               </CardTitle>
             </CardHeader>
             <CardContent>{sec.render()}</CardContent>
@@ -686,14 +702,17 @@ export default function MyProfile({
       {emptySections.length > 0 && (
         <>
           <Separator />
-          <p className="text-sm text-muted-foreground font-medium">Sections without content</p>
+          <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">Sections without content</p>
           {emptySections.map((sec) => {
             const Icon = sec.icon;
             return (
-              <Card key={sec.key} className="opacity-40">
+              <Card key={sec.key} className="opacity-40 shadow-elevated rounded-2xl border-slate-200/60 overflow-hidden">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Icon className="h-5 w-5 text-primary" /> {sec.label}
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <div className="p-2 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-500 shadow-sm">
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                    {sec.label}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>{sec.render()}</CardContent>
