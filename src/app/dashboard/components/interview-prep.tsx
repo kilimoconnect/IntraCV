@@ -16,10 +16,7 @@ import {
   BriefcaseBusiness, Clock, PlusCircle, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  loadFlutterwaveScript, openFlutterwaveCheckout, generateTxRef,
-  DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY,
-} from "@/lib/flutterwave";
+import { DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
 
 const FREE_QUOTA = 5;
 const PAID_BATCH = 20;
@@ -402,10 +399,6 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
   // ─── Flutterwave payment to unlock 20 more questions ───
   const handlePayForQuestions = useCallback(async () => {
-    const publicKey = process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY;
-    if (!publicKey) { toast.error("Payment gateway not configured."); return; }
-
-    // Need user email from cvData or profile
     const email = cvData?.personalInfo?.email || "";
     if (!email) {
       toast.error("Please add your email to your profile before paying.");
@@ -413,66 +406,30 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     }
 
     setPaymentProcessing(true);
-    const txRef = generateTxRef(userId);
-
     try {
-      await loadFlutterwaveScript();
-      const flwHandler = await openFlutterwaveCheckout({
-        public_key: publicKey,
-        tx_ref: txRef,
-        amount: DOWNLOAD_AMOUNT,
-        currency: DOWNLOAD_CURRENCY,
-        payment_options: "card",
-        customer: { email, name: cvData?.personalInfo?.fullName || "IntraCV User" },
-        customizations: {
-          title: "IntraCV — Interview Questions",
-          description: `Unlock ${PAID_BATCH} more interview questions`,
-        },
-        callback: async (response) => {
-          flwHandler.close();
-          if (response.status === "successful") {
-            try {
-              const verifyRes = await fetch("/api/payments/interview-unlock", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  transaction_id: response.transaction_id,
-                  tx_ref: txRef,
-                  expected_amount: DOWNLOAD_AMOUNT,
-                  expected_currency: DOWNLOAD_CURRENCY,
-                }),
-              });
-              const verifyData = await verifyRes.json();
-              if (verifyData.verified && verifyData.usage) {
-                setUsage(verifyData.usage);
-                toast.success(`Payment confirmed! You have ${verifyData.usage.remaining} questions available.`, { icon: "🎉" });
-                setShowPaymentModal(false);
-                // Auto-proceed with the pending generate action
-                if (pendingGenerate === "generate") {
-                  setPendingGenerate(null);
-                  setTimeout(() => generateQuestionsCore(verifyData.usage), 100);
-                } else if (pendingGenerate === "add") {
-                  setPendingGenerate(null);
-                  setTimeout(() => addMoreQuestionsCore(verifyData.usage), 100);
-                }
-              } else {
-                toast.error(verifyData.message || "Payment verification failed.");
-              }
-            } catch {
-              toast.error("Could not verify payment. Contact support.");
-            }
-          } else {
-            toast.error("Payment was not completed.");
-          }
-          setPaymentProcessing(false);
-        },
-        onclose: () => { setPaymentProcessing(false); setShowPaymentModal(false); },
+      // Store pending action in sessionStorage so the callback page can signal back
+      sessionStorage.setItem("interview_pending_action", pendingGenerate || "generate");
+
+      const redirectUrl = `${window.location.origin}/interview-payment/callback`;
+      const res = await fetch("/api/payments/interview-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          name: cvData?.personalInfo?.fullName || "IntraCV User",
+          redirectUrl,
+        }),
       });
-    } catch {
-      toast.error("Could not open payment window. Please try again.");
+      const data = await res.json();
+      if (!res.ok || !data.link) throw new Error(data.error || "Failed to create payment link");
+
+      // Redirect user to Flutterwave hosted checkout (no inline modal = no browser dialog)
+      window.location.href = data.link;
+    } catch (err: any) {
+      toast.error(err.message || "Could not open payment page. Please try again.");
       setPaymentProcessing(false);
     }
-  }, [userId, cvData, pendingGenerate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cvData, pendingGenerate]);
 
   // ─── Add More Questions to current session ───
   const addMoreQuestionsCore = async (currentUsage?: UsageState) => {
