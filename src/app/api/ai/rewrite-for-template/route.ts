@@ -543,6 +543,56 @@ function toolsForCompany(map: Map<string, string[]>, companyName: string): strin
 }
 
 /**
+ * Infer tool→company associations from experience description text.
+ * Used as a fallback when the user hasn't assigned companies to tools,
+ * or when the DB schema cache hasn't propagated the company column yet.
+ * If a tool name appears verbatim in a role's description, it's associated
+ * with that company. Tools not found in any description are treated as generic.
+ */
+function inferToolsByCompanyFromDesc(tools: any[], experiences: any[]): Map<string, string[]> {
+  const toolNames = (tools || [])
+    .map((t: any) => typeof t === "string" ? t : t?.name || "")
+    .filter(Boolean);
+
+  const map = new Map<string, string[]>();
+  const assigned = new Set<string>();
+
+  for (const exp of (experiences || [])) {
+    const company = (exp.company || exp.company_name || "").trim();
+    const desc = (exp.description || "").toLowerCase();
+    const key = company.toLowerCase();
+    for (const name of toolNames) {
+      if (desc.includes(name.toLowerCase())) {
+        if (!map.has(key)) map.set(key, []);
+        if (!map.get(key)!.includes(name)) map.get(key)!.push(name);
+        assigned.add(name.toLowerCase());
+      }
+    }
+  }
+
+  // Tools not found in any description → generic (available to all roles)
+  const generic = toolNames.filter(t => !assigned.has(t.toLowerCase()));
+  if (generic.length > 0) map.set("", [...(map.get("") || []), ...generic]);
+
+  return map;
+}
+
+/**
+ * Merge two tool maps. User-defined assignments take priority;
+ * description-inferred assignments fill in gaps.
+ */
+function mergeToolMaps(
+  userDefined: Map<string, string[]>,
+  inferred: Map<string, string[]>,
+): Map<string, string[]> {
+  // If user-defined has any non-empty company assignments, trust it entirely
+  const hasUserAssignments = Array.from(userDefined.keys()).some(k => k !== "");
+  if (hasUserAssignments) return userDefined;
+  // Else fall back to description-inferred
+  return inferred;
+}
+
+/**
  * Post-process a single bullet: remove any profile tool name that is NOT
  * in the approved set for this role.
  *
@@ -938,8 +988,13 @@ export async function POST(req: NextRequest) {
     return await slotRulesStore.run(slotRules, async () => {
       const pi = cvData.personalInfo || {};
 
-      // Build company → tools map once so blockExperience can use it
-      const toolsByCompany = buildToolsByCompany(cvData.tools);
+      // Build company → tools map.
+      // Prefer user-defined assignments; fall back to description-inferred if none set.
+      const userDefinedMap = buildToolsByCompany(cvData.tools);
+      const inferredMap = inferToolsByCompanyFromDesc(cvData.tools, cvData.experiences || []);
+      const toolsByCompany = mergeToolMaps(userDefinedMap, inferredMap);
+      console.log("[tools-map] user-defined keys:", [...userDefinedMap.keys()].join(", ") || "(none)");
+      console.log("[tools-map] active map:", [...toolsByCompany.entries()].map(([k, v]) => `${k || "generic"}:[${v.join(",")}]`).join(" | "));
 
       // ── Common blocks (all categories) ──
       const commonBlocksPromise = Promise.all([

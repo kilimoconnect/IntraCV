@@ -320,7 +320,7 @@ function genExperience(cvData: any, tr: string, jd: string, p: Plan) {
   const bpj = p.expTargetBulletsPerJob;
   const wpb = p.expTargetWordsPerBullet;
 
-  // Build company → tools lookup from profile tools (support both string[] and {name,company}[])
+  // Build company → tools lookup — prefer user-defined assignments, fall back to description-inferred
   const toolObjs: { name: string; company: string }[] = (cvData.tools || []).map((t: any) =>
     typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" }
   ).filter((t: any) => t.name.trim());
@@ -332,13 +332,39 @@ function genExperience(cvData: any, tr: string, jd: string, p: Plan) {
     toolsByCompany.get(key)!.push(t.name);
   }
 
+  // If no user-defined company assignments, infer from description text
+  const hasUserAssignments = Array.from(toolsByCompany.keys()).some(k => k !== "");
+  if (!hasUserAssignments) {
+    const toolNames = toolObjs.map(t => t.name);
+    for (const exp of rawExps) {
+      const company = (exp.company || exp.employer || "").trim();
+      const desc = (exp.description || "").toLowerCase();
+      const key = company.toLowerCase();
+      for (const name of toolNames) {
+        if (desc.includes(name.toLowerCase())) {
+          if (!toolsByCompany.has(key)) toolsByCompany.set(key, []);
+          if (!toolsByCompany.get(key)!.includes(name)) toolsByCompany.get(key)!.push(name);
+        }
+      }
+    }
+    // Remove generic bucket if we now have specific assignments
+    if (Array.from(toolsByCompany.keys()).some(k => k !== "")) {
+      const stillGeneric = toolNames.filter(t =>
+        !Array.from(toolsByCompany.entries()).some(([k, v]) => k !== "" && v.includes(t))
+      );
+      toolsByCompany.set("", stillGeneric);
+    }
+  }
+
+  const _approvedFor = (company: string) => {
+    const key = company.trim().toLowerCase();
+    return [...(toolsByCompany.get(key) || []), ...(toolsByCompany.get("") || [])];
+  };
+
   // Annotate each role with company-matched tools
   const expWithTools = rawExps.map((e: any) => {
     const company = e.company || e.employer || "";
-    const key = company.trim().toLowerCase();
-    const specific = toolsByCompany.get(key) || [];
-    const generic = toolsByCompany.get("") || [];
-    const relevant = [...specific, ...generic];
+    const relevant = _approvedFor(company);
     return { ...e, _toolsHint: relevant.length > 0 ? relevant.join(", ") : null };
   });
 
@@ -572,20 +598,38 @@ export async function POST(req: NextRequest) {
 
     const trimmedSkills = (skillsData?.skills || cvData.skills || []).slice(0, plan.skillTargetCount);
 
-    // Build company → approved tools map for post-processing
+    // Build company → approved tools map for post-processing (same logic as genExperience)
     const _toolObjs: { name: string; company: string }[] = (cvData.tools || []).map((t: any) =>
       typeof t === "string" ? { name: t, company: "" } : { name: t?.name || "", company: t?.company || "" }
     ).filter((t: any) => t.name.trim());
-    const _toolsByCompany = new Map<string, string[]>();
+    const _postMap = new Map<string, string[]>();
     for (const t of _toolObjs) {
       const key = t.company.trim().toLowerCase();
-      if (!_toolsByCompany.has(key)) _toolsByCompany.set(key, []);
-      _toolsByCompany.get(key)!.push(t.name);
+      if (!_postMap.has(key)) _postMap.set(key, []);
+      _postMap.get(key)!.push(t.name);
     }
-    const _allProfileTools = Array.from(_toolsByCompany.values()).flat();
+    // Fall back to description-based inference if no user-defined company assignments
+    if (!Array.from(_postMap.keys()).some(k => k !== "")) {
+      const tNames = _toolObjs.map(t => t.name);
+      const allExpsForInfer = cvData.experiences || cvData.experience || [];
+      for (const exp of allExpsForInfer) {
+        const co = (exp.company || exp.employer || "").trim();
+        const desc = (exp.description || "").toLowerCase();
+        const key = co.toLowerCase();
+        for (const name of tNames) {
+          if (desc.includes(name.toLowerCase())) {
+            if (!_postMap.has(key)) _postMap.set(key, []);
+            if (!_postMap.get(key)!.includes(name)) _postMap.get(key)!.push(name);
+          }
+        }
+      }
+      const stillGeneric = tNames.filter(t => !Array.from(_postMap.entries()).some(([k, v]) => k !== "" && v.includes(t)));
+      _postMap.set("", stillGeneric);
+    }
+    const _allProfileTools = Array.from(_postMap.values()).flat();
     const _approvedFor = (company: string) => {
       const key = company.trim().toLowerCase();
-      return [...(_toolsByCompany.get(key) || []), ...(_toolsByCompany.get("") || [])];
+      return [...(_postMap.get(key) || []), ...(_postMap.get("") || [])];
     };
 
     // Cap roles to maxRoles before trimming bullets
