@@ -614,6 +614,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   // Store original AI data (before any tightening) so retries can re-fit from a clean slate
   const rawAiDataRef = useRef<CategoryCVData | null>(null);
   const [showManualTrimPanel, setShowManualTrimPanel] = useState(false);
+  // Allow experienced users to override the enforced category recommendation
+  const [categoryOverride, setCategoryOverride] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -1363,79 +1365,144 @@ export default function CvStudio({ userId, cvData }: Props) {
     if (_exps.length > 0) _recReasonParts.push(`${_exps.length} role${_exps.length !== 1 ? "s" : ""}`);
     const _recReason = _recReasonParts.join(" · ");
 
+    // Lock reasons for non-recommended categories
+    const _lockReasons: Record<CareerCategory, string> = {
+      junior:       "Your profile has management/senior-level roles — a junior layout won't accommodate your content.",
+      "mid-senior": "Your profile signals executive-level seniority — this layout won't give you the space needed.",
+      executive:    "Your profile is better suited to a mid-senior or junior layout at this stage.",
+    };
+
     return (
       <div className="max-w-5xl mx-auto py-10 px-4">
+
+        {/* ── Header ── */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Choose Your CV Layout</h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Select the layout that best matches your career level. Each layout has a unique design optimized for your stage.
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Your CV Layout</h2>
+          <p className="text-sm text-slate-500 max-w-lg mx-auto">
+            The layout category is determined automatically from your profile data to ensure your content
+            fits perfectly without overflow or gaps.
           </p>
         </div>
 
+        {/* ── Matched category banner ── */}
         {_recCat && (
           <div className={`mb-8 flex items-center justify-between gap-4 p-4 rounded-xl border-2 bg-gradient-to-r ${_recCat.bgGradient} ${_recCat.borderColor.split(" ")[0]}`}>
             <div className="flex items-center gap-3 min-w-0">
-              <div className={`shrink-0 p-2 rounded-lg bg-white shadow-sm ${_recCat.color}`}>
+              <div className={`shrink-0 p-2.5 rounded-xl bg-white shadow-sm ${_recCat.color}`}>
                 <_recCat.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-bold text-slate-800">
-                  ✦ Recommended for you:{" "}
-                  <span className={_recCat.color}>{_recCat.label}</span>
-                  <span className="font-normal text-slate-500"> — {_recCat.subtitle}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Matched category</span>
+                  <span className={`text-sm font-extrabold ${_recCat.color}`}>{_recCat.label}</span>
+                  <span className="text-xs text-slate-500">— {_recCat.subtitle}</span>
                 </div>
                 {_recReason && (
-                  <div className="text-xs text-slate-500 mt-0.5 truncate">{_recReason}</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{_recReason}</div>
                 )}
               </div>
             </div>
-            <button
-              onClick={() => { setSelectedCategory(detectedCategory); setStep("pick-layout"); }}
-              className={`shrink-0 text-xs font-semibold px-4 py-2 rounded-lg bg-white shadow-sm border border-slate-200 ${_recCat.color} hover:shadow-md transition-shadow whitespace-nowrap`}
-            >
-              Use this →
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Override toggle — for experienced users only */}
+              <button
+                onClick={() => setCategoryOverride(prev => !prev)}
+                className="text-[10px] text-slate-400 hover:text-slate-600 underline underline-offset-2 whitespace-nowrap transition-colors"
+              >
+                {categoryOverride ? "Lock selection" : "Override"}
+              </button>
+              <button
+                onClick={() => { setCategoryOverride(false); setSelectedCategory(detectedCategory); setStep("pick-layout"); }}
+                className={`text-xs font-bold px-4 py-2 rounded-xl bg-white shadow-sm border border-slate-200 ${_recCat.color} hover:shadow-md transition-all whitespace-nowrap`}
+              >
+                Continue →
+              </button>
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Override warning */}
+        {categoryOverride && (
+          <div className="mb-6 flex items-start gap-2 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50 text-xs text-amber-800">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-500" />
+            <span>
+              <strong>Override active.</strong> You can now select any category, but content may overflow or leave gaps if it doesn&apos;t match your profile volume. The system is designed to fit your content automatically — overriding may produce a suboptimal CV.
+            </span>
+          </div>
+        )}
+
+        {/* ── Category cards ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {CATEGORY_CARDS.map((cat) => {
             const Icon = cat.icon;
-            const isRecommended = cat.id === detectedCategory;
+            const isMatched   = cat.id === detectedCategory;
+            const isClickable = isMatched || categoryOverride;
+            const lockReason  = !isMatched ? _lockReasons[cat.id as CareerCategory] : "";
+
             return (
-              <button
+              <div
                 key={cat.id}
-                onClick={() => { setSelectedCategory(cat.id); setStep("pick-layout"); }}
-                className={`group relative text-left rounded-2xl border-2 overflow-hidden transition-all duration-200 ${
-                  isRecommended
-                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} shadow-elevated hover:shadow-xl hover:-translate-y-1 ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
-                    : "bg-white border-slate-200 shadow-elevated hover:border-slate-300 hover:shadow-xl hover:-translate-y-0.5"
+                className={`relative rounded-2xl border-2 overflow-hidden transition-all duration-300 ${
+                  isMatched
+                    ? `bg-gradient-to-br ${cat.bgGradient} ${cat.borderColor} shadow-xl ring-2 ring-offset-2 ${cat.borderColor.split(" ")[0].replace("border", "ring")}`
+                    : categoryOverride
+                    ? "bg-white border-amber-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                    : "bg-white/60 border-slate-100 opacity-40 saturate-0 cursor-not-allowed select-none"
                 }`}
               >
-                {isRecommended && (
-                  <div className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white shadow-sm border border-slate-200 text-slate-700">
-                    ✦ Recommended
+                {/* Lock overlay for non-matched + not overriding */}
+                {!isMatched && !categoryOverride && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white/50 backdrop-blur-[1px]">
+                    <Lock className="h-6 w-6 text-slate-400" />
+                    <p className="text-[10px] text-slate-500 text-center px-4 leading-relaxed max-w-[160px]">
+                      {lockReason}
+                    </p>
                   </div>
                 )}
-                {/* ── Card Info ── */}
-                <div className="px-5 pt-5 pb-5">
+
+                {/* Override warning badge */}
+                {!isMatched && categoryOverride && (
+                  <div className="absolute top-3 right-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-700">
+                    ⚠ Override
+                  </div>
+                )}
+
+                {/* Matched badge */}
+                {isMatched && (
+                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white shadow-sm border border-slate-200 text-slate-700">
+                    <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
+                    Matched
+                  </div>
+                )}
+
+                {/* Card body — clickable only when appropriate */}
+                <button
+                  disabled={!isClickable}
+                  onClick={() => {
+                    if (!isClickable) return;
+                    setSelectedCategory(cat.id);
+                    setStep("pick-layout");
+                  }}
+                  className="w-full text-left px-5 pt-5 pb-5 disabled:pointer-events-none"
+                >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-1.5 rounded-lg bg-white shadow-sm ${isRecommended ? cat.color : "text-slate-400"}`}>
+                    <div className={`p-1.5 rounded-lg bg-white shadow-sm ${isMatched ? cat.color : categoryOverride ? "text-amber-500" : "text-slate-300"}`}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className={`text-base font-bold ${isRecommended ? cat.color : "text-slate-600"}`}>{cat.label}</div>
+                      <div className={`text-base font-bold ${isMatched ? cat.color : categoryOverride ? "text-slate-600" : "text-slate-400"}`}>{cat.label}</div>
                       <div className="text-[11px] text-slate-500">{cat.subtitle}</div>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-slate-600 leading-relaxed mb-3">{cat.description}</p>
+                  <p className={`text-[11px] leading-relaxed mb-3 ${isMatched || categoryOverride ? "text-slate-600" : "text-slate-400"}`}>
+                    {cat.description}
+                  </p>
 
                   <div className="space-y-1.5">
-                    <div className="text-[9px] font-semibold text-slate-700 uppercase tracking-wider">Sections</div>
+                    <div className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Sections included</div>
                     <div className="flex flex-wrap gap-1">
                       {cat.required.slice(0, 5).map((s) => (
-                        <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/80 border border-slate-200 text-slate-600">{s}</span>
+                        <span key={s} className={`text-[9px] px-1.5 py-0.5 rounded-full border ${isMatched ? "bg-white/80 border-slate-200 text-slate-600" : "bg-white/50 border-slate-100 text-slate-400"}`}>{s}</span>
                       ))}
                       {cat.required.length > 5 && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/50 text-slate-400">+{cat.required.length - 5} more</span>
@@ -1443,19 +1510,27 @@ export default function CvStudio({ userId, cvData }: Props) {
                     </div>
                   </div>
 
-                  <div className={`mt-4 flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                    isRecommended
-                      ? `border-slate-200 bg-white/80 ${cat.color} group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm`
-                      : "border-slate-200 bg-slate-50 text-slate-600 group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-50 group-hover:shadow-sm"
+                  <div className={`mt-4 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${
+                    isMatched
+                      ? `border-white/60 bg-white/80 ${cat.color} shadow-sm`
+                      : categoryOverride
+                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      : "border-slate-100 bg-slate-50/50 text-slate-300"
                   }`}>
-                    <Sparkles className="h-4 w-4" />
-                    {isRecommended ? "Generate" : "Select"}
+                    {isMatched ? <><Sparkles className="h-4 w-4" /> Select Layout</> : categoryOverride ? <><AlertCircle className="h-4 w-4" /> Override & Select</> : <><Lock className="h-4 w-4" /> Locked</>}
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>
+
+        {/* Bottom hint */}
+        <p className="text-center text-[11px] text-slate-400 mt-6">
+          {categoryOverride
+            ? "Override is active — select any category. Switching back? Click \"Lock selection\" above."
+            : "Category is matched automatically. For advanced use, click \"Override\" above to unlock all options."}
+        </p>
       </div>
     );
   }
