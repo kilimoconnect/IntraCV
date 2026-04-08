@@ -611,6 +611,9 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [fixingOverflow, setFixingOverflow] = useState(false);
   const [autoFixAttempts, setAutoFixAttempts] = useState(0);
   const autoFixAttemptsRef = useRef(0);
+  // Store original AI data (before any tightening) so retries can re-fit from a clean slate
+  const rawAiDataRef = useRef<CategoryCVData | null>(null);
+  const [showManualTrimPanel, setShowManualTrimPanel] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -895,75 +898,40 @@ export default function CvStudio({ userId, cvData }: Props) {
     });
   }, []);
 
-  const handleAutoFixOverflow = useCallback(async () => {
-    if (!aiData || overflowSections.size === 0 || fixingOverflow) return;
-    setFixingOverflow(true);
-    try {
-      const patch: Partial<CategoryCVData> = {};
-      const fixes: Promise<void>[] = [];
+  // Progressive tightenFactor values per attempt (tighter budget each time)
+  const TIGHTEN_FACTORS: number[] = [0.92, 0.85, 0.75];
 
-      if (overflowSections.has("experience") || overflowSections.has("_page")) {
-        const exps = aiData.experience || [];
-        const target = exps.reduce((mi, e, i) => (e.bullets?.length ?? 0) > (exps[mi]?.bullets?.length ?? 0) ? i : mi, 0);
-        const bullets = exps[target]?.bullets ?? [];
-        if (bullets.length > 2) {
-          fixes.push((async () => {
-            const r = await aiCondense("bullets", bullets, 110, bullets.length - 1);
-            if (Array.isArray(r)) patch.experience = exps.map((e, i) => i === target ? { ...e, bullets: r as string[] } : e);
-          })());
-        }
-      }
-      if (overflowSections.has("achievements")) {
-        const achs = aiData.achievements ?? [];
-        if (achs.length > 2) {
-          fixes.push((async () => {
-            const r = await aiCondense("achievements", achs, 110, Math.max(2, achs.length - 1));
-            if (Array.isArray(r)) patch.achievements = r as string[];
-          })());
-        }
-      }
-      if (overflowSections.has("skills")) {
-        const skls = aiData.skills ?? [];
-        if (skls.length > 6) {
-          fixes.push((async () => {
-            const r = await aiCondense("skills", skls, 18, Math.max(6, skls.length - 2));
-            if (Array.isArray(r)) patch.skills = r as string[];
-          })());
-        }
-      }
-      if (overflowSections.has("profile") && aiData.profile) {
-        fixes.push((async () => {
-          const r = await aiCondense("profile", aiData.profile, 280);
-          if (typeof r === "string") patch.profile = r;
-        })());
-      }
-
-      await Promise.all(fixes);
-      if (Object.keys(patch).length > 0) setAiData(prev => prev ? { ...prev, ...patch } : prev);
-    } catch {}
-    setFixingOverflow(false);
-  }, [aiData, overflowSections, fixingOverflow]);
-
-  // Auto-trigger fix overflow up to 3 times; only show manual button after 3 failures
+  // Auto-trigger progressive tighten up to 3 times; show manual trim panel after 3 failures
   useEffect(() => {
     if (overflowSections.size === 0) {
-      // Overflow resolved — reset counter
+      // Overflow resolved — reset counter and hide manual panel
       autoFixAttemptsRef.current = 0;
       setAutoFixAttempts(0);
+      setShowManualTrimPanel(false);
       return;
     }
-    if (fixingOverflow) return;
-    if (autoFixAttemptsRef.current >= 3) return; // all auto-attempts exhausted — show manual button
-    if (!aiData) return;
+    if (autoFixAttemptsRef.current >= 3) {
+      // All auto-attempts exhausted — show manual trim panel
+      setShowManualTrimPanel(true);
+      return;
+    }
+    if (!aiData || !selectedCategory) return;
 
-    const t = setTimeout(async () => {
+    const t = setTimeout(() => {
+      const attempt = autoFixAttemptsRef.current; // 0-based index
+      const factor = TIGHTEN_FACTORS[Math.min(attempt, TIGHTEN_FACTORS.length - 1)];
       autoFixAttemptsRef.current += 1;
       setAutoFixAttempts(autoFixAttemptsRef.current);
-      await handleAutoFixOverflow();
-    }, 800); // slight delay so the canvas has time to measure
+
+      // Re-fit from the original AI data with a tighter budget
+      // Using rawAiDataRef avoids compounding truncations across retries
+      const base = rawAiDataRef.current ?? aiData;
+      const tightened = fitContentToLayout(base, selectedCategory, selectedVariant, factor);
+      setAiData(tightened);
+    }, 900); // slight delay so the canvas has time to measure
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overflowSections.size, fixingOverflow, aiData]);
+  }, [overflowSections.size, aiData]);
 
   const handleCvClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-cv-field]");
@@ -1108,7 +1076,12 @@ export default function CvStudio({ userId, cvData }: Props) {
       };
 
       // ── Engine: fit content to layout geometry (sentence-safe truncation) ──
-      const fitted = fitContentToLayout(filled, category);
+      const fitted = fitContentToLayout(filled, category, selectedVariant);
+
+      // Reset overflow retry state for fresh generation
+      autoFixAttemptsRef.current = 0;
+      setAutoFixAttempts(0);
+      setShowManualTrimPanel(false);
 
       // ── If JD is available, optimize inline (single generation phase) ──
       if (shouldAutoOptimize && jobDescription.trim()) {
@@ -1130,19 +1103,23 @@ export default function CvStudio({ userId, cvData }: Props) {
           if (optRes.ok) {
             const optData = asObject(await optRes.json());
             const optimized = optData.optimizedCvData
-              ? fitContentToLayout(optData.optimizedCvData as CategoryCVData, category)
+              ? fitContentToLayout(optData.optimizedCvData as CategoryCVData, category, selectedVariant)
               : fitted;
+            rawAiDataRef.current = optimized;
             setAiData(optimized);
             if (typeof optData.coverLetter === "string" && optData.coverLetter) {
               setCoverLetter(optData.coverLetter);
             }
           } else {
+            rawAiDataRef.current = fitted;
             setAiData(fitted);
           }
         } catch {
+          rawAiDataRef.current = fitted;
           setAiData(fitted);
         }
       } else {
+        rawAiDataRef.current = fitted;
         setAiData(fitted);
       }
 
@@ -1261,7 +1238,8 @@ export default function CvStudio({ userId, cvData }: Props) {
       if (!res.ok) throw new Error("Optimization failed");
       const data = await res.json();
       if (data.optimizedCvData) {
-        const fitted = fitContentToLayout(data.optimizedCvData as CategoryCVData, selectedCategory!);
+        const fitted = fitContentToLayout(data.optimizedCvData as CategoryCVData, selectedCategory!, selectedVariant);
+        rawAiDataRef.current = fitted;
         setAiData(fitted);
       }
       if (data.coverLetter) {
@@ -1880,7 +1858,14 @@ export default function CvStudio({ userId, cvData }: Props) {
               <span className="sm:hidden">Profile</span>
             </button>
             <button
-              onClick={() => { setEditMode(!editMode); setInlineEditor(null); }}
+              onClick={() => {
+                if (overflowSections.size > 0 && autoFixAttempts >= 3) {
+                  setShowManualTrimPanel(prev => !prev);
+                } else {
+                  setEditMode(!editMode);
+                  setInlineEditor(null);
+                }
+              }}
               className={`flex items-center gap-1 sm:gap-1.5 rounded-md border px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors ${
                 editMode
                   ? "border-indigo-300 bg-indigo-50 text-indigo-700"
@@ -1958,6 +1943,97 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       </div>
 
+      {/* Manual Trim Panel — shown after 3 auto-fix attempts still fail */}
+      {showManualTrimPanel && overflowSections.size > 0 && !fixingOverflow && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span className="text-xs font-semibold text-amber-800">Content is still overflowing</span>
+            </div>
+            <button onClick={() => setShowManualTrimPanel(false)} className="text-amber-500 hover:text-amber-700">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <p className="text-[11px] text-amber-700 leading-relaxed">
+            The AI couldn&apos;t fully fix the overflow automatically. Use the quick actions below to trim content from the sections that are overflowing.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(overflowSections.has("experience") || overflowSections.has("_page")) && aiData && (
+              <button
+                onClick={() => {
+                  setAiData(prev => {
+                    if (!prev) return prev;
+                    const exps = prev.experience?.map(e => ({
+                      ...e,
+                      bullets: e.bullets && e.bullets.length > 2 ? e.bullets.slice(0, -1) : e.bullets,
+                    })) ?? [];
+                    return { ...prev, experience: exps };
+                  });
+                }}
+                className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors font-medium"
+              >
+                − Remove 1 bullet per role
+              </button>
+            )}
+            {overflowSections.has("skills") && aiData && (
+              <button
+                onClick={() => {
+                  setAiData(prev => {
+                    if (!prev) return prev;
+                    const trimCount = Math.max(6, (prev.skills?.length ?? 0) - 3);
+                    return { ...prev, skills: prev.skills?.slice(0, trimCount) ?? [] };
+                  });
+                }}
+                className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors font-medium"
+              >
+                − Remove 3 skills
+              </button>
+            )}
+            {overflowSections.has("achievements") && aiData && (
+              <button
+                onClick={() => {
+                  setAiData(prev => {
+                    if (!prev) return prev;
+                    const achs = prev.achievements ?? [];
+                    return { ...prev, achievements: achs.slice(0, Math.max(2, achs.length - 1)) };
+                  });
+                }}
+                className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors font-medium"
+              >
+                − Remove 1 achievement
+              </button>
+            )}
+            {overflowSections.has("profile") && aiData && (
+              <button
+                onClick={() => {
+                  setAiData(prev => {
+                    if (!prev || !prev.profile) return prev;
+                    const words = prev.profile.split(/\s+/);
+                    const shorter = words.slice(0, Math.max(30, Math.floor(words.length * 0.8))).join(" ");
+                    const lastPeriod = shorter.lastIndexOf(".");
+                    return { ...prev, profile: lastPeriod > shorter.length * 0.4 ? shorter.slice(0, lastPeriod + 1) : shorter + "." };
+                  });
+                }}
+                className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors font-medium"
+              >
+                − Shorten profile summary
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setEditMode(true);
+                setShowManualTrimPanel(false);
+              }}
+              className="text-[11px] px-3 py-1.5 rounded-lg bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors font-medium flex items-center gap-1"
+            >
+              <PenLine className="h-3 w-3" /> Edit manually
+            </button>
+          </div>
+          <p className="text-[10px] text-amber-600">Sections overflowing: {Array.from(overflowSections).filter(s => s !== "_page").join(", ") || "unknown"}</p>
+        </div>
+      )}
+
       {/* CV Preview — inline editing */}
       {editMode && (
         <div className="flex flex-col gap-2">
@@ -1969,26 +2045,25 @@ export default function CvStudio({ userId, cvData }: Props) {
             <div className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-center gap-2 text-xs text-amber-700">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                {fixingOverflow ? (
-                  <span>Auto-fixing overflow… (attempt {autoFixAttempts}/3)</span>
-                ) : autoFixAttempts < 3 ? (
-                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} overflowing — auto-fixing…</span>
+                {autoFixAttempts < 3 ? (
+                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} overflowing — auto-fixing… (attempt {autoFixAttempts}/3)</span>
                 ) : (
-                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} still overflowing after 3 attempts — fix manually or try AI fix.</span>
+                  <span>{overflowSections.size} section{overflowSections.size > 1 ? "s" : ""} still overflowing — use the trim panel above.</span>
                 )}
               </div>
               {autoFixAttempts >= 3 && (
                 <button
-                  onClick={() => { autoFixAttemptsRef.current = 0; setAutoFixAttempts(0); handleAutoFixOverflow(); }}
-                  disabled={fixingOverflow}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors disabled:opacity-60 shrink-0"
+                  onClick={() => {
+                    // Reset counter so auto-fix tries again with tighter budgets
+                    autoFixAttemptsRef.current = 0;
+                    setAutoFixAttempts(0);
+                    setShowManualTrimPanel(false);
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition-colors shrink-0"
                 >
-                  {fixingOverflow ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  {fixingOverflow ? "Fixing…" : "AI Auto-Fix"}
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Retry
                 </button>
-              )}
-              {fixingOverflow && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-500 shrink-0" />
               )}
             </div>
           )}

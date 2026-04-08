@@ -5,11 +5,14 @@
 // Guarantees every text field fits within its pixel budget:
 //   • Profile text fits within page body height
 //   • Bullets are trimmed at sentence boundaries (no mid-sentence cuts)
+//   • Bullet counts are distributed proportionally across roles
+//   • Roles are capped to category maximums
 //   • Item arrays are capped to prevent overflow
-//   • All truncation preserves complete sentences
+//   • tightenFactor (0–1) allows progressive tightening on retries
 // ═══════════════════════════════════════════════════════════
 
-import type { CategoryCVData, CareerCategory } from "./cv-layout-types";
+import type { CategoryCVData, CareerCategory, LayoutVariant } from "./cv-layout-types";
+import { CATEGORY_SLOT_RULES } from "./cv-layout-types";
 import { A4_W, A4_H } from "./cv-layout-types";
 import { PRINT_MARGIN, charsPerLine, FS } from "./cv-design-system";
 
@@ -36,7 +39,7 @@ function truncateBullet(bullet: string, maxChars: number): string {
   return truncateAtSentence(bullet, maxChars);
 }
 
-// ── Layout geometry per category (worst-case body widths from Variant A) ──
+// ── Layout geometry per category + variant ──
 
 interface LayoutGeometry {
   pages: number;
@@ -50,53 +53,116 @@ interface LayoutGeometry {
   maxExpBulletsP1: number; // total bullet budget for page 1 experience
 }
 
-function getGeometry(category: CareerCategory): LayoutGeometry {
+function getGeometry(
+  category: CareerCategory,
+  variant: LayoutVariant = "A",
+  tightenFactor: number = 1.0,
+): LayoutGeometry {
+  // Apply tightenFactor to all budgets (reduces available space, forcing earlier truncation)
+  const tight = (n: number) => Math.floor(n * tightenFactor);
+
   switch (category) {
     case "junior": {
-      const bodyTop = 100 + 28 + 16; // banner + contact + gap
+      // A: Modern Banner — full-width single column
+      // B: Clean Sidebar — narrow left accent, near full-width body
+      // C: Split Header — two-column grid for skills+edu, but experience is full-width
+      const sidebarW = variant === "B" ? 6 : 0; // thin accent bar
+      const mx = 36;
+      const bodyTop = 100 + 28 + 16; // banner + contact strip + gap
       const budget = A4_H - bodyTop - PRINT_MARGIN.bottom;
       return {
         pages: 1,
-        p1BodyWidth: A4_W - 72, // MX=36 each side
-        p1BodyBudget: budget,   // ~959px
+        p1BodyWidth: A4_W - (mx * 2) - sidebarW,
+        p1BodyBudget: tight(budget),
         p2BodyWidth: 0, p2BodyBudget: 0,
         p3BodyWidth: 0, p3BodyBudget: 0,
         maxProfileLines: 5,
-        maxExpBulletsP1: 11,
+        maxExpBulletsP1: tight(11),
       };
     }
     case "mid-senior": {
+      // A: Dark Sidebar 240px — body = A4_W - 240 - 40
+      // B: Top Bar Split — right sidebar ~200px, body wider
+      // C: Full Width Cards — no sidebar
+      const sidebarW = variant === "A" ? 280 : variant === "B" ? 240 : 52;
+      const p1BodyWidth = A4_W - sidebarW;
       const p1Top = 28;
       const p1Budget = A4_H - p1Top - PRINT_MARGIN.bottom;
+      const p2BodyWidth = variant === "C" ? A4_W - 52 : A4_W - 52;
       const p2Budget = A4_H - 48 - PRINT_MARGIN.bottom;
       return {
         pages: 2,
-        p1BodyWidth: A4_W - 240 - 40, // sidebar 240 + 20px padding each side
-        p1BodyBudget: p1Budget,        // ~1075px
-        p2BodyWidth: A4_W - 52,
-        p2BodyBudget: p2Budget,        // ~1055px
+        p1BodyWidth,
+        p1BodyBudget: tight(p1Budget),
+        p2BodyWidth,
+        p2BodyBudget: tight(p2Budget),
         p3BodyWidth: 0, p3BodyBudget: 0,
         maxProfileLines: 6,
-        maxExpBulletsP1: 16,
+        maxExpBulletsP1: tight(variant === "C" ? 18 : 16),
       };
     }
     case "executive": {
+      // A: Elegant Centered — right sidebar 230px
+      // B: Classic Columns — left sidebar 250px
+      // C: Minimal Premium — two-column body ~(A4_W - 72)/2 each
+      const sidebarW = variant === "A" ? 278 : variant === "B" ? 298 : 0;
+      const mx = variant === "C" ? 36 : 24;
+      const p1BodyWidth = variant === "C"
+        ? Math.floor((A4_W - mx * 2) / 2)   // half-width columns
+        : A4_W - sidebarW - (mx * 2);
       const p1Top = 120 + 22 + 16; // header + contact + SP
       const p1Budget = A4_H - p1Top - PRINT_MARGIN.bottom;
       const contBudget = A4_H - 54 - PRINT_MARGIN.bottom;
+      const contBodyW = A4_W - 54;
       return {
         pages: 3,
-        p1BodyWidth: A4_W - 230 - 48, // sidebar 230 + 24px padding each side
-        p1BodyBudget: p1Budget,        // ~945px
-        p2BodyWidth: A4_W - 54,
-        p2BodyBudget: contBudget,      // ~1049px
-        p3BodyWidth: A4_W - 54,
-        p3BodyBudget: contBudget,
+        p1BodyWidth,
+        p1BodyBudget: tight(p1Budget),
+        p2BodyWidth: contBodyW,
+        p2BodyBudget: tight(contBudget),
+        p3BodyWidth: contBodyW,
+        p3BodyBudget: tight(contBudget),
         maxProfileLines: 6,
-        maxExpBulletsP1: 18,
+        maxExpBulletsP1: tight(variant === "C" ? 14 : 18),
       };
     }
   }
+}
+
+// ── Proportional bullet distribution ──
+// Instead of greedily giving bullets to the first role until the budget runs out,
+// distribute the budget proportionally with more bullets going to recent roles.
+// Guarantees a minimum of 2 bullets per role.
+function distributeBullets(
+  experience: CategoryCVData["experience"],
+  totalBudget: number,
+): number[] {
+  const n = experience.length;
+  if (n === 0) return [];
+  if (n === 1) return [Math.min(totalBudget, experience[0].bullets?.length ?? 0)];
+
+  const minPerRole = 2;
+  const baseTotal = minPerRole * n;
+  const extra = Math.max(0, totalBudget - baseTotal);
+
+  // Weight distribution: recent roles (index 0, 1) get proportionally more
+  // Weights for positions: [0.45, 0.30, 0.15, 0.07, 0.03, ...]
+  const weights = Array.from({ length: n }, (_, i) => {
+    if (i === 0) return 0.45;
+    if (i === 1) return 0.30;
+    if (i === 2) return 0.15;
+    if (i === 3) return 0.07;
+    return 0.03 / Math.max(1, n - 4); // remaining weight spread across rest
+  });
+  // Normalize weights
+  const weightSum = weights.reduce((s, w) => s + w, 0);
+  const normalized = weights.map(w => w / weightSum);
+
+  return experience.map((exp, i) => {
+    const allocated = minPerRole + Math.round(extra * normalized[i]);
+    // Never allocate more than the role actually has
+    return Math.min(allocated, exp.bullets?.length ?? 0);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -104,16 +170,36 @@ function getGeometry(category: CareerCategory): LayoutGeometry {
 // ═══════════════════════════════════════════════════════════
 
 /**
- * Validate and fit all CV data to the layout geometry for the given category.
+ * Validate and fit all CV data to the layout geometry for the given category + variant.
  * Returns a new CategoryCVData with content trimmed to fit.
  * ALL truncation is sentence-safe — no broken sentences.
+ *
+ * @param tightenFactor  0–1 multiplier applied to all budgets.
+ *   1.0 = full budget, 0.92 = slightly tighter, 0.85 = tighter, 0.75 = aggressive
+ *   Used for progressive overflow correction retries in cv-studio.
  */
 export function fitContentToLayout(
   data: CategoryCVData,
   category: CareerCategory,
+  variant: LayoutVariant = "A",
+  tightenFactor: number = 1.0,
 ): CategoryCVData {
   const d = JSON.parse(JSON.stringify(data)) as CategoryCVData;
-  const geo = getGeometry(category);
+  const geo = getGeometry(category, variant, tightenFactor);
+  const slotRules = CATEGORY_SLOT_RULES[category];
+
+  // ── Role count cap: slice experience to the max defined in slot rules ──
+  {
+    const maxRoles = (slotRules.experience as any).roles ?? (
+      category === "junior" ? 3 : category === "mid-senior" ? 4 : 5
+    );
+    if (d.experience && d.experience.length > maxRoles) {
+      d.experience = d.experience.slice(0, maxRoles);
+    }
+    if (d.history && d.history.length > maxRoles) {
+      d.history = d.history.slice(0, maxRoles);
+    }
+  }
 
   // ── Profile: cap to max lines that fit ──
   {
@@ -124,30 +210,38 @@ export function fitContentToLayout(
     }
   }
 
-  // ── Experience bullets: cap total count and individual length ──
+  // ── Experience bullets: proportional distribution, then individual cap ──
   {
-    const maxBulletChars = Math.floor(charsPerLine(FS.smt, geo.p1BodyWidth - 14) * 2.5); // 2.5 lines max per bullet
-    let totalBullets = 0;
-    for (const exp of d.experience || []) {
-      if (!exp.bullets) continue;
-      const remaining = geo.maxExpBulletsP1 - totalBullets;
-      if (remaining <= 0) {
-        exp.bullets = [];
-        continue;
-      }
-      exp.bullets = exp.bullets.slice(0, remaining).map(b => truncateBullet(b, maxBulletChars));
-      totalBullets += exp.bullets.length;
+    const maxBulletChars = Math.floor(charsPerLine(FS.smt, geo.p1BodyWidth - 14) * 2.5);
+    const exps = d.experience || [];
+
+    if (exps.length > 0) {
+      const targets = distributeBullets(exps, geo.maxExpBulletsP1);
+      exps.forEach((exp, i) => {
+        if (!exp.bullets) return;
+        exp.bullets = exp.bullets
+          .slice(0, targets[i])
+          .map(b => truncateBullet(b, maxBulletChars));
+      });
     }
   }
 
   // ── History bullets (page 2): cap per role ──
   if (d.history && d.history.length > 0 && geo.pages >= 2) {
     const maxBulletChars = Math.floor(charsPerLine(FS.smt, geo.p2BodyWidth - 14) * 2.5);
-    const maxBulletsPerRole = category === "junior" ? 0 : category === "mid-senior" ? 5 : 5;
+    const maxBulletsPerRole = category === "junior" ? 0 : 5;
     for (const h of d.history) {
       if (!h.bullets) continue;
       h.bullets = h.bullets.slice(0, maxBulletsPerRole).map(b => truncateBullet(b, maxBulletChars));
     }
+  }
+
+  // ── Skills: cap count using slot rules ──
+  if (d.skills) {
+    const maxSkills = (slotRules.skills as any).count ?? (
+      category === "junior" ? 22 : category === "mid-senior" ? 24 : 28
+    );
+    d.skills = d.skills.slice(0, Math.floor(maxSkills / tightenFactor));
   }
 
   // ── Projects: cap description length ──
@@ -160,29 +254,35 @@ export function fitContentToLayout(
     }
   }
 
-  // ── Achievements: cap per-item length ──
+  // ── Achievements: cap per-item length and count ──
   if (d.achievements) {
-    const maxLen = category === "junior" ? 110 : category === "mid-senior" ? 125 : 135;
-    d.achievements = d.achievements.map(a => truncateAtSentence(a, maxLen));
+    const maxLen = (slotRules as any).achievements?.maxChars ?? (
+      category === "junior" ? 110 : category === "mid-senior" ? 140 : 140
+    );
+    const maxCount = (slotRules as any).achievements?.count ?? (
+      category === "junior" ? 4 : category === "mid-senior" ? 5 : 6
+    );
+    d.achievements = d.achievements
+      .slice(0, Math.ceil(maxCount * tightenFactor))
+      .map(a => truncateAtSentence(a, maxLen));
   }
 
-  // ── Skills: cap count ──
-  if (d.skills) {
-    const maxSkills = category === "junior" ? 22 : category === "mid-senior" ? 24 : 28;
-    d.skills = d.skills.slice(0, maxSkills);
-  }
-
-  // ── References: cap count based on page budget ──
+  // ── References: cap count based on slot rules ──
   if (d.references) {
-    const maxRefs = category === "junior" ? 2 : category === "mid-senior" ? 3 : 4;
+    const maxRefs = (slotRules.references as any).count ?? (
+      category === "junior" ? 2 : category === "mid-senior" ? 3 : 4
+    );
     d.references = d.references.slice(0, maxRefs);
   }
 
-  // ── Board Roles descriptions ──
+  // ── Board Roles: cap count and description ──
   if (d.boardRoles) {
+    const maxDesc = (slotRules as any).boardRoles?.maxDescriptionChars ?? 150;
+    const maxCount = (slotRules as any).boardRoles?.max ?? 5;
+    d.boardRoles = d.boardRoles.slice(0, maxCount);
     for (const role of d.boardRoles) {
-      if (role.description && role.description.length > 140) {
-        role.description = truncateAtSentence(role.description, 140);
+      if (role.description && role.description.length > maxDesc) {
+        role.description = truncateAtSentence(role.description, maxDesc);
       }
     }
   }

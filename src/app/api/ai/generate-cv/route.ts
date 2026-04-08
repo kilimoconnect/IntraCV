@@ -24,6 +24,7 @@ interface Plan {
   addlTargetItems: number;
   refTargetCount: number;
   declTargetWords: number;
+  maxRoles: number;
   // Per-section fill instruction for AI
   expFill: string;
   achFill: string;
@@ -142,16 +143,29 @@ function buildPlan(cvData: any, templateType: string): Plan {
   const skillTargetCount = Math.max(rawSkills.length, Math.floor(skillsContent / 8));
 
   // Experience: divide container evenly across ACTUAL jobs
+  // Cap roles to category maximums to prevent over-crowding
+  const maxRoles = templateType === "two-page" ? 4 : templateType === "three-page" ? 5 : 3;
+  const effectiveJobCount = Math.min(jobCount, maxRoles);
   let expTargetBulletsPerJob = 3, expTargetWordsPerBullet = 15;
-  if (jobCount > 0) {
-    const pxPerJob = Math.floor(expContent / jobCount);
+  if (effectiveJobCount > 0) {
+    const pxPerJob = Math.floor(expContent / effectiveJobCount);
     expTargetBulletsPerJob = Math.max(2, Math.min(8, Math.floor((pxPerJob - EXP_JOB_OVERHEAD) / EXP_BULLET_PX)));
-    expTargetWordsPerBullet = Math.max(12, Math.min(22, Math.round(700 / 42)));
+    // Compute words-per-bullet from available body width
+    // Body width: one-page ~722px, two-page sidebar layout ~514px
+    const bodyW = templateType === "two-page" ? 514 : 722;
+    // chars per line at bullet font size (9.5px, ratio 0.52)
+    const cpl = Math.floor(bodyW / (9.5 * 0.52));
+    // average chars per word ~5.5; target ~1.5 lines per bullet
+    const wordsPerLine = Math.floor(cpl / 5.5);
+    expTargetWordsPerBullet = Math.max(12, Math.min(20, Math.round(wordsPerLine * 1.5)));
   }
 
   // Achievements: fill container
   const achTargetCount = Math.max(rawAch.length || 3, Math.floor(achContent / ACH_ITEM_PX));
-  const achTargetWords = Math.max(12, Math.min(22, Math.round(700 / 42)));
+  // Same calculation for achievement word targets
+  const achBodyW = templateType === "two-page" ? 722 : 722;
+  const achCpl = Math.floor(achBodyW / (9.5 * 0.52));
+  const achTargetWords = Math.max(12, Math.min(20, Math.round(Math.floor(achCpl / 5.5) * 1.5)));
 
   // Education: per-entry description words
   const eduCount = rawEdu.length || 1;
@@ -186,6 +200,7 @@ function buildPlan(cvData: any, templateType: string): Plan {
     expTargetBulletsPerJob, expTargetWordsPerBullet,
     achTargetCount, achTargetWords,
     eduTargetDescWords, certTargetCount, addlTargetItems, refTargetCount, declTargetWords,
+    maxRoles,
     expFill, achFill,
     summFill: fillMsg(summRatio),
     skillsFill: `Profile has ${rawSkills.length} skills, container fits ~${skillTargetCount}. ${fillMsg(skillsRatio)}`,
@@ -493,34 +508,43 @@ export async function POST(req: NextRequest) {
     const refData = val(referees);
     const declData = val(declaration);
 
-    // ─── Hard-trim safety net ───
+    // ─── Hard-trim safety net (sentence-safe) ───
+    // Helper: truncate at last complete sentence
+    const trimAtSentence = (text: string, maxChars: number): string => {
+      if (!text || text.length <= maxChars) return text;
+      const cut = text.slice(0, maxChars);
+      const lastEnd = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?"));
+      if (lastEnd > maxChars * 0.4) return cut.slice(0, lastEnd + 1).trimEnd();
+      const lastSpace = cut.lastIndexOf(" ");
+      return lastSpace > 0 ? cut.slice(0, lastSpace).trimEnd() + "." : cut.trimEnd() + ".";
+    };
+
     const trimmedSkills = (skillsData?.skills || cvData.skills || []).slice(0, plan.skillTargetCount);
-    const trimmedExps = (expData?.experiences || cvData.experiences || cvData.experience || []).map((e: any) => {
+    // Cap roles to maxRoles before trimming bullets
+    const allExps = (expData?.experiences || cvData.experiences || cvData.experience || []);
+    const cappedExps = allExps.slice(0, plan.maxRoles);
+    const trimmedExps = cappedExps.map((e: any) => {
       if (!e.description) return e;
       const bullets = e.description.split("\n").filter((l: string) => l.trim());
       const trimmed = bullets.slice(0, plan.expTargetBulletsPerJob).map((b: string) => {
-        const words = b.trim().split(/\s+/);
-        return words.length > plan.expTargetWordsPerBullet + 5
-          ? words.slice(0, plan.expTargetWordsPerBullet).join(" ")
-          : b;
+        // Sentence-safe bullet trim — max 2 lines at ~100 chars/line
+        return trimAtSentence(b.trim(), plan.expTargetWordsPerBullet * 6);
       });
       return { ...e, description: trimmed.join("\n") };
     });
     const trimmedAch = (achData?.keyAchievements || []).slice(0, plan.achTargetCount).map((a: string) => {
-      const words = a.split(/\s+/);
-      return words.length > plan.achTargetWords + 5
-        ? words.slice(0, plan.achTargetWords).join(" ")
-        : a;
+      // Sentence-safe achievement trim
+      return trimAtSentence(a, plan.achTargetWords * 6);
     });
     const trimmedEdu = (eduData?.education || cvData.education || []);
     const trimmedCerts = (certData?.certifications || cvData.certifications || []);
     const trimmedRefs = (refData?.referees || cvData.referees || []).slice(0, plan.refTargetCount);
 
-    // Trim summary words
+    // Sentence-safe summary trim
     let summaryText = summaryData?.summary || cvData.summary || "";
-    const summWords = summaryText.split(/\s+/);
-    if (summWords.length > plan.summaryTargetWords + 5) {
-      summaryText = summWords.slice(0, plan.summaryTargetWords).join(" ") + ".";
+    const summMaxChars = plan.summaryTargetWords * 6; // avg 6 chars/word
+    if (summaryText.length > summMaxChars + 30) {
+      summaryText = trimAtSentence(summaryText, summMaxChars);
     }
 
     const generatedCV = {

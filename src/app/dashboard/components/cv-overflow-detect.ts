@@ -4,8 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 
 /**
  * Detects which CV sections have content that overflows their page container.
- * Watches the previewRef for mutations and re-checks after each render.
- * Returns a Set of section names that are clipped.
+ *
+ * Improvements over the original heuristic version:
+ *  • Uses data-section-id attributes for precise identification (no text scanning)
+ *  • Waits for document.fonts.ready before measuring to avoid false positives
+ *    caused by web-font FOUT shifting layout heights
+ *  • Uses ResizeObserver to re-check on zoom or container resize
+ *  • Proper set-equality check — avoids spurious re-renders
  */
 export function useOverflowDetect(
   previewRef: React.RefObject<HTMLDivElement | null>,
@@ -19,63 +24,77 @@ export function useOverflowDetect(
 
     const clipped = new Set<string>();
 
-    // Find all page sheets
-    const pages = root.querySelectorAll(".cv-page-sheet");
+    // Walk each A4 page sheet
+    const pages = root.querySelectorAll<HTMLElement>(".cv-page-sheet");
     pages.forEach((page) => {
-      // Check body containers (position:absolute children with maxHeight or overflow:hidden)
-      const bodies = page.querySelectorAll<HTMLElement>("[style]");
-      bodies.forEach((el) => {
-        const style = el.style;
-        if (style.overflow === "hidden" && el.scrollHeight > el.clientHeight + 2) {
-          // This container is clipping content — figure out which section
-          // Look at the last visible child vs total children
-          const diff = el.scrollHeight - el.clientHeight;
-          if (diff > 4) {
-            // Heuristic: check data attributes or text content for section identification
-            const text = el.textContent || "";
-            if (text.includes("Professional Summary") || text.includes("Executive Profile")) clipped.add("profile");
-            if (text.includes("Experience") || text.includes("Professional Experience")) clipped.add("experience");
-            if (text.includes("Achievement") || text.includes("Career Highlight")) clipped.add("achievements");
-            if (text.includes("Skills") || text.includes("Competenc")) clipped.add("skills");
-            if (text.includes("Education")) clipped.add("education");
-            if (text.includes("Certification")) clipped.add("certifications");
-            if (text.includes("Reference")) clipped.add("references");
-            if (text.includes("Language")) clipped.add("languages");
-            if (text.includes("Project")) clipped.add("projects");
+      const pageRect = page.getBoundingClientRect();
 
-            // If we can't identify specific sections, mark as general overflow
-            if (clipped.size === 0) clipped.add("_page");
-          }
+      // Primary: sections with data-section-id — precise, no text heuristics
+      const sections = page.querySelectorAll<HTMLElement>("[data-section-id]");
+      sections.forEach((section) => {
+        const sectionRect = section.getBoundingClientRect();
+        // If the section's bottom extends more than 4 px past the page bottom → overflow
+        if (sectionRect.bottom > pageRect.bottom + 4) {
+          const id = section.dataset.sectionId;
+          if (id) clipped.add(id);
         }
       });
+
+      // Fallback: page's own scroll height exceeds its client height
+      // (catches overflow even when no section has the attribute)
+      if (page.scrollHeight > page.clientHeight + 4 && clipped.size === 0) {
+        clipped.add("_page");
+      }
     });
 
     setOverflow((prev) => {
-      // Only update if the set actually changed
+      // Fast-path: both empty → no change
+      if (prev.size === 0 && clipped.size === 0) return prev;
+      // Size mismatch → definitely changed
       if (prev.size !== clipped.size) return clipped;
+      // Same size: check that every clipped item is already in prev
+      // (if sizes match and all clipped ∈ prev, then sets are equal)
       for (const item of clipped) {
         if (!prev.has(item)) return clipped;
       }
-      return prev;
+      return prev; // No change — skip re-render
     });
   }, [previewRef]);
 
   useEffect(() => {
-    // Check after a short delay to let the layout settle
-    const timer = setTimeout(check, 400);
-
-    // Also observe DOM mutations for re-checks
+    let cancelled = false;
     const root = previewRef.current;
-    if (!root) return () => clearTimeout(timer);
+    if (!root) return;
 
-    const observer = new MutationObserver(() => {
-      setTimeout(check, 200);
+    const runCheck = () => {
+      if (!cancelled) check();
+    };
+
+    // ── 1. Wait for fonts to fully render before first measurement ──
+    // Avoids false overflow when a web font hasn't loaded yet and the
+    // browser falls back to a narrower system font that shifts heights.
+    document.fonts.ready.then(runCheck);
+
+    // ── 2. Re-check whenever DOM content changes (text, bullet additions) ──
+    const mutationObs = new MutationObserver(() => {
+      // Re-wait for fonts in case new content uses a different font
+      document.fonts.ready.then(runCheck);
     });
-    observer.observe(root, { childList: true, subtree: true, attributes: true });
+    mutationObs.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: false, // attribute changes don't affect rendered height
+    });
+
+    // ── 3. Re-check on zoom or container resize ──
+    const resizeObs = new ResizeObserver(runCheck);
+    resizeObs.observe(root);
 
     return () => {
-      clearTimeout(timer);
-      observer.disconnect();
+      cancelled = true;
+      mutationObs.disconnect();
+      resizeObs.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [check, ...deps]);
