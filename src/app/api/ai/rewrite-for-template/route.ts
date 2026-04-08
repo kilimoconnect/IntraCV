@@ -291,28 +291,32 @@ async function blockExperience(exps: any[], toolsByCompany?: Map<string, string[
     const dates = [e.startDate, e.endDate].filter(Boolean).join(" – ") || "";
     const company = e.company || e.company_name || "";
     const relevantTools = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
-    const toolsHint = relevantTools.length > 0
-      ? `\n  Tools used at this company: ${relevantTools.join(", ")} — reference these naturally in bullets where truly relevant. Do NOT invent tools not on this list.`
-      : "";
+    const toolsBlock = relevantTools.length > 0
+      ? `\n  APPROVED TOOLS FOR THIS ROLE (the ONLY software/systems you may name): ${relevantTools.join(", ")}`
+      : `\n  APPROVED TOOLS FOR THIS ROLE: none — do not name any software or system`;
     return `Role ${i+1}:
   Title: ${e.title || e.job_title || ""}
   Company: ${company}
   Dates: ${dates}
-  Description: ${e.description || ""}${toolsHint}
+  Description: ${e.description || ""}${toolsBlock}
   Write exactly ${count} achievement bullets. Target ${bulletMinChars}-${bulletMaxChars} chars per bullet.`;
   }).join("\n\n");
 
   const r = await ai(`Rewrite the following work experience into polished CV bullets.
     ${rolesData}
-    Rules:
-    - past tense action verbs, include quantified results (KPIs, %, $) where possible
-    - Only mention tools that appear in the "Tools used at this company" hint — never invent or add tools not provided
+
+    TOOL RULE (CRITICAL — no exceptions):
+    Each role has an "APPROVED TOOLS FOR THIS ROLE" list. You MUST follow it exactly:
+    - You may only name a software, system, or platform if it appears on that role's approved list.
+    - If a tool name appears in the description but is NOT on the approved list, describe the action WITHOUT naming the tool (e.g. "using payroll software" → "overseeing payroll disbursements").
+    - NEVER invent, guess, or carry over tool names from other roles or the description.
+
+    Other rules:
+    - Past tense action verbs; include quantified results (KPIs, %, $) where possible
     - IMPORTANT: Always reformat dates to month and year only: "May 2020 – Feb 2022"
     - Use 3-letter month abbreviations: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
-    - Format: "Month YYYY – Month YYYY"
-    - If only years available, use "2020 – 2022"
+    - Format: "Month YYYY – Month YYYY" — if only years available use "2020 – 2022"
     - Never include days or ordinal suffixes
-    - Never return dates in any other format
     Return JSON: {"experience": [{"role": "", "company": "", "dates": "", "bullets": []}]}`);
 
   return (r.experience || []).map((exp: any, i: number) => ({
@@ -324,25 +328,39 @@ async function blockExperience(exps: any[], toolsByCompany?: Map<string, string[
   }));
 }
 
-async function blockHistory(exps: any[]): Promise<any[]> {
+async function blockHistory(exps: any[], toolsByCompany?: Map<string, string[]>): Promise<any[]> {
   const pool = exps.slice(2, 2 + S.history.roles);
   const { maxBulletChars, bulletsPerRole } = S.history;
-  
+
   // Check if we have few roles to expand content
   const roleCount = pool.length;
   let bulletCount: number = bulletsPerRole;
   let minBulletChars = 80;
-  
+
   if (roleCount <= 2) {
     // If only 1-2 roles, add more bullets and longer descriptions
     bulletCount = roleCount === 1 ? 8 : 6;
     minBulletChars = 100;
   }
 
-  const r = await ai(`Write condensed history for: ${JSON.stringify(pool)}.
+  // Annotate each history role with its approved tools
+  const rolesWithTools = pool.map((e: any) => {
+    const company = e.company || e.company_name || "";
+    const approved = toolsByCompany ? toolsForCompany(toolsByCompany, company) : [];
+    return { ...e, _approvedTools: approved.length > 0 ? approved.join(", ") : null };
+  });
+
+  const toolsNote = rolesWithTools.some((e: any) => e._approvedTools)
+    ? `\nAPPROVED TOOLS PER ROLE (only name tools listed here — never invent any):\n` +
+      rolesWithTools.map((e: any) => `- ${e.company || "Unknown"}: ${e._approvedTools ?? "none"}`).join("\n")
+    : `\nDo not name any specific software, system, or platform in the bullets.`;
+
+  const r = await ai(`Write condensed history for these roles.
+    ROLES: ${JSON.stringify(pool)}
     Each role gets exactly ${bulletCount} bullets.
     Target length: ${minBulletChars}-${maxBulletChars} chars per bullet.
     If there are only ${roleCount} roles, make the bullets more detailed and comprehensive to fill space.
+    ${toolsNote}
     IMPORTANT: Always reformat dates to month and year only: "May 2020 – Feb 2022"
     Use 3-letter month abbreviations: Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
     Format: "Month YYYY – Month YYYY"
@@ -866,7 +884,7 @@ export async function POST(req: NextRequest) {
         blockProfile(cvData),
         (isExecutive || isMidSenior) ? blockTagline(cvData) : Promise.resolve(""),
         blockExperience(cvData.experiences || [], toolsByCompany),
-        blockHistory(cvData.experiences || []),
+        blockHistory(cvData.experiences || [], toolsByCompany),
         (!isJunior || (cvData.projects || []).length > 0) ? blockProjects(cvData) : Promise.resolve([]),
         blockEducation(cvData.education || []),
         (async () => {

@@ -323,10 +323,13 @@ function genExperience(cvData: any, tr: string, jd: string, p: Plan) {
     return { ...e, _toolsHint: relevant.length > 0 ? relevant.join(", ") : null };
   });
 
+  // Per-company approved tools block
   const toolsInstructions = expWithTools.some((e: any) => e._toolsHint)
-    ? `\nTOOLS BY COMPANY (only reference tools listed here — never invent tools):\n` +
-      expWithTools.map((e: any) => e._toolsHint ? `- ${e.company || "Unknown"}: ${e._toolsHint}` : null).filter(Boolean).join("\n")
-    : "";
+    ? `\nAPPROVED TOOLS PER COMPANY — CRITICAL RULE: You may ONLY name a software, system, or platform if it appears on that company's approved list below. If a tool name appears in the raw description but is NOT on the list, describe the action WITHOUT naming the tool.\n` +
+      expWithTools.map((e: any) =>
+        `- ${e.company || "Unknown"}: ${e._toolsHint ?? "NONE — do not name any tools for this role"}`
+      ).join("\n")
+    : `\nDo not name any specific software, system, or platform in any bullet. Describe actions without tool names.`;
 
   return callAI(`You are a CV experience writer. Rewrite professional experience to PERFECTLY fill the allocated space.
 
@@ -351,7 +354,7 @@ RULES:
 8. NEVER fabricate — enhance wording, expand on existing details
 9. When expanding: add context about scope, team size, processes, technologies, impact
 10. When condensing: merge similar points, keep strongest achievements
-11. Only mention tools from the TOOLS BY COMPANY list above — do not invent tool names
+11. TOOL RULE: strictly follow the APPROVED TOOLS PER COMPANY block above — no exceptions
 
 Return ONLY JSON: { "experiences": [{ "title": "", "company": "", "location": "", "startDate": "", "endDate": "", "description": "" }] }`);
 }
