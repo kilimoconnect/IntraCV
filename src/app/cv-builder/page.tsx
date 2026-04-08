@@ -1027,11 +1027,21 @@ function CVBuilderPage() {
 
       await saveSection("tools", async () => {
         await supabase.from("cv_tools").delete().eq("user_id", user.id);
-        if (tools.filter((t) => t.name?.trim()).length > 0) {
-          const { error } = await supabase.from("cv_tools").insert(
-            tools.filter((t) => t.name?.trim()).map((t, i) => ({ user_id: user.id, name: t.name.trim(), company: t.company?.trim() || null, sort_order: i }))
-          );
-          if (error) throw error;
+        const validTools = tools.filter((t) => t.name?.trim());
+        if (validTools.length > 0) {
+          // Try with company column first; fall back to name-only if column doesn't exist yet
+          const rowsWithCompany = validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), company: t.company?.trim() || null, sort_order: i }));
+          const { error } = await supabase.from("cv_tools").insert(rowsWithCompany);
+          if (error) {
+            if (error.message?.includes("company")) {
+              // Migration not yet applied — save without company column
+              const rowsNameOnly = validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), sort_order: i }));
+              const { error: err2 } = await supabase.from("cv_tools").insert(rowsNameOnly);
+              if (err2) throw err2;
+            } else {
+              throw error;
+            }
+          }
         }
       });
 
