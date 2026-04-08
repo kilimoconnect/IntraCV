@@ -283,6 +283,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   // ─── Generate Questions ───
   // Core generate — accepts optional pre-verified usage to skip re-check
   const generateQuestionsCore = async (currentUsage?: UsageState) => {
+    if (!simRole.trim()) { toast.error("Please enter a job role"); return; }
+    if (!simJobDescription.trim()) { toast.error("Please enter a job description"); return; }
     const u = currentUsage ?? usage;
     if (u.remaining <= 0) {
       setPendingGenerate("generate");
@@ -697,12 +699,12 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-600">Job Description <span className="text-slate-400">(optional)</span></Label>
+              <Label className="text-xs font-medium text-slate-600">Job Description <span className="text-red-400">*</span></Label>
               <Textarea
                 value={simJobDescription}
                 onChange={(e) => setSimJobDescription(e.target.value)}
                 rows={3}
-                placeholder="Paste the job description here for targeted questions..."
+                placeholder="Paste the job description here..."
                 className="rounded-xl border-slate-200 text-sm resize-none"
               />
             </div>
@@ -947,7 +949,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               <Sparkles className="h-6 w-6 text-indigo-500" />
             </div>
             <p className="text-sm font-medium text-slate-700">Ready to practice?</p>
-            <p className="text-xs text-slate-400 mt-1">Enter a job role above and generate your first set of interview questions.</p>
+            <p className="text-xs text-slate-400 mt-1">Enter a job role and job description above to generate tailored interview questions.</p>
           </div>
         )}
       </div>
