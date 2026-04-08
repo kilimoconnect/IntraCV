@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
@@ -327,6 +327,10 @@ function CVBuilderPage() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  // Mobile tab bar auto-scroll
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
@@ -578,6 +582,16 @@ function CVBuilderPage() {
     }
   }, [searchParams, loadingProfile, hasExistingData]);
 
+  // ─── Auto-scroll active tab into view on mobile ───
+  useEffect(() => {
+    const bar = tabBarRef.current;
+    const btn = tabRefs.current.get(activeTab);
+    if (!bar || !btn) return;
+    const barRect = bar.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const scrollLeft = bar.scrollLeft + (btnRect.left - barRect.left) - barRect.width / 2 + btnRect.width / 2;
+    bar.scrollTo({ left: scrollLeft, behavior: "smooth" });
+  }, [activeTab]);
 
   // ─── File Upload + AI Extract ───
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1639,21 +1653,35 @@ function CVBuilderPage() {
             </aside>
 
             {/* ── Mobile Tab Bar ── */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 px-2 py-2 pb-safe flex gap-1 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
+            <div
+              ref={tabBarRef}
+              className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 px-2 py-2 flex gap-1 overflow-x-auto scrollbar-hide"
+              style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
+            >
               {SECTIONS.map((sec) => {
                 const Icon = sec.icon;
                 const isActive = activeTab === sec.key;
                 const hasIssues = sectionsWithIssues.has(sec.key);
+                // Short display labels for the cramped tab bar
+                const SHORT_LABELS: Record<string, string> = {
+                  personal: "Info", summary: "Summary", experience: "Exp.",
+                  education: "Edu.", skills: "Skills", certifications: "Certs",
+                  achievements: "Achieve.", awards: "Awards", memberships: "Members",
+                  projects: "Projects", boardRoles: "Board", execTraining: "Training",
+                  publications: "Pubs", tools: "Tools", volunteer: "Volunteer",
+                  languages: "Lang.", referees: "Refs", declaration: "Decl.",
+                };
                 return (
                   <button
                     key={sec.key}
+                    ref={(el) => { if (el) tabRefs.current.set(sec.key, el); else tabRefs.current.delete(sec.key); }}
                     onClick={() => setActiveTab(sec.key)}
                     className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg text-[10px] font-medium shrink-0 transition-colors ${
                       isActive ? "bg-primary text-primary-foreground" : hasIssues ? "text-red-600 bg-red-50" : "text-muted-foreground"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                    {sec.label.split(" ")[0]}
+                    {SHORT_LABELS[sec.key] ?? sec.label.split(" ")[0]}
                     {hasIssues && !isActive && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500" />}
                   </button>
                 );
