@@ -6,6 +6,101 @@ import { SLOT_RULES as THREE_PAGE_SLOT_RULES } from "@/app/dashboard/components/
 import { CATEGORY_RULES, type CategorySlotRules } from "@/app/dashboard/components/cv-category-rules";
 import type { CareerCategory } from "@/app/dashboard/components/cv-layout-types";
 
+// ═══════════════════════════════════════════════════════════════
+// ADAPTIVE SLOT RULES — computed from actual profile content
+// ═══════════════════════════════════════════════════════════════
+// Instead of static bullet/char counts, we calculate how much space
+// each section has AFTER accounting for which optional sections are
+// present or absent. This prevents both gaps (too little content)
+// and overflow (too much content) by adapting generation targets
+// to the actual user data before calling the AI.
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Compute dynamic slot rules for a given category and raw profile data.
+ * The base CATEGORY_RULES are adjusted so that:
+ *   - Fewer experience roles → more bullets per role (fills available space)
+ *   - Absent achievements on page 1 → more experience bullets
+ *   - Fewer history roles → more bullets per history role
+ *   - Single-role profiles get maxed-out bullet budgets
+ */
+function computeDynamicSlotRules(cvData: any, category: CareerCategory): CategorySlotRules {
+  const base = JSON.parse(JSON.stringify(CATEGORY_RULES[category])) as CategorySlotRules;
+
+  const exps         = (cvData.experiences || []) as any[];
+  const achievements = (cvData.keyAchievements || cvData.achievements || []) as any[];
+  const hasAch       = achievements.length > 0;
+  const topRoleCount = base.experience.roles;             // max top roles per category
+  const actualTop    = Math.min(exps.length, topRoleCount);
+  const actualHist   = Math.max(0, exps.length - actualTop);
+
+  // ── PAGE 1: experience space budget ───────────────────────────
+  // Approximate pixel budget remaining for experience on page 1 after
+  // the profile paragraph and (if present) achievement cards.
+  // These numbers are derived from the measured layout geometry.
+  const p1Budgets: Record<CareerCategory, number> = {
+    junior:       959,
+    "mid-senior": 1075,
+    executive:    943,
+  };
+  const PROFILE_H    = 200;   // ~200px for profile paragraph (any category)
+  const ACH_H        = 130;   // ~130px for 3-5 achievement items
+  const EXP_HDG_H    = 30;    // section heading
+  const SAFETY       = 30;    // buffer
+  const BULLET_PX    = 17;    // px per bullet line
+  const ROLE_OVHD    = 40;    // px per role (title + company + spacing)
+
+  const p1Budget = p1Budgets[category];
+  const usedFixed  = PROFILE_H + EXP_HDG_H + SAFETY + (hasAch ? ACH_H : 0);
+  const expBudget  = Math.max(actualTop * (ROLE_OVHD + BULLET_PX * 2), p1Budget - usedFixed);
+  const bulletPool = Math.max(actualTop * 2, Math.floor((expBudget - actualTop * ROLE_OVHD) / BULLET_PX));
+
+  if (actualTop === 0) {
+    // No experience at all — leave defaults
+  } else if (actualTop === 1) {
+    // Single role: give it all the bullets
+    const singleBullets = Math.min(18, bulletPool);
+    base.experience = { ...base.experience, role1Bullets: singleBullets, role2Bullets: 0 };
+  } else {
+    // Multiple roles: weighted split (55% / 35% / remainder)
+    const r1 = Math.min(16, Math.round(bulletPool * 0.55));
+    const r2 = Math.min(13, Math.round(bulletPool * 0.35));
+    base.experience = { ...base.experience, role1Bullets: r1, role2Bullets: r2 };
+  }
+
+  // ── Absence bonus: no achievements → more experience bullets ──
+  if (!hasAch) {
+    base.experience = {
+      ...base.experience,
+      role1Bullets: Math.min(18, base.experience.role1Bullets + 3),
+      role2Bullets: Math.min(14, base.experience.role2Bullets + 2),
+    };
+    // Also allow a slightly longer profile since achievements section is absent
+    base.profile = { ...base.profile, maxChars: Math.min(620, base.profile.maxChars + 80) };
+  }
+
+  // ── PAGE 2: history space budget ─────────────────────────────
+  // More bullets per history role when there are fewer history roles.
+  if (actualHist === 1) {
+    base.history = { ...base.history, bulletsPerRole: Math.min(10, base.history.bulletsPerRole + 4) };
+  } else if (actualHist === 2) {
+    base.history = { ...base.history, bulletsPerRole: Math.min(7, base.history.bulletsPerRole + 2) };
+  } else if (actualHist === 0) {
+    // No history roles — page 2 will be entirely achievements/edu/etc.
+    // Nothing to adjust here; layout handles it.
+  }
+
+  // ── Skills count: match actual count if below target ─────────
+  const rawSkillCount = (cvData.skills || []).length;
+  if (rawSkillCount < base.skills.count) {
+    // Don't ask AI to invent skills — cap at what the profile has
+    base.skills = { ...base.skills, count: rawSkillCount };
+  }
+
+  return base;
+}
+
+
 type TemplateType = "two-page" | "three-page";
 
 const TWO_PAGE_SLOT_RULES = {
@@ -714,11 +809,12 @@ export async function POST(req: NextRequest) {
     const isMidSenior = category === "mid-senior";
     const isJunior = category === "junior";
 
-    // Use category-aware rules when category is provided (new layout system),
-    // otherwise fall back to legacy template-based rules
+    // Use adaptive rules when category is provided — slot rules are computed from
+    // actual profile content so bullet counts fill the page without gaps or overflow.
+    // Fall back to legacy template-based static rules when no category given.
     const validCategory = category as CareerCategory | undefined;
     const slotRules: SlotRules = validCategory && CATEGORY_RULES[validCategory]
-      ? CATEGORY_RULES[validCategory]
+      ? computeDynamicSlotRules(cvData, validCategory)
       : (templateType === "three-page" ? THREE_PAGE_SLOT_RULES : TWO_PAGE_SLOT_RULES);
 
     return await slotRulesStore.run(slotRules, async () => {

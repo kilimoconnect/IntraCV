@@ -468,8 +468,8 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
 
   // ── Space fillers ──
-  const p1Fill = usePageFill(P1_BODY_BUDGET, 1.30);
-  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.30);
+  const p1Fill = usePageFill(P1_BODY_BUDGET, 1.0);
+  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.0);
 
   // ── DOM measurement for dynamic experience split ──
   const bMeasRef = useRef<HTMLDivElement>(null);
@@ -787,8 +787,8 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
 
   // ── Space fillers ──
-  const p1Fill = usePageFill(P1_BODY_BUDGET, 1.30);
-  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.30);
+  const p1Fill = usePageFill(P1_BODY_BUDGET, 1.0);
+  const p2Fill = usePageFill(P2_BODY_BUDGET, 1.0);
 
   // ── DOM measurement for dynamic experience split ──
   const cMeasRef = useRef<HTMLDivElement>(null);
