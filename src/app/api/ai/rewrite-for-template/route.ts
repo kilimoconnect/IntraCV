@@ -135,7 +135,7 @@ CRITICAL RULES:
 - NEVER produce text that ends abruptly without a period.
 - If a character limit forces truncation, remove the LAST sentence entirely rather than cutting it.
 - Use high-impact professional language (3rd person only).
-- If source material is too short, EXPAND by adding industry-standard context or specific tools.
+- If source material is too short, EXPAND by adding context about scope, team size, business impact, or processes — NEVER invent or add software/tool names not explicitly provided in the role data.
 - CHARACTER LIMITS ARE ABSOLUTE — content that exceeds limits will be cut, so stay within bounds.
 - Prefer shorter, punchier sentences over long compound ones to avoid mid-sentence breaks.`;
 
