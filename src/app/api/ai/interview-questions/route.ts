@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         : "";
 
       const profileCtx = profileContext
-        ? `\n\nCANDIDATE PROFILE (use this to personalise questions — reference their actual experience, skills, and background):\n${profileContext}\n`
+        ? `\n\nCANDIDATE PROFILE — you MUST use this to personalise questions. Reference their specific job titles, companies, projects, achievements, tools, and skills. Ask about real situations from their background rather than generic scenarios:\n${profileContext}\n`
         : "";
 
       const existingContext = existingQuestions?.length
@@ -100,7 +100,7 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are an expert interview coach. Generate realistic, challenging interview questions. You MUST return ONLY valid JSON with a 'questions' key containing the array. No other text." },
+          { role: "system", content: "You are an expert interview coach. Generate realistic, deeply personalised interview questions that reference the candidate's actual background, experience, tools, and achievements. If a candidate profile is provided, ALWAYS weave in specifics from it. You MUST return ONLY valid JSON with a 'questions' key containing the array. No other text." },
           { role: "user", content: prompt },
         ],
         temperature: 0.7,

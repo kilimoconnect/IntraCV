@@ -73,22 +73,65 @@ const QUESTION_TYPE_COLORS: Record<string, string> = {
 function buildProfileContext(cv: any): string {
   const lines: string[] = [];
   const pi = cv.personalInfo;
+
   if (pi?.headline) lines.push(`Headline: ${pi.headline}`);
-  if (cv.summary) lines.push(`Summary: ${cv.summary.slice(0, 400)}`);
-  const exps = (cv.experiences || []).slice(0, 4);
+  if (cv.summary) lines.push(`Summary: ${cv.summary.slice(0, 500)}`);
+
+  // Full experience with descriptions
+  const exps = (cv.experiences || []).slice(0, 5);
   if (exps.length) {
-    lines.push("Experience:");
+    lines.push("Work Experience:");
     exps.forEach((e: any) => {
       const title = e.title || e.jobTitle || "";
       const co = e.company || e.employer || "";
       const dates = [e.startDate, e.endDate].filter(Boolean).join("–");
       lines.push(`  - ${title}${co ? ` at ${co}` : ""}${dates ? ` (${dates})` : ""}`);
+      if (e.description) {
+        // Include first 3 bullet points from the description
+        const bullets = e.description.split("\n").filter((l: string) => l.trim()).slice(0, 3);
+        bullets.forEach((b: string) => lines.push(`    ${b.trim()}`));
+      }
     });
   }
-  const skills = (cv.skills || []).map((s: any) => s.name || s).filter(Boolean).slice(0, 15);
+
+  // Education
+  const edu = (cv.education || []).slice(0, 3);
+  if (edu.length) {
+    lines.push("Education:");
+    edu.forEach((e: any) => {
+      const degree = e.degree || e.qualification || "";
+      const inst = e.institution || e.school || "";
+      const year = e.year || e.graduationYear || "";
+      lines.push(`  - ${degree}${inst ? ` — ${inst}` : ""}${year ? ` (${year})` : ""}`);
+    });
+  }
+
+  // Skills
+  const skills = (cv.skills || []).map((s: any) => s.name || s).filter(Boolean).slice(0, 20);
   if (skills.length) lines.push(`Skills: ${skills.join(", ")}`);
-  const certs = (cv.certifications || []).map((c: any) => c.name || c).filter(Boolean).slice(0, 5);
+
+  // Tools
+  const tools = (cv.tools || []).map((t: any) => t.name || t).filter(Boolean).slice(0, 15);
+  if (tools.length) lines.push(`Tools & Software: ${tools.join(", ")}`);
+
+  // Key achievements
+  const ach = (cv.keyAchievements || []).slice(0, 4);
+  if (ach.length) {
+    lines.push("Key Achievements:");
+    ach.forEach((a: any) => lines.push(`  - ${typeof a === "string" ? a : a.achievement || a.description || ""}`));
+  }
+
+  // Awards
+  const awards = (cv.awards || []).slice(0, 3);
+  if (awards.length) {
+    lines.push("Awards:");
+    awards.forEach((a: any) => lines.push(`  - ${a.name || a.title || a}`));
+  }
+
+  // Certifications
+  const certs = (cv.certifications || []).map((c: any) => c.name || c).filter(Boolean).slice(0, 6);
   if (certs.length) lines.push(`Certifications: ${certs.join(", ")}`);
+
   return lines.join("\n");
 }
 
