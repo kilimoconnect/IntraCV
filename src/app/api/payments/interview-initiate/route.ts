@@ -13,7 +13,10 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: "Customer email is required" }, { status: 400 });
 
     const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
-    if (!secretKey) return NextResponse.json({ error: "Payment gateway not configured" }, { status: 500 });
+    if (!secretKey) {
+      console.error("[interview-initiate] FLUTTERWAVE_SECRET_KEY is not set in environment");
+      return NextResponse.json({ error: "FLUTTERWAVE_SECRET_KEY not configured on server" }, { status: 500 });
+    }
 
     const txRef = generateTxRef(user.id);
 

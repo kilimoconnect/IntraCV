@@ -12,9 +12,14 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: "Customer email is required" }, { status: 400 });
 
     const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
-    if (!secretKey) return NextResponse.json({ error: "Payment gateway not configured" }, { status: 500 });
+    if (!secretKey) {
+      console.error("[cv-download-initiate] FLUTTERWAVE_SECRET_KEY is not set in environment");
+      return NextResponse.json({ error: "FLUTTERWAVE_SECRET_KEY not configured on server" }, { status: 500 });
+    }
 
     const txRef = generateTxRef(user.id);
+
+    console.log("[cv-download-initiate] Calling Flutterwave with amount:", DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY);
 
     const flwRes = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
@@ -37,14 +42,18 @@ export async function POST(req: NextRequest) {
     });
 
     const flwJson = await flwRes.json();
+    console.log("[cv-download-initiate] Flutterwave response:", JSON.stringify(flwJson));
+
     if (flwJson.status !== "success" || !flwJson.data?.link) {
-      console.error("Flutterwave cv-download-initiate error:", flwJson);
-      return NextResponse.json({ error: flwJson.message || "Failed to create payment link" }, { status: 500 });
+      return NextResponse.json(
+        { error: flwJson.message || flwJson.error || "Flutterwave rejected the request" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ link: flwJson.data.link, txRef });
   } catch (err: any) {
-    console.error("CV download initiate error:", err);
-    return NextResponse.json({ error: "Failed to initiate payment" }, { status: 500 });
+    console.error("[cv-download-initiate] Unexpected error:", err?.message ?? err);
+    return NextResponse.json({ error: err?.message || "Failed to initiate payment" }, { status: 500 });
   }
 }
