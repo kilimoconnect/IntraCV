@@ -161,10 +161,12 @@ const PREFERRED_VOICES = [
   "Google UK English Male",
   "Microsoft Aria Online (Natural) - English (United States)",
   "Microsoft Jenny Online (Natural) - English (United States)",
+  "Microsoft Guy Online (Natural) - English (United States)",
   "Karen",        // macOS/iOS high-quality
   "Samantha",     // macOS/iOS
   "Daniel",       // macOS/iOS UK
   "Moira",        // macOS Irish English
+  "Tessa",        // macOS South African English
 ];
 
 function getBestVoice(): SpeechSynthesisVoice | null {
@@ -173,6 +175,11 @@ function getBestVoice(): SpeechSynthesisVoice | null {
   // Try preferred voices in order
   for (const name of PREFERRED_VOICES) {
     const v = voices.find((v) => v.name === name);
+    if (v) return v;
+  }
+  // Partial name match — handles locale suffix variants on Android
+  for (const name of PREFERRED_VOICES) {
+    const v = voices.find((v) => v.name.includes(name) || name.includes(v.name));
     if (v) return v;
   }
   // Fallback: any English voice that isn't "eSpeak" (robotic)
@@ -207,6 +214,13 @@ function speakText(text: string, onEnd?: () => void) {
       window.speechSynthesis.onvoiceschanged = null;
       trySpeak();
     };
+    // Android Chrome sometimes never fires onvoiceschanged — 500ms fallback
+    setTimeout(() => {
+      if (!window.speechSynthesis.speaking) {
+        window.speechSynthesis.onvoiceschanged = null;
+        trySpeak();
+      }
+    }, 500);
   }
 }
 function stopSpeaking() {
