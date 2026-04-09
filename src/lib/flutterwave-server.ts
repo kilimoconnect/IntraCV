@@ -23,14 +23,14 @@ export async function createFlutterwavePaymentLink(payload: {
 }): Promise<string> {
   const secretKey = getSecretKey();
 
-  // Log key prefix only (never log full key)
-  console.log("[flutterwave-server] key prefix:", secretKey.slice(0, 12) + "...");
-  console.log("[flutterwave-server] client_id prefix:", (process.env.FLUTTERWAVE_CLIENT_ID ?? "NOT SET").slice(0, 12) + "...");
+  const clientId = process.env.FLUTTERWAVE_CLIENT_ID;
+  console.log("[flutterwave-server] using v4 endpoint, client_id set:", !!clientId, "secret_key set:", !!secretKey);
 
-  const res = await fetch("https://api.flutterwave.com/v3/payments", {
+  const res = await fetch("https://api.flutterwave.com/v4/payments", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${secretKey}`,
+      "client-id": clientId ?? "",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
