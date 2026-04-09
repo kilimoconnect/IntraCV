@@ -14,7 +14,7 @@ import { fitContentToLayout } from "./cv-content-fitter";
 import { printCvAsPdf } from "@/lib/printCv";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { openFlutterwaveCheckout, generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
+import { DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
 
 interface Props {
   userId: string;
@@ -631,6 +631,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [coverLetterUnlocked, setCoverLetterUnlocked] = useState(false);
+  const [cvPaidReady, setCvPaidReady] = useState(false); // returned from payment redirect
   const [copiedCL, setCopiedCL] = useState(false);
   const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
   const [profileAnalysis, setProfileAnalysis] = useState<{
@@ -644,6 +645,28 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [profileAnalyzing, setProfileAnalyzing] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
+
+  // ── Detect return from CV payment redirect ──
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const paid = sessionStorage.getItem("fusecv-cv-paid");
+    const pending = sessionStorage.getItem("fusecv-pending-cv");
+    if (paid === "1" && pending) {
+      try {
+        const saved = JSON.parse(pending);
+        if (saved.aiData) setAiData(saved.aiData);
+        if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
+        if (saved.selectedVariant) setSelectedVariant(saved.selectedVariant);
+        if (saved.selectedTheme) setSelectedTheme(saved.selectedTheme);
+        if (saved.coverLetter) setCoverLetter(saved.coverLetter);
+        setCoverLetterUnlocked(true);
+        setCvPaidReady(true);
+      } catch { /* ignore */ }
+      sessionStorage.removeItem("fusecv-cv-paid");
+      sessionStorage.removeItem("fusecv-pending-cv");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Cached profile analysis: only re-run if CV data changed ──
   useEffect(() => {
@@ -1260,13 +1283,7 @@ export default function CvStudio({ userId, cvData }: Props) {
 
   const handlePayAndDownload = useCallback(async () => {
     if (!aiData || paymentProcessing) return;
-    const publicKey = process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY;
-    if (!publicKey) {
-      toast.error("Payment gateway not configured. Contact support.");
-      return;
-    }
 
-    // Resolve email: aiData → cvData.personalInfo → block
     const personalInfo = cvData?.personalInfo as Record<string, string> | undefined;
     const customerEmail = aiData.email || personalInfo?.email || "";
     if (!customerEmail) {
@@ -1275,72 +1292,33 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
 
     setPaymentProcessing(true);
-    const txRef = generateTxRef(userId);
     try {
-      const flwHandler = await openFlutterwaveCheckout({
-        public_key: publicKey,
-        tx_ref: txRef,
-        amount: DOWNLOAD_AMOUNT,
-        currency: DOWNLOAD_CURRENCY,
-        payment_options: "card",
-        customer: {
+      const redirectUrl = `${window.location.origin}/cv-payment/callback`;
+      const res = await fetch("/api/payments/cv-download-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           email: customerEmail,
           name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
-        },
-        customizations: {
-          title: "FuseCV — Download CV",
-          description: `Download your ${selectedCategory} CV as a clean, watermark-free PDF`,
-        },
-        callback: async (response) => {
-          flwHandler.close(); // dismiss the "Thanks for your payment!" screen
-          setShowPaymentModal(false);
-          if (response.status === "successful") {
-            try {
-              const verifyRes = await fetch("/api/payments/flutterwave/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  transaction_id: response.transaction_id,
-                  tx_ref: txRef,
-                  expected_amount: DOWNLOAD_AMOUNT,
-                  expected_currency: DOWNLOAD_CURRENCY,
-                }),
-              });
-              const verifyData = await verifyRes.json();
-              if (verifyData.verified) {
-                setShowPaymentModal(false);
-                setCoverLetterUnlocked(true);
-                toast.success(
-                  "Payment confirmed! Generating your PDF…",
-                  { duration: 3000, icon: "🎉" }
-                );
-                await executePdfDownload();
-                localStorage.setItem("fusecv-new-docs", "true");
-                toast.success(
-                  "Your CV and cover letter are saved — find them in the Documents page.",
-                  { duration: 6000, icon: "📄" }
-                );
-              } else {
-                toast.error(`Payment verification failed: ${verifyData.message || "Unknown error"}`);
-              }
-            } catch {
-              toast.error("Could not verify payment. Please contact support.");
-            }
-          } else {
-            toast.error("Payment was not completed.");
-          }
-          setPaymentProcessing(false);
-        },
-        onclose: () => {
-          setPaymentProcessing(false);
-          setShowPaymentModal(false);
-        },
+          redirectUrl,
+        }),
       });
-    } catch {
-      toast.error("Could not open payment window. Please try again.");
+      const data = await res.json();
+      if (!res.ok || !data.link) throw new Error(data.error || "Failed to create payment link");
+      // Store CV state so we can trigger download when user returns
+      sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({
+        aiData,
+        selectedCategory,
+        selectedVariant,
+        selectedTheme,
+        coverLetter,
+      }));
+      window.location.href = data.link;
+    } catch (err: any) {
+      toast.error(err.message || "Could not open payment page. Please try again.");
       setPaymentProcessing(false);
     }
-  }, [aiData, userId, selectedCategory, paymentProcessing, executePdfDownload]);
+  }, [aiData, cvData, userId, selectedCategory, selectedVariant, selectedTheme, coverLetter, paymentProcessing]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -2145,6 +2123,36 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
       {/* ── Payment Modal ── */}
+      {/* Payment confirmed — returned from Flutterwave redirect */}
+      {cvPaidReady && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col items-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+            </div>
+            <div className="text-center">
+              <h2 className="text-lg font-bold text-slate-800">Payment Confirmed!</h2>
+              <p className="text-sm text-slate-500 mt-1">Your CV is ready. Click below to download.</p>
+            </div>
+            <button
+              onClick={async () => {
+                setCvPaidReady(false);
+                localStorage.setItem("fusecv-new-docs", "true");
+                await executePdfDownload();
+              }}
+              disabled={downloadingPdf}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
+            >
+              {downloadingPdf ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF…</>
+              ) : (
+                <><Download className="h-4 w-4" /> Download My CV</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
