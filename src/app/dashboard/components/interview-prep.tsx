@@ -189,39 +189,58 @@ function getBestVoice(): SpeechSynthesisVoice | null {
   return englishVoice || voices[0];
 }
 
+// iOS Safari and Chrome always return [] from getVoices() on first call.
+// Any async path (setTimeout / onvoiceschanged) breaks iOS's user-gesture
+// requirement and silently blocks speech. Detect iOS and speak synchronously.
+function isIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // iPadOS 13+ reports itself as MacIntel with touch support
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
 function speakText(text: string, onEnd?: () => void) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.9;
+  u.pitch = 1.0;
+  u.volume = 1.0;
+  if (onEnd) u.onend = onEnd;
 
-  // Use natural voice — voices may load async, so try immediately then retry once
-  const trySpeak = () => {
+  const applyVoiceAndSpeak = () => {
     const voice = getBestVoice();
     if (voice) u.voice = voice;
-    u.rate = 0.9;   // slightly slower than default — clear and deliberate
-    u.pitch = 1.0;  // natural pitch
-    u.volume = 1.0;
-    if (onEnd) u.onend = onEnd;
     window.speechSynthesis.speak(u);
   };
 
   const voices = window.speechSynthesis.getVoices();
   if (voices.length > 0) {
-    trySpeak();
-  } else {
-    // Voices not loaded yet — wait for them
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.onvoiceschanged = null;
-      trySpeak();
-    };
-    // Android Chrome sometimes never fires onvoiceschanged — 500ms fallback
-    setTimeout(() => {
-      if (!window.speechSynthesis.speaking) {
-        window.speechSynthesis.onvoiceschanged = null;
-        trySpeak();
-      }
-    }, 500);
+    applyVoiceAndSpeak();
+    return;
   }
+
+  // iOS: getVoices() always returns [] initially; any async delay breaks user-gesture
+  // requirement. Speak immediately — iOS uses Samantha (natural) as system default.
+  if (isIOS()) {
+    window.speechSynthesis.speak(u);
+    return;
+  }
+
+  // Android Chrome / Desktop: voices load asynchronously
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.onvoiceschanged = null;
+    applyVoiceAndSpeak();
+  };
+  // Android Chrome sometimes never fires onvoiceschanged — 500ms fallback
+  setTimeout(() => {
+    if (!window.speechSynthesis.speaking) {
+      window.speechSynthesis.onvoiceschanged = null;
+      applyVoiceAndSpeak();
+    }
+  }, 500);
 }
 function stopSpeaking() {
   if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
