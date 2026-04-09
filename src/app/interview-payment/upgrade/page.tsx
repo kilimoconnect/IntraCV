@@ -25,7 +25,7 @@ function UpgradeContent() {
   const params = useSearchParams();
   const pendingAction = params.get("action") || "generate";
   const email = params.get("email") || "";
-  const name = params.get("name") || "IntraCV User";
+  const name = params.get("name") || "FuseCV User";
 
   const [loading, setLoading] = useState(false);
 

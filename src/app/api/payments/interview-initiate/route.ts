@@ -30,9 +30,9 @@ export async function POST(req: NextRequest) {
         currency: DOWNLOAD_CURRENCY,
         redirect_url: redirectUrl,
         payment_options: "card",
-        customer: { email, name: name || "IntraCV User" },
+        customer: { email, name: name || "FuseCV User" },
         customizations: {
-          title: "IntraCV — Interview Questions",
+          title: "FuseCV — Interview Questions",
           description: "Unlock 20 more AI-powered interview questions",
         },
       }),

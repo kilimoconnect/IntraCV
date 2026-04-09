@@ -162,7 +162,7 @@ export default function InterviewPaymentCallbackPage() {
           <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
-          <span className="font-semibold text-slate-800">IntraCV</span>
+          <span className="font-semibold text-slate-800">FuseCV</span>
         </div>
         <div className="px-6 pb-6">
           <Suspense

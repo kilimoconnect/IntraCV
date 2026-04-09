@@ -154,13 +154,60 @@ function avgScore(feedbacks: Record<string, AnswerFeedback>): number | null {
 }
 
 // ─── Speech helpers ───
+// Priority list of natural-sounding voices (Google and Apple Neural voices)
+const PREFERRED_VOICES = [
+  "Google UK English Female",
+  "Google US English",
+  "Google UK English Male",
+  "Microsoft Aria Online (Natural) - English (United States)",
+  "Microsoft Jenny Online (Natural) - English (United States)",
+  "Karen",        // macOS/iOS high-quality
+  "Samantha",     // macOS/iOS
+  "Daniel",       // macOS/iOS UK
+  "Moira",        // macOS Irish English
+];
+
+function getBestVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  // Try preferred voices in order
+  for (const name of PREFERRED_VOICES) {
+    const v = voices.find((v) => v.name === name);
+    if (v) return v;
+  }
+  // Fallback: any English voice that isn't "eSpeak" (robotic)
+  const englishVoice = voices.find(
+    (v) => v.lang.startsWith("en") && !v.name.toLowerCase().includes("espeak")
+  );
+  return englishVoice || voices[0];
+}
+
 function speakText(text: string, onEnd?: () => void) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.95; u.pitch = 1;
-  if (onEnd) u.onend = onEnd;
-  window.speechSynthesis.speak(u);
+
+  // Use natural voice — voices may load async, so try immediately then retry once
+  const trySpeak = () => {
+    const voice = getBestVoice();
+    if (voice) u.voice = voice;
+    u.rate = 0.9;   // slightly slower than default — clear and deliberate
+    u.pitch = 1.0;  // natural pitch
+    u.volume = 1.0;
+    if (onEnd) u.onend = onEnd;
+    window.speechSynthesis.speak(u);
+  };
+
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    trySpeak();
+  } else {
+    // Voices not loaded yet — wait for them
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      trySpeak();
+    };
+  }
 }
 function stopSpeaking() {
   if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
@@ -442,7 +489,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   // ─── Flutterwave payment to unlock 20 more questions ───
   const navigateToUpgrade = useCallback((action: "generate" | "add") => {
     const email = encodeURIComponent(cvData?.personalInfo?.email || "");
-    const name = encodeURIComponent(cvData?.personalInfo?.fullName || "IntraCV User");
+    const name = encodeURIComponent(cvData?.personalInfo?.fullName || "FuseCV User");
     router.push(`/interview-payment/upgrade?action=${action}&email=${email}&name=${name}`);
   }, [router, cvData]);
 
