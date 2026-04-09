@@ -154,50 +154,61 @@ function avgScore(feedbacks: Record<string, AnswerFeedback>): number | null {
 }
 
 // ─── Speech helpers ───
-// Priority list of natural-sounding voices (Google and Apple Neural voices)
-const PREFERRED_VOICES = [
-  "Google UK English Female",
-  "Google US English",
-  "Google UK English Male",
-  "Microsoft Aria Online (Natural) - English (United States)",
-  "Microsoft Jenny Online (Natural) - English (United States)",
-  "Microsoft Guy Online (Natural) - English (United States)",
-  "Karen",        // macOS/iOS high-quality
-  "Samantha",     // macOS/iOS
-  "Daniel",       // macOS/iOS UK
-  "Moira",        // macOS Irish English
-  "Tessa",        // macOS South African English
-];
 
-function getBestVoice(): SpeechSynthesisVoice | null {
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  // Try preferred voices in order
-  for (const name of PREFERRED_VOICES) {
-    const v = voices.find((v) => v.name === name);
-    if (v) return v;
-  }
-  // Partial name match — handles locale suffix variants on Android
-  for (const name of PREFERRED_VOICES) {
-    const v = voices.find((v) => v.name.includes(name) || name.includes(v.name));
-    if (v) return v;
-  }
-  // Fallback: any English voice that isn't "eSpeak" (robotic)
-  const englishVoice = voices.find(
-    (v) => v.lang.startsWith("en") && !v.name.toLowerCase().includes("espeak")
-  );
-  return englishVoice || voices[0];
-}
-
-// iOS Safari and Chrome always return [] from getVoices() on first call.
-// Any async path (setTimeout / onvoiceschanged) breaks iOS's user-gesture
-// requirement and silently blocks speech. Detect iOS and speak synchronously.
+// iOS Safari/Chrome: detect Apple device. On iOS, onvoiceschanged never fires
+// and any async path (setTimeout) breaks the user-gesture requirement.
 function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    // iPadOS 13+ reports itself as MacIntel with touch support
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+// Preference order: enhanced/premium iOS voices first, then Google, then Microsoft
+const PREFERRED_VOICES = [
+  // iOS enhanced (highest quality on Apple devices)
+  "Samantha (Enhanced)",
+  "Karen (Enhanced)",
+  "Daniel (Enhanced)",
+  "Moira (Enhanced)",
+  "Tessa (Enhanced)",
+  // iOS premium
+  "Samantha (Premium)",
+  "Karen (Premium)",
+  // Google (Android Chrome, Desktop Chrome)
+  "Google UK English Female",
+  "Google US English",
+  "Google UK English Male",
+  // Microsoft Neural (Edge, Desktop)
+  "Microsoft Aria Online (Natural) - English (United States)",
+  "Microsoft Jenny Online (Natural) - English (United States)",
+  "Microsoft Guy Online (Natural) - English (United States)",
+  // iOS compact (fallback — better than eSpeak)
+  "Samantha",
+  "Karen",
+  "Daniel",
+  "Moira",
+  "Tessa",
+  "Nicky",
+];
+
+function getBestVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  if (!voices.length) return null;
+  // Exact name match
+  for (const name of PREFERRED_VOICES) {
+    const v = voices.find((v) => v.name === name);
+    if (v) return v;
+  }
+  // Partial match for locale suffix variants (e.g. Android appends locale codes)
+  for (const name of PREFERRED_VOICES) {
+    const v = voices.find((v) => v.name.startsWith(name));
+    if (v) return v;
+  }
+  // Any English voice that isn't robotic eSpeak
+  return (
+    voices.find((v) => v.lang.startsWith("en") && !v.name.toLowerCase().includes("espeak")) ??
+    voices[0]
   );
 }
 
@@ -208,38 +219,37 @@ function speakText(text: string, onEnd?: () => void) {
   u.rate = 0.9;
   u.pitch = 1.0;
   u.volume = 1.0;
+  u.lang = "en-US"; // hint to the engine; helps iOS pick an English voice
   if (onEnd) u.onend = onEnd;
 
-  // iOS: never set a voice programmatically. Compact voices we might pick sound
-  // robotic; the system default (user's chosen voice in Settings) always sounds
-  // better. Also avoids async paths that break the user-gesture requirement.
-  if (isIOS()) {
-    window.speechSynthesis.speak(u);
-    return;
-  }
-
-  const applyVoiceAndSpeak = () => {
-    const voice = getBestVoice();
+  const speak = (voices: SpeechSynthesisVoice[]) => {
+    const voice = getBestVoice(voices);
     if (voice) u.voice = voice;
     window.speechSynthesis.speak(u);
   };
 
   const voices = window.speechSynthesis.getVoices();
   if (voices.length > 0) {
-    applyVoiceAndSpeak();
+    speak(voices);
+    return;
+
+  // iOS: getVoices() returns [] on first call; onvoiceschanged never fires.
+  // Speak immediately with lang hint — iOS will pick the system English voice.
+  } else if (isIOS()) {
+    window.speechSynthesis.speak(u);
     return;
   }
 
   // Android Chrome / Desktop: voices load asynchronously
   window.speechSynthesis.onvoiceschanged = () => {
     window.speechSynthesis.onvoiceschanged = null;
-    applyVoiceAndSpeak();
+    speak(window.speechSynthesis.getVoices());
   };
   // Android Chrome sometimes never fires onvoiceschanged — 500ms fallback
   setTimeout(() => {
     if (!window.speechSynthesis.speaking) {
       window.speechSynthesis.onvoiceschanged = null;
-      applyVoiceAndSpeak();
+      speak(window.speechSynthesis.getVoices());
     }
   }, 500);
 }
