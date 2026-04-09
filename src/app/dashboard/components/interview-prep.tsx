@@ -292,6 +292,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   // Speech
   const [speakingId, setSpeakingId] = useState<number | null>(null);
   const [listeningId, setListeningId] = useState<number | null>(null);
+  const [showVoiceTip, setShowVoiceTip] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   // ─── Load all sessions + usage on mount ───
@@ -655,6 +656,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   const handleSpeak = useCallback((questionId: number, text: string) => {
     if (speakingId === questionId) { stopSpeaking(); setSpeakingId(null); return; }
     setSpeakingId(questionId);
+    // Show iOS voice tip once per session if voice sounds robotic
+    if (isIOS() && !localStorage.getItem("voiceTipDismissed")) setShowVoiceTip(true);
     speakText(text, () => setSpeakingId(null));
   }, [speakingId]);
 
@@ -883,6 +886,22 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                 </Button>
               </div>
             </div>
+
+            {/* iOS voice quality tip — shown once after first speak */}
+            {showVoiceTip && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3 text-xs text-amber-800">
+                <span className="text-base leading-none mt-0.5">🔊</span>
+                <div className="flex-1">
+                  <p className="font-semibold mb-0.5">Voice sounds robotic on iPhone?</p>
+                  <p>Go to <strong>Settings → Accessibility → Spoken Content → Voices → English</strong> and download any <strong>Enhanced</strong> or <strong>Premium</strong> voice. It&apos;s free and sounds completely natural.</p>
+                </div>
+                <button
+                  onClick={() => { setShowVoiceTip(false); localStorage.setItem("voiceTipDismissed", "1"); }}
+                  className="text-amber-400 hover:text-amber-600 shrink-0 font-bold text-base leading-none"
+                  aria-label="Dismiss"
+                >×</button>
+              </div>
+            )}
 
             {questions.map((q) => {
               const isExpanded = expandedQuestion === q.id;
