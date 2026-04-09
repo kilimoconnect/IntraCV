@@ -210,6 +210,14 @@ function speakText(text: string, onEnd?: () => void) {
   u.volume = 1.0;
   if (onEnd) u.onend = onEnd;
 
+  // iOS: never set a voice programmatically. Compact voices we might pick sound
+  // robotic; the system default (user's chosen voice in Settings) always sounds
+  // better. Also avoids async paths that break the user-gesture requirement.
+  if (isIOS()) {
+    window.speechSynthesis.speak(u);
+    return;
+  }
+
   const applyVoiceAndSpeak = () => {
     const voice = getBestVoice();
     if (voice) u.voice = voice;
@@ -219,13 +227,6 @@ function speakText(text: string, onEnd?: () => void) {
   const voices = window.speechSynthesis.getVoices();
   if (voices.length > 0) {
     applyVoiceAndSpeak();
-    return;
-  }
-
-  // iOS: getVoices() always returns [] initially; any async delay breaks user-gesture
-  // requirement. Speak immediately — iOS uses Samantha (natural) as system default.
-  if (isIOS()) {
-    window.speechSynthesis.speak(u);
     return;
   }
 
