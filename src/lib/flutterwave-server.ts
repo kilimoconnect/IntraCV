@@ -89,6 +89,50 @@ export async function encryptField(
   return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
 }
 
+// ─── V3 Standard Payment (redirect) using V4 OAuth token ─────────────────────
+// Use the V4 OAuth token as Bearer with the V3 payments endpoint.
+// This creates a hosted payment page — no card form needed on our side.
+
+export async function createPaymentLink(payload: {
+  txRef: string;
+  amount: number;
+  currency: string;
+  redirectUrl: string;
+  email: string;
+  name: string;
+  title: string;
+  description: string;
+}): Promise<string> {
+  const token = await getV4Token();
+
+  const res = await fetch("https://api.flutterwave.com/v3/payments", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      tx_ref: payload.txRef,
+      amount: payload.amount,
+      currency: payload.currency,
+      redirect_url: payload.redirectUrl,
+      payment_options: "card",
+      customer: { email: payload.email, name: payload.name },
+      customizations: { title: payload.title, description: payload.description },
+    }),
+  });
+
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`Payment link endpoint returned non-JSON: ${text.slice(0, 300)}`);
+  }
+  if (json.status !== "success" || !(json.data as Record<string, unknown>)?.link) {
+    throw new Error(`Failed to create payment link: ${JSON.stringify(json)}`);
+  }
+  return (json.data as Record<string, unknown>).link as string;
+}
+
 // ─── Step 3: Create Customer ──────────────────────────────────────────────────
 
 export interface V4CustomerData {

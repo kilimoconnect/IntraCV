@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
-import { createFlutterwavePaymentLink } from "@/lib/flutterwave-server";
+import { createPaymentLink } from "@/lib/flutterwave-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,8 +13,7 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: "Customer email is required" }, { status: 400 });
 
     const txRef = generateTxRef(user.id);
-
-    const link = await createFlutterwavePaymentLink({
+    const link = await createPaymentLink({
       txRef,
       amount: DOWNLOAD_AMOUNT,
       currency: DOWNLOAD_CURRENCY,
@@ -26,8 +25,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ link, txRef });
-  } catch (err: any) {
-    console.error("[cv-download-initiate] error:", err?.message ?? err);
-    return NextResponse.json({ error: err?.message || "Failed to initiate payment" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to initiate payment";
+    console.error("[cv-download-initiate]", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
