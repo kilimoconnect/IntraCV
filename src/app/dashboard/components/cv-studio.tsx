@@ -659,21 +659,38 @@ export default function CvStudio({ userId, cvData }: Props) {
         if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
         if (saved.selectedVariant) setSelectedVariant(saved.selectedVariant);
         if (saved.selectedTheme) setSelectedTheme(saved.selectedTheme);
+        // Save CV + cover letter to Documents immediately — independent of PDF download
+        const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+        const fullName = saved.aiData?.fullName || "CV";
+        const catLabel = saved.selectedCategory === "mid-senior"
+          ? "Mid-Senior"
+          : saved.selectedCategory
+            ? saved.selectedCategory.charAt(0).toUpperCase() + saved.selectedCategory.slice(1)
+            : "";
+        const cvTitle = `${fullName}${catLabel ? ` — ${catLabel} CV` : " — CV"} (${month})`;
+        const cvContent = JSON.stringify({
+          studioData: saved.aiData,
+          studioCategory: saved.selectedCategory,
+          studioVariant: saved.selectedVariant,
+          studioTheme: saved.selectedTheme,
+        });
+        fetch("/api/documents/save-cv", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: cvTitle, content: cvContent }),
+        }).catch(() => { /* silent */ });
+
         if (saved.coverLetter) {
           setCoverLetter(saved.coverLetter);
           setCoverLetterUnlocked(true);
-          // Save cover letter to Documents immediately — independent of PDF download
-          const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
-          const clTitle = saved.aiData?.fullName
-            ? `${saved.aiData.fullName} — Cover Letter (${month})`
-            : `Cover Letter (${month})`;
+          const clTitle = `${fullName} — Cover Letter (${month})`;
           fetch("/api/documents/save-cover-letter", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ coverLetter: saved.coverLetter, title: clTitle }),
-          }).catch(() => { /* silent — PDF download will also save it */ });
-          localStorage.setItem("fusecv-new-docs", "true");
+          }).catch(() => { /* silent */ });
         }
+        localStorage.setItem("fusecv-new-docs", "true");
         setCvPaidReady(true);
         if (sessionStorage.getItem("fusecv-auto-download") === "1") {
           setAutoDownload(true);
@@ -689,11 +706,11 @@ export default function CvStudio({ userId, cvData }: Props) {
   // ── Auto-download once state is restored and preview is rendered ──
   useEffect(() => {
     if (!autoDownload || !cvPaidReady || !aiData || !selectedCategory) return;
-    localStorage.setItem("fusecv-new-docs", "true");
     const timer = setTimeout(async () => {
       setCvPaidReady(false);
       setAutoDownload(false);
       await executePdfDownload();
+      toast.success("✓ CV saved to Documents", { duration: 4000 });
     }, 700);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1229,7 +1246,10 @@ export default function CvStudio({ userId, cvData }: Props) {
           await printCvAsPdf(element, { filename, useApi2Pdf: false });
         } catch (fallbackErr) {
           console.error("Fallback print failed", fallbackErr);
-          toast.error("PDF export failed. Please try again.");
+          toast.error(
+            "PDF download failed — but your CV is saved in Documents. You can retry from there.",
+            { duration: 6000 }
+          );
         }
       }
     } finally {
