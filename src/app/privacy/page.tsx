@@ -64,7 +64,7 @@ export default function PrivacyPage() {
             <Li title="CV content">Work history, education, skills, certifications, and any other sections you enter or upload. This data is yours — we store it to generate your CV documents.</Li>
             <Li title="Uploaded documents">PDF or Word files you upload for AI extraction. Files are processed and immediately discarded — we do not store the original files.</Li>
             <Li title="Usage data">Pages visited, features used, and error logs to help us improve the product. This data is anonymised where possible.</Li>
-            <Li title="Payment data">If you purchase a CV download, payment is processed by Flutterwave. We receive only a transaction status — no card or bank details are stored on our servers.</Li>
+            <Li title="Payment data">If you purchase a CV download, payment is processed by Pesapal. We receive only a transaction status — no card or bank details are stored on our servers.</Li>
           </ul>
         </Section>
 
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
                   ["Supabase", "Database, authentication, and file storage"],
                   ["Brevo (Sendinblue)", "Transactional email delivery"],
                   ["Google Gemini / OpenAI", "AI-powered CV generation and extraction"],
-                  ["Flutterwave", "Payment processing for CV downloads"],
+                  ["Pesapal", "Payment processing for CV downloads"],
                   ["Vercel", "Hosting and edge infrastructure"],
                 ].map(([name, purpose]) => (
                   <tr key={name} className="hover:bg-slate-50/50">

@@ -2252,7 +2252,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-slate-600">Secure card payment via Flutterwave — Visa, Mastercard & more</span>
+                <span className="text-sm text-slate-600">Secure card payment via Pesapal — Visa, Mastercard & more</span>
               </div>
             </div>
 
@@ -2274,7 +2274,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             </button>
 
             <p className="text-center text-[11px] text-slate-400 mt-3">
-              Powered by Flutterwave · Secure &amp; Encrypted
+              Powered by Pesapal · Secure &amp; Encrypted
             </p>
           </div>
         </div>
