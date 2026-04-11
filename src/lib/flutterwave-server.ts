@@ -25,8 +25,8 @@ function getClientSecret(): string {
 }
 
 function getRsaPublicKey(): string {
-  const v = process.env.FLW_RSA_PUBLIC_KEY;
-  if (!v) throw new Error("FLW_RSA_PUBLIC_KEY is not set — add the RSA public key from your Flutterwave dashboard");
+  const v = process.env.FLW_ENCRYPTION_KEY;
+  if (!v) throw new Error("FLW_ENCRYPTION_KEY is not set");
   return v;
 }
 
