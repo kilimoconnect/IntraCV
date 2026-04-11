@@ -35,7 +35,10 @@ function CallbackContent() {
       .then((data) => {
         if (data.verified) {
           sessionStorage.setItem("fusecv-cv-paid", "1");
+          sessionStorage.setItem("fusecv-auto-download", "1");
           setState("success");
+          // Auto-redirect to dashboard after brief confirmation
+          setTimeout(() => router.push("/dashboard"), 1800);
         } else {
           setErrorMsg(data.message || data.error || "Verification failed. Please contact support.");
           setState("error");
@@ -90,20 +93,14 @@ function CallbackContent() {
       </div>
       <div className="text-center">
         <h2 className="text-xl font-bold text-slate-800">Payment Confirmed!</h2>
-        <p className="text-sm text-slate-500 mt-1">Your CV download is ready.</p>
+        <p className="text-sm text-slate-500 mt-1">Redirecting and starting your download…</p>
       </div>
       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 w-full max-w-xs text-xs text-slate-600 space-y-2">
         <p className="flex gap-2"><span className="text-emerald-500">✓</span> Payment verified</p>
         <p className="flex gap-2"><span className="text-emerald-500">✓</span> No watermarks</p>
         <p className="flex gap-2"><span className="text-emerald-500">✓</span> Saved to your Documents</p>
       </div>
-      <Button
-        onClick={() => router.push("/dashboard")}
-        className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0 shadow-sm gap-2 px-6"
-      >
-        <Download className="h-4 w-4" />
-        Go Back &amp; Download CV
-      </Button>
+      <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
     </div>
   );
 }

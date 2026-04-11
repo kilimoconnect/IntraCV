@@ -632,6 +632,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [coverLetterUnlocked, setCoverLetterUnlocked] = useState(false);
   const [cvPaidReady, setCvPaidReady] = useState(false); // returned from payment redirect
+  const [autoDownload, setAutoDownload] = useState(false); // auto-trigger download on return
   const [copiedCL, setCopiedCL] = useState(false);
   const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
   const [profileAnalysis, setProfileAnalysis] = useState<{
@@ -661,12 +662,29 @@ export default function CvStudio({ userId, cvData }: Props) {
         if (saved.coverLetter) setCoverLetter(saved.coverLetter);
         setCoverLetterUnlocked(true);
         setCvPaidReady(true);
+        if (sessionStorage.getItem("fusecv-auto-download") === "1") {
+          setAutoDownload(true);
+          sessionStorage.removeItem("fusecv-auto-download");
+        }
       } catch { /* ignore */ }
       sessionStorage.removeItem("fusecv-cv-paid");
       sessionStorage.removeItem("fusecv-pending-cv");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Auto-download once state is restored and preview is rendered ──
+  useEffect(() => {
+    if (!autoDownload || !cvPaidReady || !aiData || !selectedCategory) return;
+    localStorage.setItem("fusecv-new-docs", "true");
+    const timer = setTimeout(async () => {
+      setCvPaidReady(false);
+      setAutoDownload(false);
+      await executePdfDownload();
+    }, 700);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDownload, cvPaidReady, aiData, selectedCategory]);
 
   // ── Cached profile analysis: only re-run if CV data changed ──
   useEffect(() => {
@@ -2119,32 +2137,37 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
       {/* ── Payment Modal ── */}
-      {/* Payment confirmed — returned from Flutterwave redirect */}
       {cvPaidReady && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col items-center gap-4">
             <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+              {autoDownload || downloadingPdf
+                ? <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+                : <CheckCircle2 className="h-8 w-8 text-emerald-500" />}
             </div>
             <div className="text-center">
               <h2 className="text-lg font-bold text-slate-800">Payment Confirmed!</h2>
-              <p className="text-sm text-slate-500 mt-1">Your CV is ready. Click below to download.</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {autoDownload || downloadingPdf
+                  ? "Preparing your download…"
+                  : "Your CV is ready to download."}
+              </p>
             </div>
-            <button
-              onClick={async () => {
-                setCvPaidReady(false);
-                localStorage.setItem("fusecv-new-docs", "true");
-                await executePdfDownload();
-              }}
-              disabled={downloadingPdf}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
-            >
-              {downloadingPdf ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF…</>
-              ) : (
-                <><Download className="h-4 w-4" /> Download My CV</>
-              )}
-            </button>
+            {!autoDownload && (
+              <button
+                onClick={async () => {
+                  setCvPaidReady(false);
+                  localStorage.setItem("fusecv-new-docs", "true");
+                  await executePdfDownload();
+                }}
+                disabled={downloadingPdf}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
+              >
+                {downloadingPdf
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF…</>
+                  : <><Download className="h-4 w-4" /> Download My CV</>}
+              </button>
+            )}
           </div>
         </div>
       )}
