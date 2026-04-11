@@ -37,8 +37,8 @@ function CallbackContent() {
           sessionStorage.setItem("fusecv-cv-paid", "1");
           sessionStorage.setItem("fusecv-auto-download", "1");
           setState("success");
-          // Auto-redirect to dashboard after brief confirmation
-          setTimeout(() => router.push("/dashboard"), 1800);
+          // Auto-redirect to CV Studio tab after brief confirmation
+          setTimeout(() => router.push("/dashboard?tab=studio"), 1800);
         } else {
           setErrorMsg(data.message || data.error || "Verification failed. Please contact support.");
           setState("error");
