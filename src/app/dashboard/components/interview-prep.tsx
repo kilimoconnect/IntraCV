@@ -331,6 +331,32 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // ── Detect return from interview payment redirect ──
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const unlocked = sessionStorage.getItem("fusecv-interview-unlocked");
+    if (!unlocked) return;
+    sessionStorage.removeItem("fusecv-interview-unlocked");
+    const remaining = parseInt(unlocked, 10);
+    // Refresh usage from server
+    const supabase = createClient();
+    supabase
+      .from("profiles")
+      .select("interview_questions_generated, interview_questions_paid_quota")
+      .eq("id", userId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          const generated = data.interview_questions_generated ?? 0;
+          const paidQuota = data.interview_questions_paid_quota ?? 0;
+          const totalAllowed = FREE_QUOTA + paidQuota;
+          setUsage({ generated, paidQuota, totalAllowed, remaining: Math.max(0, totalAllowed - generated) });
+        }
+      });
+    toast.success(`🎉 +${PAID_BATCH} questions unlocked! ${remaining} questions remaining.`, { duration: 5000 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -532,10 +558,13 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   };
 
   // ─── Navigate to interview upgrade payment ───
+  const [isPayingInterview, setIsPayingInterview] = useState(false);
+
   const navigateToUpgrade = useCallback(async (_action: "generate" | "add") => {
     const email = cvData?.personalInfo?.email || "";
     const name = cvData?.personalInfo?.fullName || "FuseCV User";
     if (!email) { toast.error("Please add your email to your profile before paying."); return; }
+    setIsPayingInterview(true);
     try {
       const callbackUrl = `${window.location.origin}/interview-payment/callback`;
       const res = await fetch("/api/payments/interview-initiate", {
@@ -549,6 +578,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Payment setup failed";
       toast.error(msg);
+      setIsPayingInterview(false);
     }
   }, [cvData]);
 
@@ -869,9 +899,12 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               <Button
                 size="sm"
                 onClick={() => navigateToUpgrade("generate")}
-                className="shrink-0 h-7 px-3 text-xs rounded-lg bg-amber-600 hover:bg-amber-700 text-white border-0"
+                disabled={isPayingInterview}
+                className="shrink-0 h-7 px-3 text-xs rounded-lg bg-amber-600 hover:bg-amber-700 text-white border-0 disabled:opacity-70"
               >
-                Unlock
+                {isPayingInterview
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : "Unlock"}
               </Button>
             </div>
           );
