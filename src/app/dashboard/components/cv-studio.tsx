@@ -659,38 +659,10 @@ export default function CvStudio({ userId, cvData }: Props) {
         if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
         if (saved.selectedVariant) setSelectedVariant(saved.selectedVariant);
         if (saved.selectedTheme) setSelectedTheme(saved.selectedTheme);
-        // Save CV + cover letter to Documents immediately — independent of PDF download
-        const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
-        const fullName = saved.aiData?.fullName || "CV";
-        const catLabel = saved.selectedCategory === "mid-senior"
-          ? "Mid-Senior"
-          : saved.selectedCategory
-            ? saved.selectedCategory.charAt(0).toUpperCase() + saved.selectedCategory.slice(1)
-            : "";
-        const cvTitle = `${fullName}${catLabel ? ` — ${catLabel} CV` : " — CV"} (${month})`;
-        const cvContent = JSON.stringify({
-          studioData: saved.aiData,
-          studioCategory: saved.selectedCategory,
-          studioVariant: saved.selectedVariant,
-          studioTheme: saved.selectedTheme,
-        });
-        fetch("/api/documents/save-cv", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: cvTitle, content: cvContent }),
-        }).catch(() => { /* silent */ });
-
         if (saved.coverLetter) {
           setCoverLetter(saved.coverLetter);
           setCoverLetterUnlocked(true);
-          const clTitle = `${fullName} — Cover Letter (${month})`;
-          fetch("/api/documents/save-cover-letter", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ coverLetter: saved.coverLetter, title: clTitle }),
-          }).catch(() => { /* silent */ });
         }
-        localStorage.setItem("fusecv-new-docs", "true");
         // Restore step so the CV preview renders and previewRef becomes available
         setStep("preview");
         setCvPaidReady(true);
@@ -717,8 +689,8 @@ export default function CvStudio({ userId, cvData }: Props) {
       if (previewRef.current) {
         setCvPaidReady(false);
         setAutoDownload(false);
+        localStorage.setItem("fusecv-new-docs", "true");
         await executePdfDownload();
-        toast.success("✓ CV saved to Documents", { duration: 4000 });
       } else if (attempts < MAX) {
         attempts++;
         timerId = setTimeout(() => { rafId = requestAnimationFrame(tryDownload); }, 100);
@@ -1264,13 +1236,32 @@ export default function CvStudio({ userId, cvData }: Props) {
       } catch (apiErr) {
         console.warn("[pdf] api2pdf failed, falling back to print dialog:", apiErr);
         toast.error("Cloud PDF failed — opening print dialog as fallback.");
+        let printOk = false;
         try {
           await printCvAsPdf(element, { filename, useApi2Pdf: false });
+          printOk = true;
         } catch (fallbackErr) {
           console.error("Fallback print failed", fallbackErr);
+        }
+        if (!printOk) {
+          // Both PDF methods failed — save CV data to Documents without PDF so nothing is lost
+          fetch("/api/documents/save-cv", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: docTitle, content: docContent }),
+          }).catch(() => {});
+          if (coverLetter) {
+            const clTitle = docTitle.replace(/CV \(/, "Cover Letter (");
+            fetch("/api/documents/save-cover-letter", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ coverLetter, title: clTitle }),
+            }).catch(() => {});
+          }
+          localStorage.setItem("fusecv-new-docs", "true");
           toast.error(
-            "PDF download failed — but your CV is saved in Documents. You can retry from there.",
-            { duration: 6000 }
+            "PDF download failed — your CV has been saved to Documents. You can retry from there.",
+            { duration: 7000 }
           );
         }
       }
