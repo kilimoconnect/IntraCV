@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import { getV4Token, getV4Charge } from "@/lib/flutterwave-server";
 import { createServerSupabase } from "@/lib/supabase/server";
