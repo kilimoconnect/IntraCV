@@ -52,12 +52,12 @@ export default function CallbackClient({ verified, errorMsg }: Props) {
         <p className="text-sm text-slate-500 mt-1 max-w-xs">{errorMsg}</p>
       </div>
       <Button
-        onClick={() => router.push("/dashboard")}
+        onClick={() => router.push("/dashboard?tab=studio")}
         variant="outline"
         className="rounded-xl border-slate-200 gap-2"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
+        Back to CV
       </Button>
     </div>
   );
