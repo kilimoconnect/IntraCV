@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
-import { createPaymentLink } from "@/lib/flutterwave-server";
+import { createPesapalPaymentLink } from "@/lib/pesapal-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,18 +13,24 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: "Customer email is required" }, { status: 400 });
 
     const txRef = generateTxRef(user.id);
-    const link = await createPaymentLink({
-      txRef,
-      amount: DOWNLOAD_AMOUNT,
+    const nameParts = (name || "FuseCV User").trim().split(" ");
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ") || "User";
+
+    const base = process.env.NEXT_PUBLIC_SITE_URL || "";
+    const { redirectUrl: link, orderTrackingId } = await createPesapalPaymentLink({
+      id: txRef,
       currency: DOWNLOAD_CURRENCY,
-      redirectUrl,
-      email,
-      name: name || "FuseCV User",
-      title: "FuseCV — Interview Questions",
+      amount: DOWNLOAD_AMOUNT,
       description: "Unlock 20 more AI-powered interview questions",
+      callbackUrl: redirectUrl,
+      ipnBaseUrl: base,
+      email,
+      firstName,
+      lastName,
     });
 
-    return NextResponse.json({ link, txRef });
+    return NextResponse.json({ link, txRef, orderTrackingId });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to initiate payment";
     console.error("[interview-initiate]", message);

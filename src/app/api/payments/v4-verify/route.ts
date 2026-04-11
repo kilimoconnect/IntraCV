@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyV3Transaction } from "@/lib/flutterwave-server";
+import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -8,36 +8,34 @@ const PAID_BATCH = 20;
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    // V3 redirect callback sends transaction_id in the URL
-    const transactionId = searchParams.get("transaction_id");
+    // Pesapal redirect callback sends OrderTrackingId in the URL
+    const orderTrackingId = searchParams.get("OrderTrackingId") || searchParams.get("order_tracking_id");
     const type = searchParams.get("type") as "cv" | "interview" | null;
 
-    if (!transactionId) {
-      return NextResponse.json({ error: "Missing transaction_id" }, { status: 400 });
+    if (!orderTrackingId) {
+      return NextResponse.json({ error: "Missing OrderTrackingId" }, { status: 400 });
     }
 
-    const { status, rawResponse } = await verifyV3Transaction(transactionId);
+    const token = await getPesapalToken();
+    const { completed, statusDescription, rawResponse } = await getPesapalTransactionStatus(token, orderTrackingId);
 
-    if (status !== "successful") {
+    if (!completed) {
       return NextResponse.json(
-        { verified: false, status, message: "Payment not yet confirmed" },
+        { verified: false, status: statusDescription, message: "Payment not yet confirmed" },
         { status: 400 }
       );
     }
 
     // ── CV payment ──
     if (!type || type === "cv") {
-      return NextResponse.json({ verified: true, status, transactionId, rawResponse });
+      return NextResponse.json({ verified: true, orderTrackingId, rawResponse });
     }
 
     // ── Interview payment: grant quota ──
     if (type === "interview") {
       const serverSupabase = await createServerSupabase();
       const { data: { user } } = await serverSupabase.auth.getUser();
-
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+      if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
       const admin = createAdminSupabase();
       await admin.rpc("add_interview_paid_quota", { uid: user.id, n: PAID_BATCH });
@@ -55,16 +53,15 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         verified: true,
-        status,
-        transactionId,
+        orderTrackingId,
         usage: { generated, paidQuota, totalAllowed, remaining, freeQuota: 5, paidBatch: PAID_BATCH },
       });
     }
 
-    return NextResponse.json({ verified: true, status, transactionId });
+    return NextResponse.json({ verified: true, orderTrackingId });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[v4-verify] error:", message);
+    console.error("[pesapal-verify] error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

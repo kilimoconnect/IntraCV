@@ -9,27 +9,28 @@ function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // V4 direct charge sends charge_id in callback URL
-  const chargeId = params.get("charge_id");
-  const status = params.get("status");
+  // Pesapal redirect sends OrderTrackingId in the callback URL
+  const orderTrackingId = params.get("OrderTrackingId");
+  const orderNotificationType = params.get("OrderNotificationType");
 
   const [state, setState] = useState<"verifying" | "success" | "error">("verifying");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (status && status !== "successful" && status !== "succeeded") {
+    // User cancelled
+    if (orderNotificationType === "CANCELLED") {
       setState("error");
-      setErrorMsg("Payment was not completed. No charges were made.");
+      setErrorMsg("Payment was cancelled. No charges were made.");
       return;
     }
 
-    if (!chargeId) {
+    if (!orderTrackingId) {
       setState("error");
-      setErrorMsg("Missing charge details. Please contact support.");
+      setErrorMsg("Missing payment details. Please contact support.");
       return;
     }
 
-    fetch(`/api/payments/v4-verify?charge_id=${encodeURIComponent(chargeId)}&type=cv`)
+    fetch(`/api/payments/v4-verify?OrderTrackingId=${encodeURIComponent(orderTrackingId)}&type=cv`)
       .then((r) => r.json())
       .then((data) => {
         if (data.verified) {
@@ -44,7 +45,7 @@ function CallbackContent() {
         setErrorMsg("Network error during verification. Please contact support.");
         setState("error");
       });
-  }, [chargeId, status]);
+  }, [orderTrackingId, orderNotificationType]);
 
   if (state === "verifying") {
     return (
@@ -82,7 +83,6 @@ function CallbackContent() {
     );
   }
 
-  // Success
   return (
     <div className="flex flex-col items-center gap-5 py-8">
       <div className="h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">

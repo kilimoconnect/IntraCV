@@ -3,38 +3,34 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  CheckCircle2, XCircle, Loader2, Sparkles, ArrowLeft,
-} from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Sparkles, ArrowLeft } from "lucide-react";
 
-// ── Inner component that reads search params ──
 function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // V4 direct charge sends charge_id in callback URL
-  const chargeId = params.get("charge_id");
-  const status = params.get("status");
+  // Pesapal redirect sends OrderTrackingId in the callback URL
+  const orderTrackingId = params.get("OrderTrackingId");
+  const orderNotificationType = params.get("OrderNotificationType");
 
   const [state, setState] = useState<"verifying" | "success" | "error">("verifying");
   const [errorMsg, setErrorMsg] = useState("");
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    if (status && status !== "successful" && status !== "succeeded") {
+    if (orderNotificationType === "CANCELLED") {
       setState("error");
-      setErrorMsg("Payment was not completed. No charges were made.");
+      setErrorMsg("Payment was cancelled. No charges were made.");
       return;
     }
 
-    if (!chargeId) {
+    if (!orderTrackingId) {
       setState("error");
-      setErrorMsg("Missing charge details. Please contact support.");
+      setErrorMsg("Missing payment details. Please contact support.");
       return;
     }
 
-    // Verify and unlock via V4 verify endpoint
-    fetch(`/api/payments/v4-verify?charge_id=${encodeURIComponent(chargeId)}&type=interview`)
+    fetch(`/api/payments/v4-verify?OrderTrackingId=${encodeURIComponent(orderTrackingId)}&type=interview`)
       .then((r) => r.json())
       .then((data) => {
         if (data.verified) {
@@ -49,11 +45,10 @@ function CallbackContent() {
         setErrorMsg("Network error during verification. Please contact support.");
         setState("error");
       });
-  }, [chargeId, status]);
+  }, [orderTrackingId, orderNotificationType]);
 
   const goToDashboard = () => router.push("/dashboard?tab=interview");
 
-  // ── Verifying ──
   if (state === "verifying") {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
@@ -68,7 +63,6 @@ function CallbackContent() {
     );
   }
 
-  // ── Error ──
   if (state === "error") {
     return (
       <div className="flex flex-col items-center gap-5 py-8">
@@ -79,11 +73,7 @@ function CallbackContent() {
           <h2 className="text-lg font-semibold text-slate-800">Payment Not Confirmed</h2>
           <p className="text-sm text-slate-500 mt-1 max-w-xs">{errorMsg}</p>
         </div>
-        <Button
-          onClick={goToDashboard}
-          variant="outline"
-          className="rounded-xl border-slate-200 gap-2"
-        >
+        <Button onClick={goToDashboard} variant="outline" className="rounded-xl border-slate-200 gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Interview Prep
         </Button>
@@ -91,10 +81,8 @@ function CallbackContent() {
     );
   }
 
-  // ── Success ──
   return (
     <div className="flex flex-col items-center gap-5 py-8">
-      {/* Animated checkmark */}
       <div className="relative">
         <div className="h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
           <CheckCircle2 className="h-10 w-10 text-emerald-500" />
@@ -109,7 +97,6 @@ function CallbackContent() {
         <p className="text-sm text-slate-500 mt-1">Your questions have been unlocked successfully.</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
         <div className="bg-indigo-50 rounded-2xl p-4 text-center border border-indigo-100">
           <p className="text-2xl font-extrabold text-indigo-600">+20</p>
@@ -123,7 +110,6 @@ function CallbackContent() {
         </div>
       </div>
 
-      {/* What&apos;s next */}
       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 w-full max-w-xs text-sm text-slate-600 space-y-2">
         <p className="font-semibold text-slate-700 text-xs uppercase tracking-wider">What&apos;s next</p>
         <p className="flex gap-2 text-xs"><span className="text-emerald-500">✓</span> Generate new interview sessions</p>
@@ -142,12 +128,10 @@ function CallbackContent() {
   );
 }
 
-// ── Page wrapper with Suspense (required for useSearchParams) ──
 export default function InterviewPaymentCallbackPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden">
-        {/* Top bar */}
         <div className="bg-gradient-to-r from-indigo-600 to-violet-600 h-2" />
         <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
           <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
