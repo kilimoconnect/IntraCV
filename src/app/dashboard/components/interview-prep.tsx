@@ -531,11 +531,12 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     }
   };
 
-  // ─── Flutterwave payment to unlock 20 more questions ───
-  const navigateToUpgrade = useCallback((action: "generate" | "add") => {
+  // ─── Navigate to card payment page to unlock 20 more questions ───
+  const navigateToUpgrade = useCallback((_action: "generate" | "add") => {
     const email = encodeURIComponent(cvData?.personalInfo?.email || "");
     const name = encodeURIComponent(cvData?.personalInfo?.fullName || "FuseCV User");
-    router.push(`/interview-payment/upgrade?action=${action}&email=${email}&name=${name}`);
+    const callbackUrl = encodeURIComponent(`${window.location.origin}/interview-payment/callback`);
+    router.push(`/payment/card?type=interview&email=${email}&name=${name}&redirectUrl=${callbackUrl}`);
   }, [router, cvData]);
 
   // ─── Add More Questions to current session ───

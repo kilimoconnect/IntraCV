@@ -4,49 +4,40 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2, Download, ArrowLeft } from "lucide-react";
-import { DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
 
 function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
 
+  // V4 sends charge_id; legacy flow sent transaction_id / tx_ref
+  const chargeId = params.get("charge_id");
   const status = params.get("status");
-  const txRef = params.get("tx_ref");
-  const transactionId = params.get("transaction_id");
 
   const [state, setState] = useState<"verifying" | "success" | "error">("verifying");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (status !== "successful") {
+    // If status is already marked as not successful (from 3DS redirect)
+    if (status && status !== "successful" && status !== "succeeded") {
       setState("error");
       setErrorMsg("Payment was not completed. No charges were made.");
       return;
     }
-    if (!transactionId) {
+
+    if (!chargeId) {
       setState("error");
-      setErrorMsg("Missing transaction details. Please contact support.");
+      setErrorMsg("Missing charge details. Please contact support.");
       return;
     }
 
-    fetch("/api/payments/flutterwave/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        transaction_id: Number(transactionId),
-        tx_ref: txRef,
-        expected_amount: DOWNLOAD_AMOUNT,
-        expected_currency: DOWNLOAD_CURRENCY,
-      }),
-    })
+    fetch(`/api/payments/v4-verify?charge_id=${encodeURIComponent(chargeId)}&type=cv`)
       .then((r) => r.json())
       .then((data) => {
         if (data.verified) {
-          // Store verified flag so cv-studio can trigger the download
           sessionStorage.setItem("fusecv-cv-paid", "1");
           setState("success");
         } else {
-          setErrorMsg(data.message || "Verification failed. Please contact support.");
+          setErrorMsg(data.message || data.error || "Verification failed. Please contact support.");
           setState("error");
         }
       })
@@ -54,7 +45,7 @@ function CallbackContent() {
         setErrorMsg("Network error during verification. Please contact support.");
         setState("error");
       });
-  }, [status, txRef, transactionId]);
+  }, [chargeId, status]);
 
   if (state === "verifying") {
     return (

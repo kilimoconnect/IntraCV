@@ -1293,19 +1293,7 @@ export default function CvStudio({ userId, cvData }: Props) {
 
     setPaymentProcessing(true);
     try {
-      const redirectUrl = `${window.location.origin}/cv-payment/callback`;
-      const res = await fetch("/api/payments/cv-download-initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: customerEmail,
-          name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
-          redirectUrl,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.link) throw new Error(data.error || "Failed to create payment link");
-      // Store CV state so we can trigger download when user returns
+      // Store CV state so we can trigger download when user returns from payment
       sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({
         aiData,
         selectedCategory,
@@ -1313,7 +1301,9 @@ export default function CvStudio({ userId, cvData }: Props) {
         selectedTheme,
         coverLetter,
       }));
-      window.location.href = data.link;
+      const customerName = aiData.fullName || personalInfo?.fullName || "FuseCV User";
+      const callbackUrl = `${window.location.origin}/cv-payment/callback`;
+      window.location.href = `/payment/card?type=cv&email=${encodeURIComponent(customerEmail)}&name=${encodeURIComponent(customerName)}&redirectUrl=${encodeURIComponent(callbackUrl)}`;
     } catch (err: any) {
       toast.error(err.message || "Could not open payment page. Please try again.");
       setPaymentProcessing(false);
