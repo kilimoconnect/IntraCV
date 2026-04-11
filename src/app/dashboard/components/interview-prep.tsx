@@ -894,7 +894,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
             <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
               <div className="flex items-center gap-2 text-xs text-amber-800">
                 <Star className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-                <span>Free questions used up · Unlock <strong>{PAID_BATCH} more</strong> for {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</span>
+                <span>{paidQuota > 0 ? "Paid questions used up" : "Free questions used up"} · Unlock <strong>{PAID_BATCH} more</strong> for {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</span>
               </div>
               <Button
                 size="sm"
