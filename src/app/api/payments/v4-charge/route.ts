@@ -57,14 +57,14 @@ export async function POST(req: NextRequest) {
     // Step 1: Get OAuth token
     const token = await getV4Token();
 
-    // Step 2: Encrypt card fields with RSA-OAEP (V4 requirement)
+    // Step 2: Encrypt card fields with AES-256-GCM using FLW_ENCRYPTION_KEY
     const nonce = generateNonce();
     const [encrypted_card_number, encrypted_expiry_month, encrypted_expiry_year, encrypted_cvv] =
       await Promise.all([
-        encryptFieldRSA(cardNumber.replace(/\s/g, "")),
-        encryptFieldRSA(expiryMonth),
-        encryptFieldRSA(expiryYear),
-        encryptFieldRSA(cvv),
+        encryptFieldRSA(cardNumber.replace(/\s/g, ""), nonce),
+        encryptFieldRSA(expiryMonth, nonce),
+        encryptFieldRSA(expiryYear, nonce),
+        encryptFieldRSA(cvv, nonce),
       ]);
 
     // Step 3: Create customer
