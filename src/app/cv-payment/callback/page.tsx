@@ -9,28 +9,27 @@ function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // V4 sends charge_id; legacy flow sent transaction_id / tx_ref
-  const chargeId = params.get("charge_id");
+  // V3 Standard redirect sends transaction_id, tx_ref, status in callback URL
+  const transactionId = params.get("transaction_id");
   const status = params.get("status");
 
   const [state, setState] = useState<"verifying" | "success" | "error">("verifying");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    // If status is already marked as not successful (from 3DS redirect)
-    if (status && status !== "successful" && status !== "succeeded") {
+    if (status && status !== "successful") {
       setState("error");
       setErrorMsg("Payment was not completed. No charges were made.");
       return;
     }
 
-    if (!chargeId) {
+    if (!transactionId) {
       setState("error");
-      setErrorMsg("Missing charge details. Please contact support.");
+      setErrorMsg("Missing transaction details. Please contact support.");
       return;
     }
 
-    fetch(`/api/payments/v4-verify?charge_id=${encodeURIComponent(chargeId)}&type=cv`)
+    fetch(`/api/payments/v4-verify?transaction_id=${encodeURIComponent(transactionId)}&type=cv`)
       .then((r) => r.json())
       .then((data) => {
         if (data.verified) {
@@ -45,7 +44,7 @@ function CallbackContent() {
         setErrorMsg("Network error during verification. Please contact support.");
         setState("error");
       });
-  }, [chargeId, status]);
+  }, [transactionId, status]);
 
   if (state === "verifying") {
     return (

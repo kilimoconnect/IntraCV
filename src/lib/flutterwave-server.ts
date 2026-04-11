@@ -350,3 +350,27 @@ export async function getV4Charge(
   const status = (json.status ?? (json.data as Record<string, unknown>)?.status ?? "unknown") as string;
   return { status, rawResponse: json };
 }
+
+// ─── V3 Transaction Verify (used with Standard redirect flow) ─────────────────
+// After V3 /payments redirect, Flutterwave returns transaction_id in callback URL.
+// Verify it using GET /v3/transactions/{id}/verify with V4 OAuth token as Bearer.
+
+export async function verifyV3Transaction(
+  transactionId: string
+): Promise<{ status: string; rawResponse: Record<string, unknown> }> {
+  const token = await getV4Token();
+  const res = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  });
+
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`verifyV3Transaction non-JSON: ${text.slice(0, 300)}`);
+  }
+
+  const data = (json.data ?? {}) as Record<string, unknown>;
+  const status = (data.status ?? json.status ?? "unknown") as string;
+  return { status, rawResponse: json };
+}
