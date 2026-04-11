@@ -1296,14 +1296,24 @@ export default function CvStudio({ userId, cvData }: Props) {
       aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter,
     }));
 
-    const callbackUrl = `${window.location.origin}/cv-payment/callback`;
-    const params = new URLSearchParams({
-      type: "cv",
-      email: encodeURIComponent(customerEmail),
-      name: encodeURIComponent(aiData.fullName || personalInfo?.fullName || "FuseCV User"),
-      redirectUrl: encodeURIComponent(callbackUrl),
-    });
-    router.push(`/payment/card?${params.toString()}`);
+    try {
+      const callbackUrl = `${window.location.origin}/cv-payment/callback`;
+      const res = await fetch("/api/payments/cv-download-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customerEmail,
+          name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
+          redirectUrl: callbackUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!data.link) throw new Error(data.error || "Failed to create payment link");
+      window.location.href = data.link;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Payment setup failed";
+      toast.error(msg);
+    }
   }, [aiData, cvData, userId, selectedCategory, selectedVariant, selectedTheme, coverLetter, paymentProcessing]);
 
   // ── Category Selection ──
