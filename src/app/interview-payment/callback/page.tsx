@@ -12,8 +12,8 @@ function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
 
-  // V3 Standard redirect sends transaction_id, tx_ref, status in callback URL
-  const transactionId = params.get("transaction_id");
+  // V4 direct charge sends charge_id in callback URL
+  const chargeId = params.get("charge_id");
   const status = params.get("status");
 
   const [state, setState] = useState<"verifying" | "success" | "error">("verifying");
@@ -21,20 +21,20 @@ function CallbackContent() {
   const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    if (status && status !== "successful") {
+    if (status && status !== "successful" && status !== "succeeded") {
       setState("error");
       setErrorMsg("Payment was not completed. No charges were made.");
       return;
     }
 
-    if (!transactionId) {
+    if (!chargeId) {
       setState("error");
-      setErrorMsg("Missing transaction details. Please contact support.");
+      setErrorMsg("Missing charge details. Please contact support.");
       return;
     }
 
-    // Verify and unlock via verify endpoint
-    fetch(`/api/payments/v4-verify?transaction_id=${encodeURIComponent(transactionId)}&type=interview`)
+    // Verify and unlock via V4 verify endpoint
+    fetch(`/api/payments/v4-verify?charge_id=${encodeURIComponent(chargeId)}&type=interview`)
       .then((r) => r.json())
       .then((data) => {
         if (data.verified) {
@@ -49,7 +49,7 @@ function CallbackContent() {
         setErrorMsg("Network error during verification. Please contact support.");
         setState("error");
       });
-  }, [transactionId, status]);
+  }, [chargeId, status]);
 
   const goToDashboard = () => router.push("/dashboard?tab=interview");
 

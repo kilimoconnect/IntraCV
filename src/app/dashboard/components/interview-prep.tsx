@@ -532,24 +532,19 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   };
 
   // ─── Navigate to interview upgrade payment ───
-  const navigateToUpgrade = useCallback(async (_action: "generate" | "add") => {
+  const navigateToUpgrade = useCallback((_action: "generate" | "add") => {
     const email = cvData?.personalInfo?.email || "";
     const name = cvData?.personalInfo?.fullName || "FuseCV User";
     if (!email) { toast.error("Please add your email to your profile before paying."); return; }
-    try {
-      const redirectUrl = `${window.location.origin}/interview-payment/callback`;
-      const res = await fetch("/api/payments/interview-initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, redirectUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.link) throw new Error(data.error || "Failed to create payment link");
-      window.location.href = data.link;
-    } catch (err: any) {
-      toast.error(err.message || "Could not open payment page. Please try again.");
-    }
-  }, [cvData]);
+    const callbackUrl = `${window.location.origin}/interview-payment/callback`;
+    const params = new URLSearchParams({
+      type: "interview",
+      email: encodeURIComponent(email),
+      name: encodeURIComponent(name),
+      redirectUrl: encodeURIComponent(callbackUrl),
+    });
+    router.push(`/payment/card?${params.toString()}`);
+  }, [cvData, router]);
 
   // ─── Add More Questions to current session ───
   const addMoreQuestionsCore = async (currentUsage?: UsageState) => {

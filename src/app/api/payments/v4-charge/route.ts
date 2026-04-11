@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getV4Token,
   generateNonce,
-  encryptField,
+  encryptFieldRSA,
   createV4Customer,
   createV4PaymentMethod,
   initiateV4Charge,
@@ -57,18 +57,14 @@ export async function POST(req: NextRequest) {
     // Step 1: Get OAuth token
     const token = await getV4Token();
 
-    // Step 2: Encrypt card fields (shared nonce across all fields)
-    const encKey = process.env.FLW_ENCRYPTION_KEY;
-    if (!encKey) {
-      return NextResponse.json({ error: "Encryption key not configured" }, { status: 500 });
-    }
+    // Step 2: Encrypt card fields with RSA-OAEP (V4 requirement)
     const nonce = generateNonce();
     const [encrypted_card_number, encrypted_expiry_month, encrypted_expiry_year, encrypted_cvv] =
       await Promise.all([
-        encryptField(cardNumber.replace(/\s/g, ""), encKey, nonce),
-        encryptField(expiryMonth, encKey, nonce),
-        encryptField(expiryYear, encKey, nonce),
-        encryptField(cvv, encKey, nonce),
+        encryptFieldRSA(cardNumber.replace(/\s/g, "")),
+        encryptFieldRSA(expiryMonth),
+        encryptFieldRSA(expiryYear),
+        encryptFieldRSA(cvv),
       ]);
 
     // Step 3: Create customer

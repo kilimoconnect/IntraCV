@@ -2,7 +2,13 @@
  * Server-only Flutterwave V4 helpers.
  * Uses Web Crypto API (globalThis.crypto) only — no Node.js "crypto" import
  * so this works in both Node.js and Edge runtimes.
+ *
+ * V4 production base: https://api.flutterwave.com
+ * V4 endpoints: /customers, /payment-methods, /charges  (NO /v4/ prefix)
  */
+
+// ─── Production base URL ──────────────────────────────────────────────────────
+const V4_BASE = "https://api.flutterwave.com";
 
 // ─── Credential helpers ───────────────────────────────────────────────────────
 
@@ -15,6 +21,12 @@ function getClientId(): string {
 function getClientSecret(): string {
   const v = process.env.FLUTTERWAVE_SECRET_KEY;
   if (!v) throw new Error("FLUTTERWAVE_SECRET_KEY is not set");
+  return v;
+}
+
+function getRsaPublicKey(): string {
+  const v = process.env.FLW_RSA_PUBLIC_KEY;
+  if (!v) throw new Error("FLW_RSA_PUBLIC_KEY is not set — add the RSA public key from your Flutterwave dashboard");
   return v;
 }
 
@@ -47,7 +59,9 @@ export async function getV4Token(): Promise<string> {
   return json.access_token as string;
 }
 
-// ─── Step 2: Encryption helpers (Web Crypto API) ──────────────────────────────
+// ─── Step 2: Encryption (RSA-OAEP via Web Crypto API) ─────────────────────────
+// V4 requires each card field encrypted individually with RSA-OAEP + SHA-256.
+// Public key comes from the Flutterwave dashboard (FLW_RSA_PUBLIC_KEY env var).
 
 /** Generate a 12-character alphanumeric nonce */
 export function generateNonce(): string {
@@ -58,79 +72,34 @@ export function generateNonce(): string {
 }
 
 /**
- * Encrypt a single card field using AES-256-GCM.
- * keyBase64: base64-encoded 32-byte AES key (FLW_ENCRYPTION_KEY)
- * nonce: 12-char string used as IV
- * Returns base64(ciphertext + 16-byte auth tag)
+ * Encrypt a single card field using RSA-OAEP + SHA-256.
+ * Uses the RSA public key from FLW_RSA_PUBLIC_KEY env var.
+ * Returns base64-encoded ciphertext.
  */
-export async function encryptField(
-  data: string,
-  keyBase64: string,
-  nonce: string
-): Promise<string> {
-  const keyBytes = Uint8Array.from(atob(keyBase64), (c) => c.charCodeAt(0));
-  const iv = new TextEncoder().encode(nonce); // 12 bytes
+export async function encryptFieldRSA(value: string): Promise<string> {
+  const pem = getRsaPublicKey();
+  const b64 = pem
+    .replace(/-----BEGIN PUBLIC KEY-----/g, "")
+    .replace(/-----END PUBLIC KEY-----/g, "")
+    .replace(/\s+/g, "");
 
-  const key = await globalThis.crypto.subtle.importKey(
-    "raw",
-    keyBytes,
-    { name: "AES-GCM" },
+  const keyBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await globalThis.crypto.subtle.importKey(
+    "spki",
+    keyBytes.buffer,
+    { name: "RSA-OAEP", hash: "SHA-256" },
     false,
     ["encrypt"]
   );
 
   const encrypted = await globalThis.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv, tagLength: 128 },
-    key,
-    new TextEncoder().encode(data)
+    { name: "RSA-OAEP" },
+    cryptoKey,
+    new TextEncoder().encode(value)
   );
 
-  // Web Crypto appends the 16-byte auth tag automatically
   return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
-}
-
-// ─── V3 Standard Payment (redirect) using V4 OAuth token ─────────────────────
-// Use the V4 OAuth token as Bearer with the V3 payments endpoint.
-// This creates a hosted payment page — no card form needed on our side.
-
-export async function createPaymentLink(payload: {
-  txRef: string;
-  amount: number;
-  currency: string;
-  redirectUrl: string;
-  email: string;
-  name: string;
-  title: string;
-  description: string;
-}): Promise<string> {
-  const token = await getV4Token();
-
-  const res = await fetch("https://api.flutterwave.com/v3/payments", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      tx_ref: payload.txRef,
-      amount: payload.amount,
-      currency: payload.currency,
-      redirect_url: payload.redirectUrl,
-      payment_options: "card",
-      customer: { email: payload.email, name: payload.name },
-      customizations: { title: payload.title, description: payload.description },
-    }),
-  });
-
-  const text = await res.text();
-  let json: Record<string, unknown>;
-  try { json = JSON.parse(text); } catch {
-    throw new Error(`Payment link endpoint returned non-JSON: ${text.slice(0, 300)}`);
-  }
-  if (json.status !== "success" || !(json.data as Record<string, unknown>)?.link) {
-    throw new Error(`Failed to create payment link: ${JSON.stringify(json)}`);
-  }
-  return (json.data as Record<string, unknown>).link as string;
 }
 
 // ─── Step 3: Create Customer ──────────────────────────────────────────────────
@@ -152,11 +121,12 @@ export async function createV4Customer(
   token: string,
   customerData: V4CustomerData
 ): Promise<string> {
-  const res = await fetch("https://api.flutterwave.com/v4/customers", {
+  const res = await fetch(`${V4_BASE}/customers`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "X-Trace-Id": globalThis.crypto.randomUUID(),
       "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -196,11 +166,12 @@ export async function createV4PaymentMethod(
   token: string,
   encryptedCard: V4EncryptedCard
 ): Promise<string> {
-  const res = await fetch("https://api.flutterwave.com/v4/payment-methods", {
+  const res = await fetch(`${V4_BASE}/payment-methods`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "X-Trace-Id": globalThis.crypto.randomUUID(),
       "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -259,11 +230,12 @@ export async function initiateV4Charge(
   token: string,
   chargeData: V4ChargeData
 ): Promise<V4ChargeResult> {
-  const res = await fetch("https://api.flutterwave.com/v4/charges", {
+  const res = await fetch(`${V4_BASE}/charges`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "X-Trace-Id": globalThis.crypto.randomUUID(),
       "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -297,11 +269,12 @@ export async function submitV4Avs(
   chargeId: string,
   avsData: { billingLine1: string; billingCity: string; billingState: string; billingPostalCode: string; billingCountry: string }
 ): Promise<V4ChargeResult> {
-  const res = await fetch(`https://api.flutterwave.com/v4/charges/${chargeId}`, {
+  const res = await fetch(`${V4_BASE}/charges/${chargeId}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "X-Trace-Id": globalThis.crypto.randomUUID(),
       "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
@@ -336,9 +309,13 @@ export async function getV4Charge(
   token: string,
   chargeId: string
 ): Promise<{ status: string; rawResponse: Record<string, unknown> }> {
-  const res = await fetch(`https://api.flutterwave.com/v4/charges/${chargeId}`, {
+  const res = await fetch(`${V4_BASE}/charges/${chargeId}`, {
     method: "GET",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-Trace-Id": globalThis.crypto.randomUUID(),
+    },
   });
 
   const text = await res.text();
@@ -348,29 +325,5 @@ export async function getV4Charge(
   }
 
   const status = (json.status ?? (json.data as Record<string, unknown>)?.status ?? "unknown") as string;
-  return { status, rawResponse: json };
-}
-
-// ─── V3 Transaction Verify (used with Standard redirect flow) ─────────────────
-// After V3 /payments redirect, Flutterwave returns transaction_id in callback URL.
-// Verify it using GET /v3/transactions/{id}/verify with V4 OAuth token as Bearer.
-
-export async function verifyV3Transaction(
-  transactionId: string
-): Promise<{ status: string; rawResponse: Record<string, unknown> }> {
-  const token = await getV4Token();
-  const res = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
-    method: "GET",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
-
-  const text = await res.text();
-  let json: Record<string, unknown>;
-  try { json = JSON.parse(text); } catch {
-    throw new Error(`verifyV3Transaction non-JSON: ${text.slice(0, 300)}`);
-  }
-
-  const data = (json.data ?? {}) as Record<string, unknown>;
-  const status = (data.status ?? json.status ?? "unknown") as string;
   return { status, rawResponse: json };
 }

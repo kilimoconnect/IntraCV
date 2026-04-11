@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyV3Transaction } from "@/lib/flutterwave-server";
+import { getV4Token, getV4Charge } from "@/lib/flutterwave-server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -8,18 +8,18 @@ const PAID_BATCH = 20;
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    // V3 Standard redirect returns transaction_id in callback URL
-    const transactionId = searchParams.get("transaction_id");
+    const chargeId = searchParams.get("charge_id");
     const type = searchParams.get("type") as "cv" | "interview" | null;
 
-    if (!transactionId) {
-      return NextResponse.json({ error: "Missing transaction_id" }, { status: 400 });
+    if (!chargeId) {
+      return NextResponse.json({ error: "Missing charge_id" }, { status: 400 });
     }
 
-    // Verify via V3 endpoint (using V4 OAuth token as Bearer)
-    const { status, rawResponse } = await verifyV3Transaction(transactionId);
+    // Verify charge via V4 endpoint
+    const token = await getV4Token();
+    const { status, rawResponse } = await getV4Charge(token, chargeId);
 
-    if (status !== "successful") {
+    if (status !== "succeeded" && status !== "successful") {
       return NextResponse.json(
         { verified: false, status, message: "Payment not yet confirmed" },
         { status: 400 }
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         verified: true,
         status,
-        transactionId,
+        chargeId,
         rawResponse,
       });
     }
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         verified: true,
         status,
-        transactionId,
+        chargeId,
         usage: {
           generated,
           paidQuota,
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ verified: true, status, transactionId });
+    return NextResponse.json({ verified: true, status, chargeId });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[v4-verify] error:", message);
