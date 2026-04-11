@@ -659,8 +659,21 @@ export default function CvStudio({ userId, cvData }: Props) {
         if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
         if (saved.selectedVariant) setSelectedVariant(saved.selectedVariant);
         if (saved.selectedTheme) setSelectedTheme(saved.selectedTheme);
-        if (saved.coverLetter) setCoverLetter(saved.coverLetter);
-        setCoverLetterUnlocked(true);
+        if (saved.coverLetter) {
+          setCoverLetter(saved.coverLetter);
+          setCoverLetterUnlocked(true);
+          // Save cover letter to Documents immediately — independent of PDF download
+          const month = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+          const clTitle = saved.aiData?.fullName
+            ? `${saved.aiData.fullName} — Cover Letter (${month})`
+            : `Cover Letter (${month})`;
+          fetch("/api/documents/save-cover-letter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ coverLetter: saved.coverLetter, title: clTitle }),
+          }).catch(() => { /* silent — PDF download will also save it */ });
+          localStorage.setItem("fusecv-new-docs", "true");
+        }
         setCvPaidReady(true);
         if (sessionStorage.getItem("fusecv-auto-download") === "1") {
           setAutoDownload(true);
