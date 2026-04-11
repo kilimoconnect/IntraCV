@@ -1342,6 +1342,9 @@ export default function CvStudio({ userId, cvData }: Props) {
       return;
     }
 
+    // Spin the button immediately
+    setPaymentProcessing(true);
+
     // Store CV state so we can trigger download when user returns
     sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({
       aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter,
@@ -1364,6 +1367,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Payment setup failed";
       toast.error(msg);
+      setPaymentProcessing(false);
     }
   }, [aiData, cvData, userId, selectedCategory, selectedVariant, selectedTheme, coverLetter, paymentProcessing]);
 
