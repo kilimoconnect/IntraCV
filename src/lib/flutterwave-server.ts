@@ -76,22 +76,64 @@ export function generateNonce(): string {
  * Uses the RSA public key from FLW_RSA_PUBLIC_KEY env var.
  * Returns base64-encoded ciphertext.
  */
+/** Wrap a PKCS#1 RSA public key (DER) into an SPKI envelope so Web Crypto can import it */
+function pkcs1ToSpki(pkcs1: Uint8Array): Uint8Array {
+  // AlgorithmIdentifier: SEQUENCE { OID rsaEncryption (1.2.840.113549.1.1.1), NULL }
+  const algId = new Uint8Array([
+    0x30, 0x0d,
+    0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01,
+    0x05, 0x00,
+  ]);
+  const encodeLen = (n: number): number[] =>
+    n < 128 ? [n] : n < 256 ? [0x81, n] : [0x82, (n >> 8) & 0xff, n & 0xff];
+  // BIT STRING: tag 0x03, length, 0x00 (no unused bits), then PKCS#1 bytes
+  const bitStr = new Uint8Array([0x03, ...encodeLen(pkcs1.length + 1), 0x00, ...pkcs1]);
+  const inner = new Uint8Array([...algId, ...bitStr]);
+  return new Uint8Array([0x30, ...encodeLen(inner.length), ...inner]);
+}
+
 export async function encryptFieldRSA(value: string): Promise<string> {
-  const pem = getRsaPublicKey();
-  const b64 = pem
-    .replace(/-----BEGIN PUBLIC KEY-----/g, "")
-    .replace(/-----END PUBLIC KEY-----/g, "")
-    .replace(/\s+/g, "");
+  const raw = getRsaPublicKey();
 
-  const keyBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  // Normalise: handle \n stored as literal backslash-n in Vercel env vars
+  const normalised = raw.replace(/\\n/g, "\n").trim();
 
-  const cryptoKey = await globalThis.crypto.subtle.importKey(
-    "spki",
-    keyBytes.buffer,
-    { name: "RSA-OAEP", hash: "SHA-256" },
-    false,
-    ["encrypt"]
-  );
+  // Strip PEM headers if present; otherwise treat as raw base64 DER
+  const b64 = normalised.includes("-----")
+    ? normalised.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "")
+    : normalised.replace(/\s+/g, "");
+
+  let keyBytes: Uint8Array;
+  try {
+    keyBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  } catch {
+    throw new Error(`FLW_ENCRYPTION_KEY is not valid base64 (stripped length: ${b64.length})`);
+  }
+
+  // Try SPKI format first; if it fails, try wrapping as PKCS#1
+  let cryptoKey: CryptoKey;
+  try {
+    cryptoKey = await globalThis.crypto.subtle.importKey(
+      "spki", keyBytes.buffer,
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      false, ["encrypt"]
+    );
+  } catch {
+    // Fallback: treat as PKCS#1 RSA public key and wrap into SPKI
+    try {
+      const spkiBytes = pkcs1ToSpki(keyBytes);
+      cryptoKey = await globalThis.crypto.subtle.importKey(
+        "spki", spkiBytes.buffer,
+        { name: "RSA-OAEP", hash: "SHA-256" },
+        false, ["encrypt"]
+      );
+    } catch (err2: unknown) {
+      const msg = err2 instanceof Error ? err2.message : String(err2);
+      throw new Error(
+        `FLW_ENCRYPTION_KEY (${keyBytes.length} bytes) is not a valid RSA public key (tried SPKI and PKCS#1): ${msg}`
+      );
+    }
+  }
 
   const encrypted = await globalThis.crypto.subtle.encrypt(
     { name: "RSA-OAEP" },
