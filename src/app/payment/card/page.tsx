@@ -145,10 +145,20 @@ function CardForm() {
           }),
         });
 
-        const data = await res.json();
+        // Safely parse — if the server crashes it may return plain text not JSON
+        const rawText = await res.text();
+        let data: Record<string, unknown>;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          console.error("[v4-charge] non-JSON response from server:", rawText);
+          setError(`Server error: ${rawText.slice(0, 200)}`);
+          setSubmitting(false);
+          return;
+        }
 
         if (!res.ok || data.error) {
-          setError(data.error || "Payment failed. Please check your card details and try again.");
+          setError((data.error as string) || "Payment failed. Please check your card details and try again.");
           setSubmitting(false);
           return;
         }
