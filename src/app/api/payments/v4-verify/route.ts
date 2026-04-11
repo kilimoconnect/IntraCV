@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getV4Token, getV4Charge } from "@/lib/flutterwave-server";
+import { verifyV3Transaction } from "@/lib/flutterwave-server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -8,40 +8,32 @@ const PAID_BATCH = 20;
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const chargeId = searchParams.get("charge_id");
+    // V3 redirect callback sends transaction_id in the URL
+    const transactionId = searchParams.get("transaction_id");
     const type = searchParams.get("type") as "cv" | "interview" | null;
 
-    if (!chargeId) {
-      return NextResponse.json({ error: "Missing charge_id" }, { status: 400 });
+    if (!transactionId) {
+      return NextResponse.json({ error: "Missing transaction_id" }, { status: 400 });
     }
 
-    // Verify charge via V4 endpoint
-    const token = await getV4Token();
-    const { status, rawResponse } = await getV4Charge(token, chargeId);
+    const { status, rawResponse } = await verifyV3Transaction(transactionId);
 
-    if (status !== "succeeded" && status !== "successful") {
+    if (status !== "successful") {
       return NextResponse.json(
         { verified: false, status, message: "Payment not yet confirmed" },
         { status: 400 }
       );
     }
 
-    // ── CV payment: just verify and return ──
+    // ── CV payment ──
     if (!type || type === "cv") {
-      return NextResponse.json({
-        verified: true,
-        status,
-        chargeId,
-        rawResponse,
-      });
+      return NextResponse.json({ verified: true, status, transactionId, rawResponse });
     }
 
-    // ── Interview payment: also grant quota ──
+    // ── Interview payment: grant quota ──
     if (type === "interview") {
       const serverSupabase = await createServerSupabase();
-      const {
-        data: { user },
-      } = await serverSupabase.auth.getUser();
+      const { data: { user } } = await serverSupabase.auth.getUser();
 
       if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,19 +56,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         verified: true,
         status,
-        chargeId,
-        usage: {
-          generated,
-          paidQuota,
-          totalAllowed,
-          remaining,
-          freeQuota: 5,
-          paidBatch: PAID_BATCH,
-        },
+        transactionId,
+        usage: { generated, paidQuota, totalAllowed, remaining, freeQuota: 5, paidBatch: PAID_BATCH },
       });
     }
 
-    return NextResponse.json({ verified: true, status, chargeId });
+    return NextResponse.json({ verified: true, status, transactionId });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[v4-verify] error:", message);
