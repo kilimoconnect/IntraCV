@@ -17,9 +17,15 @@ function getConsumerSecret(): string {
   return v;
 }
 
-// ─── Auth Token ───────────────────────────────────────────────────────────────
+// ─── Auth Token (cached in-process for 4 min) ─────────────────────────────────
+// Pesapal tokens last ~5 min. Caching saves one round-trip on every verify call.
+
+let _cachedToken: string | null = null;
+let _tokenExpiresAt = 0;
 
 export async function getPesapalToken(): Promise<string> {
+  if (_cachedToken && Date.now() < _tokenExpiresAt) return _cachedToken;
+
   const res = await fetch(`${PESAPAL_BASE}/Auth/RequestToken`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -35,7 +41,9 @@ export async function getPesapalToken(): Promise<string> {
     throw new Error(`Pesapal auth non-JSON (${res.status}): ${text.slice(0, 300)}`);
   }
   if (!json.token) throw new Error(`Pesapal auth failed: ${JSON.stringify(json)}`);
-  return json.token as string;
+  _cachedToken = json.token as string;
+  _tokenExpiresAt = Date.now() + 4 * 60 * 1000; // 4 minutes
+  return _cachedToken;
 }
 
 // ─── Register IPN URL ─────────────────────────────────────────────────────────
