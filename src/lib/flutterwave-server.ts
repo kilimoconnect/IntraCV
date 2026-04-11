@@ -108,7 +108,7 @@ export async function createV4Customer(
   token: string,
   customerData: V4CustomerData
 ): Promise<string> {
-  const res = await fetch("https://api.flutterwave.com/customers", {
+  const res = await fetch("https://api.flutterwave.com/v4/customers", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -152,7 +152,7 @@ export async function createV4PaymentMethod(
   token: string,
   encryptedCard: V4EncryptedCard
 ): Promise<string> {
-  const res = await fetch("https://api.flutterwave.com/payment-methods", {
+  const res = await fetch("https://api.flutterwave.com/v4/payment-methods", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -215,7 +215,7 @@ export async function initiateV4Charge(
   token: string,
   chargeData: V4ChargeData
 ): Promise<V4ChargeResult> {
-  const res = await fetch("https://api.flutterwave.com/charges", {
+  const res = await fetch("https://api.flutterwave.com/v4/charges", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -253,7 +253,7 @@ export async function submitV4Avs(
   chargeId: string,
   avsData: { billingLine1: string; billingCity: string; billingState: string; billingPostalCode: string; billingCountry: string }
 ): Promise<V4ChargeResult> {
-  const res = await fetch(`https://api.flutterwave.com/charges/${chargeId}`, {
+  const res = await fetch(`https://api.flutterwave.com/v4/charges/${chargeId}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -292,7 +292,7 @@ export async function getV4Charge(
   token: string,
   chargeId: string
 ): Promise<{ status: string; rawResponse: Record<string, unknown> }> {
-  const res = await fetch(`https://api.flutterwave.com/charges/${chargeId}`, {
+  const res = await fetch(`https://api.flutterwave.com/v4/charges/${chargeId}`, {
     method: "GET",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
   });
