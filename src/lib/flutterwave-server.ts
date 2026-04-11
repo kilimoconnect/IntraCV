@@ -1,15 +1,8 @@
 /**
- * Server-only Flutterwave V4 helpers (never import in client components).
- * Implements the full V4 card payment flow:
- *   1. OAuth token exchange
- *   2. AES-256-GCM card field encryption
- *   3. Customer creation
- *   4. Payment method creation
- *   5. Charge initiation
- *   6. Charge status retrieval
+ * Server-only Flutterwave V4 helpers.
+ * Uses Web Crypto API (globalThis.crypto) only — no Node.js "crypto" import
+ * so this works in both Node.js and Edge runtimes.
  */
-
-import crypto from "crypto";
 
 // ─── Credential helpers ───────────────────────────────────────────────────────
 
@@ -23,12 +16,6 @@ function getClientSecret(): string {
   const v = process.env.FLUTTERWAVE_SECRET_KEY;
   if (!v) throw new Error("FLUTTERWAVE_SECRET_KEY is not set");
   return v;
-}
-
-function getEncryptionKey(): Buffer {
-  const v = process.env.FLW_ENCRYPTION_KEY;
-  if (!v) throw new Error("FLW_ENCRYPTION_KEY is not set");
-  return Buffer.from(v, "base64");
 }
 
 // ─── Step 1: OAuth Token ──────────────────────────────────────────────────────
@@ -49,39 +36,57 @@ export async function getV4Token(): Promise<string> {
     }
   );
 
-  const json = await res.json();
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`V4 token endpoint returned non-JSON: ${text.slice(0, 300)}`);
+  }
   if (!json.access_token) {
     throw new Error(`Failed to get V4 token: ${JSON.stringify(json)}`);
   }
   return json.access_token as string;
 }
 
-// ─── Step 2: Encryption helpers ───────────────────────────────────────────────
+// ─── Step 2: Encryption helpers (Web Crypto API) ──────────────────────────────
 
 /** Generate a 12-character alphanumeric nonce */
 export function generateNonce(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let nonce = "";
-  const bytes = crypto.randomBytes(12);
-  for (let i = 0; i < 12; i++) {
-    nonce += chars[bytes[i] % chars.length];
-  }
-  return nonce;
+  const bytes = new Uint8Array(12);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
 /**
  * Encrypt a single card field using AES-256-GCM.
- * The nonce is used as the IV (converted to 12-byte buffer from UTF-8).
- * Auth tag (16 bytes) is appended to the ciphertext, then the whole thing is base64-encoded.
+ * keyBase64: base64-encoded 32-byte AES key (FLW_ENCRYPTION_KEY)
+ * nonce: 12-char string used as IV
+ * Returns base64(ciphertext + 16-byte auth tag)
  */
-export function encryptField(data: string, keyBase64: string, nonce: string): string {
-  const key = Buffer.from(keyBase64, "base64");
-  const iv = Buffer.from(nonce, "utf8"); // 12 bytes (nonce is 12 chars)
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const encrypted = Buffer.concat([cipher.update(data, "utf8"), cipher.final()]);
-  const authTag = cipher.getAuthTag(); // 16 bytes
-  const combined = Buffer.concat([encrypted, authTag]);
-  return combined.toString("base64");
+export async function encryptField(
+  data: string,
+  keyBase64: string,
+  nonce: string
+): Promise<string> {
+  const keyBytes = Uint8Array.from(atob(keyBase64), (c) => c.charCodeAt(0));
+  const iv = new TextEncoder().encode(nonce); // 12 bytes
+
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"]
+  );
+
+  const encrypted = await globalThis.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, tagLength: 128 },
+    key,
+    new TextEncoder().encode(data)
+  );
+
+  // Web Crypto appends the 16-byte auth tag automatically
+  return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
 }
 
 // ─── Step 3: Create Customer ──────────────────────────────────────────────────
@@ -108,18 +113,12 @@ export async function createV4Customer(
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "X-Idempotency-Key": crypto.randomUUID(),
+      "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
       email: customerData.email,
-      name: {
-        first: customerData.firstName,
-        last: customerData.lastName || "User",
-      },
-      phone: {
-        country_code: customerData.phoneCountryCode || "1",
-        number: customerData.phone || "0000000000",
-      },
+      name: { first: customerData.firstName, last: customerData.lastName || "User" },
+      phone: { country_code: customerData.phoneCountryCode || "1", number: customerData.phone || "0000000000" },
       address: {
         line1: customerData.billingLine1,
         city: customerData.billingCity,
@@ -130,10 +129,12 @@ export async function createV4Customer(
     }),
   });
 
-  const json = await res.json();
-  if (!json.id) {
-    throw new Error(`Failed to create V4 customer: ${JSON.stringify(json)}`);
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`createV4Customer non-JSON: ${text.slice(0, 300)}`);
   }
+  if (!json.id) throw new Error(`Failed to create V4 customer: ${JSON.stringify(json)}`);
   return json.id as string;
 }
 
@@ -156,7 +157,7 @@ export async function createV4PaymentMethod(
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "X-Idempotency-Key": crypto.randomUUID(),
+      "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
       type: "card",
@@ -170,10 +171,12 @@ export async function createV4PaymentMethod(
     }),
   });
 
-  const json = await res.json();
-  if (!json.id) {
-    throw new Error(`Failed to create V4 payment method: ${JSON.stringify(json)}`);
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`createV4PaymentMethod non-JSON: ${text.slice(0, 300)}`);
   }
+  if (!json.id) throw new Error(`Failed to create V4 payment method: ${JSON.stringify(json)}`);
   return json.id as string;
 }
 
@@ -190,12 +193,22 @@ export interface V4ChargeData {
 
 export interface V4ChargeResult {
   chargeId: string;
-  nextAction: {
-    type: string;
-    url?: string;
-    fields?: Record<string, unknown>;
-  };
+  nextAction: { type: string; url?: string; fields?: Record<string, unknown> };
   rawResponse: Record<string, unknown>;
+}
+
+function normalizeNextAction(nextAction: Record<string, unknown>): V4ChargeResult["nextAction"] {
+  if (nextAction.type === "redirect_url" || nextAction.redirect_url) {
+    const inner = nextAction.redirect_url as Record<string, unknown> | undefined;
+    return {
+      type: "redirect_url",
+      url: (inner?.url ?? nextAction.url ?? nextAction.redirect_url) as string,
+    };
+  }
+  if (nextAction.type === "requires_additional_fields") {
+    return { type: "requires_additional_fields", fields: nextAction.fields as Record<string, unknown> };
+  }
+  return { type: (nextAction.type as string) ?? "unknown" };
 }
 
 export async function initiateV4Charge(
@@ -207,7 +220,7 @@ export async function initiateV4Charge(
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "X-Idempotency-Key": crypto.randomUUID(),
+      "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
       reference: chargeData.reference,
@@ -219,89 +232,58 @@ export async function initiateV4Charge(
     }),
   });
 
-  const json = await res.json();
-  const chargeId = json.id ?? json.data?.id;
-  if (!chargeId) {
-    throw new Error(`Failed to initiate V4 charge: ${JSON.stringify(json)}`);
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`initiateV4Charge non-JSON: ${text.slice(0, 300)}`);
   }
 
-  const nextAction = json.next_action ?? json.data?.next_action ?? {};
-  let nextActionNormalized: V4ChargeResult["nextAction"];
+  const chargeId = (json.id ?? (json.data as Record<string, unknown>)?.id) as string | undefined;
+  if (!chargeId) throw new Error(`Failed to initiate V4 charge: ${JSON.stringify(json)}`);
 
-  if (nextAction.type === "redirect_url" || nextAction.redirect_url) {
-    nextActionNormalized = {
-      type: "redirect_url",
-      url: nextAction.redirect_url?.url ?? nextAction.url ?? nextAction.redirect_url,
-    };
-  } else if (nextAction.type === "requires_additional_fields") {
-    nextActionNormalized = {
-      type: "requires_additional_fields",
-      fields: nextAction.fields,
-    };
-  } else {
-    // Unknown / already succeeded
-    nextActionNormalized = { type: nextAction.type ?? "unknown" };
-  }
+  const nextAction = (json.next_action ?? (json.data as Record<string, unknown>)?.next_action ?? {}) as Record<string, unknown>;
 
-  return {
-    chargeId: String(chargeId),
-    nextAction: nextActionNormalized,
-    rawResponse: json,
-  };
+  return { chargeId: String(chargeId), nextAction: normalizeNextAction(nextAction), rawResponse: json };
 }
 
-// ─── Step 6: Handle AVS (requires_additional_fields) ─────────────────────────
-
-export interface V4AvsData {
-  billingLine1: string;
-  billingCity: string;
-  billingState: string;
-  billingPostalCode: string;
-  billingCountry: string;
-}
+// ─── Step 6: Handle AVS ───────────────────────────────────────────────────────
 
 export async function submitV4Avs(
   token: string,
   chargeId: string,
-  avsData: V4AvsData
+  avsData: { billingLine1: string; billingCity: string; billingState: string; billingPostalCode: string; billingCountry: string }
 ): Promise<V4ChargeResult> {
   const res = await fetch(`https://api.flutterwave.com/charges/${chargeId}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "X-Idempotency-Key": crypto.randomUUID(),
+      "X-Idempotency-Key": globalThis.crypto.randomUUID(),
     },
     body: JSON.stringify({
-      billing_address: {
-        line1: avsData.billingLine1,
-        city: avsData.billingCity,
-        state: avsData.billingState,
-        postal_code: avsData.billingPostalCode,
-        country: avsData.billingCountry,
+      authorization: {
+        type: "avs",
+        avs: {
+          line1: avsData.billingLine1,
+          city: avsData.billingCity,
+          state: avsData.billingState,
+          postal_code: avsData.billingPostalCode,
+          country: avsData.billingCountry,
+        },
       },
     }),
   });
 
-  const json = await res.json();
-  const chargeIdOut = json.id ?? json.data?.id ?? chargeId;
-  const nextAction = json.next_action ?? json.data?.next_action ?? {};
-  let nextActionNormalized: V4ChargeResult["nextAction"];
-
-  if (nextAction.type === "redirect_url" || nextAction.redirect_url) {
-    nextActionNormalized = {
-      type: "redirect_url",
-      url: nextAction.redirect_url?.url ?? nextAction.url ?? nextAction.redirect_url,
-    };
-  } else {
-    nextActionNormalized = { type: nextAction.type ?? "unknown" };
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`submitV4Avs non-JSON: ${text.slice(0, 300)}`);
   }
 
-  return {
-    chargeId: String(chargeIdOut),
-    nextAction: nextActionNormalized,
-    rawResponse: json,
-  };
+  const chargeIdOut = ((json.id ?? (json.data as Record<string, unknown>)?.id) as string | undefined) ?? chargeId;
+  const nextAction = (json.next_action ?? (json.data as Record<string, unknown>)?.next_action ?? {}) as Record<string, unknown>;
+
+  return { chargeId: String(chargeIdOut), nextAction: normalizeNextAction(nextAction), rawResponse: json };
 }
 
 // ─── Step 7: Get Charge Status ────────────────────────────────────────────────
@@ -312,13 +294,15 @@ export async function getV4Charge(
 ): Promise<{ status: string; rawResponse: Record<string, unknown> }> {
   const res = await fetch(`https://api.flutterwave.com/charges/${chargeId}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
   });
 
-  const json = await res.json();
-  const status = json.status ?? json.data?.status ?? "unknown";
-  return { status: String(status), rawResponse: json };
+  const text = await res.text();
+  let json: Record<string, unknown>;
+  try { json = JSON.parse(text); } catch {
+    throw new Error(`getV4Charge non-JSON: ${text.slice(0, 300)}`);
+  }
+
+  const status = (json.status ?? (json.data as Record<string, unknown>)?.status ?? "unknown") as string;
+  return { status, rawResponse: json };
 }

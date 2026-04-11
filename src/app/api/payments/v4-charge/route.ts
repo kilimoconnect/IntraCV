@@ -1,5 +1,3 @@
-export const runtime = "nodejs";
-
 import { NextRequest, NextResponse } from "next/server";
 import {
   getV4Token,
@@ -65,10 +63,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Encryption key not configured" }, { status: 500 });
     }
     const nonce = generateNonce();
-    const encrypted_card_number = encryptField(cardNumber.replace(/\s/g, ""), encKey, nonce);
-    const encrypted_expiry_month = encryptField(expiryMonth, encKey, nonce);
-    const encrypted_expiry_year = encryptField(expiryYear, encKey, nonce);
-    const encrypted_cvv = encryptField(cvv, encKey, nonce);
+    const [encrypted_card_number, encrypted_expiry_month, encrypted_expiry_year, encrypted_cvv] =
+      await Promise.all([
+        encryptField(cardNumber.replace(/\s/g, ""), encKey, nonce),
+        encryptField(expiryMonth, encKey, nonce),
+        encryptField(expiryYear, encKey, nonce),
+        encryptField(cvv, encKey, nonce),
+      ]);
 
     // Step 3: Create customer
     const nameParts = (cardholderName || "FuseCV User").trim().split(/\s+/);
