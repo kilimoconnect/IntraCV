@@ -691,6 +691,8 @@ export default function CvStudio({ userId, cvData }: Props) {
           }).catch(() => { /* silent */ });
         }
         localStorage.setItem("fusecv-new-docs", "true");
+        // Restore step so the CV preview renders and previewRef becomes available
+        setStep("preview");
         setCvPaidReady(true);
         if (sessionStorage.getItem("fusecv-auto-download") === "1") {
           setAutoDownload(true);
@@ -703,16 +705,36 @@ export default function CvStudio({ userId, cvData }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Auto-download once state is restored and preview is rendered ──
+  // ── Auto-download once state is restored and previewRef is in the DOM ──
   useEffect(() => {
     if (!autoDownload || !cvPaidReady || !aiData || !selectedCategory) return;
-    const timer = setTimeout(async () => {
-      setCvPaidReady(false);
-      setAutoDownload(false);
-      await executePdfDownload();
-      toast.success("✓ CV saved to Documents", { duration: 4000 });
-    }, 700);
-    return () => clearTimeout(timer);
+    let attempts = 0;
+    const MAX = 30; // 30 × 100 ms = 3 s max wait
+    let rafId: number;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const tryDownload = async () => {
+      if (previewRef.current) {
+        setCvPaidReady(false);
+        setAutoDownload(false);
+        await executePdfDownload();
+        toast.success("✓ CV saved to Documents", { duration: 4000 });
+      } else if (attempts < MAX) {
+        attempts++;
+        timerId = setTimeout(() => { rafId = requestAnimationFrame(tryDownload); }, 100);
+      } else {
+        // previewRef never appeared — fall back to manual button
+        setAutoDownload(false);
+      }
+    };
+
+    // Initial frame delay so React can paint the preview step
+    rafId = requestAnimationFrame(() => { timerId = setTimeout(tryDownload, 200); });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoDownload, cvPaidReady, aiData, selectedCategory]);
 
