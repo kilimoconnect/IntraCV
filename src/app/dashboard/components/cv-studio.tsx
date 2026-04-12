@@ -2546,17 +2546,18 @@ export default function CvStudio({ userId, cvData }: Props) {
         )
       )}
 
-      {/* CV Preview + Editor Panel side by side when editMode is on */}
-      <div className={`flex gap-4 items-start ${editMode ? "flex-col lg:flex-row" : ""}`}>
+      {/* CV Preview + Editor Panel */}
+      <div className={`flex gap-4 items-start ${editMode ? "lg:flex-row flex-col" : ""}`}>
 
-        {/* CV Canvas */}
-        <div className={`relative ${editMode ? "lg:flex-1 lg:min-w-0 w-full" : "w-full"}`}>
-          <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
+        {/* CV Canvas — shrinks when panel is open */}
+        <div className={`relative min-w-0 ${editMode ? "lg:flex-1 w-full" : "w-full"}`}>
+          <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={editMode ? () => {} : handleCvClick}>
             {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
             {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
             {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
           </CVCanvasPreview>
-          {inlineEditor && (
+          {/* Inline editor only when panel is NOT open */}
+          {!editMode && inlineEditor && (
             <CVInlineEditor
               editor={inlineEditor}
               onSave={setFieldValue}
@@ -2567,9 +2568,12 @@ export default function CvStudio({ userId, cvData }: Props) {
           )}
         </div>
 
-        {/* Structured Editor Panel */}
+        {/* Structured Editor Panel — sticky, full-height, scrollable */}
         {editMode && aiData && (
-          <div className="w-full lg:w-[400px] shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-lg" style={{ maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+          <div
+            className="w-full lg:w-[400px] shrink-0 rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col lg:sticky lg:top-4"
+            style={{ height: "calc(100vh - 80px)" }}
+          >
             <CVEditorPanel
               data={aiData}
               category={selectedCategory}
