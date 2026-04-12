@@ -1746,7 +1746,6 @@ export default function CvStudio({ userId, cvData }: Props) {
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-violet-600" />
               <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
-              <span className="text-xs text-red-500 font-medium ml-1">(mandatory)</span>
             </div>
 
             {/* Company name + Job title (side by side) */}
