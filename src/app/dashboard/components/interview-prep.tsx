@@ -959,9 +959,9 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
               return (
                 <div key={q.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <button
+                  <div
                     onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
-                    className="w-full text-left px-5 py-4 flex items-start justify-between gap-3 hover:bg-slate-50 transition-colors"
+                    className="w-full text-left px-5 py-4 flex items-start justify-between gap-3 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -993,7 +993,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </div>
                   </div>
-                  </button>
+                  </div>
 
                   {isExpanded && (
                     <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">

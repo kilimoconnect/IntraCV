@@ -11,11 +11,11 @@ import {
 import Image from "next/image";
 
 const NAV_ITEMS = [
-  { key: "profile",   label: "My Profile",     href: "/dashboard?tab=profile",   icon: UserCircle2 },
-  { key: "studio",    label: "Fix and improve your CV",         href: "/dashboard?tab=studio",    icon: Wand2 },
-  { key: "interview", label: "Practice real interview questions", href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
-  { key: "documents", label: "Access your CV and cover letters",  href: "/dashboard?tab=documents", icon: FolderOpen },
-  { key: "settings",  label: "Settings",        href: "/dashboard?tab=settings",  icon: SettingsIcon },
+  { key: "profile",   label: "My Profile",                        subtitle: "View and edit your data",    href: "/dashboard?tab=profile",   icon: UserCircle2 },
+  { key: "studio",    label: "Fix and improve your CV",           subtitle: "AI-powered CV optimization", href: "/dashboard?tab=studio",    icon: Wand2 },
+  { key: "interview", label: "Practice real interview questions", subtitle: "AI mock interviews",         href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
+  { key: "documents", label: "Access your CV and cover letters",  subtitle: "Download your documents",    href: "/dashboard?tab=documents", icon: FolderOpen },
+  { key: "settings",  label: "Settings",                          subtitle: "Account preferences",        href: "/dashboard?tab=settings",  icon: SettingsIcon },
 ];
 
 interface AppShellProps {
@@ -93,7 +93,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
 
         {/* ── Dark Desktop Sidebar ── */}
         {!hideSidebar && (
-          <aside className="hidden md:flex flex-col w-60 shrink-0 bg-[#0F172A] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
+          <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#0F172A] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
 
             {/* Brand accent bar at top */}
             <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
@@ -109,35 +109,39 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                     key={item.key}
                     onClick={() => handleNav(item.key, item.href)}
                     disabled={isLoading}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left group relative overflow-hidden ${
+                    className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left group relative overflow-hidden ${
                       isActive
                         ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-900/40"
                         : isLoading
                         ? "bg-white/5 text-slate-500"
                         : "text-slate-400 hover:text-white hover:bg-white/8"
                     }`}
-                    style={!isActive && !isLoading ? { '--tw-bg-opacity': '1' } as React.CSSProperties : {}}
                   >
                     {/* Active item glow */}
                     {isActive && (
                       <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-violet-600/10 blur-xl" />
                     )}
-                    <span className={`shrink-0 relative z-10 transition-transform duration-200 ${!isActive && !isLoading ? "group-hover:scale-110" : ""}`}>
+                    <span className={`shrink-0 mt-0.5 relative z-10 transition-transform duration-200 ${!isActive && !isLoading ? "group-hover:scale-110" : ""}`}>
                       {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <Icon className="h-4 w-4" />
                       )}
                     </span>
-                    <span className="truncate relative z-10">{item.label}</span>
+                    <span className="flex-1 min-w-0 relative z-10">
+                      <span className="block leading-snug break-words">{item.label}</span>
+                      <span className={`block text-[11px] font-normal mt-0.5 leading-tight ${isActive ? "text-white/60" : "text-slate-500 group-hover:text-slate-400"}`}>
+                        {item.subtitle}
+                      </span>
+                    </span>
                     {item.key === "documents" && hasNewDocs && !isActive && (
-                      <span className="ml-auto relative flex h-2.5 w-2.5 shrink-0 z-10">
+                      <span className="ml-auto mt-1 relative flex h-2.5 w-2.5 shrink-0 z-10">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-400" />
                       </span>
                     )}
                     {isActive && (
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-white/60 shrink-0 relative z-10" />
+                      <ChevronRight className="ml-auto mt-1 h-3.5 w-3.5 text-white/60 shrink-0 relative z-10" />
                     )}
                   </button>
                 );
