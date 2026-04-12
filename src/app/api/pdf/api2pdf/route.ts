@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { createServerSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -24,12 +25,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // ── Auth ──
+  const serverSupabase = await createServerSupabase();
+  const { data: { user } } = await serverSupabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let html: string;
   let filename: string;
   let userId: string | undefined;
   let docTitle: string | undefined;
   let docContent: string | undefined;
   let coverLetter: string | undefined;
+  let downloadToken: string | undefined;
 
   try {
     const body = await req.json();
@@ -39,12 +48,50 @@ export async function POST(req: NextRequest) {
     docTitle = body.docTitle;
     docContent = body.docContent;
     coverLetter = body.coverLetter;
+    downloadToken = body.downloadToken;
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   if (!html || typeof html !== "string") {
     return NextResponse.json({ error: "html field is required" }, { status: 400 });
+  }
+
+  // ── Verify one-time payment token ──
+  if (!downloadToken) {
+    return NextResponse.json({ error: "Payment required" }, { status: 402 });
+  }
+
+  const admin = createAdminSupabase();
+  const { data: tokenRow } = await admin
+    .from("cv_download_tokens")
+    .select("id, used, expires_at, user_id")
+    .eq("id", downloadToken)
+    .single();
+
+  if (!tokenRow) {
+    return NextResponse.json({ error: "Invalid payment token" }, { status: 402 });
+  }
+  if (tokenRow.user_id !== user.id) {
+    return NextResponse.json({ error: "Payment token does not belong to this account" }, { status: 403 });
+  }
+  if (tokenRow.used) {
+    return NextResponse.json({ error: "Payment token already used" }, { status: 402 });
+  }
+  if (new Date(tokenRow.expires_at) < new Date()) {
+    return NextResponse.json({ error: "Payment token expired — please contact support" }, { status: 402 });
+  }
+
+  // Mark token as used atomically (only update if still unused, preventing race conditions)
+  const { count } = await admin
+    .from("cv_download_tokens")
+    .update({ used: true })
+    .eq("id", downloadToken)
+    .eq("used", false)
+    .select("id", { count: "exact", head: true });
+
+  if (!count || count === 0) {
+    return NextResponse.json({ error: "Payment token already used" }, { status: 402 });
   }
 
   const safeName = filename.replace(/[^a-z0-9_\-\.]/gi, "_");
@@ -110,7 +157,6 @@ export async function POST(req: NextRequest) {
     let storageStatus = "skipped";
     if (userId) {
       try {
-        const admin = createAdminSupabase();
         const docId = crypto.randomUUID();
         const storagePath = `${userId}/${docId}.pdf`;
 

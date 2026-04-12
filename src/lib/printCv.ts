@@ -29,6 +29,8 @@ export interface PrintCvOptions {
   docContent?: string;
   /** Cover letter text to store alongside the CV */
   coverLetter?: string;
+  /** One-time payment token issued by /cv-payment/callback — verified server-side */
+  downloadToken?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -169,6 +171,7 @@ async function generateViaApi2Pdf(
     docTitle?: string;
     docContent?: string;
     coverLetter?: string;
+    downloadToken?: string;
   } = {}
 ): Promise<void> {
   const res = await fetch("/api/pdf/api2pdf", {
@@ -181,6 +184,7 @@ async function generateViaApi2Pdf(
       docTitle: opts.docTitle,
       docContent: opts.docContent,
       coverLetter: opts.coverLetter,
+      downloadToken: opts.downloadToken,
     }),
   });
 
@@ -247,7 +251,7 @@ export async function printCvAsPdf(
   element: HTMLElement,
   options: PrintCvOptions
 ): Promise<void> {
-  const { filename, onStart, onComplete, useApi2Pdf = false, userId, docTitle, docContent, coverLetter } = options;
+  const { filename, onStart, onComplete, useApi2Pdf = false, userId, docTitle, docContent, coverLetter, downloadToken } = options;
   onStart?.();
 
   try {
@@ -258,7 +262,7 @@ export async function printCvAsPdf(
     const html = buildPrintHtml(element, filename);
 
     if (useApi2Pdf) {
-      await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter });
+      await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter, downloadToken });
     } else {
       await printViaIframe(html, filename);
     }

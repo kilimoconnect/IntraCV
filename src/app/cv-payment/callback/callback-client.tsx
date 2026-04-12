@@ -10,18 +10,23 @@ interface Props {
   errorMsg: string;
   plan: "starter" | "professional" | "full";
   interviewQuotaGranted?: boolean;
+  downloadTokenId?: string | null;
 }
 
-export default function CallbackClient({ verified, errorMsg, plan }: Props) {
+export default function CallbackClient({ verified, errorMsg, plan, downloadTokenId }: Props) {
   const router = useRouter();
 
   useEffect(() => {
     if (!verified) return;
-    sessionStorage.setItem("fusecv-cv-paid", "1");
+    // Store the server-issued one-time token (replaces the easily-faked "1" flag)
+    if (downloadTokenId) {
+      sessionStorage.setItem("fusecv-cv-token", downloadTokenId);
+    }
+    sessionStorage.setItem("fusecv-cv-plan", plan);
     sessionStorage.setItem("fusecv-auto-download", "1");
     // Interview quota is granted server-side silently — no toast/redirect needed
     router.push("/dashboard?tab=studio");
-  }, [verified, router]);
+  }, [verified, downloadTokenId, plan, router]);
 
   if (verified) {
     const bullets = [

@@ -18,6 +18,7 @@ export default async function CvPaymentCallbackPage({
   let verified = false;
   let errorMsg = "";
   let interviewQuotaGranted = false;
+  let downloadTokenId: string | null = null;
 
   if (orderNotificationType === "CANCELLED") {
     errorMsg = "Payment was cancelled. No charges were made.";
@@ -25,25 +26,39 @@ export default async function CvPaymentCallbackPage({
     errorMsg = "Missing payment details. Please contact support.";
   } else {
     try {
-      const token = await getPesapalToken();
+      const pesapalToken = await getPesapalToken();
       const { completed, statusDescription } = await getPesapalTransactionStatus(
-        token,
+        pesapalToken,
         orderTrackingId
       );
       if (completed) {
         verified = true;
-        // Full Package — grant 20 interview questions
-        if (plan === "full") {
-          try {
-            const serverSupabase = await createServerSupabase();
-            const { data: { user } } = await serverSupabase.auth.getUser();
-            if (user) {
-              const admin = createAdminSupabase();
+
+        const serverSupabase = await createServerSupabase();
+        const { data: { user } } = await serverSupabase.auth.getUser();
+
+        if (user) {
+          const admin = createAdminSupabase();
+
+          // ── Issue one-time download token (idempotent on order_tracking_id) ──
+          const { data: tokenRow } = await admin
+            .from("cv_download_tokens")
+            .upsert(
+              { user_id: user.id, plan, order_tracking_id: orderTrackingId },
+              { onConflict: "order_tracking_id", ignoreDuplicates: false }
+            )
+            .select("id")
+            .single();
+          downloadTokenId = tokenRow?.id ?? null;
+
+          // ── Full Package — grant 20 interview questions ──
+          if (plan === "full") {
+            try {
               await admin.rpc("add_interview_paid_quota", { uid: user.id, n: 20 });
               interviewQuotaGranted = true;
+            } catch (quotaErr) {
+              console.error("[cv-callback] Failed to grant interview quota:", quotaErr);
             }
-          } catch (quotaErr) {
-            console.error("[cv-callback] Failed to grant interview quota:", quotaErr);
           }
         }
       } else {
@@ -75,6 +90,7 @@ export default async function CvPaymentCallbackPage({
               errorMsg={errorMsg}
               plan={plan}
               interviewQuotaGranted={interviewQuotaGranted}
+              downloadTokenId={downloadTokenId}
             />
           </Suspense>
         </div>

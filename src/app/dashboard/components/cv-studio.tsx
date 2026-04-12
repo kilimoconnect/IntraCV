@@ -741,9 +741,9 @@ export default function CvStudio({ userId, cvData }: Props) {
   // ── Detect return from CV payment redirect ──
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const paid = sessionStorage.getItem("fusecv-cv-paid");
+    const cvToken = sessionStorage.getItem("fusecv-cv-token");
     const pending = sessionStorage.getItem("fusecv-pending-cv");
-    if (paid === "1" && pending) {
+    if (cvToken && pending) {
       try {
         const saved = JSON.parse(pending);
         if (saved.aiData) setAiData(saved.aiData);
@@ -768,7 +768,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           sessionStorage.removeItem("fusecv-auto-download");
         }
       } catch { /* ignore */ }
-      sessionStorage.removeItem("fusecv-cv-paid");
+      // Keep the token in sessionStorage until executePdfDownload consumes it
       sessionStorage.removeItem("fusecv-pending-cv");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1346,6 +1346,11 @@ export default function CvStudio({ userId, cvData }: Props) {
         studioTheme: selectedTheme,
       });
 
+      // Read and immediately clear the one-time payment token
+      const downloadToken = sessionStorage.getItem("fusecv-cv-token") ?? undefined;
+      if (downloadToken) sessionStorage.removeItem("fusecv-cv-token");
+      if (downloadToken) sessionStorage.removeItem("fusecv-cv-plan");
+
       try {
         await printCvAsPdf(element, {
           filename,
@@ -1354,6 +1359,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           docTitle,
           docContent,
           coverLetter: coverLetter ?? undefined,
+          downloadToken,
         });
       } catch (apiErr) {
         console.warn("[pdf] api2pdf failed, falling back to print dialog:", apiErr);
