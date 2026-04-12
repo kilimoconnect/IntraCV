@@ -19,9 +19,9 @@ import { generateTxRef } from "@/lib/flutterwave";
 // ─── CV Pricing Plans ───
 const CURRENCY = "USD";
 const CV_PLANS = [
-  { id: "starter"      as const, label: "Starter",       amount: 0.5, badge: null,              badgeClass: "",                                             desc: "CV only, saved to documents" },
-  { id: "professional" as const, label: "Professional",  amount: 1,   badge: "⭐ MOST POPULAR",  badgeClass: "bg-indigo-100 text-indigo-700",                desc: "CV and cover letter activated and saved to documents" },
-  { id: "full"         as const, label: "Full Package",  amount: 1.5, badge: "🔥 BEST VALUE",    badgeClass: "bg-amber-100 text-amber-700",                  desc: "CV, cover letter and 20 interview questions unlocked" },
+  { id: "starter"      as const, label: "Starter",       amount: 3,  badge: null,              badgeClass: "",                                             desc: "CV only, saved to documents" },
+  { id: "professional" as const, label: "Professional",  amount: 7,  badge: "⭐ MOST POPULAR",  badgeClass: "bg-indigo-100 text-indigo-700",                desc: "CV and cover letter activated and saved to documents" },
+  { id: "full"         as const, label: "Full Package",  amount: 10, badge: "🔥 BEST VALUE",    badgeClass: "bg-amber-100 text-amber-700",                  desc: "CV, cover letter and 20 interview questions unlocked" },
 ] as const;
 type PlanId = "starter" | "professional" | "full";
 
