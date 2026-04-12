@@ -1793,6 +1793,11 @@ function CVBuilderPage() {
                   {/* ── Experience ── */}
                   {currentKey === "experience" && (
                     <div className="space-y-4">
+                      {experiences.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => { justAddedExpRef.current = true; setExperiences([{ id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }, ...experiences]); }}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Experience
+                        </Button>
+                      )}
                       {experiences.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No experiences added yet</p>
                       )}
