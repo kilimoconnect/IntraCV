@@ -16,6 +16,7 @@ import { printCvAsPdf } from "@/lib/printCv";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { generateTxRef } from "@/lib/flutterwave";
+import { detectCategory } from "@/lib/detect-category";
 
 // ─── CV Pricing Plans ───
 const CURRENCY = "USD";
@@ -33,88 +34,7 @@ interface Props {
 
 type LooseObject = Record<string, unknown>;
 
-// ─── Career category detection from profile data ───
-
-const EXEC_TITLES = /\b(chief|ceo|cfo|cto|coo|cio|cmo|cpo|president|vice\s*president|vp|managing\s*director|md|executive\s*director|group\s*director|partner|head\s*of|country\s*manager|regional\s*director|general\s*manager|gm|board\s*member|chairman|chairperson)\b/i;
-const MID_TITLES = /\b(senior|sr\.?|lead|manager|director|team\s*lead|principal|supervisor|coordinator|specialist|consultant|architect|head|associate\s*director)\b/i;
-const JUNIOR_TITLES = /\b(junior|jr\.?|intern|trainee|entry|assistant|graduate|apprentice|associate|analyst|officer|clerk|attachment|industrial\s*training)\b/i;
-const EXEC_SCOPE = /\b(p&l|profit\s*and\s*loss|board|strategy|transformation|million|billion|revenue|shareholder|governance|merger|acquisition|m&a)\b/i;
-const MID_SCOPE = /\b(managed\s*(?:a\s*)?team|budget|cross-functional|department|division|portfolio|stakeholder|kpi|roadmap|mentored|coached|process\s*improvement)\b/i;
-
-function detectCategory(cvData: Record<string, unknown>): CareerCategory {
-  const experiences  = Array.isArray(cvData.experiences)       ? cvData.experiences       : [];
-  const education    = Array.isArray(cvData.education)          ? cvData.education          : [];
-  const boardRoles   = Array.isArray(cvData.boardRoles)         ? cvData.boardRoles         : [];
-  const publications = Array.isArray(cvData.publications)       ? cvData.publications       : [];
-  const execTraining = Array.isArray(cvData.executiveTraining)  ? cvData.executiveTraining  : [];
-  const achievements = Array.isArray(cvData.keyAchievements)    ? cvData.keyAchievements    : [];
-  const skills       = Array.isArray(cvData.skills)             ? cvData.skills             : [];
-  const certifications = Array.isArray(cvData.certifications)   ? cvData.certifications     : [];
-
-  let score = 0;
-
-  // ── Seniority signals from job titles ──
-  let execTitleCount = 0, midTitleCount = 0, juniorTitleCount = 0;
-  for (const exp of experiences) {
-    const t = (exp as any)?.title || "";
-    if (EXEC_TITLES.test(t)) execTitleCount++;
-    else if (MID_TITLES.test(t)) midTitleCount++;
-    else if (JUNIOR_TITLES.test(t)) juniorTitleCount++;
-  }
-  if (execTitleCount >= 2) score += 35;
-  else if (execTitleCount === 1) score += 28;
-  else if (midTitleCount >= 3) score += 22;
-  else if (midTitleCount >= 1) score += 15;
-  else if (juniorTitleCount >= 1) score += 2;
-  else if (experiences.length > 0) score += 10;
-
-  // ── Scope / keyword signals ──
-  let execScopeHits = 0, midScopeHits = 0;
-  for (const exp of experiences) {
-    const desc = (exp as any)?.description || "";
-    if (EXEC_SCOPE.test(desc)) execScopeHits++;
-    if (MID_SCOPE.test(desc)) midScopeHits++;
-  }
-  if (execScopeHits >= 2) score += 20;
-  else if (execScopeHits === 1) score += 14;
-  else if (midScopeHits >= 2) score += 10;
-  else if (midScopeHits === 1) score += 6;
-
-  // ── Education ──
-  if (education.some((e: any) => /\b(mba|phd|doctorate|masters?|m\.?sc|emba)\b/i.test(e?.degree || ""))) score += 10;
-  else if (education.length > 0) score += 4;
-
-  // ── Executive-specific sections ──
-  if (boardRoles.length >= 2) score += 10; else if (boardRoles.length === 1) score += 7;
-  if (publications.length >= 2) score += 5; else if (publications.length === 1) score += 3;
-  if (execTraining.length >= 2) score += 5; else if (execTraining.length === 1) score += 3;
-
-  // ── Content volume signals ──
-  if (experiences.length >= 7) score += 15;
-  else if (experiences.length >= 5) score += 10;
-  else if (experiences.length >= 3) score += 6;
-  else if (experiences.length >= 2) score += 3;
-
-  if (achievements.length >= 6) score += 10;
-  else if (achievements.length >= 3) score += 6;
-  else if (achievements.length >= 1) score += 3;
-
-  if (skills.length >= 12) score += 6;
-  else if (skills.length >= 6) score += 3;
-
-  if (certifications.length >= 3) score += 5;
-  else if (certifications.length >= 1) score += 2;
-
-  // Guard each category against missing data for its distinctive sections:
-  // - executive requires at least one of: board roles, publications, exec training
-  // - mid-senior requires at least: achievements OR 3+ roles
-  // Falls back down the chain when the data isn't there.
-  const hasExecSections   = boardRoles.length > 0 || publications.length > 0 || execTraining.length > 0;
-  const hasMidSeniorData  = achievements.length > 0 || experiences.length >= 3;
-  if (score >= 60) return hasExecSections ? "executive" : hasMidSeniorData ? "mid-senior" : "junior";
-  if (score >= 25) return hasMidSeniorData ? "mid-senior" : "junior";
-  return "junior";
-}
+// detectCategory imported from @/lib/detect-category
 
 // ─── Category-specific gap checker ───
 function getCategoryGaps(category: CareerCategory, cvData: Record<string, unknown>): string[] {

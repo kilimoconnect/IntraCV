@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { detectCategory, type CareerCategory } from "@/lib/detect-category";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -142,20 +143,10 @@ interface Publication {
 const uid = () => Date.now().toString() + Math.random().toString(36).slice(2, 6);
 
 // ─── Career Category System ───
-type CareerCategory = "junior" | "mid-senior" | "executive";
-
-const EXECUTIVE_TITLES = /\b(chief|ceo|cfo|cto|coo|cio|cmo|cpo|president|vice\s*president|vp|managing\s*director|md|executive\s*director|group\s*director|partner|head\s*of|country\s*manager|regional\s*director|general\s*manager|gm|board\s*member|chairman|chairperson)\b/i;
-const MID_TITLES = /\b(senior|sr\.?|lead|manager|director|team\s*lead|principal|supervisor|coordinator|specialist|consultant|architect|head|associate\s*director)\b/i;
-const JUNIOR_TITLES = /\b(junior|jr\.?|intern|trainee|entry|assistant|graduate|apprentice|associate|analyst|officer|clerk|attachment|industrial\s*training)\b/i;
-
-const EXEC_SCOPE_KEYWORDS = /\b(p&l|profit\s*and\s*loss|board|strategy|transformation|million|billion|revenue|shareholder|governance|merger|acquisition|m&a|ipo|fundrais|c-suite|enterprise-wide|group-wide|multi-?country|global\s*(?:operations|strategy|team))\b/i;
-const MID_SCOPE_KEYWORDS = /\b(managed\s*(?:a\s*)?team|budget|cross-functional|department|division|portfolio|stakeholder|kpi|roadmap|mentored|coached|process\s*improvement|implemented|scaled|grew\s*(?:team|revenue))\b/i;
-
 interface CategoryResult {
   category: CareerCategory;
   label: string;
   color: string;
-  score: number;
   requiredSections: { key: string; label: string }[];
   recommendedSections: { key: string; label: string }[];
 }
@@ -166,72 +157,16 @@ function categorizeProfile(
   boardRoles: BoardRole[],
   publications: Publication[],
   execTraining: ExecTraining[],
-  yearsExp: number
 ): CategoryResult {
-  let score = 0; // 0-100 scale: 0-35 junior, 36-65 mid, 66+ executive
-
-  // ── 1. Title analysis (max 35 pts) ──
-  let execTitleCount = 0, midTitleCount = 0, juniorTitleCount = 0;
-  for (const exp of experiences) {
-    const t = exp.title || "";
-    if (EXECUTIVE_TITLES.test(t)) execTitleCount++;
-    else if (MID_TITLES.test(t)) midTitleCount++;
-    else if (JUNIOR_TITLES.test(t)) juniorTitleCount++;
-  }
-  if (execTitleCount >= 2) score += 35;
-  else if (execTitleCount === 1) score += 28;
-  else if (midTitleCount >= 3) score += 22;
-  else if (midTitleCount >= 1) score += 15;
-  else if (juniorTitleCount >= 1) score += 5;
-  else if (experiences.length > 0) score += 10; // titles exist but don't match patterns
-
-  // ── 2. Scope/responsibility indicators in descriptions (max 20 pts) ──
-  let execScopeHits = 0, midScopeHits = 0;
-  for (const exp of experiences) {
-    const desc = exp.description || "";
-    if (EXEC_SCOPE_KEYWORDS.test(desc)) execScopeHits++;
-    if (MID_SCOPE_KEYWORDS.test(desc)) midScopeHits++;
-  }
-  if (execScopeHits >= 2) score += 20;
-  else if (execScopeHits === 1) score += 14;
-  else if (midScopeHits >= 2) score += 10;
-  else if (midScopeHits === 1) score += 6;
-
-  // ── 3. Education signals (max 10 pts) ──
-  const hasAdvancedDegree = education.some(e =>
-    /\b(mba|m\.?b\.?a|phd|ph\.?d|doctorate|masters?|m\.?sc|m\.?a\.?|executive\s*(program|education)|emba)\b/i.test(e.degree || "")
-  );
-  if (hasAdvancedDegree) score += 10;
-  else if (education.length > 0) score += 4;
-
-  // ── 4. Board roles (max 10 pts) ──
-  if (boardRoles.length >= 2) score += 10;
-  else if (boardRoles.length === 1) score += 7;
-
-  // ── 5. Publications & thought leadership (max 5 pts) ──
-  if (publications.length >= 2) score += 5;
-  else if (publications.length === 1) score += 3;
-
-  // ── 6. Executive training (max 5 pts) ──
-  if (execTraining.length >= 2) score += 5;
-  else if (execTraining.length === 1) score += 3;
-
-  // ── 7. Number of roles / career depth (max 10 pts) ──
-  if (experiences.length >= 6) score += 10;
-  else if (experiences.length >= 4) score += 7;
-  else if (experiences.length >= 2) score += 4;
-  else if (experiences.length === 1) score += 2;
-
-  // ── 8. Years of experience — supporting factor only (max 5 pts) ──
-  if (yearsExp >= 15) score += 5;
-  else if (yearsExp >= 8) score += 3;
-  else if (yearsExp >= 3) score += 1;
-
-  // ── Determine category ──
-  let category: CareerCategory;
-  if (score >= 60) category = "executive";
-  else if (score >= 30) category = "mid-senior";
-  else category = "junior";
+  // Delegate scoring to the shared algorithm so CV Builder and CV Studio
+  // always agree on the detected category.
+  const category = detectCategory({
+    experiences,
+    education,
+    boardRoles,
+    publications,
+    executiveTraining: execTraining,
+  });
 
   // ── Required & recommended sections per category ──
   const SECTIONS: Record<CareerCategory, { required: { key: string; label: string }[]; recommended: { key: string; label: string }[] }> = {
@@ -1328,9 +1263,8 @@ function CVBuilderPage() {
   volunteer.forEach((v) => { if (!v?.trim()) sectionsWithIssues.add("volunteer"); });
 
   // ─── Career Categorization ───
-  const numericYears = typeof yearsOfExperience === "string" ? 0 : Number(yearsOfExperience);
   const categoryResult = categorizeProfile(
-    experiences, education, boardRoles, publications, execTraining, numericYears
+    experiences, education, boardRoles, publications, execTraining
   );
 
   

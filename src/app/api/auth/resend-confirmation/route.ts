@@ -51,8 +51,8 @@ export async function POST(req: Request) {
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 8px">
             <tr>
               <td style="padding-right:10px;vertical-align:middle">
-                <div style="width:36px;height:36px;background:rgba(255,255,255,0.15);border-radius:10px;border:1px solid rgba(255,255,255,0.25);text-align:center;line-height:36px">
-                  <span style="color:#ffffff;font-size:18px;font-weight:900;letter-spacing:-1px">F</span>
+                <div style="width:36px;height:36px;background:linear-gradient(135deg,#1a2f6e,#0a1540);border-radius:10px;border:1px solid rgba(0,200,230,0.5);text-align:center;line-height:36px">
+                  <span style="color:#3de8ff;font-size:18px;font-weight:900;font-style:italic">F</span>
                 </div>
               </td>
               <td style="vertical-align:middle">

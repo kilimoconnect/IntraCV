@@ -100,8 +100,8 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px">
             <tr>
               <td style="padding-right:10px;vertical-align:middle">
-                <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:10px;border:1px solid rgba(255,255,255,0.3);text-align:center;line-height:38px">
-                  <span style="color:#ffffff;font-size:20px;font-weight:900;letter-spacing:-1px">F</span>
+                <div style="width:38px;height:38px;background:linear-gradient(135deg,#1a2f6e,#0a1540);border-radius:10px;border:1px solid rgba(0,200,230,0.5);text-align:center;line-height:38px">
+                  <span style="color:#3de8ff;font-size:20px;font-weight:900;font-style:italic">F</span>
                 </div>
               </td>
               <td style="vertical-align:middle">
