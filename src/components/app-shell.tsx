@@ -12,9 +12,9 @@ import Image from "next/image";
 
 const NAV_ITEMS = [
   { key: "profile",   label: "My Profile",     href: "/dashboard?tab=profile",   icon: UserCircle2 },
-  { key: "studio",    label: "CV Studio",       href: "/dashboard?tab=studio",    icon: Wand2 },
-  { key: "interview", label: "Interview Preparation", href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
-  { key: "documents", label: "Documents",       href: "/dashboard?tab=documents", icon: FolderOpen },
+  { key: "studio",    label: "Fix and improve your CV",         href: "/dashboard?tab=studio",    icon: Wand2 },
+  { key: "interview", label: "Practice real interview questions", href: "/dashboard?tab=interview", icon: BriefcaseBusiness },
+  { key: "documents", label: "Access your CV and cover letters",  href: "/dashboard?tab=documents", icon: FolderOpen },
   { key: "settings",  label: "Settings",        href: "/dashboard?tab=settings",  icon: SettingsIcon },
 ];
 
