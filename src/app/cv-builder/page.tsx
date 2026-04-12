@@ -1825,7 +1825,7 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <Button variant="outline" className="w-full" onClick={() => setExperiences([...experiences, { id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }])}>
+                      <Button variant="outline" className="w-full" onClick={() => setExperiences([{ id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }, ...experiences])}>
                         <Plus className="mr-2 h-4 w-4" /> Add Experience
                       </Button>
                     </div>
