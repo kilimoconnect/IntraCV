@@ -117,52 +117,80 @@ function detectCategory(cvData: Record<string, unknown>): CareerCategory {
 
 // ─── Category-specific gap checker ───
 function getCategoryGaps(category: CareerCategory, cvData: Record<string, unknown>): string[] {
-  const gaps: string[] = [];
-  const pi         = (cvData.personalInfo as any) ?? {};
-  const summary    = (cvData.summary as string) ?? "";
-  const exps       = Array.isArray(cvData.experiences)      ? cvData.experiences      : [];
-  const edu        = Array.isArray(cvData.education)         ? cvData.education         : [];
-  const skills     = Array.isArray(cvData.skills)            ? cvData.skills            : [];
-  const certs      = Array.isArray(cvData.certifications)    ? cvData.certifications    : [];
-  const langs      = Array.isArray(cvData.languages)         ? cvData.languages         : [];
-  const refs       = Array.isArray(cvData.referees)          ? cvData.referees          : [];
-  const achieve    = Array.isArray(cvData.keyAchievements)   ? cvData.keyAchievements   : [];
-  const awards     = Array.isArray(cvData.awards)            ? cvData.awards            : [];
-  const projects   = Array.isArray(cvData.projects)          ? cvData.projects          : [];
-  const boards     = Array.isArray(cvData.boardRoles)        ? cvData.boardRoles        : [];
-  const pubs       = Array.isArray(cvData.publications)      ? cvData.publications      : [];
-  const execTrain  = Array.isArray(cvData.executiveTraining) ? cvData.executiveTraining : [];
+  const required: string[] = [];
+  const recommended: string[] = [];
 
-  // Common across all categories
-  if (!summary.trim())        gaps.push("No professional summary — add one to introduce yourself");
-  if (!pi.linkedin?.trim())   gaps.push("Missing LinkedIn URL");
-  if (edu.length === 0)       gaps.push("No education entries added");
-  if (skills.length === 0)    gaps.push("No skills listed");
-  if (refs.length === 0)      gaps.push("No referees added");
+  const pi          = (cvData.personalInfo as any) ?? {};
+  const summary     = (cvData.summary as string) ?? "";
+  const exps        = Array.isArray(cvData.experiences)       ? cvData.experiences       : [];
+  const edu         = Array.isArray(cvData.education)          ? cvData.education          : [];
+  const skills      = Array.isArray(cvData.skills)             ? cvData.skills             : [];
+  const certs       = Array.isArray(cvData.certifications)     ? cvData.certifications     : [];
+  const langs       = Array.isArray(cvData.languages)          ? cvData.languages          : [];
+  const refs        = Array.isArray(cvData.referees)           ? cvData.referees           : [];
+  const achieve     = Array.isArray(cvData.keyAchievements)    ? cvData.keyAchievements    : [];
+  const awards      = Array.isArray(cvData.awards)             ? cvData.awards             : [];
+  const projects    = Array.isArray(cvData.projects)           ? cvData.projects           : [];
+  const boards      = Array.isArray(cvData.boardRoles)         ? cvData.boardRoles         : [];
+  const pubs        = Array.isArray(cvData.publications)       ? cvData.publications       : [];
+  const execTrain   = Array.isArray(cvData.executiveTraining)  ? cvData.executiveTraining  : [];
+  const memberships = Array.isArray(cvData.memberships)        ? cvData.memberships        : [];
+  const tools       = Array.isArray(cvData.tools)              ? cvData.tools              : [];
+  const volunteer   = Array.isArray(cvData.volunteer)          ? cvData.volunteer          : [];
+
+  // ── Required for all categories ──
+  if (!summary.trim())       required.push("No professional summary — add one to introduce yourself");
+  if (!pi.linkedin?.trim())  required.push("Missing LinkedIn URL");
+  if (edu.length === 0)      required.push("No education entries added");
+  if (skills.length === 0)   required.push("No skills listed");
+  if (refs.length === 0)     required.push("No referees added");
 
   if (category === "junior") {
-    if (exps.length === 0)    gaps.push("No work experience added — even internships count");
-    if (projects.length === 0) gaps.push("No projects listed — add personal or academic projects");
-    if (langs.length === 0)   gaps.push("No languages listed");
+    // Required
+    if (exps.length === 0)     required.push("No work experience added — even internships count");
+    if (certs.length === 0)    required.push("No certifications listed");
+    if (langs.length === 0)    required.push("No languages listed");
+    // Recommended
+    if (projects.length === 0) recommended.push("No projects — add personal or academic projects to stand out");
+    if (memberships.length === 0) recommended.push("No memberships or associations listed");
+    if (tools.length === 0)    recommended.push("No tools & software listed");
+    if (volunteer.length === 0) recommended.push("No volunteer experience listed");
   }
 
   if (category === "mid-senior") {
-    if (exps.length < 3)      gaps.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — mid-senior CVs typically show 3–6 roles`);
-    if (achieve.length === 0) gaps.push("No key achievements listed — these are critical at mid-senior level");
-    if (certs.length === 0)   gaps.push("No certifications listed");
-    if (langs.length === 0)   gaps.push("No languages listed");
-    if (awards.length === 0)  gaps.push("No awards or recognition listed");
+    // Required
+    if (exps.length < 3)       required.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — mid-senior CVs typically show 3–6 roles`);
+    if (achieve.length === 0)  required.push("No key achievements listed — critical at mid-senior level");
+    if (certs.length === 0)    required.push("No certifications listed");
+    if (langs.length === 0)    required.push("No languages listed");
+    // Recommended
+    if (awards.length === 0)   recommended.push("No awards or recognition listed");
+    if (memberships.length === 0) recommended.push("No professional memberships or associations");
+    if (tools.length === 0)    recommended.push("No tools & software listed");
+    if (projects.length === 0) recommended.push("No projects listed — strengthens technical depth");
+    if (volunteer.length === 0) recommended.push("No volunteer experience listed");
   }
 
   if (category === "executive") {
-    if (exps.length < 5)      gaps.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — executive CVs typically show 5+ roles`);
-    if (achieve.length === 0) gaps.push("No key achievements listed — essential for executive profiles");
-    if (boards.length === 0)  gaps.push("No board roles listed — add any board or advisory positions");
-    if (pubs.length === 0 && execTrain.length === 0) gaps.push("No publications or executive training — adds credibility at executive level");
-    if (certs.length === 0)   gaps.push("No certifications or professional memberships");
+    // Required
+    if (exps.length < 5)       required.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — executive CVs typically show 5+ roles`);
+    if (achieve.length === 0)  required.push("No key achievements listed — essential for executive profiles");
+    if (boards.length === 0)   required.push("No board roles — add any board or advisory positions");
+    if (pubs.length === 0 && execTrain.length === 0) required.push("No publications or executive training listed");
+    if (certs.length === 0)    required.push("No certifications listed");
+    if (langs.length === 0)    required.push("No languages listed");
+    // Recommended
+    if (memberships.length === 0) recommended.push("No professional memberships or associations");
+    if (awards.length === 0)   recommended.push("No awards or recognition listed");
+    if (tools.length === 0)    recommended.push("No tools & software listed");
+    if (volunteer.length === 0) recommended.push("No volunteer or community involvement listed");
   }
 
-  return gaps;
+  // Required items first, then recommended (marked)
+  return [
+    ...required,
+    ...recommended.map(r => `[Recommended] ${r}`),
+  ];
 }
 
 // ─── Helpers ───
@@ -1866,12 +1894,21 @@ export default function CvStudio({ userId, cvData }: Props) {
                   </button>
                 </div>
                 <ul className="space-y-2">
-                  {categoryGaps.map((gap, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-amber-900">
-                      <span className="text-amber-500 shrink-0 mt-0.5 font-bold">•</span>
-                      {gap}
-                    </li>
-                  ))}
+                  {categoryGaps.map((gap, i) => {
+                    const isRec = gap.startsWith("[Recommended] ");
+                    const text = isRec ? gap.replace("[Recommended] ", "") : gap;
+                    return (
+                      <li key={i} className={`flex items-start gap-2 text-xs ${isRec ? "text-slate-500" : "text-amber-900"}`}>
+                        <span className={`shrink-0 mt-0.5 font-bold ${isRec ? "text-slate-400" : "text-amber-500"}`}>
+                          {isRec ? "○" : "•"}
+                        </span>
+                        <span>
+                          {isRec && <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mr-1">Recommended</span>}
+                          {text}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
                 <p className="mt-3 text-[11px] text-slate-500 italic">
                   You can still proceed to generate your CV — these items are optional but will improve your score.
