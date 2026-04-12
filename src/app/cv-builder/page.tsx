@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/supabase/auth-context";
 import { createClient } from "@/lib/supabase/client";
@@ -319,6 +319,8 @@ function CVBuilderPage() {
   });
   const [summary, setSummary] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const firstExpCardRef  = useRef<HTMLDivElement>(null);
+  const justAddedExpRef  = useRef(false);
   const [education, setEducation] = useState<Education[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -500,6 +502,19 @@ function CVBuilderPage() {
   useEffect(() => {
     if (user) loadFromDB();
   }, [user, loadFromDB]);
+
+  // ─── Scroll to new experience card after adding ───
+  useEffect(() => {
+    if (!justAddedExpRef.current) return;
+    justAddedExpRef.current = false;
+    if (!firstExpCardRef.current) return;
+    firstExpCardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Focus the first input (Job Title) after scroll animation
+    const timer = setTimeout(() => {
+      firstExpCardRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [experiences]);
 
   // ─── Handle ?tab= query param from My Profile ───
   useEffect(() => {
@@ -1784,7 +1799,7 @@ function CVBuilderPage() {
                       {experiences.map((exp, i) => {
                         const expMissing = getItemMissing("experience", exp);
                         return (
-                        <div key={exp.id} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${expMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={exp.id} ref={i === 0 ? firstExpCardRef : undefined} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${expMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -1825,7 +1840,7 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <Button variant="outline" className="w-full" onClick={() => setExperiences([{ id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }, ...experiences])}>
+                      <Button variant="outline" className="w-full" onClick={() => { justAddedExpRef.current = true; setExperiences([{ id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }, ...experiences]); }}>
                         <Plus className="mr-2 h-4 w-4" /> Add Experience
                       </Button>
                     </div>
