@@ -255,45 +255,55 @@ export default function MyProfile({
           } catch { /* corrupt session data — fall through */ }
         }
 
-        // 3. Check DB cache
-        const { data: cached } = await supabase
-          .from("cv_readiness_cache")
-          .select("data_hash, cv_strength, cv_issues, cv_improvements")
-          .eq("user_id", userId)
-          .single();
+        // 3. Check both DB caches in parallel
+        const [{ data: profileCache }, { data: readinessCache }] = await Promise.all([
+          supabase.from("profile_analysis").select("data_hash, completeness_score").eq("user_id", userId).single(),
+          supabase.from("cv_readiness_cache").select("data_hash, cv_issues, cv_improvements").eq("user_id", userId).single(),
+        ]);
 
-        if (cached && cached.data_hash === dataHash) {
-          const readiness: CvReadiness = { strength: cached.cv_strength, issues: cached.cv_issues, improvements: cached.cv_improvements };
-          if (!cancelled) {
-            setCvReadiness(readiness);
-            setLoadingReadiness(false);
-          }
+        // Use profile_analysis score so it matches CV Studio exactly
+        const cachedScore = profileCache?.data_hash === dataHash ? profileCache.completeness_score : null;
+        const cachedIssues = readinessCache?.data_hash === dataHash ? { issues: readinessCache.cv_issues, improvements: readinessCache.cv_improvements } : null;
+
+        if (cachedScore !== null && cachedIssues !== null) {
+          const readiness: CvReadiness = { strength: cachedScore, ...cachedIssues };
+          if (!cancelled) { setCvReadiness(readiness); setLoadingReadiness(false); }
           sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data: readiness }));
           return;
         }
 
-        // 4. Call AI (only when CV data has changed)
-        const res = await fetch("/api/ai/cv-readiness", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cvData }),
-        });
-        if (!res.ok) throw new Error("Readiness API failed");
-        const data = await res.json();
+        // 4. Call AI for whatever is missing
+        const [scoreData, issuesData] = await Promise.all([
+          cachedScore === null
+            ? fetch("/api/ai/analyze-profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cvData }) }).then(r => r.json())
+            : Promise.resolve(null),
+          cachedIssues === null
+            ? fetch("/api/ai/cv-readiness", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cvData }) }).then(r => r.json())
+            : Promise.resolve(null),
+        ]);
         if (cancelled) return;
 
-        const readiness: CvReadiness = {
-          strength: data.cvStrength ?? 0,
-          issues: data.cvIssues ?? [],
-          improvements: data.cvImprovements ?? [],
-        };
+        const strength = cachedScore ?? (scoreData?.completenessScore ?? 0);
+        const issues   = cachedIssues?.issues       ?? (issuesData?.cvIssues       ?? []);
+        const improvements = cachedIssues?.improvements ?? (issuesData?.cvImprovements ?? []);
+        const readiness: CvReadiness = { strength, issues, improvements };
         setCvReadiness(readiness);
 
         // 5. Persist to DB + sessionStorage
-        await supabase.from("cv_readiness_cache").upsert(
-          { user_id: userId, data_hash: dataHash, cv_strength: readiness.strength, cv_issues: readiness.issues, cv_improvements: readiness.improvements, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        );
+        const upserts: Promise<unknown>[] = [];
+        if (cachedScore === null && scoreData) {
+          upserts.push(supabase.from("profile_analysis").upsert(
+            { user_id: userId, data_hash: dataHash, completeness_score: strength, strengths: scoreData.strengths ?? [], gaps: scoreData.gaps ?? [] },
+            { onConflict: "user_id" }
+          ));
+        }
+        if (cachedIssues === null && issuesData) {
+          upserts.push(supabase.from("cv_readiness_cache").upsert(
+            { user_id: userId, data_hash: dataHash, cv_strength: strength, cv_issues: issues, cv_improvements: improvements, updated_at: new Date().toISOString() },
+            { onConflict: "user_id" }
+          ));
+        }
+        await Promise.all(upserts);
         sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data: readiness }));
       } catch (err) {
         console.error("[cv-readiness]", err);
