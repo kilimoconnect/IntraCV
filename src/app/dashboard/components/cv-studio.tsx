@@ -753,18 +753,22 @@ export default function CvStudio({ userId, cvData }: Props) {
 
         // 2. DB cache — shared with profile page
         const [{ data: profileCache }, { data: readinessCache }] = await Promise.all([
-          supabase.from("profile_analysis").select("data_hash, completeness_score").eq("user_id", userId).single(),
+          supabase.from("profile_analysis").select("data_hash, completeness_score, strengths, gaps").eq("user_id", userId).single(),
           supabase.from("cv_readiness_cache").select("data_hash, cv_issues, cv_improvements").eq("user_id", userId).single(),
         ]);
 
         const cachedScore = profileCache?.data_hash === dataHash ? profileCache.completeness_score : null;
+        const cachedGaps  = profileCache?.data_hash === dataHash ? { strengths: profileCache.strengths ?? [], gaps: profileCache.gaps ?? [] } : null;
         const cachedIssues = readinessCache?.data_hash === dataHash
           ? { issues: readinessCache.cv_issues, improvements: readinessCache.cv_improvements }
           : null;
 
         if (cachedScore !== null && cachedIssues !== null) {
           const data = { strength: cachedScore, ...cachedIssues };
-          if (!cancelled) setCvReadiness(data);
+          if (!cancelled) {
+            setCvReadiness(data);
+            if (cachedGaps) setProfileAnalysis({ completenessScore: cachedScore, strengths: cachedGaps.strengths, gaps: cachedGaps.gaps });
+          }
           sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data }));
           return;
         }
@@ -786,6 +790,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         const improvements = cachedIssues?.improvements ?? (issuesRes?.cvImprovements ?? []);
         const readiness = { strength, issues, improvements };
         setCvReadiness(readiness);
+        if (scoreRes) setProfileAnalysis({ completenessScore: strength, strengths: scoreRes.strengths ?? [], gaps: scoreRes.gaps ?? [] });
 
         const upserts: Promise<unknown>[] = [];
         if (cachedScore === null && scoreRes) {
@@ -1755,7 +1760,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               </div>
             </div>
 
-            {/* Edit profile link */}
+            {/* Edit CV button */}
             <button
               onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
               disabled={navigatingToBuilder}
@@ -1795,6 +1800,31 @@ export default function CvStudio({ userId, cvData }: Props) {
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Missing sections / profile gaps */}
+          {profileAnalysis && profileAnalysis.gaps.length > 0 && (
+            <div className="border-t border-slate-200 px-5 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">📋 Missing sections &amp; items</p>
+                <button
+                  onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
+                  disabled={navigatingToBuilder}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                >
+                  {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
+                  Edit CV
+                </button>
+              </div>
+              <ul className="space-y-2">
+                {profileAnalysis.gaps.map((gap, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-amber-900">
+                    <span className="text-amber-500 shrink-0 mt-0.5 font-bold">•</span>
+                    {gap}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
