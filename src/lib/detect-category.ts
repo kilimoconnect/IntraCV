@@ -118,17 +118,20 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
   if      (execTraining.length >= 2) score += 5;
   else if (execTraining.length === 1) score += 3;
 
-  // ── 7. Number of roles / career depth (max 10 pts) ──
-  if      (experiences.length >= 6) score += 10;
-  else if (experiences.length >= 4) score += 7;
-  else if (experiences.length >= 2) score += 4;
+  // ── 7. Number of roles / career depth (max 20 pts) ──
+  // Experience count is a strong career-level signal — weighted heavily.
+  if      (experiences.length >= 6) score += 20;
+  else if (experiences.length >= 4) score += 15;
+  else if (experiences.length >= 3) score += 10;
+  else if (experiences.length >= 2) score += 6;
   else if (experiences.length === 1) score += 2;
 
-  // ── 8. Years of experience — supporting factor only (max 5 pts) ──
+  // ── 8. Years of experience (max 10 pts) ──
   const yearsExp = calcYearsOfExperience(experiences);
-  if      (yearsExp >= 15) score += 5;
-  else if (yearsExp >= 8)  score += 3;
-  else if (yearsExp >= 3)  score += 1;
+  if      (yearsExp >= 15) score += 10;
+  else if (yearsExp >= 8)  score += 7;
+  else if (yearsExp >= 5)  score += 4;
+  else if (yearsExp >= 3)  score += 2;
 
   // ── 9. Achievements, skills, certifications ──
   if      (achievements.length >= 6)    score += 10;
