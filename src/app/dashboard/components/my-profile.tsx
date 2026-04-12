@@ -652,6 +652,36 @@ export default function MyProfile({
     <div className="space-y-6 stagger-children">
       {/* ─── CV Readiness Banner ─── */}
       {(() => {
+        /* ── Loading skeleton — shown until data is ready ── */
+        if (loadingReadiness) {
+          return (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-sm">
+              <div className="px-5 pt-5 pb-4 space-y-4">
+                <div className="h-5 bg-slate-200 rounded-lg animate-pulse w-3/4" />
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <div className="h-3.5 bg-slate-200 rounded animate-pulse w-40" />
+                    <div className="h-6 bg-slate-200 rounded animate-pulse w-12" />
+                  </div>
+                  <div className="h-3 w-full bg-slate-200 rounded-full animate-pulse" />
+                </div>
+                <div className="h-3.5 bg-slate-200 rounded animate-pulse w-56" />
+                <div className="h-11 bg-slate-200 rounded-xl animate-pulse w-full" />
+              </div>
+              <div className="border-t border-slate-200 px-5 py-4 grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="h-3 bg-slate-200 rounded animate-pulse w-1/2" />
+                  {[80, 90, 70].map((w, i) => <div key={i} className="h-2.5 bg-slate-200 rounded animate-pulse" style={{ width: `${w}%` }} />)}
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 bg-slate-200 rounded animate-pulse w-1/2" />
+                  {[75, 85, 65].map((w, i) => <div key={i} className="h-2.5 bg-slate-200 rounded animate-pulse" style={{ width: `${w}%` }} />)}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         const score = cvReadiness?.strength ?? 0;
         const isReady = score >= 75;
         const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-500" : "text-red-600";
@@ -674,16 +704,10 @@ export default function MyProfile({
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm font-medium text-slate-700">Your current CV strength</span>
-                  {loadingReadiness
-                    ? <span className="text-sm text-slate-400 animate-pulse">Analysing…</span>
-                    : <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}%</span>
-                  }
+                  <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}%</span>
                 </div>
                 <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-3 rounded-full transition-all duration-700 ${loadingReadiness ? "bg-slate-300 animate-pulse w-1/3" : barColor}`}
-                    style={loadingReadiness ? {} : { width: `${score}%` }}
-                  />
+                  <div className={`h-3 rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${score}%` }} />
                 </div>
               </div>
 
@@ -701,8 +725,8 @@ export default function MyProfile({
               </button>
             </div>
 
-            {/* Issues + Improvements — only show when loaded and has data */}
-            {!loadingReadiness && cvReadiness && (
+            {/* Issues + Improvements */}
+            {cvReadiness && (
               <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-red-200/60 border-t border-red-200/40">
 
                 {/* Issues */}
@@ -737,15 +761,6 @@ export default function MyProfile({
               </div>
             )}
 
-            {/* Loading skeleton for bottom section */}
-            {loadingReadiness && (
-              <div className="border-t border-red-200/40 px-5 py-4">
-                <div className="h-3 bg-slate-200 rounded animate-pulse w-1/3 mb-3" />
-                <div className="space-y-2">
-                  {[1,2,3].map(i => <div key={i} className="h-2.5 bg-slate-200 rounded animate-pulse" style={{ width: `${70 + i * 8}%` }} />)}
-                </div>
-              </div>
-            )}
           </div>
         );
       })()}
