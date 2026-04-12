@@ -598,7 +598,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const supabase = createClient();
 
   const detectedCategory = detectCategory(cvData);
-  const [step, setStep] = useState<"analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("analyze-profile");
+  const [step, setStep] = useState<"choose-path" | "analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("choose-path");
+  const [cvPath, setCvPath] = useState<"improve" | "apply" | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<LayoutVariant>("A");
   const [aiData, setAiData] = useState<CategoryCVData | null>(null);
@@ -1577,6 +1578,55 @@ export default function CvStudio({ userId, cvData }: Props) {
     );
   }
 
+  // ── Choose Path ──
+  if (step === "choose-path") {
+    return (
+      <div className="max-w-xl mx-auto py-14 px-4">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 mb-4">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800">CV Studio</h2>
+          <p className="text-sm text-slate-500 mt-1">What do you want to do?</p>
+        </div>
+
+        {/* Path cards */}
+        <div className="space-y-4">
+          {/* Path 1 — Improve my CV */}
+          <button
+            onClick={() => { setCvPath("improve"); setStep("analyze-profile"); }}
+            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-200"
+          >
+            <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-slate-800 text-base">Improve my CV</p>
+              <p className="text-sm text-slate-500 mt-0.5">Get a clean, professional CV in seconds</p>
+            </div>
+            <ArrowLeft className="h-5 w-5 text-slate-300 rotate-180 shrink-0 mt-0.5 group-hover:text-indigo-400 transition-colors" />
+          </button>
+
+          {/* Path 2 — Apply for a job */}
+          <button
+            onClick={() => { setCvPath("apply"); setStep("analyze-profile"); }}
+            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-400 hover:shadow-lg hover:shadow-violet-100/50 transition-all duration-200"
+          >
+            <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-slate-800 text-base">Apply for a job</p>
+              <p className="text-sm text-slate-500 mt-0.5">Optimize your CV for a specific job and increase your chances</p>
+            </div>
+            <ArrowLeft className="h-5 w-5 text-slate-300 rotate-180 shrink-0 mt-0.5 group-hover:text-violet-400 transition-colors" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Profile Analysis (initial step, auto-runs) ──
   if (step === "analyze-profile") {
     const ps = profileAnalysis?.completenessScore ?? 0;
@@ -1589,15 +1639,30 @@ export default function CvStudio({ userId, cvData }: Props) {
 
     return (
       <div className="max-w-2xl mx-auto py-10 px-4 space-y-4">
-        {/* Header */}
+        {/* Back + Header */}
+        <button
+          onClick={() => setStep("choose-path")}
+          className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-2 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600">
-            <Sparkles className="h-5 w-5" />
+          <div className={`p-2 rounded-lg ${cvPath === "apply" ? "bg-violet-100 text-violet-600" : "bg-indigo-100 text-indigo-600"}`}>
+            {cvPath === "apply" ? <Briefcase className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Profile Analysis</h2>
-            <p className="text-xs text-slate-500">AI reviews your profile before generating your CV</p>
+            <h2 className="text-xl font-bold text-slate-800">CV Studio</h2>
+            <p className="text-xs text-slate-500">
+              {cvPath === "apply" ? "Optimize your CV for a specific job" : "Design and generate your professional CV"}
+            </p>
           </div>
+        </div>
+
+        {/* Profile Analysis sub-header */}
+        <div className="flex items-center gap-2 px-1">
+          <Sparkles className="h-4 w-4 text-indigo-400 shrink-0" />
+          <p className="text-sm font-semibold text-slate-700">Profile Analysis</p>
+          <span className="text-xs text-slate-400">— AI reviews your profile before generating your CV</span>
         </div>
 
         {/* ── Profile card ── */}
@@ -1675,12 +1740,13 @@ export default function CvStudio({ userId, cvData }: Props) {
             </div>
           )}
 
-          {/* ── JD Section ── */}
+          {/* ── JD Section — only shown for "Apply for a job" path ── */}
+          {cvPath === "apply" && (
           <div className="px-6 py-5 space-y-4">
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-violet-600" />
               <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
-              <span className="text-xs text-slate-400 font-normal ml-1">(optional)</span>
+              <span className="text-xs text-red-500 font-medium ml-1">(mandatory)</span>
             </div>
 
             {/* Company name + Job title (side by side) */}
@@ -1792,36 +1858,54 @@ export default function CvStudio({ userId, cvData }: Props) {
               </div>
             )}
           </div>
+          )}
 
           {/* ── CTA ── */}
           <div className="px-6 py-5 bg-slate-50">
             {(() => {
-              const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
-              const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
-              const incomplete = !!(hasAny && !hasAll);
+              if (cvPath === "apply") {
+                const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
+                const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
+                const incomplete = !!(hasAny && !hasAll);
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        if (!hasAll) return;
+                        setShouldAutoOptimize(true);
+                        setStep("select");
+                      }}
+                      disabled={!hasAll || (profileAnalyzing && !profileAnalysis)}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generate Tailored CV →
+                    </button>
+                    {!hasAll && (
+                      <p className="text-center text-xs text-slate-400 mt-2">
+                        {incomplete
+                          ? "Please fill in all three: company name, job title, and job description."
+                          : "Fill in the job details above to continue."}
+                      </p>
+                    )}
+                    {hasAll && !profileAnalysis && profileAnalyzing && (
+                      <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
+                    )}
+                  </>
+                );
+              }
+              // Path: "improve" — no JD required
               return (
-                <>
-                  <button
-                    onClick={() => {
-                      if (incomplete) return;
-                      if (hasAll) setShouldAutoOptimize(true);
-                      setStep("select");
-                    }}
-                    disabled={incomplete || (profileAnalyzing && !profileAnalysis)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {hasAll ? "Generate Tailored CV →" : "Generate My CV →"}
-                  </button>
-                  {incomplete && (
-                    <p className="text-center text-xs text-red-400 mt-2">Please fill in all three: company name, job title, and job description.</p>
-                  )}
-                </>
+                <button
+                  onClick={() => setStep("select")}
+                  disabled={profileAnalyzing && !profileAnalysis}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Generate My CV →
+                </button>
               );
             })()}
-            {company.trim() && jobTitle.trim() && jobDescription.trim() && !profileAnalysis && profileAnalyzing && (
-              <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
-            )}
           </div>
         </div>
       </div>
