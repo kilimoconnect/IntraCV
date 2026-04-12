@@ -2321,7 +2321,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
             <PenLine className="h-3.5 w-3.5 shrink-0" />
-            <span>Use the editor panel on the right to edit all CV fields. You can also <strong>click any text</strong> in the CV to edit it inline.</span>
+            <span><strong>Two ways to edit:</strong> use the panel on the right for all sections, or <strong>click any text</strong> in the CV for a quick inline edit.</span>
           </div>
           {overflowSections.size > 0 && (
             <div className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
@@ -2551,13 +2551,12 @@ export default function CvStudio({ userId, cvData }: Props) {
 
         {/* CV Canvas — shrinks when panel is open */}
         <div className={`relative min-w-0 ${editMode ? "lg:flex-1 w-full" : "w-full"}`}>
-          <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={editMode ? () => {} : handleCvClick}>
+          <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
             {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
             {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
             {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
           </CVCanvasPreview>
-          {/* Inline editor only when panel is NOT open */}
-          {!editMode && inlineEditor && (
+          {inlineEditor && (
             <CVInlineEditor
               editor={inlineEditor}
               onSave={setFieldValue}
