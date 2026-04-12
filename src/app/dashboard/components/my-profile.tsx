@@ -650,6 +650,14 @@ export default function MyProfile({
 
   return (
     <div className="space-y-6 stagger-children">
+      {/* ─── Edit CV button — top right ─── */}
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={() => { setIsEditingCV(true); router.push("/cv-builder"); }} disabled={isEditingCV} className="rounded-xl border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm">
+          {isEditingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+          {isEditingCV ? "Loading..." : "Edit CV"}
+        </Button>
+      </div>
+
       {/* ─── CV Readiness Banner ─── */}
       {(() => {
         /* ── Loading skeleton — shown until data is ready ── */
@@ -765,12 +773,8 @@ export default function MyProfile({
         );
       })()}
 
-      {/* Header: Badges + Edit CV */}
+      {/* Header: Badges */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button size="sm" variant="outline" onClick={() => { setIsEditingCV(true); router.push("/cv-builder"); }} disabled={isEditingCV} className="rounded-xl border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm">
-          {isEditingCV ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
-          {isEditingCV ? "Loading..." : "Edit CV"}
-        </Button>
         {experiences.length > 0 && (
           <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-xl border border-blue-200/80 shadow-sm shadow-blue-100/50">
             <Clock className="h-4 w-4" />
