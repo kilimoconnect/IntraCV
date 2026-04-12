@@ -17,7 +17,7 @@ import {
   BriefcaseBusiness, Clock, PlusCircle, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
+import { INTERVIEW_UNLOCK_AMOUNT, INTERVIEW_UNLOCK_CURRENCY } from "@/lib/flutterwave";
 
 const FREE_QUOTA = 5;
 const PAID_BATCH = 20;
@@ -894,7 +894,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
             <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200">
               <div className="flex items-center gap-2 text-xs text-amber-800">
                 <Star className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-                <span>{paidQuota > 0 ? "Paid questions used up" : "Free questions used up"} · Unlock <strong>{PAID_BATCH} more</strong> for {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</span>
+                <span>{paidQuota > 0 ? "Paid questions used up" : "Free questions used up"} · Unlock <strong>{PAID_BATCH} more</strong> for {INTERVIEW_UNLOCK_CURRENCY} {INTERVIEW_UNLOCK_AMOUNT}</span>
               </div>
               <Button
                 size="sm"

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
+import { generateTxRef, INTERVIEW_UNLOCK_AMOUNT, INTERVIEW_UNLOCK_CURRENCY } from "@/lib/flutterwave";
 import { createPesapalPaymentLink } from "@/lib/pesapal-server";
 
 export async function POST(req: NextRequest) {
@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
     const base = process.env.NEXT_PUBLIC_SITE_URL || "";
     const { redirectUrl: link, orderTrackingId } = await createPesapalPaymentLink({
       id: txRef,
-      currency: DOWNLOAD_CURRENCY,
-      amount: DOWNLOAD_AMOUNT,
+      currency: INTERVIEW_UNLOCK_CURRENCY,
+      amount: INTERVIEW_UNLOCK_AMOUNT,
       description: "Unlock 20 more AI-powered interview questions",
       callbackUrl: redirectUrl,
       ipnBaseUrl: base,

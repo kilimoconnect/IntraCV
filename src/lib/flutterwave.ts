@@ -106,3 +106,5 @@ export function generateTxRef(userId: string): string {
 
 export const DOWNLOAD_AMOUNT = Number(process.env.NEXT_PUBLIC_CV_DOWNLOAD_PRICE ?? 1);
 export const DOWNLOAD_CURRENCY = process.env.NEXT_PUBLIC_CV_DOWNLOAD_CURRENCY ?? "USD";
+export const INTERVIEW_UNLOCK_AMOUNT = 5;
+export const INTERVIEW_UNLOCK_CURRENCY = "USD";
