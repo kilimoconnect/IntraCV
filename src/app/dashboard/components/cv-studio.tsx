@@ -654,6 +654,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     missingSkills?: string[];
     weakAreas?: string[];
   } | null>(null);
+  const [cvReadiness, setCvReadiness] = useState<{ strength: number; issues: string[]; improvements: string[] } | null>(null);
   const [profileAnalyzing, setProfileAnalyzing] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const overflowSections = useOverflowDetect(previewRef, [aiData, selectedTheme, selectedVariant]);
@@ -727,60 +728,80 @@ export default function CvStudio({ userId, cvData }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoDownload, cvPaidReady, aiData, selectedCategory]);
 
-  // ── Cached profile analysis: only re-run if CV data changed ──
+  // ── Cached readiness: shared with profile page via sessionStorage + cv_readiness_cache ──
   useEffect(() => {
     let cancelled = false;
+    const SESSION_KEY = `fusecv-readiness-${userId}`;
 
-    async function loadOrRunAnalysis() {
-      // Build a simple hash of the CV data to detect changes
-      const dataStr = JSON.stringify(cvData);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dataStr));
-      const dataHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
-
-      // Check for cached analysis in the database
-      const { data: cached } = await supabase
-        .from("profile_analysis")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-
-      if (cached && cached.data_hash === dataHash) {
-        // Data hasn't changed — use cached result
-        if (!cancelled) {
-          setProfileAnalysis({
-            completenessScore: cached.completeness_score,
-            strengths: cached.strengths,
-            gaps: cached.gaps,
-          });
-        }
-        return;
-      }
-
-      // Data changed or no cache — run fresh analysis
-      if (!cancelled) setProfileAnalyzing(true);
+    async function loadReadiness() {
       try {
-        const res = await fetch("/api/ai/analyze-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cvData }),
-        });
-        if (!res.ok) throw new Error("Analysis failed");
-        const data = await res.json();
+        const dataStr = JSON.stringify(cvData);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dataStr));
+        const dataHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+        // 1. sessionStorage — instant, no network
+        const session = sessionStorage.getItem(SESSION_KEY);
+        if (session) {
+          try {
+            const parsed = JSON.parse(session);
+            if (parsed.hash === dataHash && !cancelled) {
+              setCvReadiness(parsed.data);
+              return;
+            }
+          } catch { /* fall through */ }
+        }
+
+        // 2. DB cache — shared with profile page
+        const [{ data: profileCache }, { data: readinessCache }] = await Promise.all([
+          supabase.from("profile_analysis").select("data_hash, completeness_score").eq("user_id", userId).single(),
+          supabase.from("cv_readiness_cache").select("data_hash, cv_issues, cv_improvements").eq("user_id", userId).single(),
+        ]);
+
+        const cachedScore = profileCache?.data_hash === dataHash ? profileCache.completeness_score : null;
+        const cachedIssues = readinessCache?.data_hash === dataHash
+          ? { issues: readinessCache.cv_issues, improvements: readinessCache.cv_improvements }
+          : null;
+
+        if (cachedScore !== null && cachedIssues !== null) {
+          const data = { strength: cachedScore, ...cachedIssues };
+          if (!cancelled) setCvReadiness(data);
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data }));
+          return;
+        }
+
+        // 3. Call AI for missing parts
+        if (!cancelled) setProfileAnalyzing(true);
+        const [scoreRes, issuesRes] = await Promise.all([
+          cachedScore === null
+            ? fetch("/api/ai/analyze-profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cvData }) }).then(r => r.json())
+            : Promise.resolve(null),
+          cachedIssues === null
+            ? fetch("/api/ai/cv-readiness", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cvData }) }).then(r => r.json())
+            : Promise.resolve(null),
+        ]);
         if (cancelled) return;
 
-        setProfileAnalysis(data);
+        const strength = cachedScore ?? (scoreRes?.completenessScore ?? 0);
+        const issues = cachedIssues?.issues ?? (issuesRes?.cvIssues ?? []);
+        const improvements = cachedIssues?.improvements ?? (issuesRes?.cvImprovements ?? []);
+        const readiness = { strength, issues, improvements };
+        setCvReadiness(readiness);
 
-        // Save to database for next time
-        await supabase.from("profile_analysis").upsert(
-          {
-            user_id: userId,
-            data_hash: dataHash,
-            completeness_score: data.completenessScore ?? 0,
-            strengths: data.strengths ?? [],
-            gaps: data.gaps ?? [],
-          },
-          { onConflict: "user_id" }
-        );
+        const upserts: Promise<unknown>[] = [];
+        if (cachedScore === null && scoreRes) {
+          upserts.push(Promise.resolve(supabase.from("profile_analysis").upsert(
+            { user_id: userId, data_hash: dataHash, completeness_score: strength, strengths: scoreRes.strengths ?? [], gaps: scoreRes.gaps ?? [] },
+            { onConflict: "user_id" }
+          )));
+        }
+        if (cachedIssues === null && issuesRes) {
+          upserts.push(Promise.resolve(supabase.from("cv_readiness_cache").upsert(
+            { user_id: userId, data_hash: dataHash, cv_strength: strength, cv_issues: issues, cv_improvements: improvements, updated_at: new Date().toISOString() },
+            { onConflict: "user_id" }
+          )));
+        }
+        await Promise.all(upserts);
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data: readiness }));
       } catch {
         if (!cancelled) toast.error("Profile analysis failed.");
       } finally {
@@ -788,7 +809,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       }
     }
 
-    loadOrRunAnalysis();
+    loadReadiness();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1664,16 +1685,14 @@ export default function CvStudio({ userId, cvData }: Props) {
 
   // ── Profile Analysis (initial step, auto-runs) ──
   if (step === "analyze-profile") {
-    const ps = profileAnalysis?.completenessScore ?? 0;
-    const psColor = ps >= 75 ? "text-emerald-600" : ps >= 50 ? "text-amber-600" : "text-red-600";
-    const psBar   = ps >= 75 ? "bg-emerald-500"   : ps >= 50 ? "bg-amber-500"   : "bg-red-500";
-    const jdScore = profileAnalysis?.atsScore;
-    const jdColor = jdScore !== undefined ? (jdScore >= 75 ? "text-emerald-600" : jdScore >= 50 ? "text-amber-600" : "text-red-600") : "";
-    const jdBar   = jdScore !== undefined ? (jdScore >= 75 ? "bg-emerald-500"   : jdScore >= 50 ? "bg-amber-500"   : "bg-red-500")   : "";
-    const hasJDResult = jdScore !== undefined;
+    const score = cvReadiness?.strength ?? 0;
+    const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-500" : "text-red-600";
+    const barColor   = score >= 75 ? "bg-emerald-500"   : score >= 50 ? "bg-amber-500"   : "bg-red-500";
+    const isReady    = score >= 75;
 
     return (
-      <div className="max-w-2xl mx-auto py-10 px-4 space-y-4">
+      <div className="max-w-2xl mx-auto pt-4 pb-10 px-4 space-y-4">
+
         {/* Back + Header */}
         <button
           onClick={() => setStep("choose-path")}
@@ -1693,15 +1712,8 @@ export default function CvStudio({ userId, cvData }: Props) {
           </div>
         </div>
 
-        {/* Profile Analysis sub-header */}
-        <div className="flex items-center gap-2 px-1">
-          <Sparkles className="h-4 w-4 text-indigo-400 shrink-0" />
-          <p className="text-sm font-semibold text-slate-700">Profile Analysis</p>
-          <span className="text-xs text-slate-400">— AI reviews your profile before generating your CV</span>
-        </div>
-
-        {/* Banner when returning from plan selection */}
-        {selectedPlan && (cvPath === "apply") && (
+        {/* Plan banner when returning from plan selection */}
+        {selectedPlan && cvPath === "apply" && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-xs text-violet-800">
             <span className="text-base">{selectedPlan === "full" ? "🔥" : "⭐"}</span>
             <span>
@@ -1711,248 +1723,152 @@ export default function CvStudio({ userId, cvData }: Props) {
           </div>
         )}
 
-        {/* ── Profile card ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-elevated divide-y divide-slate-100 overflow-hidden">
+        {/* ── CV Readiness Banner ── */}
+        <div className={`rounded-2xl border overflow-hidden shadow-sm ${isReady ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50" : "border-red-200 bg-gradient-to-br from-red-50 to-amber-50"}`}>
+          <div className="px-5 pt-5 pb-4">
 
-          {/* Loading */}
-          {profileAnalyzing && !profileAnalysis && (
-            <div className="flex items-center gap-3 px-6 py-5 text-slate-500">
-              <Loader2 className="h-5 w-5 animate-spin text-indigo-600 shrink-0" />
-              <span className="text-sm">Analyzing your profile…</span>
+            {/* Status */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className={`text-base font-bold ${isReady ? "text-emerald-800" : "text-red-700"}`}>
+                {profileAnalyzing && !cvReadiness
+                  ? "Analysing your profile…"
+                  : isReady
+                  ? "Your CV looks strong and job-ready ✅"
+                  : "Your CV is not ready for job applications ❌"}
+              </span>
             </div>
-          )}
 
-          {/* Completeness score */}
-          {profileAnalysis && (
-            <div className="flex items-center gap-4 px-6 py-5">
-              <div className={`text-4xl font-black tabular-nums shrink-0 ${psColor}`}>{ps}%</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-xs font-semibold text-slate-700">Profile Completeness</span>
-                </div>
-                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div className={`h-2 rounded-full ${psBar}`} style={{ width: `${ps}%` }} />
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1">
-                  {ps >= 75 ? "Strong profile — ready to generate a great CV"
-                   : ps >= 50 ? "Good profile — a few gaps to address"
-                   : "Thin profile — consider adding more detail before generating"}
-                </p>
+            {/* Strength bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-medium text-slate-700">Your current CV strength</span>
+                {profileAnalyzing && !cvReadiness
+                  ? <span className="text-sm text-slate-400 animate-pulse">Analysing…</span>
+                  : <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}%</span>
+                }
+              </div>
+              <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-3 rounded-full transition-all duration-700 ${profileAnalyzing && !cvReadiness ? "bg-slate-300 animate-pulse w-1/3" : barColor}`}
+                  style={profileAnalyzing && !cvReadiness ? {} : { width: `${score}%` }}
+                />
               </div>
             </div>
-          )}
 
-          {/* Strengths */}
-          {profileAnalysis && profileAnalysis.strengths.length > 0 && (
-            <div className="px-6 py-4">
-              <p className="text-xs font-semibold text-slate-700 mb-2">Profile Strengths</p>
-              <ul className="space-y-1.5">
-                {profileAnalysis.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                    {s}
-                  </li>
-                ))}
-              </ul>
+            {/* Edit profile link */}
+            <button
+              onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
+              disabled={navigatingToBuilder}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 mb-1 transition-colors disabled:opacity-60"
+            >
+              {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
+              Edit profile to improve your score
+            </button>
+          </div>
+
+          {/* Issues + Improvements */}
+          {cvReadiness && (cvReadiness.issues.length > 0 || cvReadiness.improvements.length > 0) && (
+            <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 border-t border-slate-200">
+              {cvReadiness.issues.length > 0 && (
+                <div className="px-5 py-4">
+                  <p className="text-[11px] font-bold text-red-700 uppercase tracking-wider mb-3">⚠️ Issues found in your CV</p>
+                  <ul className="space-y-2">
+                    {cvReadiness.issues.map((issue, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-red-800">
+                        <span className="text-red-400 shrink-0 mt-0.5 font-bold">–</span>
+                        {issue}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {cvReadiness.improvements.length > 0 && (
+                <div className="px-5 py-4 bg-emerald-50/60">
+                  <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-3">What we will improve</p>
+                  <ul className="space-y-2">
+                    {cvReadiness.improvements.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-emerald-800">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
+        </div>
 
-          {/* Gaps */}
-          {profileAnalysis && profileAnalysis.gaps.length > 0 && (
-            <div className="px-6 py-4">
-              <p className="text-xs font-semibold text-slate-700 mb-2">Profile Gaps</p>
-              <ul className="space-y-1.5 mb-4">
-                {profileAnalysis.gaps.map((g, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                    <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                    {g}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
-                disabled={navigatingToBuilder}
-                className="w-full flex items-center justify-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-70"
-              >
-                {navigatingToBuilder
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <UserPen className="h-3.5 w-3.5" />}
-                Edit Profile to fix these gaps
-              </button>
-              <p className="text-center text-[11px] text-slate-400 mt-2">
-                You can also proceed as is — gaps won&apos;t stop CV generation.
-              </p>
-            </div>
-          )}
-
-          {/* ── JD Section — only shown for "Apply for a job" path ── */}
-          {cvPath === "apply" && (
+        {/* ── JD Section — only for "Apply for a job" path ── */}
+        {cvPath === "apply" && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-5 space-y-4">
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4 text-violet-600" />
               <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
             </div>
 
-            {/* Company name + Job title (side by side) */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium text-slate-500 mb-1 block">
-                  Company Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={company}
-                  onChange={(e) => setCompany(e.target.value)}
-                  placeholder="e.g. Acme Corp"
-                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(jobTitle.trim() || jobDescription.trim()) && !company.trim() ? "border-red-200" : "border-slate-200"}`}
-                />
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Name <span className="text-red-500">*</span></label>
+                <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g. Acme Corp"
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(jobTitle.trim() || jobDescription.trim()) && !company.trim() ? "border-red-200" : "border-slate-200"}`} />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-slate-500 mb-1 block">
-                  Job Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
-                  placeholder="e.g. Senior Product Manager"
-                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(company.trim() || jobDescription.trim()) && !jobTitle.trim() ? "border-red-200" : "border-slate-200"}`}
-                />
+                <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Title <span className="text-red-500">*</span></label>
+                <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Senior Product Manager"
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(company.trim() || jobDescription.trim()) && !jobTitle.trim() ? "border-red-200" : "border-slate-200"}`} />
               </div>
             </div>
 
-            {/* Company address */}
             <div>
               <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Address</label>
-              <input
-                type="text"
-                value={companyAddress}
-                onChange={(e) => setCompanyAddress(e.target.value)}
-                placeholder="e.g. 10 Downing St, London, UK"
-                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400"
-              />
+              <input type="text" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} placeholder="e.g. 10 Downing St, London, UK"
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400" />
             </div>
 
-            {/* Job description */}
             <div>
-              <label className="text-[11px] font-medium text-slate-500 mb-1 block">
-                Job Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => {
-                  setJobDescription(e.target.value);
-                  if (hasJDResult) setProfileAnalysis((prev) => prev ? { ...prev, atsScore: undefined, missingSkills: undefined, weakAreas: undefined } : null);
-                  setJobAnalysis(null);
-                }}
-                rows={5}
+              <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description <span className="text-red-500">*</span></label>
+              <textarea value={jobDescription} onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }} rows={5}
                 placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
-                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`}
-              />
+                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`} />
             </div>
-
-            {jobDescription.trim() && !hasJDResult && (
-              <button
-                onClick={() => void handleAnalyzeProfile()}
-                disabled={profileAnalyzing}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 text-white text-sm font-semibold py-2.5 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
-              >
-                {profileAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                {profileAnalyzing ? "Analyzing…" : "Analyze Profile vs Job Description"}
-              </button>
-            )}
-
-            {/* JD Results */}
-            {hasJDResult && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 p-3 rounded-xl border bg-slate-50">
-                  <div className={`text-3xl font-black tabular-nums shrink-0 ${jdColor}`}>{jdScore}%</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-700 mb-1">ATS Match Score</p>
-                    <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div className={`h-1.5 rounded-full ${jdBar}`} style={{ width: `${jdScore}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-                {profileAnalysis?.missingSkills && profileAnalysis.missingSkills.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Missing Skills / Keywords</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {profileAnalysis.missingSkills.map((s, i) => (
-                        <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {profileAnalysis?.weakAreas && profileAnalysis.weakAreas.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 mb-2">Weak Areas</p>
-                    <ul className="space-y-1.5">
-                      {profileAnalysis.weakAreas.map((a, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                          <AlertCircle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                          {a}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-          )}
 
-          {/* ── CTA ── */}
-          <div className="px-6 py-5 bg-slate-50">
+          <div className="px-6 py-5 bg-slate-50 border-t border-slate-100">
             {(() => {
-              if (cvPath === "apply") {
-                const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
-                const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
-                const incomplete = !!(hasAny && !hasAll);
-                return (
-                  <>
-                    <button
-                      onClick={() => {
-                        if (!hasAll) return;
-                        setShouldAutoOptimize(true);
-                        setStep("select");
-                      }}
-                      disabled={!hasAll || (profileAnalyzing && !profileAnalysis)}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      Generate Tailored CV →
-                    </button>
-                    {!hasAll && (
-                      <p className="text-center text-xs text-slate-400 mt-2">
-                        {incomplete
-                          ? "Please fill in all three: company name, job title, and job description."
-                          : "Fill in the job details above to continue."}
-                      </p>
-                    )}
-                    {hasAll && !profileAnalysis && profileAnalyzing && (
-                      <p className="text-center text-xs text-slate-400 mt-2">Wait for profile analysis to complete…</p>
-                    )}
-                  </>
-                );
-              }
-              // Path: "improve" — no JD required
+              const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
+              const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
+              const incomplete = !!(hasAny && !hasAll);
               return (
-                <button
-                  onClick={() => setStep("select")}
-                  disabled={profileAnalyzing && !profileAnalysis}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Generate My CV →
-                </button>
+                <>
+                  <button
+                    onClick={() => { if (!hasAll) return; setShouldAutoOptimize(true); setStep("select"); }}
+                    disabled={!hasAll}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Generate Tailored CV →
+                  </button>
+                  {incomplete && <p className="text-center text-xs text-red-400 mt-2">Please fill in company name, job title, and job description.</p>}
+                </>
               );
             })()}
           </div>
         </div>
+        )}
+
+        {/* ── CTA for Path 1 ── */}
+        {cvPath !== "apply" && (
+          <button
+            onClick={() => setStep("select")}
+            disabled={profileAnalyzing && !cvReadiness}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
+          >
+            <Sparkles className="h-4 w-4" />
+            Generate My CV →
+          </button>
+        )}
       </div>
     );
   }
