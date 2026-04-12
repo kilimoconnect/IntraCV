@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
-
-const PAID_BATCH = 20;
+import { FREE_QUOTA, PAID_BATCH } from "@/lib/interview-constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,12 +65,12 @@ export async function POST(req: NextRequest) {
 
     const generated = profile?.interview_questions_generated ?? 0;
     const paidQuota = profile?.interview_questions_paid_quota ?? 0;
-    const totalAllowed = 5 + paidQuota;
+    const totalAllowed = FREE_QUOTA + paidQuota;
     const remaining = Math.max(0, totalAllowed - generated);
 
     return NextResponse.json({
       verified: true,
-      usage: { generated, paidQuota, totalAllowed, remaining, freeQuota: 5, paidBatch: PAID_BATCH },
+      usage: { generated, paidQuota, totalAllowed, remaining, freeQuota: FREE_QUOTA, paidBatch: PAID_BATCH },
     });
   } catch (err: any) {
     console.error("Interview unlock error:", err);

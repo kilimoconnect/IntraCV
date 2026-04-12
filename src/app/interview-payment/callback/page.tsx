@@ -4,9 +4,7 @@ import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-serv
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import InterviewCallbackClient from "./callback-client";
-
-const PAID_BATCH = 20;
-const FREE_QUOTA = 5;
+import { FREE_QUOTA, PAID_BATCH } from "@/lib/interview-constants";
 
 // Server Component — verification + quota grant happen during SSR,
 // result is ready the moment HTML reaches the browser.

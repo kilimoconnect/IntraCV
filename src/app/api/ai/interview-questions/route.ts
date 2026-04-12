@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
-
-const FREE_QUOTA = 5;
-const PAID_BATCH = 20;
+import { FREE_QUOTA, PAID_BATCH } from "@/lib/interview-constants";
 
 async function getUsage(userId: string) {
   const admin = createAdminSupabase();
@@ -32,12 +30,17 @@ export async function POST(req: NextRequest) {
     const { jobRole, company, jobDescription, action, question, answer,
             existingQuestions, count, startId, profileContext } = body;
 
-    // ─── Auth (required for generate; optional for feedback) ───
+    // ─── Auth ───
     const serverSupabase = await createServerSupabase();
     const { data: { user } } = await serverSupabase.auth.getUser();
 
     // Generate interview questions
     if (action === "generate") {
+      // Auth is required to enforce quota
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
       if (!jobRole) {
         return NextResponse.json({ error: "Job role is required" }, { status: 400 });
       }
@@ -45,22 +48,17 @@ export async function POST(req: NextRequest) {
       const requested = Math.max(1, Math.min(20, count || 5));
 
       // ── Quota check ──
-      if (user) {
-        const usage = await getUsage(user.id);
-        if (usage.remaining <= 0) {
-          return NextResponse.json({
-            error: "quota_exceeded",
-            usage: { generated: usage.generated, paidQuota: usage.paidQuota, remaining: 0, freeQuota: FREE_QUOTA, paidBatch: PAID_BATCH },
-          }, { status: 402 });
-        }
+      const usage = await getUsage(user.id);
+      if (usage.remaining <= 0) {
+        return NextResponse.json({
+          error: "quota_exceeded",
+          usage: { generated: usage.generated, paidQuota: usage.paidQuota, remaining: 0, freeQuota: FREE_QUOTA, paidBatch: PAID_BATCH },
+        }, { status: 402 });
       }
 
       // Cap to remaining quota
-      let actualCount = requested;
-      if (user) {
-        const u2 = await getUsage(user.id);
-        actualCount = Math.min(requested, u2.remaining);
-      }
+      const u2 = await getUsage(user.id);
+      let actualCount = Math.min(requested, u2.remaining);
 
       const idOffset = startId || 1;
 
@@ -114,12 +112,12 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
       const questions = Array.isArray(parsed) ? parsed : parsed.questions || parsed[Object.keys(parsed)[0]] || [];
 
       // ── Increment lifetime counter ──
-      if (user && questions.length > 0) {
+      if (questions.length > 0) {
         await incrementGenerated(user.id, questions.length);
       }
 
       // Return usage info so client can refresh display
-      const updatedUsage = user ? await getUsage(user.id) : null;
+      const updatedUsage = await getUsage(user.id);
 
       return NextResponse.json({ questions, usage: updatedUsage });
     }

@@ -7,10 +7,7 @@ import { toast } from "sonner";
 import {
   Sparkles, ArrowLeft, Loader2, CheckCircle2, Zap, Shield, RefreshCw,
 } from "lucide-react";
-import { DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
-
-const FREE_QUOTA = 5;
-const PAID_BATCH = 20;
+import { FREE_QUOTA, PAID_BATCH, INTERVIEW_UNLOCK_AMOUNT, INTERVIEW_UNLOCK_CURRENCY } from "@/lib/interview-constants";
 
 const features = [
   { icon: Zap,          label: `${PAID_BATCH} new questions added to your account`,         color: "text-indigo-500", bg: "bg-indigo-50" },
@@ -78,7 +75,7 @@ function UpgradeContent() {
       <div className="grid grid-cols-3 bg-indigo-50">
         <div className="px-4 py-3 text-sm text-indigo-700 font-bold">Top-Up</div>
         <div className="px-4 py-3 text-sm text-indigo-600 font-bold text-center">+{PAID_BATCH}</div>
-        <div className="px-4 py-3 text-sm text-indigo-600 font-bold text-center">{DOWNLOAD_AMOUNT.toLocaleString()}</div>
+        <div className="px-4 py-3 text-sm text-indigo-600 font-bold text-center">{INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}</div>
       </div>
     </div>
   );
@@ -92,7 +89,7 @@ function UpgradeContent() {
     >
       {loading
         ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Opening payment…</>
-        : <><Sparkles className="mr-2 h-5 w-5" />Pay {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}</>}
+        : <><Sparkles className="mr-2 h-5 w-5" />Pay {INTERVIEW_UNLOCK_CURRENCY} {INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}</>}
     </Button>
   );
 
@@ -126,7 +123,7 @@ function UpgradeContent() {
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">One-time top-up</p>
             <p className="text-3xl font-extrabold text-slate-900 leading-none">
-              {DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toLocaleString()}
+              {INTERVIEW_UNLOCK_CURRENCY} {INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}
             </p>
             <p className="text-xs text-slate-400 mt-1.5">One payment · {PAID_BATCH} questions</p>
           </div>
@@ -192,7 +189,7 @@ function UpgradeContent() {
             <div className="mt-auto pt-8">
               <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest mb-2">One-time top-up</p>
               <p className="text-4xl font-extrabold leading-none">
-                {DOWNLOAD_CURRENCY}<br />{DOWNLOAD_AMOUNT.toLocaleString()}
+                {INTERVIEW_UNLOCK_CURRENCY}<br />{INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}
               </p>
               <div className="flex items-center gap-2 mt-3">
                 <PricingBadge />

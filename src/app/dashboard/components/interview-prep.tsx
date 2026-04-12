@@ -17,10 +17,7 @@ import {
   BriefcaseBusiness, Clock, PlusCircle, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { INTERVIEW_UNLOCK_AMOUNT, INTERVIEW_UNLOCK_CURRENCY } from "@/lib/flutterwave";
-
-const FREE_QUOTA = 5;
-const PAID_BATCH = 20;
+import { FREE_QUOTA, PAID_BATCH, INTERVIEW_UNLOCK_AMOUNT, INTERVIEW_UNLOCK_CURRENCY } from "@/lib/interview-constants";
 
 interface UsageState {
   generated: number;
