@@ -11,9 +11,10 @@ import {
   Globe, Users, ScrollText, Mail, Phone, MapPin, Linkedin,
   Link as LinkIcon, Pencil, Trophy, Building2, FolderKanban, Shield,
   BookMarked, PenLine, Wrench, Heart, Plus, Clock,
-  AlertCircle, AlertTriangle, XCircle, Loader2,
+  AlertCircle, AlertTriangle, XCircle, Loader2, CheckCircle2,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface MyProfileProps {
   personalInfo: any;
@@ -34,6 +35,8 @@ interface MyProfileProps {
   publications: any[];
   tools: any[];
   volunteer: any[];
+  userId: string;
+  cvData: Record<string, unknown>;
 }
 
 // ─── Career Category System ───
@@ -212,12 +215,78 @@ export default function MyProfile({
   personalInfo, summary, experiences, education, skills,
   certifications, languages, referees, declaration,
   keyAchievements, awards, memberships, projects, boardRoles, execTraining,
-  publications, tools, volunteer,
+  publications, tools, volunteer, userId, cvData,
 }: MyProfileProps) {
   const router = useRouter();
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
   const [isEditingCV, setIsEditingCV] = useState(false);
   const [loadingSection, setLoadingSection] = useState<string | null>(null);
+
+  // ─── CV Readiness Banner state ───
+  interface CvReadiness { strength: number; issues: string[]; improvements: string[] }
+  const [cvReadiness, setCvReadiness] = useState<CvReadiness | null>(null);
+  const [loadingReadiness, setLoadingReadiness] = useState(true);
+
+  useEffect(() => {
+    if (!userId || !cvData) return;
+    const supabase = createClient();
+    let cancelled = false;
+
+    async function loadReadiness() {
+      try {
+        // 1. Hash the cvData
+        const dataStr = JSON.stringify(cvData);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dataStr));
+        const dataHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+        // 2. Check cache
+        const { data: cached } = await supabase
+          .from("cv_readiness_cache")
+          .select("data_hash, cv_strength, cv_issues, cv_improvements")
+          .eq("user_id", userId)
+          .single();
+
+        if (cached && cached.data_hash === dataHash) {
+          if (!cancelled) {
+            setCvReadiness({ strength: cached.cv_strength, issues: cached.cv_issues, improvements: cached.cv_improvements });
+            setLoadingReadiness(false);
+          }
+          return;
+        }
+
+        // 3. Call AI
+        const res = await fetch("/api/ai/cv-readiness", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cvData }),
+        });
+        if (!res.ok) throw new Error("Readiness API failed");
+        const data = await res.json();
+        if (cancelled) return;
+
+        const readiness: CvReadiness = {
+          strength: data.cvStrength ?? 0,
+          issues: data.cvIssues ?? [],
+          improvements: data.cvImprovements ?? [],
+        };
+        setCvReadiness(readiness);
+
+        // 4. Cache to DB
+        await supabase.from("cv_readiness_cache").upsert(
+          { user_id: userId, data_hash: dataHash, cv_strength: readiness.strength, cv_issues: readiness.issues, cv_improvements: readiness.improvements, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+      } catch (err) {
+        console.error("[cv-readiness]", err);
+      } finally {
+        if (!cancelled) setLoadingReadiness(false);
+      }
+    }
+
+    void loadReadiness();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   const handleGenerateCV = () => {
     setIsGeneratingCV(true);
@@ -562,6 +631,106 @@ export default function MyProfile({
 
   return (
     <div className="space-y-6 stagger-children">
+      {/* ─── CV Readiness Banner ─── */}
+      {(() => {
+        const score = cvReadiness?.strength ?? 0;
+        const isReady = score >= 75;
+        const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-500" : "text-red-600";
+        const barColor  = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500"  : "bg-red-500";
+
+        return (
+          <div className={`rounded-2xl border overflow-hidden shadow-sm ${isReady ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50" : "border-red-200 bg-gradient-to-br from-red-50 to-amber-50"}`}>
+
+            {/* Top section */}
+            <div className="px-5 pt-5 pb-4">
+
+              {/* Status headline */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className={`text-base font-bold ${isReady ? "text-emerald-800" : "text-red-700"}`}>
+                  {isReady ? "Your CV looks strong and job-ready ✅" : "Your CV is not ready for job applications ❌"}
+                </span>
+              </div>
+
+              {/* Strength bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium text-slate-700">Your current CV strength</span>
+                  {loadingReadiness
+                    ? <span className="text-sm text-slate-400 animate-pulse">Analysing…</span>
+                    : <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}%</span>
+                  }
+                </div>
+                <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-700 ${loadingReadiness ? "bg-slate-300 animate-pulse w-1/3" : barColor}`}
+                    style={loadingReadiness ? {} : { width: `${score}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Improve text + CTA */}
+              <p className="text-sm font-semibold text-slate-700 mb-3">
+                {isReady ? "Keep your CV polished — generate or update it anytime" : "Improve your chances of getting hired"}
+              </p>
+              <button
+                onClick={handleGenerateCV}
+                disabled={isGeneratingCV}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 disabled:opacity-70 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200/50 transition-all duration-200 text-sm"
+              >
+                {isGeneratingCV ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                Generate Professional CV
+              </button>
+            </div>
+
+            {/* Issues + Improvements — only show when loaded and has data */}
+            {!loadingReadiness && cvReadiness && (
+              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-red-200/60 border-t border-red-200/40">
+
+                {/* Issues */}
+                {cvReadiness.issues.length > 0 && (
+                  <div className="px-5 py-4">
+                    <p className="text-[11px] font-bold text-red-700 uppercase tracking-wider mb-3">⚠️ Issues found in your CV</p>
+                    <ul className="space-y-2">
+                      {cvReadiness.issues.map((issue, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-red-800">
+                          <span className="text-red-400 shrink-0 mt-0.5 font-bold">–</span>
+                          {issue}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Improvements */}
+                {cvReadiness.improvements.length > 0 && (
+                  <div className="px-5 py-4 bg-emerald-50/60">
+                    <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-3">What we will improve</p>
+                    <ul className="space-y-2">
+                      {cvReadiness.improvements.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-emerald-800">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Loading skeleton for bottom section */}
+            {loadingReadiness && (
+              <div className="border-t border-red-200/40 px-5 py-4">
+                <div className="h-3 bg-slate-200 rounded animate-pulse w-1/3 mb-3" />
+                <div className="space-y-2">
+                  {[1,2,3].map(i => <div key={i} className="h-2.5 bg-slate-200 rounded animate-pulse" style={{ width: `${70 + i * 8}%` }} />)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Header: Badges + Actions */}
       <div className="space-y-3 sm:space-y-0 sm:flex sm:justify-between sm:items-center">
         {/* Badges row */}

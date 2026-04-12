@@ -278,6 +278,8 @@ function DashboardPage() {
           publications={publications}
           tools={tools}
           volunteer={volunteer}
+          userId={user.id}
+          cvData={cvData}
         />
       )}
 
