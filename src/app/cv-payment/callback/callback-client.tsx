@@ -9,21 +9,19 @@ interface Props {
   verified: boolean;
   errorMsg: string;
   plan: "starter" | "professional" | "full";
-  interviewQuotaGranted: boolean;
+  interviewQuotaGranted?: boolean;
 }
 
-export default function CallbackClient({ verified, errorMsg, plan, interviewQuotaGranted }: Props) {
+export default function CallbackClient({ verified, errorMsg, plan }: Props) {
   const router = useRouter();
 
   useEffect(() => {
     if (!verified) return;
     sessionStorage.setItem("fusecv-cv-paid", "1");
     sessionStorage.setItem("fusecv-auto-download", "1");
-    if (interviewQuotaGranted) {
-      sessionStorage.setItem("fusecv-interview-unlocked", "20");
-    }
+    // Interview quota is granted server-side silently — no toast/redirect needed
     router.push("/dashboard?tab=studio");
-  }, [verified, interviewQuotaGranted, router]);
+  }, [verified, router]);
 
   if (verified) {
     const bullets = [
