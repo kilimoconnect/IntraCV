@@ -78,36 +78,6 @@ export default function PrivacyPage() {
           </ul>
         </Section>
 
-        <Section title="4. Third-Party Services">
-          <p className="mb-3">We use the following trusted providers, each bound by their own privacy policies:</p>
-          <div className="overflow-hidden rounded-xl border border-slate-200">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-700">Provider</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-700">Purpose</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {[
-                  ["Supabase", "Database, authentication, and file storage"],
-                  ["Brevo (Sendinblue)", "Transactional email delivery"],
-                  ["Google Gemini / OpenAI", "AI-powered CV generation and extraction"],
-                  ["Pesapal", "Payment processing for CV downloads"],
-                  ["Vercel", "Hosting and edge infrastructure"],
-                ].map(([name, purpose]) => (
-                  <tr key={name} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-medium text-slate-800">{name}</td>
-                    <td className="px-4 py-3 text-slate-600">{purpose}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-3 text-slate-500 text-sm">
-            We do not sell, rent, or trade your personal data with any third party for marketing purposes.
-          </p>
-        </Section>
 
         <Section title="5. Data Retention">
           <ul className="space-y-3">
