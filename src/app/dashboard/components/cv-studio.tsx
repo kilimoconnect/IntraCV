@@ -1810,15 +1810,6 @@ export default function CvStudio({ userId, cvData }: Props) {
               </div>
             </div>
 
-            {/* Edit CV button */}
-            <button
-              onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
-              disabled={navigatingToBuilder}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 mb-1 transition-colors disabled:opacity-60"
-            >
-              {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
-              Edit profile to improve your score
-            </button>
           </div>
 
           {/* Issues + Improvements */}
