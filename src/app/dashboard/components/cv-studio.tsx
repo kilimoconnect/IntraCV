@@ -115,6 +115,56 @@ function detectCategory(cvData: Record<string, unknown>): CareerCategory {
   return "junior";
 }
 
+// ─── Category-specific gap checker ───
+function getCategoryGaps(category: CareerCategory, cvData: Record<string, unknown>): string[] {
+  const gaps: string[] = [];
+  const pi         = (cvData.personalInfo as any) ?? {};
+  const summary    = (cvData.summary as string) ?? "";
+  const exps       = Array.isArray(cvData.experiences)      ? cvData.experiences      : [];
+  const edu        = Array.isArray(cvData.education)         ? cvData.education         : [];
+  const skills     = Array.isArray(cvData.skills)            ? cvData.skills            : [];
+  const certs      = Array.isArray(cvData.certifications)    ? cvData.certifications    : [];
+  const langs      = Array.isArray(cvData.languages)         ? cvData.languages         : [];
+  const refs       = Array.isArray(cvData.referees)          ? cvData.referees          : [];
+  const achieve    = Array.isArray(cvData.keyAchievements)   ? cvData.keyAchievements   : [];
+  const awards     = Array.isArray(cvData.awards)            ? cvData.awards            : [];
+  const projects   = Array.isArray(cvData.projects)          ? cvData.projects          : [];
+  const boards     = Array.isArray(cvData.boardRoles)        ? cvData.boardRoles        : [];
+  const pubs       = Array.isArray(cvData.publications)      ? cvData.publications      : [];
+  const execTrain  = Array.isArray(cvData.executiveTraining) ? cvData.executiveTraining : [];
+
+  // Common across all categories
+  if (!summary.trim())        gaps.push("No professional summary — add one to introduce yourself");
+  if (!pi.linkedin?.trim())   gaps.push("Missing LinkedIn URL");
+  if (edu.length === 0)       gaps.push("No education entries added");
+  if (skills.length === 0)    gaps.push("No skills listed");
+  if (refs.length === 0)      gaps.push("No referees added");
+
+  if (category === "junior") {
+    if (exps.length === 0)    gaps.push("No work experience added — even internships count");
+    if (projects.length === 0) gaps.push("No projects listed — add personal or academic projects");
+    if (langs.length === 0)   gaps.push("No languages listed");
+  }
+
+  if (category === "mid-senior") {
+    if (exps.length < 3)      gaps.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — mid-senior CVs typically show 3–6 roles`);
+    if (achieve.length === 0) gaps.push("No key achievements listed — these are critical at mid-senior level");
+    if (certs.length === 0)   gaps.push("No certifications listed");
+    if (langs.length === 0)   gaps.push("No languages listed");
+    if (awards.length === 0)  gaps.push("No awards or recognition listed");
+  }
+
+  if (category === "executive") {
+    if (exps.length < 5)      gaps.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — executive CVs typically show 5+ roles`);
+    if (achieve.length === 0) gaps.push("No key achievements listed — essential for executive profiles");
+    if (boards.length === 0)  gaps.push("No board roles listed — add any board or advisory positions");
+    if (pubs.length === 0 && execTrain.length === 0) gaps.push("No publications or executive training — adds credibility at executive level");
+    if (certs.length === 0)   gaps.push("No certifications or professional memberships");
+  }
+
+  return gaps;
+}
+
 // ─── Helpers ───
 
 function asObject(value: unknown): LooseObject {
@@ -1803,33 +1853,41 @@ export default function CvStudio({ userId, cvData }: Props) {
             </div>
           )}
 
-          {/* Missing sections / profile gaps */}
-          {profileAnalysis && profileAnalysis.gaps.length > 0 && (
-            <div className="border-t border-slate-200 px-5 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">📋 Missing sections &amp; items</p>
-                <button
-                  onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
-                  disabled={navigatingToBuilder}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
-                >
-                  {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
-                  Edit CV
-                </button>
+          {/* Missing sections / profile gaps — computed per detected category */}
+          {(() => {
+            const detectedCat = detectCategory(cvData);
+            const categoryGaps = getCategoryGaps(detectedCat, cvData);
+            if (categoryGaps.length === 0) return null;
+            const catLabel = detectedCat === "mid-senior" ? "Mid-Senior" : detectedCat.charAt(0).toUpperCase() + detectedCat.slice(1);
+            return (
+              <div className="border-t border-slate-200 px-5 py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
+                    📋 Missing for {catLabel} CV
+                  </p>
+                  <button
+                    onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
+                    disabled={navigatingToBuilder}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
+                    Edit CV
+                  </button>
+                </div>
+                <ul className="space-y-2">
+                  {categoryGaps.map((gap, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-amber-900">
+                      <span className="text-amber-500 shrink-0 mt-0.5 font-bold">•</span>
+                      {gap}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[11px] text-slate-500 italic">
+                  You can still proceed to generate your CV — these items are optional but will improve your score.
+                </p>
               </div>
-              <ul className="space-y-2">
-                {profileAnalysis.gaps.map((gap, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-amber-900">
-                    <span className="text-amber-500 shrink-0 mt-0.5 font-bold">•</span>
-                    {gap}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-[11px] text-slate-500 italic">
-                You can still proceed to generate your CV — these items are optional but will improve your score.
-              </p>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* ── JD Section — only for "Apply for a job" path ── */}
