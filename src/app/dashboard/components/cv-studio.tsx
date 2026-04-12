@@ -1825,6 +1825,9 @@ export default function CvStudio({ userId, cvData }: Props) {
                   </li>
                 ))}
               </ul>
+              <p className="mt-3 text-[11px] text-slate-500 italic">
+                You can still proceed to generate your CV — these items are optional but will improve your score.
+              </p>
             </div>
           )}
         </div>
