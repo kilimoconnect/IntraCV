@@ -18,14 +18,16 @@ export default function CallbackClient({ verified, errorMsg, plan, downloadToken
 
   useEffect(() => {
     if (!verified) return;
-    // Store the server-issued one-time token (replaces the easily-faked "1" flag)
     if (downloadTokenId) {
+      // Fresh token — store it so CV Studio can consume it on download
       sessionStorage.setItem("fusecv-cv-token", downloadTokenId);
+      sessionStorage.setItem("fusecv-cv-plan", plan);
+      sessionStorage.setItem("fusecv-auto-download", "1");
+      router.push("/dashboard?tab=studio");
+    } else {
+      // Token already used — the PDF was already downloaded. Send to Documents.
+      router.push("/dashboard?tab=documents");
     }
-    sessionStorage.setItem("fusecv-cv-plan", plan);
-    sessionStorage.setItem("fusecv-auto-download", "1");
-    // Interview quota is granted server-side silently — no toast/redirect needed
-    router.push("/dashboard?tab=studio");
   }, [verified, downloadTokenId, plan, router]);
 
   if (verified) {
@@ -44,7 +46,9 @@ export default function CallbackClient({ verified, errorMsg, plan, downloadToken
         </div>
         <div className="text-center">
           <h2 className="text-xl font-bold text-slate-800">Payment Confirmed!</h2>
-          <p className="text-sm text-slate-500 mt-1">Redirecting and starting your download…</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {downloadTokenId ? "Redirecting and starting your download…" : "Redirecting to your Documents…"}
+          </p>
         </div>
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 w-full max-w-xs text-xs text-slate-600 space-y-2">
           {bullets.map((b) => (

@@ -41,15 +41,20 @@ export default async function CvPaymentCallbackPage({
           const admin = createAdminSupabase();
 
           // ── Issue one-time download token (idempotent on order_tracking_id) ──
+          // ignoreDuplicates:true means if the row already exists we get it back unchanged
           const { data: tokenRow } = await admin
             .from("cv_download_tokens")
             .upsert(
               { user_id: user.id, plan, order_tracking_id: orderTrackingId },
-              { onConflict: "order_tracking_id", ignoreDuplicates: false }
+              { onConflict: "order_tracking_id", ignoreDuplicates: true }
             )
-            .select("id")
+            .select("id, used")
             .single();
-          downloadTokenId = tokenRow?.id ?? null;
+          // Only give the client an active (unused) token.
+          // If the callback is revisited after a successful download the token
+          // will already be used=true — we send null and the client shows
+          // a "check your Documents" message instead of triggering a download.
+          downloadTokenId = (tokenRow && !tokenRow.used) ? tokenRow.id : null;
 
           // ── Full Package — grant 20 interview questions ──
           if (plan === "full") {

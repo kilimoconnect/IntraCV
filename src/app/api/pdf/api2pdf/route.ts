@@ -82,19 +82,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment token expired — please contact support" }, { status: 402 });
   }
 
-  // Mark token as used atomically (only update if still unused, preventing race conditions)
-  const { count } = await admin
+  // Mark token as used atomically (only succeeds if still unused — race-condition safe)
+  const { data: updatedRows } = await admin
     .from("cv_download_tokens")
     .update({ used: true })
     .eq("id", downloadToken)
     .eq("used", false)
-    .select("id", { count: "exact", head: true });
+    .select("id");
 
-  if (!count || count === 0) {
+  if (!updatedRows || updatedRows.length === 0) {
     return NextResponse.json({ error: "Payment token already used" }, { status: 402 });
   }
 
   const safeName = filename.replace(/[^a-z0-9_\-\.]/gi, "_");
+
+  // Helper: revert the token so the user can retry if PDF generation fails
+  const revertToken = () =>
+    admin.from("cv_download_tokens").update({ used: false }).eq("id", downloadToken);
 
   try {
     // ── Call api2pdf Headless Chrome ────────────────────────────────────────
@@ -116,6 +120,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (Buffer.isBuffer(raw)) {
+      await revertToken();
       return NextResponse.json(
         { error: "Unexpected binary response from api2pdf" },
         { status: 502 }
@@ -129,6 +134,7 @@ export async function POST(req: NextRequest) {
 
     if (!success) {
       console.error("[api2pdf] generation failed:", apiError);
+      await revertToken();
       return NextResponse.json(
         { error: apiError || "PDF generation failed" },
         { status: 502 }
@@ -136,6 +142,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!fileUrl) {
+      await revertToken();
       return NextResponse.json(
         { error: "api2pdf did not return a file URL" },
         { status: 502 }
@@ -145,6 +152,7 @@ export async function POST(req: NextRequest) {
     // ── Fetch PDF binary from api2pdf CDN ──────────────────────────────────
     const pdfRes = await fetch(fileUrl);
     if (!pdfRes.ok) {
+      await revertToken();
       return NextResponse.json(
         { error: "Could not retrieve generated PDF" },
         { status: 502 }
@@ -233,6 +241,8 @@ export async function POST(req: NextRequest) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[api2pdf] error:", message);
+    // Revert token so the user can retry after an unexpected error
+    if (downloadToken) await revertToken();
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
