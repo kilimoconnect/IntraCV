@@ -88,6 +88,37 @@ function fieldLabel(field: string): string {
     if (p[2] === "email") return `Reference ${n} – Email`;
     return `Reference ${n}`;
   }
+  if (p[0] === "tool") return `Tool ${num(p[1])}`;
+  if (p[0] === "memb") return `Membership ${num(p[1])}`;
+  if (p[0] === "vol")  return `Volunteer ${num(p[1])}`;
+  if (p[0] === "boardRole") {
+    const n = num(p[1]);
+    if (p[2] === "title")        return `Board Role ${n} – Title`;
+    if (p[2] === "organization") return `Board Role ${n} – Organization`;
+    if (p[2] === "dates")        return `Board Role ${n} – Dates`;
+    if (p[2] === "description")  return `Board Role ${n} – Description`;
+    return `Board Role ${n}`;
+  }
+  if (p[0] === "execTrain") {
+    const n = num(p[1]);
+    if (p[2] === "name")        return `Exec Training ${n} – Programme`;
+    if (p[2] === "institution") return `Exec Training ${n} – Institution`;
+    if (p[2] === "year")        return `Exec Training ${n} – Year`;
+    return `Exec Training ${n}`;
+  }
+  if (p[0] === "pub") {
+    const n = num(p[1]);
+    if (p[2] === "title")     return `Publication ${n} – Title`;
+    if (p[2] === "publisher") return `Publication ${n} – Publisher`;
+    if (p[2] === "year")      return `Publication ${n} – Year`;
+    return `Publication ${n}`;
+  }
+  if (p[0] === "decl") {
+    if (p[1] === "declaration") return "Declaration Text";
+    if (p[1] === "place")       return "Declaration – Place";
+    if (p[1] === "date")        return "Declaration – Date";
+    return "Declaration";
+  }
   return field.replace(/\./g, " › ");
 }
 

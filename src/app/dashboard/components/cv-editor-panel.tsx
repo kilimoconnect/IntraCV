@@ -239,11 +239,11 @@ export default function CVEditorPanel({ data, category, onChange, onClose }: Pro
           </div>
         </Section>
 
-        {/* ── History (if present) ── */}
-        {(data.history && data.history.length > 0) && (
-          <Section icon={Briefcase} title="Career History" count={data.history.length}>
+        {/* ── History — always show for mid-senior/executive which use it ── */}
+        {(category !== "junior") && (
+          <Section icon={Briefcase} title="Career History" count={data.history?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
-              {data.history.map((h, i) => (
+              {(data.history || []).map((h, i) => (
                 <ItemCard key={i} onDelete={() => {
                   const a = [...(data.history || [])]; a.splice(i, 1); upd({ history: a });
                 }}>
@@ -285,6 +285,10 @@ export default function CVEditorPanel({ data, category, onChange, onClose }: Pro
                   </div>
                 </ItemCard>
               ))}
+              <button onClick={() => upd({ history: [...(data.history || []), { role: "", company: "", dates: "", bullets: [""] }] })}
+                className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 font-semibold transition-colors w-full justify-center py-2 border-2 border-dashed border-indigo-200 rounded-xl hover:bg-indigo-50">
+                <Plus className="h-3.5 w-3.5" /> Add History Entry
+              </button>
             </div>
           </Section>
         )}
@@ -431,8 +435,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose }: Pro
         )}
 
         {/* ── Awards ── */}
-        {((data.awards && data.awards.length > 0) || category !== "junior") && (
-          <Section icon={Trophy} title="Awards & Recognition" count={data.awards?.length ?? 0} defaultOpen={false}>
+        <Section icon={Trophy} title="Awards & Recognition" count={data.awards?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.awards || []).map((a, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -451,8 +454,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose }: Pro
                 <Plus className="h-3.5 w-3.5" /> Add Award
               </button>
             </div>
-          </Section>
-        )}
+        </Section>
 
         {/* ── Tools & Software ── */}
         {category !== "junior" && (
