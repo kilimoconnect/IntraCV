@@ -1415,8 +1415,8 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.info("Add job details to generate your cover letter");
       return;
     }
-    // All other cases — proceed to payment
-    setShowPricingModal(false);
+    // All other cases — spin immediately then proceed to payment
+    setPaymentProcessing(true);
     void handlePayAndDownload(planId);
   }, [cvPath, handlePayAndDownload]);
 
@@ -2370,10 +2370,12 @@ export default function CvStudio({ userId, cvData }: Props) {
                     onClick={() => handlePlanSelect(plan.id)}
                     disabled={paymentProcessing}
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-150 ${
-                      selectedPlan === plan.id
+                      selectedPlan === plan.id && paymentProcessing
                         ? "border-indigo-500 bg-indigo-50"
+                        : selectedPlan === plan.id
+                        ? "border-indigo-400 bg-indigo-50"
                         : "border-slate-200 hover:border-slate-300 bg-white"
-                    } disabled:opacity-60`}
+                    } disabled:cursor-not-allowed`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -2384,12 +2386,18 @@ export default function CvStudio({ userId, cvData }: Props) {
                           </span>
                         )}
                       </div>
-                      <span className="font-bold text-base text-indigo-700 shrink-0 ml-2">
-                        {CURRENCY} {plan.amount}
-                      </span>
+                      {selectedPlan === plan.id && paymentProcessing ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-indigo-600 shrink-0 ml-2" />
+                      ) : (
+                        <span className="font-bold text-base text-indigo-700 shrink-0 ml-2">
+                          {CURRENCY} {plan.amount}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-slate-500">{plan.desc}</p>
-                    {(plan.id === "professional" || plan.id === "full") && cvPath !== "apply" && (
+                    <p className={`text-xs ${selectedPlan === plan.id && paymentProcessing ? "text-indigo-500" : "text-slate-500"}`}>
+                      {selectedPlan === plan.id && paymentProcessing ? "Redirecting to payment…" : plan.desc}
+                    </p>
+                    {(plan.id === "professional" || plan.id === "full") && cvPath !== "apply" && !paymentProcessing && (
                       <p className="text-[10px] text-violet-500 mt-1.5 font-medium">
                         ↩ Requires job details — you&apos;ll be asked to add them
                       </p>
@@ -2397,13 +2405,6 @@ export default function CvStudio({ userId, cvData }: Props) {
                   </button>
                 ))}
             </div>
-
-            {paymentProcessing && (
-              <div className="flex items-center justify-center gap-2 py-3 text-sm text-slate-500">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Redirecting to payment…
-              </div>
-            )}
 
             <p className="text-center text-[11px] text-slate-400 mt-2">
               Powered by Pesapal · Secure &amp; Encrypted
