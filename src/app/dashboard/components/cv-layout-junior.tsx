@@ -52,7 +52,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
   const C = themes[theme];
   const MX = 36;
   const COL_W = A4_W - MX * 2;
-  const HEADER_H = 100;
+  const HEADER_H = 118; // increased from 100 to accommodate tagline
   const CONTACT_H = 28;
   const BODY_TOP = HEADER_H + CONTACT_H + 16;
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
@@ -754,8 +754,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const C = themes[theme];
   const MX = 32;
   const W = A4_W - MX * 2;
-  const HEADER_H = 83; // 80px header + 3px border
-  const BODY_TOP = 96;
+  const HEADER_H = 103; // 100px header + 3px border (increased from 83 to accommodate tagline)
+  const BODY_TOP = 116;
   const BODY_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
   const LEFT_W = Math.floor((W - 24) * 1.4 / 2.4);
   const RIGHT_W = W - 24 - LEFT_W;
@@ -781,7 +781,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
     <div>
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Split header: name left, contact right */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 80, display: "flex", alignItems: "center", padding: `0 ${MX}px`, borderBottom: `3px solid ${C.primary}` }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 100, display: "flex", alignItems: "center", padding: `0 ${MX}px`, borderBottom: `3px solid ${C.primary}` }}>
           <div style={{ flex: 1 }}>
             <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.text, letterSpacing: "-0.5px" }}>{d.fullName}</div>
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.primary, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>

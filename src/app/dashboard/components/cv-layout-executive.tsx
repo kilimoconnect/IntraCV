@@ -17,7 +17,7 @@ interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVarian
 const SIDE_W = 230;
 const MAIN_W = A4_W - SIDE_W;
 const SP = 16;
-const HEADER_H = 120;
+const HEADER_H = 138; // increased from 120 to accommodate tagline
 
 function RightLabel({ children, C }: { children: string; C: ThemeColors }) {
   return (

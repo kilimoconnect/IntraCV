@@ -463,7 +463,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const INNER_W = BODY_W - 44;
 
   // ── Engine: page budgets ──
-  const P1_CHROME = 83 + 16;
+  const P1_CHROME = 103 + 16; // 100px header + 3px border + 16 gap (increased from 83+16 to accommodate tagline)
   const P1_BODY_BUDGET = A4_H - P1_CHROME - PRINT_MARGIN.bottom;
   const P1_SIDEBAR_BUDGET = A4_H - 83 - PRINT_MARGIN.bottom;
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
@@ -559,7 +559,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Dark top header */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 80, backgroundColor: C.headerBg, display: "flex", alignItems: "center", padding: "0 22px" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 100, backgroundColor: C.headerBg, display: "flex", alignItems: "center", padding: "0 22px" }}>
           <div style={{ flex: 1 }}>
             <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
@@ -572,10 +572,10 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
             {d.linkedin && <div data-cv-field="linkedin">in {d.linkedin}</div>}
           </div>
         </div>
-        <div style={{ position: "absolute", top: 80, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 100, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
 
         {/* Light right sidebar */}
-        <div style={{ position: "absolute", top: 83, right: 0, width: RSIDE, height: A4_H - 83, backgroundColor: C.sidebarBg, borderLeft: `2px solid ${C.divider}`, padding: "16px 16px", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 103, right: 0, width: RSIDE, height: A4_H - 103, backgroundColor: C.sidebarBg, borderLeft: `2px solid ${C.divider}`, padding: "16px 16px", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
           {d.skills?.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 6 }}>Core Competencies</div>
@@ -784,7 +784,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const W = A4_W - MX * 2;
 
   // ── Engine: page budgets ──
-  const P1_CHROME = 93 + 16;
+  const P1_CHROME = 113 + 16; // 110px header + 3px border + 16 gap (increased from 93+16 to accommodate tagline)
   const P1_BODY_BUDGET = A4_H - P1_CHROME - PRINT_MARGIN.bottom;
   const P2_BODY_BUDGET = A4_H - 50 - PRINT_MARGIN.bottom;
 
@@ -930,7 +930,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
       {/* ══ PAGE 1 ══ */}
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
         {/* Full-width header */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 90, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", justifyContent: "center", padding: `0 ${MX}px` }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: 110, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", justifyContent: "center", padding: `0 ${MX}px` }}>
           <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "26px", fontWeight: 800, color: C.headerText }}>{d.fullName}</div>
           <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
           {d.tagline && <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "9.5px", color: C.headerText, opacity: 0.55, marginTop: 3, fontStyle: "italic", wordWrap: "break-word" }}>"{d.tagline}"</div>}
@@ -941,7 +941,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             {d.linkedin && <span data-cv-field="linkedin">in {d.linkedin}</span>}
           </div>
         </div>
-        <div style={{ position: "absolute", top: 90, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
+        <div style={{ position: "absolute", top: 110, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
 
         {/* Full-width body — flex distributes whitespace */}
         <div style={{ position: "absolute", top: P1_CHROME, left: MX, width: W, height: P1_BODY_BUDGET, overflow: "hidden" }}>
