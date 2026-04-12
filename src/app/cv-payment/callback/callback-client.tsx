@@ -23,11 +23,13 @@ export default function CallbackClient({ verified, errorMsg, plan, downloadToken
       sessionStorage.setItem("fusecv-cv-token", downloadTokenId);
       sessionStorage.setItem("fusecv-cv-plan", plan);
       sessionStorage.setItem("fusecv-auto-download", "1");
-      router.push("/dashboard?tab=studio");
     } else {
-      // Token already used — the PDF was already downloaded. Send to Documents.
-      router.push("/dashboard?tab=documents");
+      // Token already used (callback revisited) — flag so CV Studio shows
+      // a "already downloaded" notice instead of triggering a new download
+      sessionStorage.setItem("fusecv-cv-already-downloaded", "1");
     }
+    // Always return to CV Studio — api2pdf requires the rendered CV preview DOM
+    router.push("/dashboard?tab=studio");
   }, [verified, downloadTokenId, plan, router]);
 
   if (verified) {
@@ -47,7 +49,7 @@ export default function CallbackClient({ verified, errorMsg, plan, downloadToken
         <div className="text-center">
           <h2 className="text-xl font-bold text-slate-800">Payment Confirmed!</h2>
           <p className="text-sm text-slate-500 mt-1">
-            {downloadTokenId ? "Redirecting and starting your download…" : "Redirecting to your Documents…"}
+            {downloadTokenId ? "Redirecting and starting your download…" : "Redirecting to CV Studio…"}
           </p>
         </div>
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 w-full max-w-xs text-xs text-slate-600 space-y-2">

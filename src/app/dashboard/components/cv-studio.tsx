@@ -741,6 +741,16 @@ export default function CvStudio({ userId, cvData }: Props) {
   // ── Detect return from CV payment redirect ──
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Case 1: callback was revisited after a successful download
+    const alreadyDownloaded = sessionStorage.getItem("fusecv-cv-already-downloaded");
+    if (alreadyDownloaded === "1") {
+      sessionStorage.removeItem("fusecv-cv-already-downloaded");
+      toast.info("Your CV was already downloaded — find it in the Documents tab.", { duration: 6000 });
+      return;
+    }
+
+    // Case 2: fresh return from payment — restore CV state and trigger download
     const cvToken = sessionStorage.getItem("fusecv-cv-token");
     const pending = sessionStorage.getItem("fusecv-pending-cv");
     if (cvToken && pending) {
