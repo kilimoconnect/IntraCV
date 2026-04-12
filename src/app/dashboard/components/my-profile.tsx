@@ -634,7 +634,7 @@ export default function MyProfile({
       {/* ─── CV Readiness Banner ─── */}
       {(() => {
         const score = cvReadiness?.strength ?? 0;
-        const isReady = score >= 75 && missingRequired.length === 0 && missingRecommended.length === 0;
+        const isReady = score >= 75;
         const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-500" : "text-red-600";
         const barColor  = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500"  : "bg-red-500";
 
