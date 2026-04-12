@@ -147,7 +147,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.headerText, letterSpacing: "2px", textTransform: "uppercase", lineHeight: "34px" }}>{d.fullName}</div>
           <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 4, letterSpacing: "1px", textTransform: "uppercase", wordWrap: "break-word" }}>{d.title}</div>
           {d.tagline && (
-            <div style={{ fontFamily: FONT, fontSize: "10px", color: C.headerText, opacity: 0.55, marginTop: 6, fontStyle: "italic" }}>"{d.tagline}"</div>
+            <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "10px", color: C.headerText, opacity: 0.55, marginTop: 6, fontStyle: "italic" }}>"{d.tagline}"</div>
           )}
           {/* Decorative line below */}
           <div style={{ width: 60, height: 2, backgroundColor: C.primary, marginTop: 10 }} />

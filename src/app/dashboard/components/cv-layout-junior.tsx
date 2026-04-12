@@ -227,6 +227,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
         <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: HEADER_H, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
           <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "28px", fontWeight: 800, color: C.headerText, letterSpacing: "-0.5px" }}>{d.fullName}</div>
           <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 500, color: C.headerText, opacity: 0.85, marginTop: 3 }}>{d.title}</div>
+          {d.tagline && <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "10px", color: C.headerText, opacity: 0.6, marginTop: 5, fontStyle: "italic" }}>"{d.tagline}"</div>}
         </div>
 
         {/* ── Contact strip below banner ── */}
@@ -601,6 +602,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
           <div style={{ padding: "28px 16px 18px", borderBottom: `1px solid ${C.divider}` }}>
             <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "18px", fontWeight: 800, color: C.text, lineHeight: "22px" }}>{d.fullName}</div>
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 500, color: C.primary, marginTop: 3, wordWrap: "break-word" }}>{d.title}</div>
+            {d.tagline && <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, marginTop: 4, fontStyle: "italic", wordWrap: "break-word" }}>"{d.tagline}"</div>}
           </div>
           {/* Contact */}
           <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.divider}`, fontFamily: FONT, fontSize: "9.5px", color: C.muted, lineHeight: "14px" }}>
@@ -783,6 +785,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
           <div style={{ flex: 1 }}>
             <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "24px", fontWeight: 800, color: C.text, letterSpacing: "-0.5px" }}>{d.fullName}</div>
             <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.primary, marginTop: 2, wordWrap: "break-word" }}>{d.title}</div>
+            {d.tagline && <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, marginTop: 3, fontStyle: "italic", wordWrap: "break-word" }}>"{d.tagline}"</div>}
           </div>
           <div style={{ textAlign: "right", fontFamily: FONT, fontSize: "9.5px", color: C.muted, lineHeight: "17px" }}>
             {d.email && <div data-cv-field="email">{d.email}</div>}
