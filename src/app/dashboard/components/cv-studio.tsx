@@ -1364,44 +1364,20 @@ export default function CvStudio({ userId, cvData }: Props) {
       try {
         await printCvAsPdf(element, {
           filename,
-          useApi2Pdf: true,
           userId,
           docTitle,
           docContent,
           coverLetter: coverLetter ?? undefined,
           downloadToken,
         });
-      } catch (apiErr) {
-        console.warn("[pdf] api2pdf failed, falling back to print dialog:", apiErr);
-        toast.error("Cloud PDF failed — opening print dialog as fallback.");
-        let printOk = false;
-        try {
-          await printCvAsPdf(element, { filename, useApi2Pdf: false });
-          printOk = true;
-        } catch (fallbackErr) {
-          console.error("Fallback print failed", fallbackErr);
-        }
-        if (!printOk) {
-          // Both PDF methods failed — save CV data to Documents without PDF so nothing is lost
-          fetch("/api/documents/save-cv", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: docTitle, content: docContent }),
-          }).catch(() => {});
-          if (coverLetter) {
-            const clTitle = docTitle.replace(/CV \(/, "Cover Letter (");
-            fetch("/api/documents/save-cover-letter", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ coverLetter, title: clTitle }),
-            }).catch(() => {});
-          }
-          localStorage.setItem("fusecv-new-docs", "true");
-          toast.error(
-            "PDF download failed — your CV has been saved to Documents. You can retry from there.",
-            { duration: 7000 }
-          );
-        }
+      } catch (apiErr: any) {
+        console.error("[pdf] api2pdf failed:", apiErr);
+        toast.error(
+          apiErr?.message?.includes("Payment")
+            ? apiErr.message
+            : "PDF generation failed. Please try downloading again.",
+          { duration: 7000 }
+        );
       }
     } finally {
       setDownloadingPdf(false);

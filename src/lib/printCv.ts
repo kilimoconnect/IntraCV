@@ -21,8 +21,6 @@ export interface PrintCvOptions {
   filename: string;
   onStart?: () => void;
   onComplete?: () => void;
-  /** When true, calls /api/pdf/api2pdf instead of the iframe fallback */
-  useApi2Pdf?: boolean;
   userId?: string;
   /** Document metadata — the route creates the record server-side */
   docTitle?: string;
@@ -212,46 +210,13 @@ async function generateViaApi2Pdf(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Strategy 2 — iframe print fallback (shows OS print dialog)
-// ─────────────────────────────────────────────────────────────────────────────
-async function printViaIframe(html: string, filename: string): Promise<void> {
-  const originalTitle = document.title;
-  document.title = filename;
-
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;top:0;left:0;width:794px;height:0;" +
-    "border:none;opacity:0;pointer-events:none;z-index:-1;";
-  document.body.appendChild(iframe);
-
-  await new Promise<void>((resolve) => {
-    iframe.onload = () => resolve();
-    const doc = iframe.contentDocument!;
-    doc.open();
-    doc.write(html);
-    doc.close();
-  });
-
-  // Let fonts/images finish loading inside the iframe
-  await new Promise<void>((r) => setTimeout(r, 600));
-
-  iframe.contentWindow!.focus();
-  iframe.contentWindow!.print();
-
-  setTimeout(() => {
-    if (document.body.contains(iframe)) document.body.removeChild(iframe);
-    document.title = originalTitle;
-  }, 1000);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Public entry point
+// Public entry point — always uses api2pdf
 // ─────────────────────────────────────────────────────────────────────────────
 export async function printCvAsPdf(
   element: HTMLElement,
   options: PrintCvOptions
 ): Promise<void> {
-  const { filename, onStart, onComplete, useApi2Pdf = false, userId, docTitle, docContent, coverLetter, downloadToken } = options;
+  const { filename, onStart, onComplete, userId, docTitle, docContent, coverLetter, downloadToken } = options;
   onStart?.();
 
   try {
@@ -260,12 +225,7 @@ export async function printCvAsPdf(
     await new Promise<void>((r) => setTimeout(r, 300));
 
     const html = buildPrintHtml(element, filename);
-
-    if (useApi2Pdf) {
-      await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter, downloadToken });
-    } else {
-      await printViaIframe(html, filename);
-    }
+    await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter, downloadToken });
   } catch (err) {
     console.error("[printCv] failed:", err);
     // Re-throw so callers can show an error toast
