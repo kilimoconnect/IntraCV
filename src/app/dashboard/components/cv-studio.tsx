@@ -1581,11 +1581,11 @@ export default function CvStudio({ userId, cvData }: Props) {
   // ── Choose Path ──
   if (step === "choose-path") {
     return (
-      <div className="max-w-xl mx-auto py-14 px-4">
+      <div className="max-w-xl mx-auto pt-4 pb-10 px-4">
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 mb-4">
-            <Sparkles className="h-6 w-6" />
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 mb-3">
+            <Sparkles className="h-5 w-5" />
           </div>
           <h2 className="text-2xl font-bold text-slate-800">CV Studio</h2>
           <p className="text-sm text-slate-500 mt-1">What do you want to do?</p>
