@@ -242,7 +242,6 @@ function categorizeProfile(
     category,
     label: labels[category],
     color: colors[category],
-    score,
     requiredSections: SECTIONS[category].required,
     recommendedSections: SECTIONS[category].recommended,
   };
