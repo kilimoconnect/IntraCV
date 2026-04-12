@@ -8,21 +8,32 @@ import { CheckCircle2, XCircle, Loader2, ArrowLeft } from "lucide-react";
 interface Props {
   verified: boolean;
   errorMsg: string;
+  plan: "starter" | "professional" | "full";
+  interviewQuotaGranted: boolean;
 }
 
-export default function CallbackClient({ verified, errorMsg }: Props) {
+export default function CallbackClient({ verified, errorMsg, plan, interviewQuotaGranted }: Props) {
   const router = useRouter();
 
   useEffect(() => {
     if (!verified) return;
-    // Set flags so cv-studio can restore state and auto-download
     sessionStorage.setItem("fusecv-cv-paid", "1");
     sessionStorage.setItem("fusecv-auto-download", "1");
-    // Redirect to CV Studio immediately
+    if (interviewQuotaGranted) {
+      sessionStorage.setItem("fusecv-interview-unlocked", "20");
+    }
     router.push("/dashboard?tab=studio");
-  }, [verified, router]);
+  }, [verified, interviewQuotaGranted, router]);
 
   if (verified) {
+    const bullets = [
+      "Payment verified",
+      "Watermark-free CV download",
+      plan === "professional" || plan === "full" ? "Cover letter activated" : null,
+      plan === "full" ? "20 interview questions unlocked" : null,
+      "Saved to your Documents",
+    ].filter(Boolean) as string[];
+
     return (
       <div className="flex flex-col items-center gap-5 py-8">
         <div className="h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -33,9 +44,9 @@ export default function CallbackClient({ verified, errorMsg }: Props) {
           <p className="text-sm text-slate-500 mt-1">Redirecting and starting your download…</p>
         </div>
         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 w-full max-w-xs text-xs text-slate-600 space-y-2">
-          <p className="flex gap-2"><span className="text-emerald-500">✓</span> Payment verified</p>
-          <p className="flex gap-2"><span className="text-emerald-500">✓</span> No watermarks</p>
-          <p className="flex gap-2"><span className="text-emerald-500">✓</span> Saved to your Documents</p>
+          {bullets.map((b) => (
+            <p key={b} className="flex gap-2"><span className="text-emerald-500">✓</span> {b}</p>
+          ))}
         </div>
         <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
       </div>

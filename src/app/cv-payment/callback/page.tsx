@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-server";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
 import CallbackClient from "./callback-client";
 
-// Server Component — verification happens during SSR so the result is
-// ready the moment the HTML reaches the browser (no client fetch needed).
 export default async function CvPaymentCallbackPage({
   searchParams,
 }: {
@@ -13,9 +13,11 @@ export default async function CvPaymentCallbackPage({
   const params = await searchParams;
   const orderTrackingId = params.OrderTrackingId;
   const orderNotificationType = params.OrderNotificationType;
+  const plan = (params.plan ?? "starter") as "starter" | "professional" | "full";
 
   let verified = false;
   let errorMsg = "";
+  let interviewQuotaGranted = false;
 
   if (orderNotificationType === "CANCELLED") {
     errorMsg = "Payment was cancelled. No charges were made.";
@@ -30,6 +32,20 @@ export default async function CvPaymentCallbackPage({
       );
       if (completed) {
         verified = true;
+        // Full Package — grant 20 interview questions
+        if (plan === "full") {
+          try {
+            const serverSupabase = await createServerSupabase();
+            const { data: { user } } = await serverSupabase.auth.getUser();
+            if (user) {
+              const admin = createAdminSupabase();
+              await admin.rpc("add_interview_paid_quota", { uid: user.id, n: 20 });
+              interviewQuotaGranted = true;
+            }
+          } catch (quotaErr) {
+            console.error("[cv-callback] Failed to grant interview quota:", quotaErr);
+          }
+        }
       } else {
         errorMsg = statusDescription || "Payment not yet confirmed. Please contact support.";
       }
@@ -54,7 +70,12 @@ export default async function CvPaymentCallbackPage({
               <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             </div>
           }>
-            <CallbackClient verified={verified} errorMsg={errorMsg} />
+            <CallbackClient
+              verified={verified}
+              errorMsg={errorMsg}
+              plan={plan}
+              interviewQuotaGranted={interviewQuotaGranted}
+            />
           </Suspense>
         </div>
       </div>

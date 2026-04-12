@@ -14,7 +14,16 @@ import { fitContentToLayout } from "./cv-content-fitter";
 import { printCvAsPdf } from "@/lib/printCv";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
+import { generateTxRef } from "@/lib/flutterwave";
+
+// ─── CV Pricing Plans ───
+const CURRENCY = "USD";
+const CV_PLANS = [
+  { id: "starter"      as const, label: "Starter",       amount: 3,  badge: null,              badgeClass: "",                                             desc: "CV only, saved to documents" },
+  { id: "professional" as const, label: "Professional",  amount: 7,  badge: "⭐ MOST POPULAR",  badgeClass: "bg-indigo-100 text-indigo-700",                desc: "CV and cover letter activated and saved to documents" },
+  { id: "full"         as const, label: "Full Package",  amount: 10, badge: "🔥 BEST VALUE",    badgeClass: "bg-amber-100 text-amber-700",                  desc: "CV, cover letter and 20 interview questions unlocked" },
+] as const;
+type PlanId = "starter" | "professional" | "full";
 
 interface Props {
   userId: string;
@@ -619,7 +628,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [categoryOverride, setCategoryOverride] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showJobOptimizer, setShowJobOptimizer] = useState(false);
   const [jobDescription, setJobDescription] = useState("");
@@ -664,6 +674,12 @@ export default function CvStudio({ userId, cvData }: Props) {
           setCoverLetter(saved.coverLetter);
           setCoverLetterUnlocked(true);
         }
+        if (saved.jobDescription) setJobDescription(saved.jobDescription);
+        if (saved.company) setCompany(saved.company);
+        if (saved.jobTitle) setJobTitle(saved.jobTitle);
+        if (saved.companyAddress) setCompanyAddress(saved.companyAddress);
+        if (saved.cvPath) setCvPath(saved.cvPath);
+        if (saved.plan) setSelectedPlan(saved.plan as PlanId);
         // Restore step so the CV preview renders and previewRef becomes available
         setStep("preview");
         setCvPaidReady(true);
@@ -1346,7 +1362,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [aiData, jobDescription, jobAnalysis, selectedCategory, optimizing]);
 
-  const handlePayAndDownload = useCallback(async () => {
+  const handlePayAndDownload = useCallback(async (plan: PlanId) => {
     if (!aiData || paymentProcessing) return;
 
     const personalInfo = cvData?.personalInfo as Record<string, string> | undefined;
@@ -1356,16 +1372,19 @@ export default function CvStudio({ userId, cvData }: Props) {
       return;
     }
 
+    const planDef = CV_PLANS.find((p) => p.id === plan)!;
+
     // Spin the button immediately
     setPaymentProcessing(true);
 
-    // Store CV state so we can trigger download when user returns
+    // Store CV state (+ job fields + plan) so we can restore everything on return
     sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({
       aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter,
+      jobDescription, company, jobTitle, companyAddress, cvPath, plan,
     }));
 
     try {
-      const callbackUrl = `${window.location.origin}/cv-payment/callback`;
+      const callbackUrl = `${window.location.origin}/cv-payment/callback?plan=${plan}`;
       const res = await fetch("/api/payments/cv-download-initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1373,6 +1392,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           email: customerEmail,
           name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
           redirectUrl: callbackUrl,
+          amount: planDef.amount,
         }),
       });
       const data = await res.json();
@@ -1383,7 +1403,22 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error(msg);
       setPaymentProcessing(false);
     }
-  }, [aiData, cvData, userId, selectedCategory, selectedVariant, selectedTheme, coverLetter, paymentProcessing]);
+  }, [aiData, cvData, selectedCategory, selectedVariant, selectedTheme, coverLetter, jobDescription, company, jobTitle, companyAddress, cvPath, paymentProcessing]);
+
+  const handlePlanSelect = useCallback((planId: PlanId) => {
+    setSelectedPlan(planId);
+    // Professional / Full on Path 1 — need job details first
+    if ((planId === "professional" || planId === "full") && cvPath !== "apply") {
+      setShowPricingModal(false);
+      setCvPath("apply");
+      setStep("analyze-profile");
+      toast.info("Add job details to generate your cover letter");
+      return;
+    }
+    // All other cases — proceed to payment
+    setShowPricingModal(false);
+    void handlePayAndDownload(planId);
+  }, [cvPath, handlePayAndDownload]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -1664,6 +1699,17 @@ export default function CvStudio({ userId, cvData }: Props) {
           <p className="text-sm font-semibold text-slate-700">Profile Analysis</p>
           <span className="text-xs text-slate-400">— AI reviews your profile before generating your CV</span>
         </div>
+
+        {/* Banner when returning from plan selection */}
+        {selectedPlan && (cvPath === "apply") && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-xs text-violet-800">
+            <span className="text-base">{selectedPlan === "full" ? "🔥" : "⭐"}</span>
+            <span>
+              <strong>{CV_PLANS.find(p => p.id === selectedPlan)?.label}</strong> plan selected —
+              fill in the job details below to generate your tailored CV and cover letter.
+            </span>
+          </div>
+        )}
 
         {/* ── Profile card ── */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-elevated divide-y divide-slate-100 overflow-hidden">
@@ -2086,7 +2132,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               )}
             </button>
             <button
-              onClick={() => setShowPaymentModal(true)}
+              onClick={() => setShowPricingModal(true)}
               disabled={downloadingPdf || paymentProcessing}
               className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-60"
             >
@@ -2305,49 +2351,61 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
       )}
 
-      {showPaymentModal && (
+      {showPricingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-800">Download Your CV</h2>
-              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-800">Choose Your Plan</h2>
+              <button onClick={() => setShowPricingModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-3 mb-6">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-slate-600">Watermark-free, professional PDF</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-slate-600">Saved to your Documents page for re-download anytime</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                <span className="text-sm text-slate-600">Secure card payment via Pesapal — Visa, Mastercard & more</span>
-              </div>
+            <div className="space-y-3 mb-4">
+              {CV_PLANS
+                .filter((p) => cvPath === "apply" ? p.id !== "starter" : true)
+                .map((plan) => (
+                  <button
+                    key={plan.id}
+                    onClick={() => handlePlanSelect(plan.id)}
+                    disabled={paymentProcessing}
+                    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-150 ${
+                      selectedPlan === plan.id
+                        ? "border-indigo-500 bg-indigo-50"
+                        : "border-slate-200 hover:border-slate-300 bg-white"
+                    } disabled:opacity-60`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-800">{plan.label}</span>
+                        {plan.badge && (
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${plan.badgeClass}`}>
+                            {plan.badge}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-bold text-base text-indigo-700 shrink-0 ml-2">
+                        {CURRENCY} {plan.amount}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">{plan.desc}</p>
+                    {(plan.id === "professional" || plan.id === "full") && cvPath !== "apply" && (
+                      <p className="text-[10px] text-violet-500 mt-1.5 font-medium">
+                        ↩ Requires job details — you&apos;ll be asked to add them
+                      </p>
+                    )}
+                  </button>
+                ))}
             </div>
 
-            <div className="flex items-center justify-between mb-5 px-4 py-3 bg-indigo-50 rounded-xl border border-indigo-100">
-              <span className="text-sm font-medium text-slate-700">One-time download fee</span>
-              <span className="text-xl font-bold text-indigo-700">{DOWNLOAD_CURRENCY} {DOWNLOAD_AMOUNT.toFixed(2)}</span>
-            </div>
+            {paymentProcessing && (
+              <div className="flex items-center justify-center gap-2 py-3 text-sm text-slate-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Redirecting to payment…
+              </div>
+            )}
 
-            <button
-              onClick={() => void handlePayAndDownload()}
-              disabled={paymentProcessing}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-3 rounded-xl shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl disabled:opacity-60"
-            >
-              {paymentProcessing ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
-              ) : (
-                <><CreditCard className="h-4 w-4" /> Pay &amp; Download</>  
-              )}
-            </button>
-
-            <p className="text-center text-[11px] text-slate-400 mt-3">
+            <p className="text-center text-[11px] text-slate-400 mt-2">
               Powered by Pesapal · Secure &amp; Encrypted
             </p>
           </div>

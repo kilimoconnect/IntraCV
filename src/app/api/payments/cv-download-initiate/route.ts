@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { generateTxRef, DOWNLOAD_AMOUNT, DOWNLOAD_CURRENCY } from "@/lib/flutterwave";
+import { generateTxRef } from "@/lib/flutterwave";
 import { createPesapalPaymentLink } from "@/lib/pesapal-server";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
@@ -13,8 +13,11 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await serverSupabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { email, name, redirectUrl } = await req.json();
+    const { email, name, redirectUrl, amount } = await req.json();
     if (!email) return NextResponse.json({ error: "Customer email is required" }, { status: 400 });
+
+    const VALID_AMOUNTS = [3, 7, 10];
+    const chargeAmount = VALID_AMOUNTS.includes(Number(amount)) ? Number(amount) : 3;
 
     const txRef = generateTxRef(user.id);
     const nameParts = (name || "FuseCV User").trim().split(" ");
@@ -24,9 +27,9 @@ export async function POST(req: NextRequest) {
     const base = process.env.NEXT_PUBLIC_SITE_URL || siteUrl;
     const { redirectUrl: link, orderTrackingId } = await createPesapalPaymentLink({
       id: txRef,
-      currency: DOWNLOAD_CURRENCY,
-      amount: DOWNLOAD_AMOUNT,
-      description: "Download your professional CV as a clean, watermark-free PDF",
+      currency: "USD",
+      amount: chargeAmount,
+      description: "FuseCV plan — CV download and optional extras",
       callbackUrl: redirectUrl,
       ipnBaseUrl: base,
       email,
