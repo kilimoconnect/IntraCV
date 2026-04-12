@@ -231,6 +231,7 @@ export default function MyProfile({
     if (!userId || !cvData) return;
     const supabase = createClient();
     let cancelled = false;
+    const SESSION_KEY = `fusecv-readiness-${userId}`;
 
     async function loadReadiness() {
       try {
@@ -239,7 +240,22 @@ export default function MyProfile({
         const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(dataStr));
         const dataHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
 
-        // 2. Check cache
+        // 2. Check sessionStorage first (avoids DB round-trip on tab switch)
+        const session = sessionStorage.getItem(SESSION_KEY);
+        if (session) {
+          try {
+            const parsed = JSON.parse(session);
+            if (parsed.hash === dataHash) {
+              if (!cancelled) {
+                setCvReadiness(parsed.data);
+                setLoadingReadiness(false);
+              }
+              return;
+            }
+          } catch { /* corrupt session data — fall through */ }
+        }
+
+        // 3. Check DB cache
         const { data: cached } = await supabase
           .from("cv_readiness_cache")
           .select("data_hash, cv_strength, cv_issues, cv_improvements")
@@ -247,14 +263,16 @@ export default function MyProfile({
           .single();
 
         if (cached && cached.data_hash === dataHash) {
+          const readiness: CvReadiness = { strength: cached.cv_strength, issues: cached.cv_issues, improvements: cached.cv_improvements };
           if (!cancelled) {
-            setCvReadiness({ strength: cached.cv_strength, issues: cached.cv_issues, improvements: cached.cv_improvements });
+            setCvReadiness(readiness);
             setLoadingReadiness(false);
           }
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data: readiness }));
           return;
         }
 
-        // 3. Call AI
+        // 4. Call AI (only when CV data has changed)
         const res = await fetch("/api/ai/cv-readiness", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -271,11 +289,12 @@ export default function MyProfile({
         };
         setCvReadiness(readiness);
 
-        // 4. Cache to DB
+        // 5. Persist to DB + sessionStorage
         await supabase.from("cv_readiness_cache").upsert(
           { user_id: userId, data_hash: dataHash, cv_strength: readiness.strength, cv_issues: readiness.issues, cv_improvements: readiness.improvements, updated_at: new Date().toISOString() },
           { onConflict: "user_id" }
         );
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ hash: dataHash, data: readiness }));
       } catch (err) {
         console.error("[cv-readiness]", err);
       } finally {
