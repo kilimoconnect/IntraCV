@@ -8,6 +8,7 @@ import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
 import CVLayoutExecutive from "./cv-layout-executive";
 import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
+import CVEditorPanel from "./cv-editor-panel";
 import { useOverflowDetect } from "./cv-overflow-detect";
 import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
@@ -2320,7 +2321,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
             <PenLine className="h-3.5 w-3.5 shrink-0" />
-            <span>Click any text in the CV to edit it inline. Press <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Enter</kbd> to save or <kbd className="bg-white border border-indigo-200 rounded px-1 py-0.5 text-[10px]">Esc</kbd> to cancel.</span>
+            <span>Use the editor panel on the right to edit all CV fields. You can also <strong>click any text</strong> in the CV to edit it inline.</span>
           </div>
           {overflowSections.size > 0 && (
             <div className="flex items-center justify-between gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
@@ -2545,20 +2546,37 @@ export default function CvStudio({ userId, cvData }: Props) {
         )
       )}
 
-      <div className="relative">
-        <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
-          {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-          {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-          {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-        </CVCanvasPreview>
-        {inlineEditor && (
-          <CVInlineEditor
-            editor={inlineEditor}
-            onSave={setFieldValue}
-            onDelete={deleteField}
-            onAddBullet={addBullet}
-            onClose={() => setInlineEditor(null)}
-          />
+      {/* CV Preview + Editor Panel side by side when editMode is on */}
+      <div className={`flex gap-4 items-start ${editMode ? "flex-col lg:flex-row" : ""}`}>
+
+        {/* CV Canvas */}
+        <div className={`relative ${editMode ? "lg:flex-1 lg:min-w-0 w-full" : "w-full"}`}>
+          <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
+            {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+            {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+            {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+          </CVCanvasPreview>
+          {inlineEditor && (
+            <CVInlineEditor
+              editor={inlineEditor}
+              onSave={setFieldValue}
+              onDelete={deleteField}
+              onAddBullet={addBullet}
+              onClose={() => setInlineEditor(null)}
+            />
+          )}
+        </div>
+
+        {/* Structured Editor Panel */}
+        {editMode && aiData && (
+          <div className="w-full lg:w-[400px] shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-lg" style={{ maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+            <CVEditorPanel
+              data={aiData}
+              category={selectedCategory}
+              onChange={(updater) => setAiData(prev => prev ? updater(prev) : prev)}
+              onClose={() => { setEditMode(false); setInlineEditor(null); }}
+            />
+          </div>
         )}
       </div>
     </div>
