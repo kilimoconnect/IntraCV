@@ -144,6 +144,28 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
   if      (certifications.length >= 3) score += 5;
   else if (certifications.length >= 1) score += 2;
 
+  // ── 10. Content sufficiency gate ──
+  // A layout is only as good as the content that fills it.
+  // Count "bonus" sections beyond the base (exp + edu + skills).
+  const richSections = [
+    achievements.length  > 0,
+    certifications.length > 0,
+    publications.length  > 0,
+    boardRoles.length    > 0,
+    execTraining.length  > 0,
+  ].filter(Boolean).length;
+
+  // With ≤ 2 experiences and fewer than 2 rich sections → not enough content
+  // for a mid-senior layout; cap score just below the threshold.
+  if (experiences.length <= 2 && richSections < 2) {
+    score = Math.min(score, 29); // keeps mid-senior unreachable
+  }
+
+  // With ≤ 4 experiences and fewer than 3 rich sections → not enough for executive.
+  if (experiences.length <= 4 && richSections < 3) {
+    score = Math.min(score, 59); // keeps executive unreachable
+  }
+
   // ── Determine category ──
   if (score >= 60) return "executive";
   if (score >= 30) return "mid-senior";
