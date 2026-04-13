@@ -13,13 +13,20 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
+  const passwordsMatch = confirmPassword === "" || password === confirmPassword;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/signup", {
@@ -152,10 +159,31 @@ export default function RegisterPage() {
                       />
                     </div>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirm Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="Re-enter your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        className={`pl-9 rounded-xl border-slate-200 focus:border-indigo-300 focus:ring-indigo-200 ${!passwordsMatch ? "border-red-300 bg-red-50/30 focus:border-red-400 focus:ring-red-200" : confirmPassword && passwordsMatch ? "border-emerald-300 bg-emerald-50/30" : ""}`}
+                      />
+                    </div>
+                    {!passwordsMatch && (
+                      <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+                    )}
+                    {confirmPassword && passwordsMatch && (
+                      <p className="text-xs text-emerald-600 mt-1">✓ Passwords match</p>
+                    )}
+                  </div>
                   <Button
                     type="submit"
                     className="w-full rounded-xl h-10 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold shadow-sm shadow-indigo-200 border-0"
-                    disabled={loading}
+                    disabled={loading || !passwordsMatch || !confirmPassword}
                   >
                     {loading
                       ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account…</>
