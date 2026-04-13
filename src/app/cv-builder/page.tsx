@@ -762,6 +762,12 @@ function CVBuilderPage() {
     try {
       // 1. Personal Info — upsert (unique per user)
       const now = new Date().toISOString();
+      // Compute category here so it's saved as the authoritative value for CV Studio.
+      const detectedCareerCategory = detectCategory({
+        experiences, education, boardRoles, publications,
+        executiveTraining: execTraining,
+        skills, keyAchievements, certifications,
+      });
       const { error: piErr } = await supabase.from("cv_personal_info").upsert({
         user_id: user.id,
         full_name: personalInfo.fullName,
@@ -771,6 +777,7 @@ function CVBuilderPage() {
         headline: personalInfo.headline,
         linkedin: personalInfo.linkedin,
         website: personalInfo.website,
+        career_category: detectedCareerCategory,
         updated_at: now,
       }, { onConflict: "user_id" });
       if (piErr) throw piErr;

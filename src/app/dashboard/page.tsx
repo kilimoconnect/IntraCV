@@ -58,6 +58,7 @@ function DashboardPage() {
   const [publications, setPublications] = useState<any[]>([]);
   const [tools, setTools] = useState<any[]>([]);
   const [volunteer, setVolunteer] = useState<any[]>([]);
+  const [careerCategory, setCareerCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
@@ -111,6 +112,7 @@ function DashboardPage() {
           linkedin: piRes.data.linkedin || "",
           website: piRes.data.website || "",
         });
+        setCareerCategory(piRes.data.career_category || null);
       }
       setSummary(sumRes.data?.summary || "");
       setExperiences((expRes.data || []).map((e: any) => ({
@@ -210,7 +212,8 @@ function DashboardPage() {
     keyAchievements, awards, memberships, projects,
     boardRoles, executiveTraining, publications,
     tools, volunteer,
-  }), [personalInfo, summary, experiences, education, skills, certifications, languages, referees, declaration, keyAchievements, awards, memberships, projects, boardRoles, executiveTraining, publications, tools, volunteer]);
+    careerCategory,
+  }), [personalInfo, summary, experiences, education, skills, certifications, languages, referees, declaration, keyAchievements, awards, memberships, projects, boardRoles, executiveTraining, publications, tools, volunteer, careerCategory]);
 
   if (authLoading || loading) {
     return (

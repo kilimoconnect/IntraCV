@@ -1,11 +1,21 @@
 /**
  * Single source of truth for career category detection.
- * Used by both CV Builder and CV Studio to guarantee consistent results.
  *
- * Category thresholds (score out of ~100):
+ * Experience (title seniority + role count + years) is the PRIMARY basis.
+ * Hard count gates enforce this: you need enough roles to justify the layout.
+ * All other sections (board roles, publications, skills, etc.) are secondary
+ * confirmations — they can tip a borderline profile but cannot override a
+ * weak experience base.
+ *
+ * Category thresholds:
  *   score >= 60  → executive
  *   score >= 30  → mid-senior
  *   else         → junior
+ *
+ * Hard gates (applied after scoring):
+ *   0 experiences            → always junior
+ *   1-2 exp, no exec title   → capped at junior (29)
+ *   1-4 exp                  → capped at mid-senior (59)
  */
 
 export type CareerCategory = "junior" | "mid-senior" | "executive";
@@ -13,7 +23,7 @@ export type CareerCategory = "junior" | "mid-senior" | "executive";
 // ─── Regex patterns ────────────────────────────────────────────────────────
 
 const EXEC_TITLES = /\b(chief|ceo|cfo|cto|coo|cio|cmo|cpo|president|vice\s*president|vp|managing\s*director|md|executive\s*director|group\s*director|partner|head\s*of|country\s*manager|regional\s*director|general\s*manager|gm|board\s*member|chairman|chairperson)\b/i;
-const MID_TITLES  = /\b(senior|sr\.?|lead|manager|director|team\s*lead|principal|supervisor|coordinator|specialist|consultant|architect|head|associate\s*director)\b/i;
+const MID_TITLES  = /\b(senior|sr\.?|lead|manager|director|team\s*lead|principal|supervisor|coordinator|specialist|consultant|architect|associate\s*director)\b/i;
 const JUNIOR_TITLES = /\b(junior|jr\.?|intern|trainee|entry|assistant|graduate|apprentice|associate|analyst|officer|clerk|attachment|industrial\s*training)\b/i;
 
 const EXEC_SCOPE = /\b(p&l|profit\s*and\s*loss|board|strategy|transformation|million|billion|revenue|shareholder|governance|merger|acquisition|m&a|ipo|fundrais|c-suite|enterprise-wide|group-wide|multi-?country|global\s*(?:operations|strategy|team))\b/i;
@@ -23,7 +33,6 @@ const ADVANCED_DEGREE = /\b(mba|m\.?b\.?a|phd|ph\.?d|doctorate|masters?|m\.?sc|m
 
 // ─── Years-of-experience helper ────────────────────────────────────────────
 
-/** Compute total years of experience from an array of experience objects. */
 function calcYearsOfExperience(experiences: any[]): number {
   let totalMonths = 0;
   for (const exp of experiences) {
@@ -33,12 +42,9 @@ function calcYearsOfExperience(experiences: any[]): number {
 
     const parseDate = (s: string): Date | null => {
       if (!s) return null;
-      // "Present" / "Current" → today
       if (/present|current/i.test(s)) return new Date();
-      // Try native parse first (handles ISO, "Jan 2020", "2020-01" etc.)
       const d = new Date(s);
       if (!isNaN(d.getTime())) return d;
-      // "MM/YYYY" or "YYYY"
       const parts = s.split(/[\/\-]/);
       if (parts.length === 2) return new Date(parseInt(parts[1]), parseInt(parts[0]) - 1);
       if (parts.length === 1 && /^\d{4}$/.test(parts[0])) return new Date(parseInt(parts[0]), 0);
@@ -56,114 +62,105 @@ function calcYearsOfExperience(experiences: any[]): number {
 
 // ─── Main export ───────────────────────────────────────────────────────────
 
-/**
- * Detect the career category from raw CV data.
- *
- * Accepts either:
- *  - the flat `cvData` object used by CV Studio  (keys: experiences, education, …)
- *  - any object that has the same shape
- */
 export function detectCategory(cvData: Record<string, unknown>): CareerCategory {
-  const experiences   = Array.isArray(cvData.experiences)       ? cvData.experiences       as any[] : [];
-  const education     = Array.isArray(cvData.education)          ? cvData.education          as any[] : [];
-  const boardRoles    = Array.isArray(cvData.boardRoles)         ? cvData.boardRoles         as any[] : [];
-  const publications  = Array.isArray(cvData.publications)       ? cvData.publications       as any[] : [];
-  const execTraining  = Array.isArray(cvData.executiveTraining)  ? cvData.executiveTraining  as any[] : [];
-  const achievements  = Array.isArray(cvData.keyAchievements)    ? cvData.keyAchievements    as any[] : [];
-  const skills        = Array.isArray(cvData.skills)             ? cvData.skills             as any[] : [];
-  const certifications = Array.isArray(cvData.certifications)    ? cvData.certifications     as any[] : [];
+  const experiences    = Array.isArray(cvData.experiences)       ? cvData.experiences       as any[] : [];
+  const education      = Array.isArray(cvData.education)          ? cvData.education          as any[] : [];
+  const boardRoles     = Array.isArray(cvData.boardRoles)         ? cvData.boardRoles         as any[] : [];
+  const publications   = Array.isArray(cvData.publications)       ? cvData.publications       as any[] : [];
+  const execTraining   = Array.isArray(cvData.executiveTraining)  ? cvData.executiveTraining  as any[] : [];
+  const achievements   = Array.isArray(cvData.keyAchievements)    ? cvData.keyAchievements    as any[] : [];
+  const skills         = Array.isArray(cvData.skills)             ? cvData.skills             as any[] : [];
+  const certifications = Array.isArray(cvData.certifications)     ? cvData.certifications     as any[] : [];
+
+  // ── No experience at all → always junior ──
+  if (experiences.length === 0) return "junior";
 
   let score = 0;
 
-  // ── 1. Title analysis (max 35 pts) ──
-  let execTitleCount = 0, midTitleCount = 0, juniorTitleCount = 0;
+  // ════════════════════════════════════════════════════════════
+  // PRIMARY: Experience (titles + count + years) — max 80 pts
+  // These three together determine the base category.
+  // ════════════════════════════════════════════════════════════
+
+  // 1. Title seniority (max 40 pts)
+  let execTitleCount = 0, midTitleCount = 0;
   for (const exp of experiences) {
     const t = exp?.title || exp?.jobTitle || "";
-    if (EXEC_TITLES.test(t))   execTitleCount++;
-    else if (MID_TITLES.test(t))   midTitleCount++;
-    else if (JUNIOR_TITLES.test(t)) juniorTitleCount++;
+    if (EXEC_TITLES.test(t))        execTitleCount++;
+    else if (MID_TITLES.test(t))    midTitleCount++;
   }
-  if      (execTitleCount >= 2)  score += 35;
-  else if (execTitleCount === 1) score += 28;
-  else if (midTitleCount >= 3)   score += 22;
-  else if (midTitleCount >= 1)   score += 15;
-  else if (juniorTitleCount >= 1) score += 5;
-  else if (experiences.length > 0) score += 10; // titles exist but don't match patterns
+  if      (execTitleCount >= 2)  score += 40;
+  else if (execTitleCount === 1) score += 32;
+  else if (midTitleCount >= 3)   score += 24;
+  else if (midTitleCount >= 1)   score += 16;
+  else                           score += 8;  // titles exist but unrecognised
 
-  // ── 2. Scope / responsibility keywords in descriptions (max 20 pts) ──
+  // 2. Role count — career depth (max 25 pts)
+  if      (experiences.length >= 6) score += 25;
+  else if (experiences.length >= 4) score += 18;
+  else if (experiences.length >= 3) score += 12;
+  else if (experiences.length >= 2) score += 6;
+  else                              score += 2;  // single role
+
+  // 3. Years of experience (max 15 pts)
+  const yearsExp = calcYearsOfExperience(experiences);
+  if      (yearsExp >= 15) score += 15;
+  else if (yearsExp >= 10) score += 11;
+  else if (yearsExp >= 6)  score += 7;
+  else if (yearsExp >= 3)  score += 4;
+  else if (yearsExp >= 1)  score += 2;
+
+  // ════════════════════════════════════════════════════════════
+  // SECONDARY: Role content & other sections — max 35 pts
+  // Can confirm a borderline profile; cannot override a weak experience base.
+  // ════════════════════════════════════════════════════════════
+
+  // 4. Scope / responsibility keywords in role descriptions (max 12 pts)
   let execScopeHits = 0, midScopeHits = 0;
   for (const exp of experiences) {
     const desc = exp?.description || "";
     if (EXEC_SCOPE.test(desc)) execScopeHits++;
     if (MID_SCOPE.test(desc))  midScopeHits++;
   }
-  if      (execScopeHits >= 2) score += 20;
-  else if (execScopeHits === 1) score += 14;
-  else if (midScopeHits >= 2)  score += 10;
-  else if (midScopeHits === 1) score += 6;
+  if      (execScopeHits >= 2)  score += 12;
+  else if (execScopeHits === 1) score += 8;
+  else if (midScopeHits >= 2)   score += 6;
+  else if (midScopeHits === 1)  score += 3;
 
-  // ── 3. Education (max 10 pts) ──
-  if (education.some((e: any) => ADVANCED_DEGREE.test(e?.degree || ""))) score += 10;
-  else if (education.length > 0) score += 4;
+  // 5. Board roles (max 8 pts)
+  if      (boardRoles.length >= 2) score += 8;
+  else if (boardRoles.length === 1) score += 5;
 
-  // ── 4. Board roles (max 10 pts) ──
-  if      (boardRoles.length >= 2) score += 10;
-  else if (boardRoles.length === 1) score += 7;
+  // 6. Education (max 5 pts)
+  if (education.some((e: any) => ADVANCED_DEGREE.test(e?.degree || ""))) score += 5;
+  else if (education.length > 0) score += 2;
 
-  // ── 5. Publications (max 5 pts) ──
-  if      (publications.length >= 2) score += 5;
-  else if (publications.length === 1) score += 3;
+  // 7. Publications (max 4 pts)
+  if      (publications.length >= 2) score += 4;
+  else if (publications.length === 1) score += 2;
 
-  // ── 6. Executive training (max 5 pts) ──
-  if      (execTraining.length >= 2) score += 5;
-  else if (execTraining.length === 1) score += 3;
+  // 8. Executive training (max 3 pts)
+  if      (execTraining.length >= 2) score += 3;
+  else if (execTraining.length === 1) score += 2;
 
-  // ── 7. Number of roles / career depth (max 20 pts) ──
-  // Experience count is a strong career-level signal — weighted heavily.
-  if      (experiences.length >= 6) score += 20;
-  else if (experiences.length >= 4) score += 15;
-  else if (experiences.length >= 3) score += 10;
-  else if (experiences.length >= 2) score += 6;
-  else if (experiences.length === 1) score += 2;
+  // 9. Achievements, skills, certifications (max 3 pts total — tiebreaker only)
+  if (achievements.length >= 3)    score += 1;
+  if (skills.length >= 6)          score += 1;
+  if (certifications.length >= 1)  score += 1;
 
-  // ── 8. Years of experience (max 10 pts) ──
-  const yearsExp = calcYearsOfExperience(experiences);
-  if      (yearsExp >= 15) score += 10;
-  else if (yearsExp >= 8)  score += 7;
-  else if (yearsExp >= 5)  score += 4;
-  else if (yearsExp >= 3)  score += 2;
+  // ════════════════════════════════════════════════════════════
+  // HARD EXPERIENCE COUNT GATES
+  // Experience count is the primary basis — enforce minimums regardless of score.
+  // ════════════════════════════════════════════════════════════
 
-  // ── 9. Achievements, skills, certifications ──
-  if      (achievements.length >= 6)    score += 10;
-  else if (achievements.length >= 3)    score += 6;
-  else if (achievements.length >= 1)    score += 3;
-
-  if      (skills.length >= 12) score += 6;
-  else if (skills.length >= 6)  score += 3;
-
-  if      (certifications.length >= 3) score += 5;
-  else if (certifications.length >= 1) score += 2;
-
-  // ── 10. Content sufficiency gate ──
-  // A layout is only as good as the content that fills it.
-  // Count "bonus" sections beyond the base (exp + edu + skills).
-  const richSections = [
-    achievements.length  > 0,
-    certifications.length > 0,
-    publications.length  > 0,
-    boardRoles.length    > 0,
-    execTraining.length  > 0,
-  ].filter(Boolean).length;
-
-  // With ≤ 2 experiences and fewer than 2 rich sections → not enough content
-  // for a mid-senior layout; cap score just below the threshold.
-  if (experiences.length <= 2 && richSections < 2) {
-    score = Math.min(score, 29); // keeps mid-senior unreachable
+  // 1-2 jobs with no executive title → junior (not enough career depth for mid-senior)
+  if (experiences.length <= 2 && execTitleCount === 0) {
+    score = Math.min(score, 29);
   }
 
-  // With ≤ 4 experiences and fewer than 3 rich sections → not enough for executive.
-  if (experiences.length <= 4 && richSections < 3) {
-    score = Math.min(score, 59); // keeps executive unreachable
+  // Fewer than 5 jobs → cannot be executive (layout requires extensive career history)
+  if (experiences.length < 5) {
+    score = Math.min(score, 59);
   }
 
   // ── Determine category ──
