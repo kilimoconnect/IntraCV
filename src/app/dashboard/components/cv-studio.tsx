@@ -22,8 +22,8 @@ import { detectCategory } from "@/lib/detect-category";
 const CURRENCY = "USD";
 const CV_PLANS = [
   { id: "starter"      as const, label: "Starter",       amount: 3,  badge: null,              badgeClass: "",                                             desc: "CV only, saved to documents" },
-  { id: "professional" as const, label: "Professional",  amount: 7,  badge: "⭐ MOST POPULAR",  badgeClass: "bg-indigo-100 text-indigo-700",                desc: "CV and cover letter activated and saved to documents" },
-  { id: "full"         as const, label: "Full Package",  amount: 10, badge: "🔥 BEST VALUE",    badgeClass: "bg-amber-100 text-amber-700",                  desc: "CV, cover letter and 20 interview questions unlocked" },
+  { id: "professional" as const, label: "Professional",  amount: 7,  badge: "⭐ MOST POPULAR",  badgeClass: "bg-[#004aad]/10 text-[#004aad]",                desc: "CV and cover letter activated and saved to documents" },
+  { id: "full"         as const, label: "Full Package",  amount: 10, badge: "🔥 BEST VALUE",    badgeClass: "bg-[#ff751f]/10 text-[#ff751f]",                  desc: "CV, cover letter and 20 interview questions unlocked" },
 ] as const;
 type PlanId = "starter" | "professional" | "full";
 
@@ -198,9 +198,9 @@ const CATEGORY_CARDS: {
     subtitle: "Experienced Professional",
     description: "Professional two-column layout with sidebar. Ideal for professionals with 3-15 years of progressive experience.",
     icon: Briefcase,
-    color: "text-indigo-600",
-    bgGradient: "from-indigo-50 to-blue-50",
-    borderColor: "border-indigo-200 hover:border-indigo-400",
+    color: "text-[#004aad]",
+    bgGradient: "from-[#004aad]/5 to-[#00c4cc]/5",
+    borderColor: "border-[#004aad]/30 hover:border-[#004aad]",
     required: ["Personal Info", "Professional Summary", "Experience", "Education", "Core Competencies", "Key Achievements", "References"],
     recommended: ["Certifications", "Professional Memberships", "Tools & Software", "Languages", "Projects"],
   },
@@ -210,9 +210,9 @@ const CATEGORY_CARDS: {
     subtitle: "Senior Leadership",
     description: "Distinguished premium layout with grand header. Designed for C-suite, directors, and senior leaders with 15+ years.",
     icon: Award,
-    color: "text-purple-600",
-    bgGradient: "from-purple-50 to-violet-50",
-    borderColor: "border-purple-200 hover:border-purple-400",
+    color: "text-[#004aad]",
+    bgGradient: "from-[#004aad]/5 to-[#00c4cc]/5",
+    borderColor: "border-[#004aad]/30 hover:border-[#004aad]",
     required: ["Personal Info", "Executive Profile", "Professional Experience", "Education", "Core Leadership Competencies", "Career Highlights", "Board & Advisory Roles", "References"],
     recommended: ["Executive Training", "Publications & Speaking", "Certifications", "Professional Affiliations", "Languages"],
   },
@@ -1642,7 +1642,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       <div className="max-w-xl mx-auto pt-4 pb-10 px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 mb-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-[#004aad]/10 text-[#004aad] mb-3">
             <Sparkles className="h-5 w-5" />
           </div>
           <h2 className="text-2xl font-bold text-slate-800">CV Studio</h2>
@@ -1654,31 +1654,31 @@ export default function CvStudio({ userId, cvData }: Props) {
           {/* Path 1 — Improve my CV */}
           <button
             onClick={() => { setCvPath("improve"); setStep("analyze-profile"); }}
-            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-200"
+            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#004aad] hover:shadow-lg hover:shadow-[#004aad]/10 transition-all duration-200"
           >
-            <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
+            <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-[#004aad]/5 text-[#004aad] group-hover:bg-[#004aad]/10 transition-colors">
               <FileText className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-slate-800 text-base">Improve my CV</p>
               <p className="text-sm text-slate-500 mt-0.5">Get a clean, professional CV in seconds</p>
             </div>
-            <ArrowLeft className="h-5 w-5 text-slate-300 rotate-180 shrink-0 mt-0.5 group-hover:text-indigo-400 transition-colors" />
+            <ArrowLeft className="h-5 w-5 text-slate-300 rotate-180 shrink-0 mt-0.5 group-hover:text-[#004aad] transition-colors" />
           </button>
 
           {/* Path 2 — Apply for a job */}
           <button
             onClick={() => { setCvPath("apply"); setStep("analyze-profile"); }}
-            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-400 hover:shadow-lg hover:shadow-violet-100/50 transition-all duration-200"
+            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#00c4cc] hover:shadow-lg hover:shadow-[#00c4cc]/10 transition-all duration-200"
           >
-            <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
+            <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-[#00c4cc]/10 text-[#00c4cc] group-hover:bg-[#00c4cc]/20 transition-colors">
               <Briefcase className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-slate-800 text-base">Apply for a job</p>
               <p className="text-sm text-slate-500 mt-0.5">Optimize your CV for a specific job and increase your chances</p>
             </div>
-            <ArrowLeft className="h-5 w-5 text-slate-300 rotate-180 shrink-0 mt-0.5 group-hover:text-violet-400 transition-colors" />
+            <ArrowLeft className="h-5 w-5 text-slate-300 rotate-180 shrink-0 mt-0.5 group-hover:text-[#00c4cc] transition-colors" />
           </button>
         </div>
       </div>
@@ -1703,7 +1703,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${cvPath === "apply" ? "bg-violet-100 text-violet-600" : "bg-indigo-100 text-indigo-600"}`}>
+          <div className={`p-2 rounded-lg ${cvPath === "apply" ? "bg-[#00c4cc]/10 text-[#00c4cc]" : "bg-[#004aad]/10 text-[#004aad]"}`}>
             {cvPath === "apply" ? <Briefcase className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
           </div>
           <div>
@@ -1716,7 +1716,7 @@ export default function CvStudio({ userId, cvData }: Props) {
 
         {/* Plan banner when returning from plan selection */}
         {selectedPlan && cvPath === "apply" && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-xs text-violet-800">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#00c4cc]/10 border border-[#00c4cc]/20 text-xs text-[#0f172a]">
             <span className="text-base">{selectedPlan === "full" ? "🔥" : "⭐"}</span>
             <span>
               <strong>{CV_PLANS.find(p => p.id === selectedPlan)?.label}</strong> plan selected —
@@ -1806,7 +1806,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   <button
                     onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
                     disabled={navigatingToBuilder}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-[#004aad] hover:text-[#003a8c] bg-[#004aad]/5 hover:bg-[#004aad]/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
                   >
                     {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
                     Edit CV
@@ -1842,7 +1842,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-5 space-y-4">
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-violet-600" />
+              <Target className="h-4 w-4 text-[#00c4cc]" />
               <span className="text-sm font-semibold text-slate-800">Paste Job Description</span>
             </div>
 
@@ -1850,26 +1850,26 @@ export default function CvStudio({ userId, cvData }: Props) {
               <div>
                 <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Name <span className="text-red-500">*</span></label>
                 <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g. Acme Corp"
-                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(jobTitle.trim() || jobDescription.trim()) && !company.trim() ? "border-red-200" : "border-slate-200"}`} />
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#00c4cc] focus:border-[#00c4cc] placeholder:text-slate-400 ${(jobTitle.trim() || jobDescription.trim()) && !company.trim() ? "border-red-200" : "border-slate-200"}`} />
               </div>
               <div>
                 <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Title <span className="text-red-500">*</span></label>
                 <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Senior Product Manager"
-                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 ${(company.trim() || jobDescription.trim()) && !jobTitle.trim() ? "border-red-200" : "border-slate-200"}`} />
+                  className={`w-full text-xs p-2.5 border rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#00c4cc] focus:border-[#00c4cc] placeholder:text-slate-400 ${(company.trim() || jobDescription.trim()) && !jobTitle.trim() ? "border-red-200" : "border-slate-200"}`} />
               </div>
             </div>
 
             <div>
               <label className="text-[11px] font-medium text-slate-500 mb-1 block">Company Address</label>
               <input type="text" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} placeholder="e.g. 10 Downing St, London, UK"
-                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400" />
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#00c4cc] focus:border-[#00c4cc] placeholder:text-slate-400" />
             </div>
 
             <div>
               <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description <span className="text-red-500">*</span></label>
               <textarea value={jobDescription} onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }} rows={5}
                 placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
-                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-300 placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`} />
+                className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-[#00c4cc] focus:border-[#00c4cc] placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`} />
             </div>
           </div>
 
@@ -1883,7 +1883,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   <button
                     onClick={() => { if (!hasAll) return; setShouldAutoOptimize(true); setStep("select"); }}
                     disabled={!hasAll}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-violet-200/40 transition-all duration-200 hover:shadow-xl"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#004aad] hover:bg-[#003a8c] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-[#004aad]/20 transition-all duration-200 hover:shadow-xl"
                   >
                     <Sparkles className="h-4 w-4" />
                     Generate Tailored CV →
@@ -1901,7 +1901,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           <button
             onClick={() => setStep("select")}
             disabled={profileAnalyzing && !cvReadiness}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#004aad] hover:bg-[#003a8c] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-[#004aad]/20 transition-all duration-200 hover:shadow-xl"
           >
             <Sparkles className="h-4 w-4" />
             Generate My CV →
@@ -1970,7 +1970,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     const cat = CATEGORY_CARDS.find((c) => c.id === selectedCategory);
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#004aad]" />
         <p className="text-sm text-slate-500">
           {shouldAutoOptimize
             ? <>Building your <span className="font-semibold">tailored {cat?.label} CV</span> &amp; cover letter…</>
@@ -2000,7 +2000,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           {selectedCategory && (
             <button
               onClick={() => void handleGenerate(selectedCategory)}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+              className="flex items-center gap-2 rounded-lg bg-[#004aad] px-4 py-2 text-sm text-white hover:bg-[#003a8c]"
             >
               <RefreshCw className="h-4 w-4" />
               Try Again
@@ -2032,7 +2032,7 @@ export default function CvStudio({ userId, cvData }: Props) {
 
             <span className={`text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full ${
               selectedCategory === "junior" ? "bg-emerald-100 text-emerald-700" :
-              selectedCategory === "mid-senior" ? "bg-indigo-100 text-indigo-700" :
+              selectedCategory === "mid-senior" ? "bg-[#004aad]/10 text-[#004aad]" :
               "bg-purple-100 text-purple-700"
             }`}>
               {CATEGORY_CARDS.find((c) => c.id === selectedCategory)?.label} Layout
@@ -2051,7 +2051,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
               disabled={navigatingToBuilder}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-70"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-md border border-[#004aad]/20 bg-[#004aad]/5 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-[#004aad] transition-colors hover:bg-[#004aad]/10 disabled:opacity-70"
             >
               {navigatingToBuilder ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <UserPen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               <span className="hidden sm:inline">Edit Profile</span>
@@ -2068,7 +2068,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               }}
               className={`flex items-center gap-1 sm:gap-1.5 rounded-md border px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors ${
                 editMode
-                  ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                  ? "border-[#004aad]/30 bg-[#004aad]/5 text-[#004aad]"
                   : overflowSections.size > 0 && autoFixAttempts >= 3
                     ? "border-amber-300 bg-amber-50 text-amber-700"
                     : overflowSections.size > 0
@@ -2088,7 +2088,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               onClick={() => setShowPricingModal(true)}
               disabled={downloadingPdf || paymentProcessing}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-indigo-200/40 transition-all duration-200 hover:shadow-xl hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-60"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-[#004aad] px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-[#004aad]/20 transition-all duration-200 hover:shadow-xl hover:bg-[#003a8c] disabled:opacity-60"
             >
               {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               {downloadingPdf ? "Generating..." : "Download"}
@@ -2100,12 +2100,12 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <Palette className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+              <Palette className="h-3.5 w-3.5 text-[#004aad] shrink-0" />
               <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">CV Theme</span>
             </div>
             <span
               key={selectedTheme}
-              className="text-[11px] font-bold text-indigo-600 animate-fade-in-up"
+              className="text-[11px] font-bold text-[#004aad] animate-fade-in-up"
             >
               {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
             </span>
@@ -2237,7 +2237,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       {/* CV Preview — inline editing */}
       {editMode && (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#004aad]/5 border border-[#004aad]/20 rounded-lg text-xs text-[#004aad]">
             <PenLine className="h-3.5 w-3.5 shrink-0" />
             <span><strong>Two ways to edit:</strong> use the panel on the right for all sections, or <strong>click any text</strong> in the CV for a quick inline edit.</span>
           </div>
@@ -2325,9 +2325,9 @@ export default function CvStudio({ userId, cvData }: Props) {
                     disabled={paymentProcessing}
                     className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-150 ${
                       selectedPlan === plan.id && paymentProcessing
-                        ? "border-indigo-500 bg-indigo-50"
+                        ? "border-[#004aad] bg-[#004aad]/5"
                         : selectedPlan === plan.id
-                        ? "border-indigo-400 bg-indigo-50"
+                        ? "border-[#004aad]/70 bg-[#004aad]/5"
                         : "border-slate-200 hover:border-slate-300 bg-white"
                     } disabled:cursor-not-allowed`}
                   >
@@ -2341,18 +2341,18 @@ export default function CvStudio({ userId, cvData }: Props) {
                         )}
                       </div>
                       {selectedPlan === plan.id && paymentProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-indigo-600 shrink-0 ml-2" />
+                        <Loader2 className="h-4 w-4 animate-spin text-[#004aad] shrink-0 ml-2" />
                       ) : (
-                        <span className="font-bold text-base text-indigo-700 shrink-0 ml-2">
+                        <span className="font-bold text-base text-[#004aad] shrink-0 ml-2">
                           {CURRENCY} {plan.amount}
                         </span>
                       )}
                     </div>
-                    <p className={`text-xs ${selectedPlan === plan.id && paymentProcessing ? "text-indigo-500" : "text-slate-500"}`}>
+                    <p className={`text-xs ${selectedPlan === plan.id && paymentProcessing ? "text-[#004aad]" : "text-slate-500"}`}>
                       {selectedPlan === plan.id && paymentProcessing ? "Redirecting to payment…" : plan.desc}
                     </p>
                     {(plan.id === "professional" || plan.id === "full") && cvPath !== "apply" && !paymentProcessing && (
-                      <p className="text-[10px] text-violet-500 mt-1.5 font-medium">
+                      <p className="text-[10px] text-[#00c4cc] mt-1.5 font-medium">
                         ↩ Requires job details — you&apos;ll be asked to add them
                       </p>
                     )}
@@ -2373,8 +2373,8 @@ export default function CvStudio({ userId, cvData }: Props) {
           <div className="flex flex-col items-center gap-5">
             {/* Spinning ring */}
             <div className="relative h-16 w-16">
-              <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
-              <div className="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin" />
+              <div className="absolute inset-0 rounded-full border-4 border-[#004aad]/10" />
+              <div className="absolute inset-0 rounded-full border-4 border-[#004aad] border-t-transparent animate-spin" />
             </div>
             <div className="flex flex-col items-center gap-2">
               <p className="text-base font-semibold text-slate-800">Generating your PDF…</p>
@@ -2385,7 +2385,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="h-2 w-2 rounded-full bg-indigo-400"
+                  className="h-2 w-2 rounded-full bg-[#004aad]"
                   style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
                 />
               ))}
@@ -2396,7 +2396,7 @@ export default function CvStudio({ userId, cvData }: Props) {
 
       {/* Optimizing overlay banner */}
       {optimizing && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-violet-200 bg-violet-50 text-violet-700">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#00c4cc]/20 bg-[#00c4cc]/10 text-[#004aad]">
           <Loader2 className="h-4 w-4 animate-spin shrink-0" />
           <span className="text-xs font-medium">Tailoring your CV to the job description…</span>
         </div>
@@ -2408,7 +2408,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-violet-600" />
+                <FileText className="h-5 w-5 text-[#004aad]" />
                 <h2 className="text-base font-bold text-slate-800">Your Cover Letter</h2>
               </div>
               <div className="flex items-center gap-2">
@@ -2437,7 +2437,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               <p className="text-xs text-slate-400">AI-generated · Review before sending</p>
               <button
                 onClick={() => setShowCoverLetter(false)}
-                className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#004aad] hover:bg-[#003a8c] text-white text-sm font-medium transition-colors"
               >
                 Done
               </button>
@@ -2451,7 +2451,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         coverLetterUnlocked ? (
           <button
             onClick={() => setShowCoverLetter(true)}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-purple-50 text-sm font-semibold text-violet-700 hover:from-violet-100 hover:to-purple-100 hover:border-violet-400 transition-all shadow-sm"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-[#004aad]/30 bg-[#004aad]/5 text-sm font-semibold text-[#004aad] hover:bg-[#004aad]/10 hover:border-[#004aad]/50 transition-all shadow-sm"
           >
             <FileText className="h-4 w-4" />
             View Generated Cover Letter

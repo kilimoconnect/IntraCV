@@ -727,7 +727,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
             size="sm"
             variant="outline"
             onClick={startNewSession}
-            className="h-7 px-2.5 text-xs rounded-lg border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700"
+            className="h-7 px-2.5 text-xs rounded-lg border-slate-200 hover:bg-[#004aad]/5 hover:border-[#004aad]/20 hover:text-[#004aad]"
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             New
@@ -745,7 +745,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
             return (
               <div
                 key={s.id}
-                className={`group relative transition-colors ${isActive ? "bg-indigo-50" : "hover:bg-slate-50"}`}
+                className={`group relative transition-colors ${isActive ? "bg-[#004aad]/5" : "hover:bg-slate-50"}`}
               >
                 <button
                   onClick={() => switchSession(s)}
@@ -753,7 +753,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-medium truncate ${isActive ? "text-indigo-700" : "text-slate-800"}`}>
+                      <p className={`text-sm font-medium truncate ${isActive ? "text-[#004aad]" : "text-slate-800"}`}>
                         {s.job_role || "Untitled"}
                       </p>
                       {s.company && (
@@ -800,7 +800,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-200">
+              <div className="h-9 w-9 rounded-xl bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#004aad]/20">
                 <BriefcaseBusiness className="h-4.5 w-4.5 text-white" />
               </div>
               <div>
@@ -858,7 +858,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               <Button
                 onClick={generateQuestions}
                 disabled={generatingQuestions}
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm shadow-blue-200 text-white"
+                className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm shadow-[#004aad]/20 text-white"
               >
                 {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                 Generate Questions
@@ -921,7 +921,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                   variant="outline"
                   onClick={addMoreQuestions}
                   disabled={addingMore || !currentSessionId}
-                  className="h-7 px-2.5 text-xs rounded-lg border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700"
+                  className="h-7 px-2.5 text-xs rounded-lg border-slate-200 hover:bg-[#004aad]/5 hover:border-[#004aad]/20 hover:text-[#004aad]"
                 >
                   {addingMore
                     ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
@@ -986,7 +986,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center transition-colors ${isExpanded ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-400"}`}>
+                    <div className={`h-6 w-6 rounded-full flex items-center justify-center transition-colors ${isExpanded ? "bg-[#004aad]/10 text-[#004aad]" : "bg-slate-100 text-slate-400"}`}>
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </div>
                   </div>
@@ -995,13 +995,13 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                   {isExpanded && (
                     <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
                       {/* Tip + Speaker */}
-                      <div className="bg-indigo-50 rounded-xl p-3 flex items-start gap-3">
-                        <p className="text-xs text-indigo-800 flex-1"><span className="font-semibold">Tip:</span> {q.tips}</p>
+                      <div className="bg-[#004aad]/5 rounded-xl p-3 flex items-start gap-3">
+                        <p className="text-xs text-[#004aad] flex-1"><span className="font-semibold">Tip:</span> {q.tips}</p>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleSpeak(q.id, q.question); }}
                           className={`shrink-0 h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${
-                            isSpeaking ? "bg-indigo-600 text-white" : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                            isSpeaking ? "bg-[#004aad] text-white" : "bg-[#004aad]/10 text-[#004aad] hover:bg-[#004aad]/20"
                           }`}
                           title={isSpeaking ? "Stop reading" : "Read question aloud"}
                         >
@@ -1051,7 +1051,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                         size="sm"
                         onClick={() => submitAnswer(q.id)}
                         disabled={isLoading || !(answers[q.id] || "").trim()}
-                        className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 border-0 shadow-sm text-white"
+                        className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm text-white"
                       >
                         {isLoading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Star className="mr-2 h-3.5 w-3.5" />}
                         Get AI Feedback
@@ -1110,8 +1110,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
         {/* Empty state when no session selected */}
         {!currentSessionId && questions.length === 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center mx-auto mb-3">
-              <Sparkles className="h-6 w-6 text-indigo-500" />
+            <div className="h-12 w-12 rounded-2xl bg-[#004aad]/10 flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="h-6 w-6 text-[#004aad]" />
             </div>
             <p className="text-sm font-medium text-slate-700">Ready to practice?</p>
             <p className="text-xs text-slate-400 mt-1">Enter a job role and job description above to generate tailored interview questions.</p>

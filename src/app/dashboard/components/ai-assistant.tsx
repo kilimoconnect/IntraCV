@@ -64,7 +64,7 @@ function AssistantBubble({ content }: { content: string }) {
           <ul className="space-y-1.5">
             {data.tips.map((tip, ti) => (
               <li key={ti} className="flex gap-2 text-xs text-muted-foreground">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 shrink-0" />
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#004aad] shrink-0" />
                 {tip}
               </li>
             ))}
@@ -168,7 +168,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center animate-pulse">
+          <div className="h-10 w-10 rounded-full bg-[#004aad] flex items-center justify-center animate-pulse">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <p className="text-sm text-muted-foreground">Loading conversation...</p>
@@ -182,7 +182,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+          <div className="h-9 w-9 rounded-xl bg-[#004aad] flex items-center justify-center shadow-sm shadow-[#004aad]/20">
             <Sparkles className="h-4.5 w-4.5 text-white" />
           </div>
           <div>
@@ -207,7 +207,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 scrollbar-thin scrollbar-thumb-slate-200">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
+            <div className="h-16 w-16 rounded-2xl bg-[#004aad] flex items-center justify-center mb-4 shadow-lg shadow-[#004aad]/20">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
             <h4 className="font-semibold text-slate-700 mb-1">Your AI Career Coach</h4>
@@ -219,7 +219,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
                 <button
                   key={q}
                   onClick={() => setInput(q)}
-                  className="text-xs border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-full px-3 py-1.5 transition-colors font-medium"
+                  className="text-xs border border-[#004aad]/20 text-[#004aad] bg-[#004aad]/5 hover:bg-[#004aad]/10 rounded-full px-3 py-1.5 transition-colors font-medium"
                 >
                   {q}
                 </button>
@@ -231,13 +231,13 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200 mt-0.5">
+              <div className="h-7 w-7 rounded-lg bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#004aad]/20 mt-0.5">
                 <Sparkles className="h-3.5 w-3.5 text-white" />
               </div>
             )}
             <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm ${
               msg.role === "user"
-                ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-sm rounded-tr-sm"
+                ? "bg-[#004aad] text-white text-sm rounded-tr-sm"
                 : "bg-white border border-slate-100 rounded-tl-sm"
             }`}>
               {msg.role === "user"
@@ -255,14 +255,14 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
 
         {sending && (
           <div className="flex gap-2.5 justify-start">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200 mt-0.5">
+            <div className="h-7 w-7 rounded-lg bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#004aad]/20 mt-0.5">
               <Sparkles className="h-3.5 w-3.5 text-white" />
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex gap-1 items-center">
-                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:0ms]" />
-                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:150ms]" />
-                <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:300ms]" />
+                <span className="h-2 w-2 rounded-full bg-[#004aad] animate-bounce [animation-delay:0ms]" />
+                <span className="h-2 w-2 rounded-full bg-[#004aad] animate-bounce [animation-delay:150ms]" />
+                <span className="h-2 w-2 rounded-full bg-[#004aad] animate-bounce [animation-delay:300ms]" />
               </div>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       </div>
 
       {/* Input */}
-      <div className="flex gap-2 items-end bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-sm focus-within:border-indigo-300 focus-within:ring-1 focus-within:ring-indigo-200 transition-all">
+      <div className="flex gap-2 items-end bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-sm focus-within:border-[#00c4cc] focus-within:ring-1 focus-within:ring-[#00c4cc] transition-all">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -285,7 +285,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
           disabled={!input.trim() || sending}
           className={`shrink-0 h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-150 ${
             input.trim() && !sending
-              ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+              ? "bg-[#004aad] text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
               : "bg-slate-100 text-slate-300 cursor-not-allowed"
           }`}
         >

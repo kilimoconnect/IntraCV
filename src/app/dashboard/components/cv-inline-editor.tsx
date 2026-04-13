@@ -188,7 +188,7 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
 
       {/* Bottom sheet on mobile, floating popup on desktop */}
       <div
-        className="fixed z-[9999] bg-white shadow-2xl border border-indigo-200 overflow-hidden flex flex-col"
+        className="fixed z-[9999] bg-white shadow-2xl border border-[#004aad]/20 overflow-hidden flex flex-col"
         style={isMobile
           ? { left: 0, right: 0, bottom: 0, width: "100%", borderRadius: "16px 16px 0 0" }
           : { left, top, width: W, borderRadius: "16px" }
@@ -196,11 +196,11 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-500">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-[#004aad]">
           <span className="text-xs font-semibold text-white tracking-wide">
             ✏️ {fieldLabel(editor.field)}
           </span>
-          <button onClick={onClose} className="text-indigo-200 hover:text-white transition-colors ml-2">
+          <button onClick={onClose} className="text-white/70 hover:text-white transition-colors ml-2">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -210,7 +210,7 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
           {editor.multiline ? (
             <textarea
               ref={textareaRef}
-              className="w-full text-sm text-slate-800 leading-relaxed outline-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 resize-none focus:border-indigo-400 focus:bg-white transition-colors"
+              className="w-full text-sm text-slate-800 leading-relaxed outline-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 resize-none focus:border-[#00c4cc] focus:bg-white transition-colors"
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -220,7 +220,7 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
           ) : (
             <input
               ref={inputRef}
-              className="w-full text-sm text-slate-800 outline-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:border-indigo-400 focus:bg-white transition-colors"
+              className="w-full text-sm text-slate-800 outline-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:border-[#00c4cc] focus:bg-white transition-colors"
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -264,7 +264,7 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
             </span>
             <button
               onClick={save}
-              className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors font-medium"
+              className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-[#004aad] text-white hover:bg-[#003a8c] transition-colors font-medium"
             >
               <Check className="h-3.5 w-3.5" />
               Save

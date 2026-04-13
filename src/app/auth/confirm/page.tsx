@@ -85,15 +85,15 @@ export default function AuthConfirmPage() {
     <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 w-full max-w-sm flex flex-col items-center gap-5 text-center">
         <div className="relative">
-          <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
-          <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg overflow-hidden">
+          <div className="absolute inset-0 bg-[#004aad]/20 rounded-2xl blur-md" />
+          <div className="relative h-20 w-20 rounded-2xl bg-[#004aad] flex items-center justify-center shadow-lg overflow-hidden">
             <Image src="/fusecv-icon.png" alt="FuseCV" width={58} height={80} className="object-contain" />
           </div>
         </div>
 
         {status === "loading" && (
           <>
-            <Loader2 className="h-8 w-8 text-indigo-500 animate-spin" />
+            <Loader2 className="h-8 w-8 text-[#004aad] animate-spin" />
             <div>
               <p className="font-semibold text-slate-800">Confirming your account…</p>
               <p className="text-sm text-slate-500 mt-1">Just a moment</p>
@@ -120,7 +120,7 @@ export default function AuthConfirmPage() {
             </div>
             <a
               href="/register"
-              className="text-sm font-medium text-indigo-600 hover:underline"
+              className="text-sm font-medium text-[#004aad] hover:underline"
             >
               Try signing up again
             </a>

@@ -13,9 +13,9 @@ import Documents from "./components/documents";
 import SettingsPanel from "./components/settings";
 
 const TAB_META: Record<string, { label: string; description: string; icon: React.ElementType; gradient: string }> = {
-  profile:   { label: "My Profile",          description: "View and manage your career profile data",          icon: UserCircle2,      gradient: "from-indigo-500 to-violet-600" },
-  studio:    { label: "Fix and improve your CV",            description: "AI-powered CV optimization and generation",   icon: Wand2,            gradient: "from-violet-500 to-purple-600" },
-  interview: { label: "Practice real interview questions",  description: "AI mock interviews tailored to your profile",  icon: BriefcaseBusiness,gradient: "from-blue-500 to-indigo-600" },
+  profile:   { label: "My Profile",          description: "View and manage your career profile data",          icon: UserCircle2,      gradient: "from-[#004aad] to-[#00c4cc]" },
+  studio:    { label: "Fix and improve your CV",            description: "AI-powered CV optimization and generation",   icon: Wand2,            gradient: "from-[#004aad] to-[#00c4cc]" },
+  interview: { label: "Practice real interview questions",  description: "AI mock interviews tailored to your profile",  icon: BriefcaseBusiness,gradient: "from-[#004aad] to-[#00c4cc]" },
   documents: { label: "Access your CV and cover letters",  description: "Download and manage your saved documents",     icon: FolderOpen,       gradient: "from-emerald-500 to-teal-600" },
   settings:  { label: "Settings",            description: "Manage your account and CV preferences",           icon: SettingsIcon,     gradient: "from-slate-500 to-slate-700" },
 };

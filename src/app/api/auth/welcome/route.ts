@@ -106,7 +106,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
 
           <!-- Primary CTA -->
           <table cellpadding="0" cellspacing="0" style="margin:0 auto">
-            <tr><td style="border-radius:12px;background:#f97316;box-shadow:0 4px 20px rgba(249,115,22,0.35)">
+            <tr><td style="border-radius:12px;background:#ff751f;box-shadow:0 4px 20px rgba(255,117,31,0.35)">
               <a href="${siteUrl}/cv-builder" style="display:inline-block;padding:15px 40px;color:#ffffff;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Build My CV Now &rarr;
               </a>
@@ -247,7 +247,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
 
           <!-- CTA -->
           <table cellpadding="0" cellspacing="0" style="width:100%">
-            <tr><td style="border-radius:12px;background:#f97316;box-shadow:0 4px 15px rgba(249,115,22,0.35);text-align:center">
+            <tr><td style="border-radius:12px;background:#ff751f;box-shadow:0 4px 15px rgba(255,117,31,0.35);text-align:center">
               <a href="${siteUrl}/cv-builder" style="display:block;padding:16px 36px;color:#ffffff;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Start Building My CV &rarr;
               </a>

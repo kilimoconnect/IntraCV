@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
           <!-- CTA -->
           <table cellpadding="0" cellspacing="0" style="margin-bottom:28px">
-            <tr><td style="border-radius:12px;background:#f97316;box-shadow:0 4px 15px rgba(249,115,22,0.35)">
+            <tr><td style="border-radius:12px;background:#ff751f;box-shadow:0 4px 15px rgba(255,117,31,0.35)">
               <a href="${confirmationUrl}" style="display:inline-block;padding:15px 36px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Activate My Account &rarr;
               </a>
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
             Button not working? Copy and paste this link into your browser:
           </p>
           <p style="margin:0 0 28px">
-            <a href="${confirmationUrl}" style="color:#6366f1;font-size:11px;word-break:break-all">${confirmationUrl}</a>
+            <a href="${confirmationUrl}" style="color:#00c4cc;font-size:11px;word-break:break-all">${confirmationUrl}</a>
           </p>
 
           <div style="border-top:1px solid #f1f5f9;padding-top:20px">

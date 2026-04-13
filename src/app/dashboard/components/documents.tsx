@@ -184,11 +184,11 @@ export default function Documents({ userId }: DocumentsProps) {
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Total</div>
         </div>
         <div className="stat-card rounded-2xl px-5 py-3 text-center min-w-[80px]">
-          <div className="text-2xl font-extrabold text-indigo-600">{cvDocs.length}</div>
+          <div className="text-2xl font-extrabold text-[#004aad]">{cvDocs.length}</div>
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">CVs</div>
         </div>
         <div className="stat-card rounded-2xl px-5 py-3 text-center min-w-[80px]">
-          <div className="text-2xl font-extrabold text-violet-600">{coverLetters.length}</div>
+          <div className="text-2xl font-extrabold text-[#00c4cc]">{coverLetters.length}</div>
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Letters</div>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function Documents({ userId }: DocumentsProps) {
                           : <Badge variant="outline" className="text-[10px] shrink-0 bg-amber-50 text-amber-700 border-amber-200">PDF processing…</Badge>
                       )}
                       {cv && cv.templateType === "studio" && (
-                        <Badge variant="outline" className="text-[10px] shrink-0 bg-indigo-50 text-indigo-700 border-indigo-200">CV Studio · {cv.studioCategory}</Badge>
+                        <Badge variant="outline" className="text-[10px] shrink-0 bg-[#004aad]/5 text-[#004aad] border-[#004aad]/20">CV Studio · {cv.studioCategory}</Badge>
                       )}
                     {cv && isEngineCV && (
                         <Badge variant="outline" className="text-[10px] shrink-0">{cv.engineStyleId} · {cv.engineLayoutType}</Badge>

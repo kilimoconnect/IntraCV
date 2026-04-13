@@ -75,12 +75,12 @@ export default function LoginPage() {
           {/* Brand mark */}
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-3">
-              <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
-              <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200 overflow-hidden">
+              <div className="absolute inset-0 bg-[#004aad]/20 rounded-2xl blur-md" />
+              <div className="relative h-20 w-20 rounded-2xl bg-[#004aad] flex items-center justify-center shadow-lg shadow-[#004aad]/20 overflow-hidden">
                 <Image src="/fusecv-icon.png" alt="FuseCV" width={58} height={80} className="object-contain" />
               </div>
             </div>
-            <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-extrabold text-[#004aad]">
               Welcome back
             </h1>
             <p className="text-sm text-slate-500 mt-1">Sign in to your FuseCV account</p>
@@ -124,7 +124,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="pl-9 rounded-xl border-slate-200 focus:border-indigo-300 focus:ring-indigo-200"
+                    className="pl-9 rounded-xl border-slate-200 focus:border-[#00c4cc] focus:ring-[#00c4cc]"
                   />
                 </div>
               </div>
@@ -139,13 +139,13 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="pl-9 rounded-xl border-slate-200 focus:border-indigo-300 focus:ring-indigo-200"
+                    className="pl-9 rounded-xl border-slate-200 focus:border-[#00c4cc] focus:ring-[#00c4cc]"
                   />
                 </div>
               </div>
               <Button
                 type="submit"
-                className="w-full rounded-xl h-10 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold shadow-sm shadow-indigo-200 border-0"
+                className="w-full rounded-xl h-10 bg-[#004aad] hover:bg-[#003a8c] text-white font-semibold shadow-sm shadow-[#004aad]/20 border-0"
                 disabled={loading}
               >
                 {loading
@@ -168,7 +168,7 @@ export default function LoginPage() {
               href="/register"
               className="flex items-center justify-center gap-2 w-full h-10 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+              <Sparkles className="h-3.5 w-3.5 text-[#004aad]" />
               Create a free account
             </Link>
           </div>

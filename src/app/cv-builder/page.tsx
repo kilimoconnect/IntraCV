@@ -1321,7 +1321,7 @@ function CVBuilderPage() {
 
               {/* Header */}
               <div className="text-center space-y-2">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-200 mb-2">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#004aad] shadow-lg shadow-[#004aad]/20 mb-2">
                   <Upload className="h-7 w-7 text-white" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Upload Your CV</h2>
@@ -1437,7 +1437,7 @@ function CVBuilderPage() {
               <div className={`relative flex items-start gap-3 rounded-lg border px-4 py-3 text-sm
                 ${hookLoading
                   ? "border-slate-200 bg-slate-50 text-slate-500 animate-pulse"
-                  : "border-violet-200 bg-violet-50 text-violet-900"}`}>
+                  : "border-[#004aad]/20 bg-[#004aad]/5 text-[#0f172a]"}`}>
                 {hookLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mt-0.5 shrink-0 animate-spin text-slate-400" />
@@ -1445,14 +1445,14 @@ function CVBuilderPage() {
                   </>
                 ) : hookMessage ? (
                   <>
-                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0 text-violet-500" />
+                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0 text-[#004aad]" />
                     <div className="flex-1 min-w-0">
                       <span className="font-medium">{hookMessage.message}</span>
                     </div>
                     <button
                       onClick={() => setHookDismissed(true)}
                       aria-label="Dismiss"
-                      className="shrink-0 text-violet-400 hover:text-violet-600 transition-colors"
+                      className="shrink-0 text-[#004aad]/60 hover:text-[#004aad] transition-colors"
                     >
                       <XCircle className="h-4 w-4" />
                     </button>

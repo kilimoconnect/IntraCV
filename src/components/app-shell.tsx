@@ -90,7 +90,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
           <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#004aad] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
 
             {/* Accent bar */}
-            <div className="h-0.5 w-full bg-[#00c4cc]" />
+            <div className="h-0.5 w-full bg-[#004aad]" />
 
             {/* Nav items */}
             <nav className="flex-1 px-3 py-4 space-y-1">

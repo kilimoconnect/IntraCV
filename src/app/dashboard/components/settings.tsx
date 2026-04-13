@@ -172,7 +172,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
       </SectionCard>
 
       {/* Profile */}
-      <SectionCard icon={<User className="h-4 w-4 text-white" />} gradient="from-indigo-500 to-violet-600" title="Profile" description="Your public-facing info">
+      <SectionCard icon={<User className="h-4 w-4 text-white" />} gradient="from-[#004aad] to-[#00c4cc]" title="Profile" description="Your public-facing info">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FieldRow label="Full Name" icon={<User className="h-3 w-3" />}>
             <Input value={profile.full_name} onChange={(e) => setProfile((p) => ({ ...p, full_name: e.target.value }))} placeholder="John Doe" className="rounded-xl border-slate-200 text-sm" />
@@ -194,7 +194,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           </FieldRow>
         </div>
         <div className="mt-5">
-          <Button onClick={saveProfile} disabled={savingProfile} className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 border-0 shadow-sm hover:shadow-md shadow-indigo-200 text-white transition-all">
+          <Button onClick={saveProfile} disabled={savingProfile} className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm hover:shadow-md shadow-[#004aad]/20 text-white transition-all">
             {savingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Profile
           </Button>
@@ -202,7 +202,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
       </SectionCard>
 
       {/* Change Password */}
-      <SectionCard icon={<KeyRound className="h-4 w-4 text-white" />} gradient="from-blue-500 to-indigo-600" title="Change Password" description="Update your account password">
+      <SectionCard icon={<KeyRound className="h-4 w-4 text-white" />} gradient="from-[#004aad] to-[#00c4cc]" title="Change Password" description="Update your account password">
         <div className="space-y-4">
           <FieldRow label="New Password">
             <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" className="rounded-xl border-slate-200 text-sm" />
@@ -210,7 +210,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           <FieldRow label="Confirm Password">
             <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat password" className="rounded-xl border-slate-200 text-sm" />
           </FieldRow>
-          <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-sm hover:shadow-md shadow-blue-200 text-white transition-all">
+          <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm hover:shadow-md shadow-[#004aad]/20 text-white transition-all">
             {changingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
             Update Password
           </Button>
