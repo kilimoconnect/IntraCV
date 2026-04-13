@@ -90,14 +90,14 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
 
         <!-- ── HERO HEADER ─────────────────────────────────────────────── -->
-        <tr><td style="border-radius:16px 16px 0 0;background:linear-gradient(135deg,#1e1b4b 0%,#3730a3 35%,#4f46e5 65%,#7c3aed 100%);padding:48px 32px 40px;text-align:center;position:relative;overflow:hidden">
+        <tr><td style="border-radius:16px 16px 0 0;background:linear-gradient(135deg,#1e1b4b 0%,#3730a3 35%,#4f46e5 65%,#7c3aed 100%);padding:28px 32px 32px;text-align:center;position:relative;overflow:hidden">
           <!-- Stripe overlay -->
           <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 14px);pointer-events:none"></div>
           <!-- Glow orb -->
           <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%);pointer-events:none"></div>
 
           <!-- Logo -->
-          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="200" style="display:block;margin:0 auto 24px;max-width:200px" />
+          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="120" style="display:block;margin:0 auto 16px;max-width:120px" />
 
           <!-- Hero copy -->
           <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;line-height:1.25">
