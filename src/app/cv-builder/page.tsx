@@ -785,20 +785,34 @@ function CVBuilderPage() {
       // ── All sections fire in parallel ──
       const results = await Promise.allSettled([
 
-        // Personal info (upsert)
-        supabase.from("cv_personal_info").upsert({
-          user_id: user.id,
-          full_name: personalInfo.fullName,
-          email: personalInfo.email,
-          phone: personalInfo.phone,
-          location: personalInfo.location,
-          headline: personalInfo.headline,
-          tagline: personalInfo.tagline,
-          linkedin: personalInfo.linkedin,
-          website: personalInfo.website,
-          career_category: detectedCareerCategory,
-          updated_at: now,
-        }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw error; }),
+        // Personal info (upsert — try with career_category, fall back if column not yet migrated)
+        (async () => {
+          const base = {
+            user_id: user.id,
+            full_name: personalInfo.fullName,
+            email: personalInfo.email,
+            phone: personalInfo.phone,
+            location: personalInfo.location,
+            headline: personalInfo.headline,
+            tagline: personalInfo.tagline,
+            linkedin: personalInfo.linkedin,
+            website: personalInfo.website,
+            updated_at: now,
+          };
+          const { error } = await supabase.from("cv_personal_info").upsert(
+            { ...base, career_category: detectedCareerCategory },
+            { onConflict: "user_id" }
+          );
+          if (error) {
+            if (error.message?.includes("career_category") || error.code === "PGRST204") {
+              // Column not yet in production — save without it
+              const { error: err2 } = await supabase.from("cv_personal_info").upsert(base, { onConflict: "user_id" });
+              if (err2) throw err2;
+            } else {
+              throw error;
+            }
+          }
+        })(),
 
         // Summary (upsert)
         supabase.from("cv_summary").upsert({
