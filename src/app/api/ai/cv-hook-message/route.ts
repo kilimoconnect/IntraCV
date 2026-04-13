@@ -115,9 +115,9 @@ Career level: ${cvData.careerCategory || "unknown"}
 1. Opens with "${firstName},"
 2. Identifies the REAL career-damaging weakness — not surface stuff like missing URLs. Think: too few roles for their career level, no achievements section to prove impact, experience descriptions that read like a job spec not accomplishments, skills list that any graduate could copy, no progression shown across roles, career gap with no explanation, mismatched seniority signals, or a profile so thin it would be filtered by ATS in seconds
 3. States the concrete consequence — not getting interviews, screened out before a human reads it, losing shortlists to stronger candidates, salary ceiling, invisible to headhunters
-4. Closes with a confident, professional reassurance that FuseCV will fix it — something like "We'll fix that for you.", "FuseCV will handle it.", "Our AI will close that gap." — NOT salesy, just confident and reassuring
+4. Closes with a confident, professional reassurance that FuseCV will fix it — something like "We'll fix that for you.", "FuseCV will handle it.", "We've got you covered." — do NOT mention AI. Keep it human and confident
 5. 2–3 sentences total, max 240 characters
-6. CTA label: 3–5 words that invite them to let the AI fix it (e.g. "Fix it with AI", "Let AI handle it", "Boost my CV now") — NOT a manual task
+6. CTA label: 3–5 words that invite them to act now (e.g. "Fix it now", "Strengthen my CV", "Boost my profile", "Let's fix this") — do NOT mention AI, tools, or technology
 
 DO NOT mention: LinkedIn URL, phone number, website, or other contact fields — those are trivial. Focus on what actually costs them opportunities.
 
