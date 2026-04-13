@@ -14,13 +14,13 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-[#F0F2F8]">
 
       {/* ── Header ── */}
-      <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-50 shadow-sm">
+      <header className="h-14 bg-[#00c4cc] flex items-center justify-between px-4 md:px-8 sticky top-0 z-50 shadow-md">
         <Link href="/" className="flex items-center">
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain" />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain brightness-0 invert" />
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-indigo-600 transition-colors font-medium"
+          className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       </header>
 
       {/* ── Hero ── */}
-      <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 py-14 px-4 text-center">
+      <div className="bg-[#00c4cc] py-14 px-4 text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 border border-white/25 mb-4">
           <Shield className="h-7 w-7 text-white" />
         </div>

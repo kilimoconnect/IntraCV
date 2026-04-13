@@ -60,12 +60,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
     <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
 
       {/* ── Top Header ── */}
-      <header className="h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 shadow-sm">
+      <header className="h-14 bg-[#00c4cc] flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 shadow-md">
         <button
           onClick={() => router.push(user ? "/dashboard" : "/")}
           className="flex items-center group"
         >
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain" />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain brightness-0 invert" />
         </button>
 
         <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
               variant="ghost"
               size="sm"
               onClick={() => signOut()}
-              className="text-slate-500 hover:text-red-600 hover:bg-red-50 gap-1.5 rounded-xl"
+              className="text-white/80 hover:text-white hover:bg-white/20 gap-1.5 rounded-xl"
             >
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline text-xs font-medium">Sign out</span>
@@ -85,12 +85,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
 
       <div className="flex flex-1 min-h-0">
 
-        {/* ── Dark Desktop Sidebar ── */}
+        {/* ── Teal Desktop Sidebar ── */}
         {!hideSidebar && (
-          <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#0F172A] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
+          <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#00c4cc] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
 
-            {/* Brand accent bar at top */}
-            <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+            {/* Subtle bottom-border accent */}
+            <div className="h-0.5 w-full bg-white/30" />
 
             {/* Nav items */}
             <nav className="flex-1 px-3 py-4 space-y-1">
@@ -105,16 +105,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                     disabled={isLoading}
                     className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left group relative overflow-hidden ${
                       isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-900/40"
+                        ? "bg-white text-[#00c4cc] shadow-lg"
                         : isLoading
-                        ? "bg-white/5 text-slate-500"
-                        : "text-slate-400 hover:text-white hover:bg-white/8"
+                        ? "bg-white/10 text-white/40"
+                        : "text-white/85 hover:text-white hover:bg-white/20"
                     }`}
                   >
-                    {/* Active item glow */}
-                    {isActive && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-violet-600/10 blur-xl" />
-                    )}
                     <span className={`shrink-0 mt-0.5 relative z-10 transition-transform duration-200 ${!isActive && !isLoading ? "group-hover:scale-110" : ""}`}>
                       {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -124,18 +120,18 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                     </span>
                     <span className="flex-1 min-w-0 relative z-10">
                       <span className="block leading-snug break-words">{item.label}</span>
-                      <span className={`block text-[11px] font-normal mt-0.5 leading-tight ${isActive ? "text-white/60" : "text-slate-500 group-hover:text-slate-400"}`}>
+                      <span className={`block text-[11px] font-normal mt-0.5 leading-tight ${isActive ? "text-[#00b0b8]" : "text-white/60 group-hover:text-white/80"}`}>
                         {item.subtitle}
                       </span>
                     </span>
                     {item.key === "documents" && hasNewDocs && !isActive && (
                       <span className="ml-auto mt-1 relative flex h-2.5 w-2.5 shrink-0 z-10">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-400" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff751f] opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff751f]" />
                       </span>
                     )}
                     {isActive && (
-                      <ChevronRight className="ml-auto mt-1 h-3.5 w-3.5 text-white/60 shrink-0 relative z-10" />
+                      <ChevronRight className="ml-auto mt-1 h-3.5 w-3.5 text-[#00c4cc]/60 shrink-0 relative z-10" />
                     )}
                   </button>
                 );
@@ -143,18 +139,18 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
             </nav>
 
             {/* Divider */}
-            <div className="mx-3 h-px bg-white/8" />
+            <div className="mx-3 h-px bg-white/20" />
 
             {/* User footer */}
             {user && (
               <div className="p-3">
-                <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/6 hover:bg-white/10 transition-colors cursor-default group">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-lg">
+                <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/15 hover:bg-white/25 transition-colors cursor-default group">
+                  <div className="h-8 w-8 rounded-full bg-[#ff751f] flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-lg">
                     {userInitial}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-300 truncate">{user.email}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Active account</p>
+                    <p className="text-xs text-white/90 truncate">{user.email}</p>
+                    <p className="text-[10px] text-white/50 mt-0.5">Active account</p>
                   </div>
                 </div>
               </div>
@@ -164,7 +160,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
 
         {/* ── Mobile Bottom Nav ── */}
         {!hideMobileNav && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0F172A] border-t border-white/10 z-50 px-2 py-2 flex gap-1">
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#00c4cc] border-t border-white/20 z-50 px-2 py-2 flex gap-1">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = currentKey === item.key;
@@ -176,10 +172,10 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                   disabled={isLoading}
                   className={`flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-xl text-[10px] font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-gradient-to-b from-indigo-600 to-violet-600 text-white shadow-lg"
+                      ? "bg-white text-[#00c4cc] shadow-lg"
                       : isLoading
-                      ? "text-slate-600"
-                      : "text-slate-400 hover:text-white hover:bg-white/8"
+                      ? "text-white/40"
+                      : "text-white/80 hover:text-white hover:bg-white/20"
                   }`}
                 >
                   <span className="relative">
@@ -190,8 +186,8 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                     )}
                     {item.key === "documents" && hasNewDocs && !isActive && (
                       <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff751f] opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff751f]" />
                       </span>
                     )}
                   </span>
@@ -203,7 +199,6 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
         )}
 
         {/* ── Main Content ── */}
-        {/* pb-24 on mobile only when bottom nav is visible; cv-builder manages its own bottom space */}
         <main className={`flex-1 min-w-0 p-4 sm:p-6 md:pb-8 overflow-y-auto ${hideMobileNav ? "pb-6" : "pb-24"}`}>
           {children}
         </main>
