@@ -91,7 +91,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
 
         <!-- ── LOGO HEADER ─────────────────────────────────────────────── -->
         <tr><td style="border-radius:16px 16px 0 0;background:#ffffff;border:1px solid #e2e8f0;border-bottom:none;padding:24px 32px 20px;text-align:center">
-          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="150" style="display:block;margin:0 auto;max-width:150px" />
+          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="150" height="46" style="display:block;margin:0 auto;max-width:150px;height:auto" />
         </td></tr>
 
         <!-- ── HERO BANNER ─────────────────────────────────────────────── -->

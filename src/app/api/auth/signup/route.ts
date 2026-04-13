@@ -73,7 +73,7 @@ export async function POST(req: Request) {
 
         <!-- Header -->
         <tr><td style="border-radius:16px 16px 0 0;background:#ffffff;border:1px solid #e2e8f0;border-bottom:none;padding:24px 32px 20px;text-align:center">
-          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="150" style="display:block;margin:0 auto 8px;max-width:150px" />
+          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="150" height="46" style="display:block;margin:0 auto 8px;max-width:150px;height:auto" />
           <p style="color:#64748b;margin:0;font-size:12px;letter-spacing:0.3px">Your AI-Powered CV Builder</p>
         </td></tr>
 

@@ -65,7 +65,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
           onClick={() => router.push(user ? "/dashboard" : "/")}
           className="flex items-center group"
         >
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={45} className="object-contain" />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain" />
         </button>
 
         <div className="flex items-center gap-2">

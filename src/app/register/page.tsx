@@ -55,8 +55,8 @@ export default function RegisterPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-3">
               <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
-              <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <Image src="/fusecv-icon.png" alt="FuseCV" width={96} height={96} className="rounded-lg" />
+              <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200 overflow-hidden">
+                <Image src="/fusecv-icon.png" alt="FuseCV" width={58} height={80} className="object-contain" />
               </div>
             </div>
             {!confirmed ? (
