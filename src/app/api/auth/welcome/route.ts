@@ -97,7 +97,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
           <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%);pointer-events:none"></div>
 
           <!-- Logo -->
-          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="160" style="display:block;margin:0 auto 16px;max-width:160px" />
+          <div style="display:inline-block;background:#ffffff;border-radius:12px;padding:10px 20px;margin:0 auto 16px"><img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="140" style="display:block;max-width:140px" /></div>
 
           <!-- Hero copy -->
           <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;line-height:1.25">
