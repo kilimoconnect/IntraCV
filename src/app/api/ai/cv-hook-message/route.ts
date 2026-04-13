@@ -110,23 +110,35 @@ Career level: ${cvData.careerCategory || "unknown"}
 
     const firstName = (pi?.fullName || "").split(" ")[0] || "there";
 
-    const prompt = `You are a senior recruitment director who has reviewed 10,000+ CVs. Write a hook message for the CV information entry screen. The message must:
+    const prompt = `You are a senior recruitment director who has reviewed 10,000+ CVs. Write a hook message for the CV information entry screen.
 
-1. MUST start with exactly "${firstName}," — this is required, do not skip or rephrase the opening
-2. Name the single biggest weakness in their current profile — be specific. Think: too few roles, no achievements to prove impact, thin descriptions, no career progression, profile too sparse to pass screening
-3. State the real consequence (rejected before a human reads it, losing shortlists, invisible to headhunters)
-4. Make clear this screen is for entering their raw information — the improvement and optimisation happens automatically on the next screen once they save. Use phrasing like "Complete your profile here and we'll handle the rest on the next step." or "Fill in your details — the transformation happens once you proceed."
-5. Human tone, confident, no mention of AI. 2–3 sentences, max 260 characters
-6. CTA label: 3–5 words focused on completing and saving (e.g. "Complete & Save", "Save & proceed", "Fill in & continue") — no mention of AI or technology
+Rules:
+1. MUST start with exactly "${firstName}," — required, never skip
+2. Identify 2–3 DIFFERENT weaknesses from across these areas — vary them, do NOT fixate on one topic like achievements:
+   - Too few experience roles for their career level
+   - No or weak professional summary
+   - Skills list too thin or generic
+   - No certifications or qualifications listed
+   - No education details
+   - No references added
+   - Career progression not visible
+   - Key achievements missing
+   - No projects or extracurricular work
+   - Profile overall too sparse to pass ATS screening
+3. State the real-world consequence of these gaps combined (screened out, losing shortlists, salary ceiling, invisible to headhunters)
+4. Close with a confident line that this screen is for entering raw information — the improvement and polish happens on the next screen once they save. E.g. "Fill in everything here — we'll handle the transformation on the next step."
+5. Human tone, no mention of AI. 3–4 sentences max, under 300 characters
+6. CTA label: 3–5 words on completing and saving
 
-DO NOT mention: LinkedIn URL, phone number, website, or other contact fields.
+DO NOT mention: LinkedIn URL, phone number, website.
+DO NOT repeat the same weakness on every message — look at what is actually missing in the profile data.
 
 PROFILE DATA:
 ${profileSummary}
 
 Return ONLY valid JSON:
 {
-  "message": "<hook message, max 210 chars>",
+  "message": "<hook message, under 300 chars>",
   "cta_label": "<3–5 word action label>"
 }`;
 
@@ -134,7 +146,7 @@ Return ONLY valid JSON:
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.4,
+      temperature: 0.7,
       response_format: { type: "json_object" },
     });
 
