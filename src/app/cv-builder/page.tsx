@@ -1854,7 +1854,7 @@ function CVBuilderPage() {
                   {/* ── Education ── */}
                   {currentKey === "education" && (
                     <div className="space-y-4">
-                      {education.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setEducation([{ id: uid(), degree: "", institution: "", year: "", description: "" }, ...education])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Education
                         </Button>
@@ -1904,7 +1904,7 @@ function CVBuilderPage() {
                   {/* ── Skills ── */}
                   {currentKey === "skills" && (
                     <div className="space-y-3">
-                      {skills.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setSkills([{ id: uid(), name: "", category: "" }, ...skills])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Skill
                         </Button>
@@ -1929,7 +1929,7 @@ function CVBuilderPage() {
                   {/* ── Certifications ── */}
                   {currentKey === "certifications" && (
                     <div className="space-y-3">
-                      {certifications.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setCertifications([{ id: uid(), name: "", issuer: "", year: "" }, ...certifications])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Certification
                         </Button>
@@ -1957,7 +1957,7 @@ function CVBuilderPage() {
                   {/* ── Languages ── */}
                   {currentKey === "languages" && (
                     <div className="space-y-3">
-                      {languages.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setLanguages([{ id: uid(), name: "", proficiency: "" }, ...languages])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Language
                         </Button>
@@ -1982,7 +1982,7 @@ function CVBuilderPage() {
                   {/* ── Referees ── */}
                   {currentKey === "referees" && (
                     <div className="space-y-4">
-                      {referees.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setReferees([{ id: uid(), name: "", title: "", company: "", phone: "", email: "" }, ...referees])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Referee
                         </Button>
@@ -2036,7 +2036,7 @@ function CVBuilderPage() {
                   {/* ── Key Achievements ── */}
                   {currentKey === "achievements" && (
                     <div className="space-y-3">
-                      {keyAchievements.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setKeyAchievements([{ id: uid(), achievement: "" }, ...keyAchievements])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Achievement
                         </Button>
@@ -2058,7 +2058,7 @@ function CVBuilderPage() {
                   {/* ── Awards ── */}
                   {currentKey === "awards" && (
                     <div className="space-y-3">
-                      {awards.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setAwards([{ id: uid(), title: "", description: "" }, ...awards])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Award
                         </Button>
@@ -2087,7 +2087,7 @@ function CVBuilderPage() {
                   {/* ── Memberships ── */}
                   {currentKey === "memberships" && (
                     <div className="space-y-3">
-                      {memberships.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setMemberships([{ id: uid(), name: "" }, ...memberships])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Membership
                         </Button>
@@ -2109,7 +2109,7 @@ function CVBuilderPage() {
                   {/* ── Projects ── */}
                   {currentKey === "projects" && (
                     <div className="space-y-4">
-                      {projects.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setProjects([{ id: uid(), name: "", description: "", tech: "" }, ...projects])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Project
                         </Button>
@@ -2155,7 +2155,7 @@ function CVBuilderPage() {
                   {/* ── Board / Leadership Roles ── */}
                   {currentKey === "boardRoles" && (
                     <div className="space-y-4">
-                      {boardRoles.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setBoardRoles([{ id: uid(), title: "", organization: "", startDate: "", endDate: "", description: "" }, ...boardRoles])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Board Role
                         </Button>
@@ -2209,7 +2209,7 @@ function CVBuilderPage() {
                   {/* ── Executive Training ── */}
                   {currentKey === "execTraining" && (
                     <div className="space-y-3">
-                      {execTraining.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setExecTraining([{ id: uid(), name: "", institution: "", year: "" }, ...execTraining])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Training
                         </Button>
@@ -2237,7 +2237,7 @@ function CVBuilderPage() {
                   {/* ── Publications / Speaking ── */}
                   {currentKey === "publications" && (
                     <div className="space-y-4">
-                      {publications.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setPublications([{ id: uid(), title: "", publisher: "", year: "", type: "publication" }, ...publications])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Publication
                         </Button>
@@ -2287,7 +2287,7 @@ function CVBuilderPage() {
                   {/* ── Tools & Software ── */}
                   {currentKey === "tools" && (
                     <div className="space-y-3">
-                      {tools.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setTools([{ name: "", company: "" }, ...tools])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Tool
                         </Button>
@@ -2314,7 +2314,7 @@ function CVBuilderPage() {
                   {/* ── Volunteer ── */}
                   {currentKey === "volunteer" && (
                     <div className="space-y-3">
-                      {volunteer.length > 0 && (
+                      {(
                         <Button variant="outline" className="w-full" onClick={() => setVolunteer(["", ...volunteer])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Volunteer Experience
                         </Button>
