@@ -58,13 +58,13 @@ function UnsubscribeContent() {
     <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
 
       {/* ── Header ── */}
-      <header className="h-14 bg-[#00c4cc] flex items-center justify-between px-4 md:px-8 sticky top-0 z-50 shadow-md">
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-50 shadow-sm">
         <Link href="/" className="flex items-center">
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain brightness-0 invert" />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain" />
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors font-medium"
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-[#004aad] transition-colors font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -228,9 +228,9 @@ function UnsubscribeContent() {
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
-      <header className="h-14 bg-[#00c4cc] flex items-center px-4 md:px-8 sticky top-0 z-50 shadow-md">
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 md:px-8 sticky top-0 z-50 shadow-sm">
         <Link href="/" className="flex items-center">
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain brightness-0 invert" />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={42} className="object-contain" />
         </Link>
       </header>
       <div className="flex-1 flex items-center justify-center px-4">{children}</div>
