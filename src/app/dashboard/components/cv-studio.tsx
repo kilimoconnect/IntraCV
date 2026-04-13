@@ -1883,7 +1883,7 @@ export default function CvStudio({ userId, cvData }: Props) {
                   <button
                     onClick={() => { if (!hasAll) return; setShouldAutoOptimize(true); setStep("select"); }}
                     disabled={!hasAll}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#004aad] hover:bg-[#003a8c] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-[#004aad]/20 transition-all duration-200 hover:shadow-xl"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#ff751f] hover:bg-[#e8661a] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-[#ff751f]/20 transition-all duration-200 hover:shadow-xl"
                   >
                     <Sparkles className="h-4 w-4" />
                     Generate Tailored CV →
@@ -1901,7 +1901,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           <button
             onClick={() => setStep("select")}
             disabled={profileAnalyzing && !cvReadiness}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#004aad] hover:bg-[#003a8c] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-[#004aad]/20 transition-all duration-200 hover:shadow-xl"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#ff751f] hover:bg-[#e8661a] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 shadow-lg shadow-[#ff751f]/20 transition-all duration-200 hover:shadow-xl"
           >
             <Sparkles className="h-4 w-4" />
             Generate My CV →
@@ -2000,7 +2000,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           {selectedCategory && (
             <button
               onClick={() => void handleGenerate(selectedCategory)}
-              className="flex items-center gap-2 rounded-lg bg-[#004aad] px-4 py-2 text-sm text-white hover:bg-[#003a8c]"
+              className="flex items-center gap-2 rounded-lg bg-[#004aad] px-4 py-2 text-sm text-white hover:bg-[#e8661a]"
             >
               <RefreshCw className="h-4 w-4" />
               Try Again
@@ -2088,7 +2088,7 @@ export default function CvStudio({ userId, cvData }: Props) {
             <button
               onClick={() => setShowPricingModal(true)}
               disabled={downloadingPdf || paymentProcessing}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-[#004aad] px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-[#004aad]/20 transition-all duration-200 hover:shadow-xl hover:bg-[#003a8c] disabled:opacity-60"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-[#004aad] px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-[#ff751f]/20 transition-all duration-200 hover:shadow-xl hover:bg-[#e8661a] disabled:opacity-60"
             >
               {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               {downloadingPdf ? "Generating..." : "Download"}
@@ -2437,7 +2437,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               <p className="text-xs text-slate-400">AI-generated · Review before sending</p>
               <button
                 onClick={() => setShowCoverLetter(false)}
-                className="px-4 py-2 rounded-lg bg-[#004aad] hover:bg-[#003a8c] text-white text-sm font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#ff751f] hover:bg-[#e8661a] text-white text-sm font-medium transition-colors"
               >
                 Done
               </button>

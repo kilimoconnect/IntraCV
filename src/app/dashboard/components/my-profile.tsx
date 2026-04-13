@@ -736,7 +736,7 @@ export default function MyProfile({
               <button
                 onClick={handleGenerateCV}
                 disabled={isGeneratingCV}
-                className="w-full flex items-center justify-center gap-2 bg-[#004aad] hover:bg-[#003a8c] disabled:opacity-70 text-white font-bold py-3 rounded-xl shadow-lg shadow-[#004aad]/20 transition-all duration-200 text-sm"
+                className="w-full flex items-center justify-center gap-2 bg-[#ff751f] hover:bg-[#e8661a] disabled:opacity-70 text-white font-bold py-3 rounded-xl shadow-lg shadow-[#ff751f]/20 transition-all duration-200 text-sm"
               >
                 {isGeneratingCV ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
                 Generate Professional CV

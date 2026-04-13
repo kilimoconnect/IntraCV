@@ -800,7 +800,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#004aad]/20">
+              <div className="h-9 w-9 rounded-xl bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#ff751f]/20">
                 <BriefcaseBusiness className="h-4.5 w-4.5 text-white" />
               </div>
               <div>
@@ -858,7 +858,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               <Button
                 onClick={generateQuestions}
                 disabled={generatingQuestions}
-                className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm shadow-[#004aad]/20 text-white"
+                className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] border-0 shadow-sm shadow-[#ff751f]/20 text-white"
               >
                 {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                 Generate Questions
@@ -1051,7 +1051,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                         size="sm"
                         onClick={() => submitAnswer(q.id)}
                         disabled={isLoading || !(answers[q.id] || "").trim()}
-                        className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm text-white"
+                        className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] border-0 shadow-sm text-white"
                       >
                         {isLoading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Star className="mr-2 h-3.5 w-3.5" />}
                         Get AI Feedback

@@ -264,7 +264,7 @@ export default function CVInlineEditor({ editor, onSave, onDelete, onAddBullet, 
             </span>
             <button
               onClick={save}
-              className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-[#004aad] text-white hover:bg-[#003a8c] transition-colors font-medium"
+              className="flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-[#004aad] text-white hover:bg-[#e8661a] transition-colors font-medium"
             >
               <Check className="h-3.5 w-3.5" />
               Save

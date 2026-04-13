@@ -192,7 +192,7 @@ export default function Documents({ userId }: DocumentsProps) {
           <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Letters</div>
         </div>
       </div>
-        <Button variant="outline" size="sm" onClick={loadDocs} disabled={loading} className="rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <Button size="sm" onClick={loadDocs} disabled={loading} className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] text-white border-0 shadow-sm shadow-[#ff751f]/20 transition-all">
           <RefreshCw className={`h-4 w-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
@@ -239,7 +239,7 @@ export default function Documents({ userId }: DocumentsProps) {
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => setExpandedId(isExpanded ? null : doc.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => setExpandedId(isExpanded ? null : doc.id)} className="text-[#ff751f] hover:text-[#e8661a] hover:bg-[#ff751f]/5">
                       {isExpanded ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
                       {isExpanded ? "Hide" : "View"}
                     </Button>
@@ -249,7 +249,7 @@ export default function Documents({ userId }: DocumentsProps) {
                         size="sm"
                         onClick={() => downloadCvPDF(doc)}
                         disabled={downloadingId === doc.id}
-                        className={downloadingId === doc.id ? "min-w-[140px]" : ""}
+                        className={`text-[#ff751f] hover:text-[#e8661a] hover:bg-[#ff751f]/5 ${downloadingId === doc.id ? "min-w-[140px]" : ""}`}
                       >
                         {downloadingId === doc.id ? (
                           <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Preparing PDF…</>
@@ -259,7 +259,7 @@ export default function Documents({ userId }: DocumentsProps) {
                       </Button>
                     )}
                     {doc.doc_type === "cover_letter" && doc.content && (
-                      <Button variant="ghost" size="sm" onClick={() => copyContent(doc.content)}>
+                      <Button variant="ghost" size="sm" onClick={() => copyContent(doc.content)} className="text-[#ff751f] hover:text-[#e8661a] hover:bg-[#ff751f]/5">
                         <Copy className="h-4 w-4" />
                       </Button>
                     )}

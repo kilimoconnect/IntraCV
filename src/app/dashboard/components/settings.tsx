@@ -194,7 +194,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           </FieldRow>
         </div>
         <div className="mt-5">
-          <Button onClick={saveProfile} disabled={savingProfile} className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm hover:shadow-md shadow-[#004aad]/20 text-white transition-all">
+          <Button onClick={saveProfile} disabled={savingProfile} className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] border-0 shadow-sm hover:shadow-md shadow-[#ff751f]/20 text-white transition-all">
             {savingProfile ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Profile
           </Button>
@@ -210,7 +210,7 @@ export default function Settings({ userId, userEmail }: SettingsProps) {
           <FieldRow label="Confirm Password">
             <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat password" className="rounded-xl border-slate-200 text-sm" />
           </FieldRow>
-          <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl bg-[#004aad] hover:bg-[#003a8c] border-0 shadow-sm hover:shadow-md shadow-[#004aad]/20 text-white transition-all">
+          <Button onClick={changePassword} disabled={changingPassword} className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] border-0 shadow-sm hover:shadow-md shadow-[#ff751f]/20 text-white transition-all">
             {changingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
             Update Password
           </Button>

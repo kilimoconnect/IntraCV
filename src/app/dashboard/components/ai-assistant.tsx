@@ -182,7 +182,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-[#004aad] flex items-center justify-center shadow-sm shadow-[#004aad]/20">
+          <div className="h-9 w-9 rounded-xl bg-[#004aad] flex items-center justify-center shadow-sm shadow-[#ff751f]/20">
             <Sparkles className="h-4.5 w-4.5 text-white" />
           </div>
           <div>
@@ -207,7 +207,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 scrollbar-thin scrollbar-thumb-slate-200">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-            <div className="h-16 w-16 rounded-2xl bg-[#004aad] flex items-center justify-center mb-4 shadow-lg shadow-[#004aad]/20">
+            <div className="h-16 w-16 rounded-2xl bg-[#004aad] flex items-center justify-center mb-4 shadow-lg shadow-[#ff751f]/20">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
             <h4 className="font-semibold text-slate-700 mb-1">Your AI Career Coach</h4>
@@ -231,7 +231,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
-              <div className="h-7 w-7 rounded-lg bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#004aad]/20 mt-0.5">
+              <div className="h-7 w-7 rounded-lg bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#ff751f]/20 mt-0.5">
                 <Sparkles className="h-3.5 w-3.5 text-white" />
               </div>
             )}
@@ -255,7 +255,7 @@ export default function AiAssistant({ userId, cvData }: AiAssistantProps) {
 
         {sending && (
           <div className="flex gap-2.5 justify-start">
-            <div className="h-7 w-7 rounded-lg bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#004aad]/20 mt-0.5">
+            <div className="h-7 w-7 rounded-lg bg-[#004aad] flex items-center justify-center shrink-0 shadow-sm shadow-[#ff751f]/20 mt-0.5">
               <Sparkles className="h-3.5 w-3.5 text-white" />
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">

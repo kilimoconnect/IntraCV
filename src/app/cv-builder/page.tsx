@@ -1321,7 +1321,7 @@ function CVBuilderPage() {
 
               {/* Header */}
               <div className="text-center space-y-2">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#004aad] shadow-lg shadow-[#004aad]/20 mb-2">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#004aad] shadow-lg shadow-[#ff751f]/20 mb-2">
                   <Upload className="h-7 w-7 text-white" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Upload Your CV</h2>

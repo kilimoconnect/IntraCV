@@ -55,7 +55,7 @@ export default function RegisterPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-3">
               <div className="absolute inset-0 bg-[#004aad]/20 rounded-2xl blur-md" />
-              <div className="relative h-20 w-20 rounded-2xl bg-[#004aad] flex items-center justify-center shadow-lg shadow-[#004aad]/20 overflow-hidden">
+              <div className="relative h-20 w-20 rounded-2xl bg-[#004aad] flex items-center justify-center shadow-lg shadow-[#ff751f]/20 overflow-hidden">
                 <Image src="/fusecv-icon.png" alt="FuseCV" width={58} height={80} className="object-contain" />
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function RegisterPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full rounded-xl h-10 bg-[#004aad] hover:bg-[#003a8c] text-white font-semibold shadow-sm shadow-[#004aad]/20 border-0"
+                    className="w-full rounded-xl h-10 bg-[#ff751f] hover:bg-[#e8661a] text-white font-semibold shadow-sm shadow-[#ff751f]/20 border-0"
                     disabled={loading || !passwordsMatch || !confirmPassword}
                   >
                     {loading
