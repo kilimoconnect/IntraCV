@@ -1854,6 +1854,11 @@ function CVBuilderPage() {
                   {/* ── Education ── */}
                   {currentKey === "education" && (
                     <div className="space-y-4">
+                      {education.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setEducation([{ id: uid(), degree: "", institution: "", year: "", description: "" }, ...education])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Education
+                        </Button>
+                      )}
                       {education.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No education entries added yet</p>
                       )}
@@ -1893,15 +1898,17 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <Button variant="outline" className="w-full" onClick={() => setEducation([...education, { id: uid(), degree: "", institution: "", year: "", description: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Education
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Skills ── */}
                   {currentKey === "skills" && (
                     <div className="space-y-3">
+                      {skills.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setSkills([{ id: uid(), name: "", category: "" }, ...skills])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Skill
+                        </Button>
+                      )}
                       {skills.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No skills added yet</p>
                       )}
@@ -1916,15 +1923,17 @@ function CVBuilderPage() {
                           <Input placeholder="Category (e.g. Leadership, Technical)" value={skill.category} onChange={(e) => setSkills(skills.map((s) => s.id === skill.id ? { ...s, category: e.target.value } : s))} />
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setSkills([...skills, { id: uid(), name: "", category: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Skill
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Certifications ── */}
                   {currentKey === "certifications" && (
                     <div className="space-y-3">
+                      {certifications.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setCertifications([{ id: uid(), name: "", issuer: "", year: "" }, ...certifications])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Certification
+                        </Button>
+                      )}
                       {certifications.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No certifications added yet</p>
                       )}
@@ -1942,15 +1951,17 @@ function CVBuilderPage() {
                           </div>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setCertifications([...certifications, { id: uid(), name: "", issuer: "", year: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Certification
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Languages ── */}
                   {currentKey === "languages" && (
                     <div className="space-y-3">
+                      {languages.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setLanguages([{ id: uid(), name: "", proficiency: "" }, ...languages])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Language
+                        </Button>
+                      )}
                       {languages.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No languages added yet</p>
                       )}
@@ -1965,15 +1976,17 @@ function CVBuilderPage() {
                           <Input placeholder="Proficiency (e.g. Fluent, Native, Conversational)" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setLanguages([...languages, { id: uid(), name: "", proficiency: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Language
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Referees ── */}
                   {currentKey === "referees" && (
                     <div className="space-y-4">
+                      {referees.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setReferees([{ id: uid(), name: "", title: "", company: "", phone: "", email: "" }, ...referees])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Referee
+                        </Button>
+                      )}
                       {referees.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No referees added yet</p>
                       )}
@@ -2017,17 +2030,17 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => setReferees([...referees, { id: uid(), name: "", title: "", company: "", phone: "", email: "" }])}>
-                          <Plus className="mr-2 h-4 w-4" /> Add Referee
-                        </Button>
-                      </div>
                     </div>
                   )}
 
                   {/* ── Key Achievements ── */}
                   {currentKey === "achievements" && (
                     <div className="space-y-3">
+                      {keyAchievements.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setKeyAchievements([{ id: uid(), achievement: "" }, ...keyAchievements])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Achievement
+                        </Button>
+                      )}
                       {keyAchievements.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No achievements added yet</p>
                       )}
@@ -2039,17 +2052,17 @@ function CVBuilderPage() {
                           </Button>
                         </div>
                       ))}
-                      <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => setKeyAchievements([...keyAchievements, { id: uid(), achievement: "" }])}>
-                          <Plus className="mr-2 h-4 w-4" /> Add Achievement
-                        </Button>
-                      </div>
                     </div>
                   )}
 
                   {/* ── Awards ── */}
                   {currentKey === "awards" && (
                     <div className="space-y-3">
+                      {awards.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setAwards([{ id: uid(), title: "", description: "" }, ...awards])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Award
+                        </Button>
+                      )}
                       {awards.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No awards added yet</p>
                       )}
@@ -2068,15 +2081,17 @@ function CVBuilderPage() {
                           <Textarea placeholder="Award description (optional)" value={award.description} onChange={(e) => setAwards(awards.map((a) => a.id === award.id ? { ...a, description: e.target.value } : a))} rows={2} />
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setAwards([...awards, { id: uid(), title: "", description: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Award
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Memberships ── */}
                   {currentKey === "memberships" && (
                     <div className="space-y-3">
+                      {memberships.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setMemberships([{ id: uid(), name: "" }, ...memberships])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Membership
+                        </Button>
+                      )}
                       {memberships.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No memberships added yet</p>
                       )}
@@ -2088,15 +2103,17 @@ function CVBuilderPage() {
                           </Button>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setMemberships([...memberships, { id: uid(), name: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Membership
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Projects ── */}
                   {currentKey === "projects" && (
                     <div className="space-y-4">
+                      {projects.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setProjects([{ id: uid(), name: "", description: "", tech: "" }, ...projects])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Project
+                        </Button>
+                      )}
                       {projects.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No projects added yet</p>
                       )}
@@ -2132,15 +2149,17 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <Button variant="outline" className="w-full" onClick={() => setProjects([...projects, { id: uid(), name: "", description: "", tech: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Project
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Board / Leadership Roles ── */}
                   {currentKey === "boardRoles" && (
                     <div className="space-y-4">
+                      {boardRoles.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setBoardRoles([{ id: uid(), title: "", organization: "", startDate: "", endDate: "", description: "" }, ...boardRoles])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Board Role
+                        </Button>
+                      )}
                       {boardRoles.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No board or leadership roles added yet</p>
                       )}
@@ -2184,15 +2203,17 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <Button variant="outline" className="w-full" onClick={() => setBoardRoles([...boardRoles, { id: uid(), title: "", organization: "", startDate: "", endDate: "", description: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Board Role
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Executive Training ── */}
                   {currentKey === "execTraining" && (
                     <div className="space-y-3">
+                      {execTraining.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setExecTraining([{ id: uid(), name: "", institution: "", year: "" }, ...execTraining])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Training
+                        </Button>
+                      )}
                       {execTraining.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No executive training added yet</p>
                       )}
@@ -2210,15 +2231,17 @@ function CVBuilderPage() {
                           </div>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setExecTraining([...execTraining, { id: uid(), name: "", institution: "", year: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Training
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Publications / Speaking ── */}
                   {currentKey === "publications" && (
                     <div className="space-y-4">
+                      {publications.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setPublications([{ id: uid(), title: "", publisher: "", year: "", type: "publication" }, ...publications])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Publication
+                        </Button>
+                      )}
                       {publications.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No publications or speaking engagements added yet</p>
                       )}
@@ -2258,15 +2281,17 @@ function CVBuilderPage() {
                         </div>
                         );
                       })}
-                      <Button variant="outline" className="w-full" onClick={() => setPublications([...publications, { id: uid(), title: "", publisher: "", year: "", type: "publication" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Publication
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Tools & Software ── */}
                   {currentKey === "tools" && (
                     <div className="space-y-3">
+                      {tools.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setTools([{ name: "", company: "" }, ...tools])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Tool
+                        </Button>
+                      )}
                       {tools.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No tools or software added yet</p>
                       )}
@@ -2283,15 +2308,17 @@ function CVBuilderPage() {
                           </Button>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setTools([...tools, { name: "", company: "" }])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Tool
-                      </Button>
                     </div>
                   )}
 
                   {/* ── Volunteer ── */}
                   {currentKey === "volunteer" && (
                     <div className="space-y-3">
+                      {volunteer.length > 0 && (
+                        <Button variant="outline" className="w-full" onClick={() => setVolunteer(["", ...volunteer])}>
+                          <Plus className="mr-2 h-4 w-4" /> Add Volunteer Experience
+                        </Button>
+                      )}
                       {volunteer.length === 0 && (
                         <p className="text-muted-foreground text-sm text-center py-8">No volunteer experience added yet</p>
                       )}
@@ -2303,9 +2330,6 @@ function CVBuilderPage() {
                           </Button>
                         </div>
                       ))}
-                      <Button variant="outline" className="w-full" onClick={() => setVolunteer([...volunteer, ""])}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Volunteer Experience
-                      </Button>
                     </div>
                   )}
 
