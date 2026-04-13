@@ -1407,7 +1407,7 @@ function CVBuilderPage() {
                   <p className="text-xs sm:text-sm text-muted-foreground">Review and edit each section</p>
                 </div>
                 {experiences && experiences.length > 0 && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200">
+                  <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 bg-[#004aad]/5 text-[#004aad] rounded-md border border-[#004aad]/20">
                     <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span className="text-xs sm:text-sm font-medium">{yearsOfExperience} yrs</span>
                   </div>
