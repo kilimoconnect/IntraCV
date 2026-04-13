@@ -110,16 +110,16 @@ Career level: ${cvData.careerCategory || "unknown"}
 
     const firstName = (pi?.fullName || "").split(" ")[0] || "there";
 
-    const prompt = `You are a senior recruitment director who has reviewed 10,000+ CVs and rejected most of them. Be brutally direct. Write a hook message that:
+    const prompt = `You are a senior recruitment director who has reviewed 10,000+ CVs. Write a hook message for the CV information entry screen. The message must:
 
-1. Opens with "${firstName},"
-2. Identifies the REAL career-damaging weakness — not surface stuff like missing URLs. Think: too few roles for their career level, no achievements section to prove impact, experience descriptions that read like a job spec not accomplishments, skills list that any graduate could copy, no progression shown across roles, career gap with no explanation, mismatched seniority signals, or a profile so thin it would be filtered by ATS in seconds
-3. States the concrete consequence — not getting interviews, screened out before a human reads it, losing shortlists to stronger candidates, salary ceiling, invisible to headhunters
-4. Closes with a confident, professional reassurance that FuseCV will fix it — something like "We'll fix that for you.", "FuseCV will handle it.", "We've got you covered." — do NOT mention AI. Keep it human and confident
-5. 2–3 sentences total, max 240 characters
-6. CTA label: 3–5 words that invite them to act now (e.g. "Fix it now", "Strengthen my CV", "Boost my profile", "Let's fix this") — do NOT mention AI, tools, or technology
+1. Open with "${firstName},"
+2. Name the single biggest weakness in their current profile — be specific. Think: too few roles, no achievements to prove impact, thin descriptions, no career progression, profile too sparse to pass screening
+3. State the real consequence (rejected before a human reads it, losing shortlists, invisible to headhunters)
+4. Make clear this screen is for entering their raw information — the improvement and optimisation happens automatically on the next screen once they save. Use phrasing like "Complete your profile here and we'll handle the rest on the next step." or "Fill in your details — the transformation happens once you proceed."
+5. Human tone, confident, no mention of AI. 2–3 sentences, max 260 characters
+6. CTA label: 3–5 words focused on completing and saving (e.g. "Complete & Save", "Save & proceed", "Fill in & continue") — no mention of AI or technology
 
-DO NOT mention: LinkedIn URL, phone number, website, or other contact fields — those are trivial. Focus on what actually costs them opportunities.
+DO NOT mention: LinkedIn URL, phone number, website, or other contact fields.
 
 PROFILE DATA:
 ${profileSummary}
