@@ -149,17 +149,53 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
   if (certifications.length >= 1)  score += 1;
 
   // ════════════════════════════════════════════════════════════
-  // HARD EXPERIENCE COUNT GATES
-  // Experience count is the primary basis — enforce minimums regardless of score.
+  // GATE 1 — EXPERIENCE COUNT (primary basis)
   // ════════════════════════════════════════════════════════════
 
-  // 1-2 jobs with no executive title → junior (not enough career depth for mid-senior)
+  // 1-2 jobs with no executive title → junior
   if (experiences.length <= 2 && execTitleCount === 0) {
     score = Math.min(score, 29);
   }
 
-  // Fewer than 5 jobs → cannot be executive (layout requires extensive career history)
+  // Fewer than 5 jobs → cannot be executive
   if (experiences.length < 5) {
+    score = Math.min(score, 59);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // GATE 2 — CONTENT VOLUME (second filter, avoids blank pages)
+  // Junior  = 1 page → base sections only; no multi-section extras needed
+  // Mid-Sr  = 2 pages → needs meaningful content beyond the basics
+  // Exec    = 3 pages → needs rich multi-section content to fill all pages
+  //
+  // Count sections that carry content beyond the base (exp + edu + skills).
+  // ════════════════════════════════════════════════════════════
+
+  // Sections that add content to page 2 (mid-senior extras)
+  const page2Sections = [
+    achievements.length > 0,
+    certifications.length > 0,
+    languages.length > 0,
+    Array.isArray(cvData.projects)     && (cvData.projects     as any[]).length > 0,
+    Array.isArray(cvData.awards)       && (cvData.awards       as any[]).length > 0,
+    Array.isArray(cvData.memberships)  && (cvData.memberships  as any[]).length > 0,
+    Array.isArray(cvData.tools)        && (cvData.tools        as any[]).length > 0,
+  ].filter(Boolean).length;
+
+  // Sections that add content to page 3 (executive extras)
+  const page3Sections = [
+    boardRoles.length > 0,
+    publications.length > 0,
+    execTraining.length > 0,
+  ].filter(Boolean).length;
+
+  // Mid-senior needs at least 2 page-2 sections to avoid a mostly-blank second page
+  if (page2Sections < 2) {
+    score = Math.min(score, 29);
+  }
+
+  // Executive needs at least 2 page-3 sections to avoid a mostly-blank third page
+  if (page3Sections < 2) {
     score = Math.min(score, 59);
   }
 
