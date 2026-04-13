@@ -89,28 +89,25 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
 
-        <!-- ── HERO HEADER ─────────────────────────────────────────────── -->
-        <tr><td style="border-radius:16px 16px 0 0;background:linear-gradient(135deg,#1e1b4b 0%,#3730a3 35%,#4f46e5 65%,#7c3aed 100%);padding:16px 32px 28px;text-align:center;position:relative;overflow:hidden">
-          <!-- Stripe overlay -->
-          <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 14px);pointer-events:none"></div>
-          <!-- Glow orb -->
-          <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%);pointer-events:none"></div>
+        <!-- ── LOGO HEADER ─────────────────────────────────────────────── -->
+        <tr><td style="border-radius:16px 16px 0 0;background:#ffffff;border:1px solid #e2e8f0;border-bottom:none;padding:24px 32px 20px;text-align:center">
+          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="150" style="display:block;margin:0 auto;max-width:150px" />
+        </td></tr>
 
-          <!-- Logo -->
-          <div style="display:inline-block;background:#ffffff;border-radius:12px;padding:10px 20px;margin:0 auto 16px"><img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="140" style="display:block;max-width:140px" /></div>
-
+        <!-- ── HERO BANNER ─────────────────────────────────────────────── -->
+        <tr><td style="background:#0f172a;padding:32px 32px 36px;text-align:center">
           <!-- Hero copy -->
-          <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;line-height:1.25">
+          <h1 style="color:#ffffff;font-size:26px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;line-height:1.25">
             Welcome aboard, ${firstName}! 🎉
           </h1>
-          <p style="color:rgba(255,255,255,0.8);font-size:16px;line-height:1.6;margin:0 0 28px;max-width:380px;margin-left:auto;margin-right:auto">
+          <p style="color:rgba(255,255,255,0.75);font-size:15px;line-height:1.6;margin:0 0 28px;max-width:380px;margin-left:auto;margin-right:auto">
             Your account is confirmed. You now have everything you need to <strong style="color:#ffffff">land your next job faster</strong> than 95% of applicants.
           </p>
 
           <!-- Primary CTA -->
           <table cellpadding="0" cellspacing="0" style="margin:0 auto">
-            <tr><td style="border-radius:12px;background:linear-gradient(135deg,#ffffff,#f0f0ff);box-shadow:0 4px 20px rgba(0,0,0,0.25)">
-              <a href="${siteUrl}/cv-builder" style="display:inline-block;padding:15px 40px;color:#4f46e5;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
+            <tr><td style="border-radius:12px;background:#f97316;box-shadow:0 4px 20px rgba(249,115,22,0.35)">
+              <a href="${siteUrl}/cv-builder" style="display:inline-block;padding:15px 40px;color:#ffffff;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Build My CV Now &rarr;
               </a>
             </td></tr>
@@ -213,7 +210,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
             <tr>
               <td width="32" valign="top" style="padding-right:14px;padding-top:2px">
-                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">1</div>
+                <div style="width:28px;height:28px;border-radius:50%;background:#0f172a;text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">1</div>
               </td>
               <td valign="top">
                 <p style="color:#0f172a;font-size:14px;font-weight:700;margin:0 0 2px">Upload your CV or build your profile</p>
@@ -226,7 +223,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
             <tr>
               <td width="32" valign="top" style="padding-right:14px;padding-top:2px">
-                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">2</div>
+                <div style="width:28px;height:28px;border-radius:50%;background:#0f172a;text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">2</div>
               </td>
               <td valign="top">
                 <p style="color:#0f172a;font-size:14px;font-weight:700;margin:0 0 2px">Paste a job description</p>
@@ -239,7 +236,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
             <tr>
               <td width="32" valign="top" style="padding-right:14px;padding-top:2px">
-                <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">3</div>
+                <div style="width:28px;height:28px;border-radius:50%;background:#0f172a;text-align:center;line-height:28px;color:#ffffff;font-size:13px;font-weight:800">3</div>
               </td>
               <td valign="top">
                 <p style="color:#0f172a;font-size:14px;font-weight:700;margin:0 0 2px">Download and apply</p>
@@ -250,7 +247,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
 
           <!-- CTA -->
           <table cellpadding="0" cellspacing="0" style="width:100%">
-            <tr><td style="border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 4px 15px rgba(79,70,229,0.35);text-align:center">
+            <tr><td style="border-radius:12px;background:#0f172a;box-shadow:0 4px 15px rgba(15,23,42,0.25);text-align:center">
               <a href="${siteUrl}/cv-builder" style="display:block;padding:16px 36px;color:#ffffff;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Start Building My CV &rarr;
               </a>
