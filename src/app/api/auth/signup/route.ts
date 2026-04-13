@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
           <!-- CTA -->
           <table cellpadding="0" cellspacing="0" style="margin-bottom:28px">
-            <tr><td style="border-radius:12px;background:#0f172a;box-shadow:0 4px 15px rgba(15,23,42,0.25)">
+            <tr><td style="border-radius:12px;background:#f97316;box-shadow:0 4px 15px rgba(249,115,22,0.35)">
               <a href="${confirmationUrl}" style="display:inline-block;padding:15px 36px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Activate My Account &rarr;
               </a>
