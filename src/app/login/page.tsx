@@ -76,8 +76,8 @@ export default function LoginPage() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative mb-3">
               <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
-              <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                <Image src="/fusecv-icon.png" alt="FuseCV" width={48} height={48} className="rounded-lg" />
+              <div className="relative h-40 w-40 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                <Image src="/fusecv-icon.png" alt="FuseCV" width={96} height={96} className="rounded-lg" />
               </div>
             </div>
             <h1 className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
