@@ -2374,6 +2374,35 @@ function CVBuilderPage() {
                 </CardContent>
               </Card>
 
+              {/* ── Footer Navigation (mobile only) ── */}
+              <div className="flex md:hidden items-center justify-between mt-4 gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => safeIdx > 0 && setActiveTab(SECTIONS[safeIdx - 1].key)}
+                  disabled={safeIdx === 0}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                {safeIdx < SECTIONS.length - 1 ? (
+                  <Button
+                    className="flex-1"
+                    onClick={() => setActiveTab(SECTIONS[safeIdx + 1].key)}
+                  >
+                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={handleSaveAndContinue}
+                    disabled={saving}
+                  >
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {saving ? "Saving..." : "Save & Continue"}
+                  </Button>
+                )}
+              </div>
+
               {/* ── Footer Navigation (desktop only) ── */}
               <div className="hidden md:flex items-center justify-between mt-6">
                 <Button
