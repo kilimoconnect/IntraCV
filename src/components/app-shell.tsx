@@ -60,12 +60,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
     <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
 
       {/* ── Top Header ── */}
-      <header className="h-[90px] bg-white border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 shadow-sm">
+      <header className="h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 shadow-sm">
         <button
           onClick={() => router.push(user ? "/dashboard" : "/")}
           className="flex items-center group"
         >
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={270} height={90} className="object-contain" />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={45} className="object-contain" />
         </button>
 
         <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
 
         {/* ── Dark Desktop Sidebar ── */}
         {!hideSidebar && (
-          <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#0F172A] min-h-[calc(100vh-90px)] sticky top-[90px] h-[calc(100vh-90px)]">
+          <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#0F172A] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
 
             {/* Brand accent bar at top */}
             <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
