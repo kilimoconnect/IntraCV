@@ -579,54 +579,6 @@ function CVBuilderPage() {
     }
   }, [searchParams, loadingProfile, hasExistingData]);
 
-  // ─── Save & Continue (shared by top button and hook CTA) ───
-  const handleSaveAndContinue = useCallback(async () => {
-    if (saving) return;
-
-    // 1. Required sections
-    if (missingRequired.length > 0) {
-      setValidationErrors({ sections: missingRequired.map(s => s.label), firstKey: missingRequired[0].key });
-      setActiveTab(missingRequired[0].key);
-      if (!manuallyShown.has(missingRequired[0].key)) {
-        setManuallyShown(prev => new Set([...prev, missingRequired[0].key]));
-      }
-      return;
-    }
-
-    // 2. Per-item missing fields
-    const incompleteItems: { section: string; key: string; count: number }[] = [];
-    const piMissing = getItemMissing("personal", personalInfo);
-    if (piMissing.length > 0) incompleteItems.push({ section: "Personal Info", key: "personal", count: piMissing.length });
-    experiences.forEach((exp) => { if (getItemMissing("experience", exp).length > 0) incompleteItems.push({ section: "Experience", key: "experience", count: 0 }); });
-    education.forEach((edu) => { if (getItemMissing("education", edu).length > 0) incompleteItems.push({ section: "Education", key: "education", count: 0 }); });
-    skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) incompleteItems.push({ section: "Skills", key: "skills", count: 0 }); });
-    certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) incompleteItems.push({ section: "Certifications", key: "certifications", count: 0 }); });
-    languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) incompleteItems.push({ section: "Languages", key: "languages", count: 0 }); });
-    referees.forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0 }); });
-    keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) incompleteItems.push({ section: "Achievements", key: "achievements", count: 0 }); });
-    memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) incompleteItems.push({ section: "Memberships", key: "memberships", count: 0 }); });
-    projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) incompleteItems.push({ section: "Projects", key: "projects", count: 0 }); });
-    boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) incompleteItems.push({ section: "Board Roles", key: "boardRoles", count: 0 }); });
-    execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) incompleteItems.push({ section: "Exec Training", key: "execTraining", count: 0 }); });
-    publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) incompleteItems.push({ section: "Publications", key: "publications", count: 0 }); });
-    tools.forEach((t) => { if (!t?.name?.trim()) incompleteItems.push({ section: "Tools", key: "tools", count: 0 }); });
-    volunteer.forEach((v) => { if (!v?.trim()) incompleteItems.push({ section: "Volunteer", key: "volunteer", count: 0 }); });
-
-    if (incompleteItems.length > 0) {
-      const uniqueSections = [...new Set(incompleteItems.map(i => i.section))];
-      setValidationErrors({ sections: uniqueSections, firstKey: incompleteItems[0].key });
-      setActiveTab(incompleteItems[0].key);
-      if (!manuallyShown.has(incompleteItems[0].key)) {
-        setManuallyShown(prev => new Set([...prev, incompleteItems[0].key]));
-      }
-      return;
-    }
-
-    const ok = await saveToDatabase();
-    if (ok) router.push("/dashboard");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saving, missingRequired, personalInfo, experiences, education, skills, certifications, languages, referees, keyAchievements, memberships, projects, boardRoles, execTraining, publications, tools, volunteer, manuallyShown, saveToDatabase, router]);
-
   // ─── File Upload + AI Extract ───
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1304,6 +1256,54 @@ function CVBuilderPage() {
   
   const missingRequired = categoryResult.requiredSections.filter(s => !sectionHasContent(s.key));
   const missingRecommended = categoryResult.recommendedSections.filter(s => !sectionHasContent(s.key));
+
+  // ─── Save & Continue (shared by top button and hook CTA) ───
+  // Defined here — after missingRequired — to avoid TDZ in the dependency array.
+  const handleSaveAndContinue = async () => {
+    if (saving) return;
+
+    // 1. Required sections missing → jump to first one
+    if (missingRequired.length > 0) {
+      setValidationErrors({ sections: missingRequired.map(s => s.label), firstKey: missingRequired[0].key });
+      setActiveTab(missingRequired[0].key);
+      if (!manuallyShown.has(missingRequired[0].key)) {
+        setManuallyShown(prev => new Set([...prev, missingRequired[0].key]));
+      }
+      return;
+    }
+
+    // 2. Per-item missing fields → jump to first incomplete section
+    const incompleteItems: { section: string; key: string; count: number }[] = [];
+    const piMissing = getItemMissing("personal", personalInfo);
+    if (piMissing.length > 0) incompleteItems.push({ section: "Personal Info", key: "personal", count: piMissing.length });
+    experiences.forEach((exp) => { if (getItemMissing("experience", exp).length > 0) incompleteItems.push({ section: "Experience", key: "experience", count: 0 }); });
+    education.forEach((edu) => { if (getItemMissing("education", edu).length > 0) incompleteItems.push({ section: "Education", key: "education", count: 0 }); });
+    skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) incompleteItems.push({ section: "Skills", key: "skills", count: 0 }); });
+    certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) incompleteItems.push({ section: "Certifications", key: "certifications", count: 0 }); });
+    languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) incompleteItems.push({ section: "Languages", key: "languages", count: 0 }); });
+    referees.forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0 }); });
+    keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) incompleteItems.push({ section: "Achievements", key: "achievements", count: 0 }); });
+    memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) incompleteItems.push({ section: "Memberships", key: "memberships", count: 0 }); });
+    projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) incompleteItems.push({ section: "Projects", key: "projects", count: 0 }); });
+    boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) incompleteItems.push({ section: "Board Roles", key: "boardRoles", count: 0 }); });
+    execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) incompleteItems.push({ section: "Exec Training", key: "execTraining", count: 0 }); });
+    publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) incompleteItems.push({ section: "Publications", key: "publications", count: 0 }); });
+    tools.forEach((t) => { if (!t?.name?.trim()) incompleteItems.push({ section: "Tools", key: "tools", count: 0 }); });
+    volunteer.forEach((v) => { if (!v?.trim()) incompleteItems.push({ section: "Volunteer", key: "volunteer", count: 0 }); });
+
+    if (incompleteItems.length > 0) {
+      const uniqueSections = [...new Set(incompleteItems.map(i => i.section))];
+      setValidationErrors({ sections: uniqueSections, firstKey: incompleteItems[0].key });
+      setActiveTab(incompleteItems[0].key);
+      if (!manuallyShown.has(incompleteItems[0].key)) {
+        setManuallyShown(prev => new Set([...prev, incompleteItems[0].key]));
+      }
+      return;
+    }
+
+    const ok = await saveToDatabase();
+    if (ok) router.push("/dashboard");
+  };
 
   // Ensure activeTab points to a visible section
   const activeIdx = SECTIONS.findIndex((s) => s.key === activeTab);
