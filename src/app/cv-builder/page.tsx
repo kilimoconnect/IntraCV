@@ -157,6 +157,9 @@ function categorizeProfile(
   boardRoles: BoardRole[],
   publications: Publication[],
   execTraining: ExecTraining[],
+  skills: Skill[],
+  keyAchievements: KeyAchievement[],
+  certifications: Certification[],
 ): CategoryResult {
   // Delegate scoring to the shared algorithm so CV Builder and CV Studio
   // always agree on the detected category.
@@ -166,6 +169,9 @@ function categorizeProfile(
     boardRoles,
     publications,
     executiveTraining: execTraining,
+    skills,
+    keyAchievements,
+    certifications,
   });
 
   // ── Required & recommended sections per category ──
@@ -1278,7 +1284,8 @@ function CVBuilderPage() {
 
   // ─── Career Categorization ───
   const categoryResult = categorizeProfile(
-    experiences, education, boardRoles, publications, execTraining
+    experiences, education, boardRoles, publications, execTraining,
+    skills, keyAchievements, certifications
   );
 
   
