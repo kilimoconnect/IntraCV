@@ -345,6 +345,11 @@ function CVBuilderPage() {
   const [tools, setTools] = useState<{ name: string; company: string }[]>([]);
   const [volunteer, setVolunteer] = useState<string[]>([]);
 
+  // ─── Hook message banner ───
+  const [hookMessage, setHookMessage] = useState<{ message: string; cta_label: string } | null>(null);
+  const [hookLoading, setHookLoading] = useState(false);
+  const [hookDismissed, setHookDismissed] = useState(false);
+  const hookFetchedRef = useRef(false);
 
   // ─── Load existing data from DB ───
   const loadFromDB = useCallback(async () => {
@@ -510,6 +515,44 @@ function CVBuilderPage() {
   useEffect(() => {
     if (user) loadFromDB();
   }, [user, loadFromDB]);
+
+  // ─── Fetch hook message when entering edit step ───
+  useEffect(() => {
+    if (step !== "edit" || hookFetchedRef.current || !user) return;
+    hookFetchedRef.current = true;
+    setHookLoading(true);
+    const cvSnapshot = {
+      personalInfo,
+      summary,
+      experiences,
+      education,
+      skills,
+      certifications,
+      languages,
+      referees,
+      keyAchievements,
+      awards,
+      memberships,
+      projects,
+      boardRoles,
+      executiveTraining: execTraining,
+      publications,
+      tools,
+      volunteer,
+    };
+    fetch("/api/ai/cv-hook-message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cvData: cvSnapshot }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message) setHookMessage({ message: data.message, cta_label: data.cta_label });
+      })
+      .catch(() => { /* silent fail — banner is non-critical */ })
+      .finally(() => setHookLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // ─── Scroll to new experience card after adding ───
   useEffect(() => {
@@ -1376,6 +1419,43 @@ function CVBuilderPage() {
                 </Button>
               </div>
             </div>
+
+            {/* ── AI Hook Message Banner ── */}
+            {!hookDismissed && (hookLoading || hookMessage) && (
+              <div className={`relative flex items-start gap-3 rounded-lg border px-4 py-3 text-sm
+                ${hookLoading
+                  ? "border-slate-200 bg-slate-50 text-slate-500 animate-pulse"
+                  : "border-violet-200 bg-violet-50 text-violet-900"}`}>
+                {hookLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mt-0.5 shrink-0 animate-spin text-slate-400" />
+                    <span>Analysing your profile…</span>
+                  </>
+                ) : hookMessage ? (
+                  <>
+                    <Sparkles className="h-4 w-4 mt-0.5 shrink-0 text-violet-500" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium">{hookMessage.message}</span>
+                      {hookMessage.cta_label && (
+                        <button
+                          onClick={() => setHookDismissed(true)}
+                          className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors"
+                        >
+                          {hookMessage.cta_label}
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setHookDismissed(true)}
+                      aria-label="Dismiss"
+                      className="shrink-0 text-violet-400 hover:text-violet-600 transition-colors"
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            )}
 
             {/* ── Missing Sections Panel ── */}
             {(missingRequired.length > 0 || missingRecommended.length > 0) && (
