@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "AI-powered CV builder",
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/fusecv-icon.png", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
   },

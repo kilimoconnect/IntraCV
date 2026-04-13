@@ -62,7 +62,7 @@ function UnsubscribeContent() {
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
-            <Image src="/icon.svg" alt="FuseCV" width={30} height={30} className="relative rounded-lg" />
+            <Image src="/fusecv-icon.png" alt="FuseCV" width={30} height={30} className="relative rounded-lg" />
           </div>
           <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
             FuseCV
@@ -236,7 +236,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
       <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 md:px-8 sticky top-0 z-50 shadow-sm">
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/icon.svg" alt="FuseCV" width={30} height={30} className="rounded-lg" />
+          <Image src="/fusecv-icon.png" alt="FuseCV" width={30} height={30} className="rounded-lg" />
           <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">FuseCV</span>
         </Link>
       </header>
