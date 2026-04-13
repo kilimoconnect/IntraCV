@@ -63,15 +63,9 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
       <header className="h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 shadow-sm">
         <button
           onClick={() => router.push(user ? "/dashboard" : "/")}
-          className="flex items-center gap-2.5 group"
+          className="flex items-center group"
         >
-          <div className="relative">
-            <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
-            <Image src="/fusecv-icon.png" alt="FuseCV" width={45} height={45} className="relative rounded-lg" />
-          </div>
-          <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
-            FuseCV
-          </span>
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={135} height={45} className="object-contain" />
         </button>
 
         <div className="flex items-center gap-2">
