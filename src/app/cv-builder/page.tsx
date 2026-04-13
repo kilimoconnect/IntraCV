@@ -760,265 +760,164 @@ function CVBuilderPage() {
     }
     setSaving(true);
     try {
-      // 1. Personal Info — upsert (unique per user)
       const now = new Date().toISOString();
-      // Compute category here so it's saved as the authoritative value for CV Studio.
+
+      // Compute category — saved as authoritative value for CV Studio
       const detectedCareerCategory = detectCategory({
         experiences, education, boardRoles, publications,
         executiveTraining: execTraining,
         skills, keyAchievements, certifications,
+        languages,
       });
-      const { error: piErr } = await supabase.from("cv_personal_info").upsert({
-        user_id: user.id,
-        full_name: personalInfo.fullName,
-        email: personalInfo.email,
-        phone: personalInfo.phone,
-        location: personalInfo.location,
-        headline: personalInfo.headline,
-        linkedin: personalInfo.linkedin,
-        website: personalInfo.website,
-        career_category: detectedCareerCategory,
-        updated_at: now,
-      }, { onConflict: "user_id" });
-      if (piErr) throw piErr;
 
-      // Sync to user_settings (non-blocking — table may not exist in all environments)
-      void supabase.from("user_settings").upsert({
-        user_id: user.id,
-        full_name: personalInfo.fullName,
-        phone: personalInfo.phone,
-        location: personalInfo.location,
-        headline: personalInfo.headline,
-        linkedin: personalInfo.linkedin,
-        website: personalInfo.website,
-        updated_at: now,
-      }, { onConflict: "user_id" });
-
-      // 2. Summary — upsert (unique per user)
-      const { error: sumErr } = await supabase.from("cv_summary").upsert({
-        user_id: user.id,
-        summary,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-      if (sumErr) throw sumErr;
-
-      // 3. Experiences — delete all then insert fresh
-      await supabase.from("cv_experiences").delete().eq("user_id", user.id);
-      if (experiences.filter((e) => e.title).length > 0) {
-        const { error: expErr } = await supabase.from("cv_experiences").insert(
-          experiences.filter((e) => e.title).map((e, i) => ({
-            user_id: user.id,
-            title: e.title,
-            company: e.company,
-            location: e.location,
-            start_date: e.startDate,
-            end_date: e.endDate,
-            description: e.description,
-            sort_order: i,
-          }))
-        );
-        if (expErr) throw expErr;
-      }
-
-      // 4. Education — delete all then insert fresh
-      await supabase.from("cv_education").delete().eq("user_id", user.id);
-      if (education.filter((e) => e.degree).length > 0) {
-        const { error: eduErr } = await supabase.from("cv_education").insert(
-          education.filter((e) => e.degree).map((e, i) => ({
-            user_id: user.id,
-            degree: e.degree,
-            institution: e.institution,
-            year: e.year,
-            description: e.description,
-            sort_order: i,
-          }))
-        );
-        if (eduErr) throw eduErr;
-      }
-
-      // 5. Skills — delete all then insert fresh
-      await supabase.from("cv_skills").delete().eq("user_id", user.id);
-      if (skills.filter((s) => s.name).length > 0) {
-        const { error: skillErr } = await supabase.from("cv_skills").insert(
-          skills.filter((s) => s.name).map((s, i) => ({
-            user_id: user.id,
-            name: s.name,
-            category: s.category,
-            sort_order: i,
-          }))
-        );
-        if (skillErr) throw skillErr;
-      }
-
-      // 6. Certifications — delete all then insert fresh
-      await supabase.from("cv_certifications").delete().eq("user_id", user.id);
-      if (certifications.filter((c) => c.name).length > 0) {
-        const { error: certErr } = await supabase.from("cv_certifications").insert(
-          certifications.filter((c) => c.name).map((c, i) => ({
-            user_id: user.id,
-            name: c.name,
-            issuer: c.issuer,
-            year: c.year,
-            sort_order: i,
-          }))
-        );
-        if (certErr) throw certErr;
-      }
-
-      // 7. Languages — delete all then insert fresh
-      await supabase.from("cv_languages").delete().eq("user_id", user.id);
-      if (languages.filter((l) => l.name).length > 0) {
-        const { error: langErr } = await supabase.from("cv_languages").insert(
-          languages.filter((l) => l.name).map((l, i) => ({
-            user_id: user.id,
-            name: l.name,
-            proficiency: l.proficiency,
-            sort_order: i,
-          }))
-        );
-        if (langErr) throw langErr;
-      }
-
-      // 8. Referees — delete all then insert fresh
-      await supabase.from("cv_referees").delete().eq("user_id", user.id);
-      if (referees.filter((r) => r.name).length > 0) {
-        const { error: refErr } = await supabase.from("cv_referees").insert(
-          referees.filter((r) => r.name).map((r, i) => ({
-            user_id: user.id,
-            name: r.name,
-            title: r.title,
-            company: r.company,
-            phone: r.phone,
-            email: r.email,
-            sort_order: i,
-          }))
-        );
-        if (refErr) throw refErr;
-      }
-
-      // 9. Declaration — upsert (unique per user)
-      const { error: declErr } = await supabase.from("cv_declarations").upsert({
-        user_id: user.id,
-        declaration: declaration.declaration,
-        place: declaration.place,
-        date: declaration.date,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
-      if (declErr) throw declErr;
-
-      // 11–18. Optional sections — save each independently so one failure doesn't abort others
-      const sectionErrors: string[] = [];
-
-      const saveSection = async (name: string, fn: () => Promise<void>) => {
-        try { await fn(); } catch (e: any) { sectionErrors.push(`${name}: ${e?.message || e}`); }
+      // Helper: delete all rows for a section then insert fresh ones
+      const saveList = async (
+        table: string,
+        rows: object[],
+      ) => {
+        await supabase.from(table).delete().eq("user_id", user.id);
+        if (rows.length > 0) {
+          const { error } = await supabase.from(table).insert(rows);
+          if (error) throw error;
+        }
       };
 
-      await saveSection("achievements", async () => {
-        await supabase.from("cv_key_achievements").delete().eq("user_id", user.id);
-        if (keyAchievements.filter((a) => a.achievement).length > 0) {
-          const { error } = await supabase.from("cv_key_achievements").insert(
-            keyAchievements.filter((a) => a.achievement).map((a, i) => ({ user_id: user.id, achievement: a.achievement, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+      // ── All sections fire in parallel ──
+      const results = await Promise.allSettled([
 
-      await saveSection("awards", async () => {
-        await supabase.from("cv_awards").delete().eq("user_id", user.id);
-        if (awards.filter((a) => a.title).length > 0) {
-          const { error } = await supabase.from("cv_awards").insert(
-            awards.filter((a) => a.title).map((a, i) => ({ user_id: user.id, title: a.title, description: a.description, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Personal info (upsert)
+        supabase.from("cv_personal_info").upsert({
+          user_id: user.id,
+          full_name: personalInfo.fullName,
+          email: personalInfo.email,
+          phone: personalInfo.phone,
+          location: personalInfo.location,
+          headline: personalInfo.headline,
+          tagline: personalInfo.tagline,
+          linkedin: personalInfo.linkedin,
+          website: personalInfo.website,
+          career_category: detectedCareerCategory,
+          updated_at: now,
+        }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw error; }),
 
-      await saveSection("memberships", async () => {
-        await supabase.from("cv_memberships").delete().eq("user_id", user.id);
-        if (memberships.filter((m) => m.name).length > 0) {
-          const { error } = await supabase.from("cv_memberships").insert(
-            memberships.filter((m) => m.name).map((m, i) => ({ user_id: user.id, name: m.name, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Summary (upsert)
+        supabase.from("cv_summary").upsert({
+          user_id: user.id, summary, updated_at: now,
+        }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw error; }),
 
-      await saveSection("projects", async () => {
-        await supabase.from("cv_projects").delete().eq("user_id", user.id);
-        if (projects.filter((p) => p.name).length > 0) {
-          const { error } = await supabase.from("cv_projects").insert(
-            projects.filter((p) => p.name).map((p, i) => ({ user_id: user.id, name: p.name, description: p.description, tech: p.tech, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Experiences
+        saveList("cv_experiences", experiences.filter((e) => e.title).map((e, i) => ({
+          user_id: user.id, title: e.title, company: e.company, location: e.location,
+          start_date: e.startDate, end_date: e.endDate, description: e.description, sort_order: i,
+        }))),
 
-      await saveSection("boardRoles", async () => {
-        await supabase.from("cv_board_roles").delete().eq("user_id", user.id);
-        if (boardRoles.filter((b) => b.title).length > 0) {
-          const { error } = await supabase.from("cv_board_roles").insert(
-            boardRoles.filter((b) => b.title).map((b, i) => ({
-              user_id: user.id, title: b.title, organization: b.organization,
-              start_date: b.startDate, end_date: b.endDate, description: b.description, sort_order: i,
-            }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Education
+        saveList("cv_education", education.filter((e) => e.degree).map((e, i) => ({
+          user_id: user.id, degree: e.degree, institution: e.institution,
+          year: e.year, description: e.description, sort_order: i,
+        }))),
 
-      await saveSection("execTraining", async () => {
-        await supabase.from("cv_executive_training").delete().eq("user_id", user.id);
-        if (execTraining.filter((t) => t.name).length > 0) {
-          const { error } = await supabase.from("cv_executive_training").insert(
-            execTraining.filter((t) => t.name).map((t, i) => ({ user_id: user.id, name: t.name, institution: t.institution, year: t.year, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Skills
+        saveList("cv_skills", skills.filter((s) => s.name).map((s, i) => ({
+          user_id: user.id, name: s.name, category: s.category, sort_order: i,
+        }))),
 
-      await saveSection("publications", async () => {
-        await supabase.from("cv_publications").delete().eq("user_id", user.id);
-        if (publications.filter((p) => p.title).length > 0) {
-          const { error } = await supabase.from("cv_publications").insert(
-            publications.filter((p) => p.title).map((p, i) => ({ user_id: user.id, title: p.title, publisher: p.publisher, year: p.year, type: p.type, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Certifications
+        saveList("cv_certifications", certifications.filter((c) => c.name).map((c, i) => ({
+          user_id: user.id, name: c.name, issuer: c.issuer, year: c.year, sort_order: i,
+        }))),
 
-      await saveSection("tools", async () => {
-        await supabase.from("cv_tools").delete().eq("user_id", user.id);
-        const validTools = tools.filter((t) => t.name?.trim());
-        if (validTools.length > 0) {
-          // Try with company column first; fall back to name-only if column doesn't exist yet
-          const rowsWithCompany = validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), company: t.company?.trim() || null, sort_order: i }));
-          const { error } = await supabase.from("cv_tools").insert(rowsWithCompany);
+        // Languages
+        saveList("cv_languages", languages.filter((l) => l.name).map((l, i) => ({
+          user_id: user.id, name: l.name, proficiency: l.proficiency, sort_order: i,
+        }))),
+
+        // Referees
+        saveList("cv_referees", referees.filter((r) => r.name).map((r, i) => ({
+          user_id: user.id, name: r.name, title: r.title, company: r.company,
+          phone: r.phone, email: r.email, sort_order: i,
+        }))),
+
+        // Declaration (upsert)
+        supabase.from("cv_declarations").upsert({
+          user_id: user.id, declaration: declaration.declaration,
+          place: declaration.place, date: declaration.date, updated_at: now,
+        }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw error; }),
+
+        // Key achievements
+        saveList("cv_key_achievements", keyAchievements.filter((a) => a.achievement).map((a, i) => ({
+          user_id: user.id, achievement: a.achievement, sort_order: i,
+        }))),
+
+        // Awards
+        saveList("cv_awards", awards.filter((a) => a.title).map((a, i) => ({
+          user_id: user.id, title: a.title, description: a.description, sort_order: i,
+        }))),
+
+        // Memberships
+        saveList("cv_memberships", memberships.filter((m) => m.name).map((m, i) => ({
+          user_id: user.id, name: m.name, sort_order: i,
+        }))),
+
+        // Projects
+        saveList("cv_projects", projects.filter((p) => p.name).map((p, i) => ({
+          user_id: user.id, name: p.name, description: p.description, tech: p.tech, sort_order: i,
+        }))),
+
+        // Board roles
+        saveList("cv_board_roles", boardRoles.filter((b) => b.title).map((b, i) => ({
+          user_id: user.id, title: b.title, organization: b.organization,
+          start_date: b.startDate, end_date: b.endDate, description: b.description, sort_order: i,
+        }))),
+
+        // Executive training
+        saveList("cv_executive_training", execTraining.filter((t) => t.name).map((t, i) => ({
+          user_id: user.id, name: t.name, institution: t.institution, year: t.year, sort_order: i,
+        }))),
+
+        // Publications
+        saveList("cv_publications", publications.filter((p) => p.title).map((p, i) => ({
+          user_id: user.id, title: p.title, publisher: p.publisher, year: p.year, type: p.type, sort_order: i,
+        }))),
+
+        // Tools (try with company column; fall back if migration not yet applied)
+        (async () => {
+          await supabase.from("cv_tools").delete().eq("user_id", user.id);
+          const validTools = tools.filter((t) => t.name?.trim());
+          if (validTools.length === 0) return;
+          const { error } = await supabase.from("cv_tools").insert(
+            validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), company: t.company?.trim() || null, sort_order: i }))
+          );
           if (error) {
             if (error.message?.includes("company")) {
-              // Migration not yet applied — save without company column
-              const rowsNameOnly = validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), sort_order: i }));
-              const { error: err2 } = await supabase.from("cv_tools").insert(rowsNameOnly);
+              const { error: err2 } = await supabase.from("cv_tools").insert(
+                validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), sort_order: i }))
+              );
               if (err2) throw err2;
-            } else {
-              throw error;
-            }
+            } else throw error;
           }
-        }
-      });
+        })(),
 
-      await saveSection("volunteer", async () => {
-        await supabase.from("cv_volunteer").delete().eq("user_id", user.id);
-        if (volunteer.filter(Boolean).length > 0) {
-          const { error } = await supabase.from("cv_volunteer").insert(
-            volunteer.filter(Boolean).map((v, i) => ({ user_id: user.id, description: v, sort_order: i }))
-          );
-          if (error) throw error;
-        }
-      });
+        // Volunteer
+        saveList("cv_volunteer", volunteer.filter(Boolean).map((v, i) => ({
+          user_id: user.id, description: v, sort_order: i,
+        }))),
 
-      if (sectionErrors.length > 0) {
-        console.error("Some sections failed to save:", sectionErrors);
-        toast.warning(`CV saved (${sectionErrors.length} section(s) failed — check console)`);
+        // Sync user_settings (non-blocking best-effort)
+        supabase.from("user_settings").upsert({
+          user_id: user.id, full_name: personalInfo.fullName, phone: personalInfo.phone,
+          location: personalInfo.location, headline: personalInfo.headline,
+          linkedin: personalInfo.linkedin, website: personalInfo.website, updated_at: now,
+        }, { onConflict: "user_id" }),
+      ]);
+
+      const failed = results
+        .map((r, i) => r.status === "rejected" ? i : null)
+        .filter((i) => i !== null);
+
+      if (failed.length > 0) {
+        console.error("Some sections failed to save, indices:", failed, results.filter((_, i) => failed.includes(i)));
+        toast.warning(`CV saved (${failed.length} section(s) had errors)`);
       } else {
         toast.success("CV saved successfully!");
       }

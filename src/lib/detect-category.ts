@@ -71,6 +71,7 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
   const achievements   = Array.isArray(cvData.keyAchievements)    ? cvData.keyAchievements    as any[] : [];
   const skills         = Array.isArray(cvData.skills)             ? cvData.skills             as any[] : [];
   const certifications = Array.isArray(cvData.certifications)     ? cvData.certifications     as any[] : [];
+  const languages      = Array.isArray(cvData.languages)          ? cvData.languages          as any[] : [];
 
   // ── No experience at all → always junior ──
   if (experiences.length === 0) return "junior";
