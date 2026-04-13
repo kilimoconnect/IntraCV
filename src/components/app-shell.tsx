@@ -67,7 +67,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
         >
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
-            <Image src="/fusecv-icon.png" alt="FuseCV" width={30} height={30} className="relative rounded-lg" />
+            <Image src="/fusecv-icon.png" alt="FuseCV" width={45} height={45} className="relative rounded-lg" />
           </div>
           <span className="text-xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
             FuseCV
