@@ -116,7 +116,7 @@ Career level: ${cvData.careerCategory || "unknown"}
 2. Identifies the REAL career-damaging weakness — not surface stuff like missing URLs. Think: too few roles for their career level, no achievements section to prove impact, experience descriptions that read like a job spec not accomplishments, skills list that any graduate could copy, no progression shown across roles, career gap with no explanation, mismatched seniority signals, or a profile so thin it would be filtered by ATS in seconds
 3. States the concrete consequence — not getting interviews, being screened out before a human reads it, competing against stronger candidates and losing, salary ceiling, being invisible to headhunters
 4. 1–2 sentences, punchy, max 210 characters
-5. CTA label: 3–5 words, action-specific to the fix
+5. CTA label: 3–5 words that push them to use the AI tools in this system to fix it (e.g. "Fix it with AI", "Let AI rewrite this", "Generate achievements now", "Boost my CV now") — NOT manual tasks they can do alone
 
 DO NOT mention: LinkedIn URL, phone number, website, or other contact fields — those are trivial. Focus on what actually costs them opportunities.
 
