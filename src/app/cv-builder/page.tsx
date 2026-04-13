@@ -1448,14 +1448,6 @@ function CVBuilderPage() {
                     <Sparkles className="h-4 w-4 mt-0.5 shrink-0 text-violet-500" />
                     <div className="flex-1 min-w-0">
                       <span className="font-medium">{hookMessage.message}</span>
-                      {hookMessage.cta_label && (
-                        <button
-                          onClick={() => { setHookDismissed(true); handleSaveAndContinue(); }}
-                          className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-600 text-white text-xs font-semibold hover:bg-violet-700 transition-colors"
-                        >
-                          {hookMessage.cta_label}
-                        </button>
-                      )}
                     </div>
                     <button
                       onClick={() => setHookDismissed(true)}
