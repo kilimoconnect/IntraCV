@@ -108,17 +108,21 @@ Has phone number: ${hasPhone}
 Career level: ${cvData.careerCategory || "unknown"}
 `.trim();
 
-    const prompt = `You are a career coach helping a user build a strong CV. Based on their current profile completeness, write a short motivating hook message (1–2 sentences, max 180 characters) that:
-- Points out the single most important thing they are MISSING or should improve RIGHT NOW
-- Feels urgent and personal (use "you", not "we")
-- Ends with a clear, action-oriented CTA label (3–5 words, like "Add LinkedIn URL" or "Add your experience")
+    const firstName = (pi?.fullName || "").split(" ")[0] || "there";
+
+    const prompt = `You are a brutally honest career coach. Write a short hook message for a CV builder that:
+1. Opens with the user's first name ("${firstName}, ...")
+2. Names the single biggest weakness in their CV right now
+3. States the real-world pain they will face if they don't fix it (e.g. ignored by recruiters, rejected at screening, low interview rate)
+4. Keeps the whole message to 1–2 punchy sentences, max 200 characters total
+5. Ends with a short action-oriented CTA label (3–5 words)
 
 PROFILE DATA:
 ${profileSummary}
 
 Return ONLY valid JSON:
 {
-  "message": "<hook message, max 180 chars>",
+  "message": "<hook message starting with first name, max 200 chars>",
   "cta_label": "<action label, 3–5 words>"
 }`;
 
