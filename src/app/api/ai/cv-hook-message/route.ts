@@ -41,12 +41,34 @@ export async function POST(req: NextRequest) {
 
     const currentHash = computeDataHash(cvData);
 
-    // Check if we already have a message for this exact data hash
-    const { data: existing } = await supabase
-      .from("cv_hook_messages")
-      .select("message, cta_label, data_hash")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Check if we already have a message for this exact data hash.
+    // Wrapped in try/catch — table may not exist yet in production.
+    let existing: { message: string; cta_label: string; data_hash: string } | null = null;
+    let tableExists = true;
+    try {
+      const { data, error } = await supabase
+        .from("cv_hook_messages")
+        .select("message, cta_label, data_hash")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) {
+        // relation does not exist → table not yet migrated
+        if (error.code === "42P01" || error.message?.includes("does not exist")) {
+          tableExists = false;
+        } else {
+          throw error;
+        }
+      } else {
+        existing = data;
+      }
+    } catch (dbErr: unknown) {
+      const msg = dbErr instanceof Error ? dbErr.message : String(dbErr);
+      if (msg.includes("does not exist") || (dbErr as any)?.code === "42P01") {
+        tableExists = false;
+      } else {
+        throw dbErr;
+      }
+    }
 
     if (existing && existing.data_hash === currentHash) {
       return NextResponse.json({ message: existing.message, cta_label: existing.cta_label, cached: true });
@@ -113,11 +135,13 @@ Return ONLY valid JSON:
 
     const { message, cta_label } = JSON.parse(raw) as { message: string; cta_label: string };
 
-    // Upsert into DB
-    await supabase.from("cv_hook_messages").upsert(
-      { user_id: user.id, message, cta_label, data_hash: currentHash, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" }
-    );
+    // Upsert into DB — skip silently if table hasn't been migrated yet
+    if (tableExists) {
+      await supabase.from("cv_hook_messages").upsert(
+        { user_id: user.id, message, cta_label, data_hash: currentHash, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+    }
 
     return NextResponse.json({ message, cta_label, cached: false });
   } catch (err: unknown) {
