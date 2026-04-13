@@ -96,19 +96,8 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
           <!-- Glow orb -->
           <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(167,139,250,0.25) 0%,transparent 70%);pointer-events:none"></div>
 
-          <!-- Wordmark -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px">
-            <tr>
-              <td style="padding-right:10px;vertical-align:middle">
-                <div style="width:38px;height:38px;background:linear-gradient(135deg,#1a2f6e,#0a1540);border-radius:10px;border:1px solid rgba(0,200,230,0.5);text-align:center;line-height:38px">
-                  <span style="color:#3de8ff;font-size:20px;font-weight:900;font-style:italic">F</span>
-                </div>
-              </td>
-              <td style="vertical-align:middle">
-                <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px">FuseCV</span>
-              </td>
-            </tr>
-          </table>
+          <!-- Logo -->
+          <img src="${siteUrl}/fusecv-logo.png" alt="FuseCV" width="200" style="display:block;margin:0 auto 24px;max-width:200px" />
 
           <!-- Hero copy -->
           <h1 style="color:#ffffff;font-size:28px;font-weight:800;margin:0 0 12px;letter-spacing:-0.5px;line-height:1.25">
