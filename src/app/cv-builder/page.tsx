@@ -160,6 +160,7 @@ function categorizeProfile(
   skills: Skill[],
   keyAchievements: KeyAchievement[],
   certifications: Certification[],
+  languages: Language[],
 ): CategoryResult {
   // Delegate scoring to the shared algorithm so CV Builder and CV Studio
   // always agree on the detected category.
@@ -172,6 +173,7 @@ function categorizeProfile(
     skills,
     keyAchievements,
     certifications,
+    languages,
   });
 
   // ── Required & recommended sections per category ──
@@ -1205,7 +1207,7 @@ function CVBuilderPage() {
   // ─── Career Categorization ───
   const categoryResult = categorizeProfile(
     experiences, education, boardRoles, publications, execTraining,
-    skills, keyAchievements, certifications
+    skills, keyAchievements, certifications, languages
   );
 
   
