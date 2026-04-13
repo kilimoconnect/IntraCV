@@ -110,20 +110,23 @@ Career level: ${cvData.careerCategory || "unknown"}
 
     const firstName = (pi?.fullName || "").split(" ")[0] || "there";
 
-    const prompt = `You are a brutally honest career coach. Write a short hook message for a CV builder that:
-1. Opens with the user's first name ("${firstName}, ...")
-2. Names the single biggest weakness in their CV right now
-3. States the real-world pain they will face if they don't fix it (e.g. ignored by recruiters, rejected at screening, low interview rate)
-4. Keeps the whole message to 1–2 punchy sentences, max 200 characters total
-5. Ends with a short action-oriented CTA label (3–5 words)
+    const prompt = `You are a senior recruitment director who has reviewed 10,000+ CVs and rejected most of them. Be brutally direct. Write a hook message that:
+
+1. Opens with "${firstName},"
+2. Identifies the REAL career-damaging weakness — not surface stuff like missing URLs. Think: too few roles for their career level, no achievements section to prove impact, experience descriptions that read like a job spec not accomplishments, skills list that any graduate could copy, no progression shown across roles, career gap with no explanation, mismatched seniority signals, or a profile so thin it would be filtered by ATS in seconds
+3. States the concrete consequence — not getting interviews, being screened out before a human reads it, competing against stronger candidates and losing, salary ceiling, being invisible to headhunters
+4. 1–2 sentences, punchy, max 210 characters
+5. CTA label: 3–5 words, action-specific to the fix
+
+DO NOT mention: LinkedIn URL, phone number, website, or other contact fields — those are trivial. Focus on what actually costs them opportunities.
 
 PROFILE DATA:
 ${profileSummary}
 
 Return ONLY valid JSON:
 {
-  "message": "<hook message starting with first name, max 200 chars>",
-  "cta_label": "<action label, 3–5 words>"
+  "message": "<hook message, max 210 chars>",
+  "cta_label": "<3–5 word action label>"
 }`;
 
     const openai = openaiClient();
