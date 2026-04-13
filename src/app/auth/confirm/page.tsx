@@ -87,7 +87,7 @@ export default function AuthConfirmPage() {
         <div className="relative">
           <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-md" />
           <div className="relative h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
-            <Image src="/fusecv-icon.png" alt="FuseCV" width={48} height={48} className="rounded-lg" />
+            <Image src="/fusecv-icon.png" alt="FuseCV" width={96} height={96} className="rounded-lg" />
           </div>
         </div>
 
