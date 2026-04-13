@@ -112,7 +112,7 @@ Career level: ${cvData.careerCategory || "unknown"}
 
     const prompt = `You are a senior recruitment director who has reviewed 10,000+ CVs. Write a hook message for the CV information entry screen. The message must:
 
-1. Open with "${firstName},"
+1. MUST start with exactly "${firstName}," — this is required, do not skip or rephrase the opening
 2. Name the single biggest weakness in their current profile — be specific. Think: too few roles, no achievements to prove impact, thin descriptions, no career progression, profile too sparse to pass screening
 3. State the real consequence (rejected before a human reads it, losing shortlists, invisible to headhunters)
 4. Make clear this screen is for entering their raw information — the improvement and optimisation happens automatically on the next screen once they save. Use phrasing like "Complete your profile here and we'll handle the rest on the next step." or "Fill in your details — the transformation happens once you proceed."
