@@ -247,7 +247,7 @@ function buildWelcomeEmail(firstName: string, siteUrl: string, email: string): s
 
           <!-- CTA -->
           <table cellpadding="0" cellspacing="0" style="width:100%">
-            <tr><td style="border-radius:12px;background:#0f172a;box-shadow:0 4px 15px rgba(15,23,42,0.25);text-align:center">
+            <tr><td style="border-radius:12px;background:#f97316;box-shadow:0 4px 15px rgba(249,115,22,0.35);text-align:center">
               <a href="${siteUrl}/cv-builder" style="display:block;padding:16px 36px;color:#ffffff;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Start Building My CV &rarr;
               </a>
