@@ -70,7 +70,7 @@ export interface CategorySlotRules {
 // Skills: pill cloud, ~18-22 fit
 
 const JUNIOR_RULES: CategorySlotRules = {
-  header:   { fullNameMax: 30, taglineMaxChars: 0 },
+  header:   { fullNameMax: 30, taglineMaxChars: 75 },
   contact:  { items: 5, maxChars: 30 },
   profile:  { minChars: 340, maxChars: 440 },
   skills:   { count: 22, maxLabelChars: 16 },
