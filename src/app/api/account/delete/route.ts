@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 
-const CV_TABLES = [
+// Every table that stores user data keyed by user_id
+const USER_TABLES = [
+  // CV content
   "cv_personal_info",
   "cv_summary",
   "cv_experiences",
@@ -21,9 +23,21 @@ const CV_TABLES = [
   "cv_publications",
   "cv_tools",
   "cv_volunteer",
+  // Documents & files metadata
   "generated_documents",
-  "user_settings",
+  "saved_cvs",
+  // Interview
   "interview_sessions",
+  // AI / analysis caches
+  "ai_chat_history",
+  "profile_analysis",
+  "cv_readiness_cache",
+  "cv_hook_messages",
+  // Payments / tokens
+  "cv_download_tokens",
+  // Settings & profile
+  "user_settings",
+  "profiles",
 ];
 
 export async function DELETE() {
@@ -36,14 +50,29 @@ export async function DELETE() {
 
     const admin = createAdminSupabase();
 
-    // Delete all user data from every CV table
+    // 1. Delete all rows from every user-data table (run in parallel)
     await Promise.all(
-      CV_TABLES.map((table) =>
+      USER_TABLES.map((table) =>
         admin.from(table).delete().eq("user_id", user.id)
       )
     );
 
-    // Delete the auth user (cascades any remaining auth-linked data)
+    // 2. Delete all PDF files from storage bucket cv-pdfs/{userId}/
+    try {
+      const { data: files } = await admin.storage
+        .from("cv-pdfs")
+        .list(user.id, { limit: 1000 });
+
+      if (files && files.length > 0) {
+        const paths = files.map((f) => `${user.id}/${f.name}`);
+        await admin.storage.from("cv-pdfs").remove(paths);
+      }
+    } catch (storageErr) {
+      // Non-fatal: log but continue — auth user deletion is the critical step
+      console.warn("Storage cleanup partial failure:", storageErr);
+    }
+
+    // 3. Delete the auth user — this is the point of no return
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
     if (deleteError) throw deleteError;
 
