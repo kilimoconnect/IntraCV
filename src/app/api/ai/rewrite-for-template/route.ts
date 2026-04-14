@@ -825,7 +825,7 @@ export async function POST(req: NextRequest) {
       // ── Common blocks (all categories) ──
       const commonBlocksPromise = Promise.all([
         blockProfile(cvData),
-        (isExecutive || isMidSenior) ? blockTagline(cvData) : Promise.resolve(""),
+        (isExecutive || isMidSenior || isJunior) ? blockTagline(cvData) : Promise.resolve(""),
         blockExperience(cvData.experiences || []),
         blockHistory(cvData.experiences || []),
         (!isJunior || (cvData.projects || []).length > 0) ? blockProjects(cvData) : Promise.resolve([]),
