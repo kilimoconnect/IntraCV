@@ -329,69 +329,53 @@ export default function MyProfile({
     return acc;
   }, {});
 
+  // ─── Robust date parser — handles all common CV date formats ───
+  const parseExpDate = (dateStr: string, endOfPeriod = false): Date | null => {
+    if (!dateStr?.trim()) return null;
+    const s = dateStr.trim();
+    if (/^(present|current|now|ongoing|till\s*date|to\s*date)$/i.test(s)) return new Date();
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return d;
+    const m1 = s.match(/^(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[,.\s]+(\d{4})$/i);
+    if (m1) { const p = new Date(`${m1[1].slice(0,3)} 1, ${m1[2]}`); if (!isNaN(p.getTime())) return p; }
+    if (/^\d{4}$/.test(s)) return new Date(parseInt(s), endOfPeriod ? 11 : 0, endOfPeriod ? 31 : 1);
+    const m2 = s.match(/^(\d{1,2})\/(\d{4})$/);
+    if (m2) return new Date(parseInt(m2[2]), parseInt(m2[1]) - 1, 1);
+    const m3 = s.match(/^(\d{4})[\/\-](\d{1,2})$/);
+    if (m3) return new Date(parseInt(m3[1]), parseInt(m3[2]) - 1, 1);
+    return null;
+  };
+
   // ─── Calculate Years of Experience ───
   const calculateYearsOfExperience = () => {
     if (!experiences || experiences.length === 0) return 0;
-    
     const now = new Date();
     let totalMonths = 0;
-    
     experiences.forEach((exp) => {
-      if (!exp.startDate) return;
-      
-      // Parse start date (handle various formats)
-      const startDate = new Date(exp.startDate);
-      if (isNaN(startDate.getTime())) {
-        // Try to parse month-year formats like "Jan 2020"
-        const monthYearMatch = exp.startDate.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})$/i);
-        if (monthYearMatch) {
-          const month = new Date(`${monthYearMatch[1]} 1, ${monthYearMatch[2]}`).getMonth();
-          startDate.setFullYear(parseInt(monthYearMatch[2], 10), month, 1);
-        } else if (/^\d{4}$/.test(exp.startDate)) {
-          startDate.setFullYear(parseInt(exp.startDate, 10), 0, 1); // January of that year
-        } else {
-          return; // Skip if we can't parse
-        }
-      }
-      
-      // Parse end date
-      let endDate;
-      if (exp.endDate === "Present" || exp.endDate === "present" || !exp.endDate) {
-        endDate = now;
-      } else {
-        endDate = new Date(exp.endDate);
-        if (isNaN(endDate.getTime())) {
-          const monthYearMatch = exp.endDate.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})$/i);
-          if (monthYearMatch) {
-            const month = new Date(`${monthYearMatch[1]} 1, ${monthYearMatch[2]}`).getMonth();
-            endDate.setFullYear(parseInt(monthYearMatch[2], 10), month, 1);
-          } else if (/^\d{4}$/.test(exp.endDate)) {
-            endDate.setFullYear(parseInt(exp.endDate, 10), 11, 31); // December of that year
-          } else {
-            return; // Skip if we can't parse
-          }
-        }
-      }
-      
-      // Calculate months difference
-      if (endDate >= startDate) {
-        const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-        totalMonths += Math.max(0, months);
-      }
+      const startDate = parseExpDate(exp.startDate);
+      if (!startDate) return;
+      const endDate = /^(present|current|now|ongoing|till\s*date|to\s*date)$/i.test(exp.endDate?.trim() || "")
+        ? now
+        : (parseExpDate(exp.endDate, true) ?? (!exp.endDate ? now : null));
+      if (!endDate || endDate < startDate) return;
+      const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+      totalMonths += Math.max(0, months);
     });
-    
-    // Convert to years (rounded to 1 decimal place)
     const years = totalMonths / 12;
-    return years < 1 ? "< 1" : years.toFixed(1);
+    return years < 1 ? "< 1" : parseFloat(years.toFixed(1));
   };
 
   const yearsOfExperience = calculateYearsOfExperience();
 
-  // ─── Career Categorization ───
+  // ─── Career Categorization — prefer DB-saved value, fall back to computed ───
   const numericYears = typeof yearsOfExperience === "string" ? 0 : Number(yearsOfExperience);
-  const categoryResult = categorizeProfile(
+  const computedCategory = categorizeProfile(
     experiences, education, boardRoles, publications, execTraining, numericYears
   );
+  const dbCategory = (cvData as any)?.careerCategory as CareerCategory | null | undefined;
+  const categoryResult: CategoryResult = dbCategory
+    ? { ...computedCategory, category: dbCategory, label: { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" }[dbCategory], color: { junior: "bg-emerald-50 text-emerald-700 border-emerald-200", "mid-senior": "bg-[#ff751f]/10 text-[#ff751f] border-[#ff751f]/20", executive: "bg-[#004aad]/5 text-[#004aad] border-[#004aad]/20" }[dbCategory], requiredSections: computedCategory.requiredSections, recommendedSections: computedCategory.recommendedSections }
+    : computedCategory;
 
   // ─── Section content checks ───
   const sectionHasContent: Record<string, boolean> = {
