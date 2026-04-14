@@ -90,7 +90,7 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
       "id": ${idOffset},
       "question": "The interview question text",
       "type": "behavioral" | "technical" | "situational" | "competency" | "culture-fit",
-      "tips": "Brief tip on how to approach this question"
+      "tips": "Detailed guidance: explain the best framework or structure to use (e.g. STAR for behavioral), 2-3 specific things the interviewer is looking for, what concrete examples or evidence to draw on, and one common mistake to avoid. 3-5 sentences."
     }
   ]
 }`;
@@ -128,7 +128,7 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
         return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
       }
 
-      const prompt = `You are an expert interview coach. Evaluate this interview answer and provide constructive feedback.
+      const prompt = `You are an expert interview coach. Evaluate this interview answer and provide detailed, constructive feedback.
 
 Interview Question: "${question}"
 Candidate's Answer: "${answer}"
@@ -136,10 +136,10 @@ Candidate's Answer: "${answer}"
 Provide feedback in this JSON format:
 {
   "score": <number 1-10>,
-  "strengths": ["strength 1", "strength 2"],
-  "improvements": ["improvement 1", "improvement 2"],
-  "suggestedAnswer": "A brief model answer or key points to include",
-  "overallFeedback": "2-3 sentence summary of the feedback"
+  "strengths": ["specific strength with explanation", "another strength with why it works"],
+  "improvements": ["specific improvement with how to fix it", "another actionable improvement"],
+  "suggestedAnswer": "A comprehensive model answer (4-6 sentences) showing the ideal structure, key points to cover, specific language or frameworks to use (e.g. STAR), and how to close strongly. Write it as if delivering the answer in an interview.",
+  "overallFeedback": "A detailed paragraph (4-5 sentences) covering: what the candidate did well, what is missing or weak, how the answer would land with a hiring manager, and one specific action to improve for next time."
 }`;
 
       const completion = await openai.chat.completions.create({
