@@ -111,15 +111,37 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
       const parsed = JSON.parse(cleaned);
       const questions = Array.isArray(parsed) ? parsed : parsed.questions || parsed[Object.keys(parsed)[0]] || [];
 
-      // ── Increment lifetime counter ──
-      if (questions.length > 0) {
-        await incrementGenerated(user.id, questions.length);
+      if (questions.length === 0) {
+        return NextResponse.json({ error: "No questions generated" }, { status: 500 });
       }
+
+      // ── Save session to DB first ──
+      const admin = createAdminSupabase();
+      const { data: sessionRow, error: sessionErr } = await admin
+        .from("interview_sessions")
+        .insert({
+          user_id: user.id,
+          job_role: jobRole,
+          company: company || "",
+          job_description: jobDescription || "",
+          questions,
+          answers: {},
+          feedbacks: {},
+        })
+        .select()
+        .single();
+
+      if (sessionErr) {
+        return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
+      }
+
+      // ── Only increment counter after successful DB save ──
+      await incrementGenerated(user.id, questions.length);
 
       // Return usage info so client can refresh display
       const updatedUsage = await getUsage(user.id);
 
-      return NextResponse.json({ questions, usage: updatedUsage });
+      return NextResponse.json({ questions, sessionId: sessionRow.id, session: sessionRow, usage: updatedUsage });
     }
 
     // Provide feedback on an answer

@@ -474,27 +474,12 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
       setExpandedQuestion(qs[0]?.id ?? null);
       if (json.usage) setUsage(json.usage);
 
-      // INSERT a new session row
-      const supabase = createClient();
-      const { data: newRow, error } = await supabase
-        .from("interview_sessions")
-        .insert({
-          user_id: userId,
-          job_role: simRole,
-          company: simCompany,
-          job_description: simJobDescription,
-          questions: qs,
-          answers: {},
-          feedbacks: {},
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      setCurrentSessionId(newRow.id);
+      // Session was saved server-side before counter was incremented
+      const newRow = json.session as SessionRow;
+      setCurrentSessionId(json.sessionId);
       setIsEditingDetails(false);
       setLastSaved(new Date());
-      setSessions((prev) => [newRow as SessionRow, ...prev]);
+      setSessions((prev) => [newRow, ...prev]);
     } catch (err: any) {
       toast.error(err.message || "Failed to generate questions");
     } finally {
