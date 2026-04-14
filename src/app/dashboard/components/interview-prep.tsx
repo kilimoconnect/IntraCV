@@ -590,6 +590,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
           count: 5,
           startId: nextId,
           existingQuestions: questions,
+          sessionId: currentSessionId,
           profileContext: cvData ? buildProfileContext(cvData) : undefined,
         }),
       });
@@ -604,7 +605,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
       setQuestions(merged);
       setExpandedQuestion(newQs[0]?.id ?? null);
       if (json.usage) setUsage(json.usage);
-      await saveSession({ questions: merged as any }, currentSessionId);
+      // Session already updated server-side; sync local sessions list
+      if (json.session) setSessions((prev) => prev.map((s) => s.id === currentSessionId ? { ...s, questions: merged as any } : s));
     } catch (err: any) {
       toast.error(err.message || "Failed to add more questions");
     } finally {

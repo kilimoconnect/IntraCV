@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const openai = openaiClient();
     const body = await req.json();
     const { jobRole, company, jobDescription, action, question, answer,
-            existingQuestions, count, startId, profileContext } = body;
+            existingQuestions, count, startId, profileContext, sessionId } = body;
 
     // ─── Auth ───
     const serverSupabase = await createServerSupabase();
@@ -115,33 +115,58 @@ Return ONLY valid JSON. Use sequential IDs starting from ${idOffset}:
         return NextResponse.json({ error: "No questions generated" }, { status: 500 });
       }
 
-      // ── Save session to DB first ──
+      // ── Save to DB first, then increment counter ──
       const admin = createAdminSupabase();
-      const { data: sessionRow, error: sessionErr } = await admin
-        .from("interview_sessions")
-        .insert({
-          user_id: user.id,
-          job_role: jobRole,
-          company: company || "",
-          job_description: jobDescription || "",
-          questions,
-          answers: {},
-          feedbacks: {},
-        })
-        .select()
-        .single();
 
-      if (sessionErr) {
-        return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
+      let savedSessionId: string;
+      let savedSession: any;
+
+      if (sessionId) {
+        // Adding more questions to an existing session — fetch current questions and merge
+        const { data: existing } = await admin
+          .from("interview_sessions")
+          .select("questions")
+          .eq("id", sessionId)
+          .eq("user_id", user.id)
+          .single();
+
+        const merged = [...(existing?.questions || []), ...questions];
+        const { data: updated, error: updateErr } = await admin
+          .from("interview_sessions")
+          .update({ questions: merged, updated_at: new Date().toISOString() })
+          .eq("id", sessionId)
+          .select()
+          .single();
+
+        if (updateErr) return NextResponse.json({ error: "Failed to update session" }, { status: 500 });
+        savedSessionId = sessionId;
+        savedSession = updated;
+      } else {
+        // New session
+        const { data: newRow, error: insertErr } = await admin
+          .from("interview_sessions")
+          .insert({
+            user_id: user.id,
+            job_role: jobRole,
+            company: company || "",
+            job_description: jobDescription || "",
+            questions,
+            answers: {},
+            feedbacks: {},
+          })
+          .select()
+          .single();
+
+        if (insertErr) return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
+        savedSessionId = newRow.id;
+        savedSession = newRow;
       }
 
       // ── Only increment counter after successful DB save ──
       await incrementGenerated(user.id, questions.length);
 
-      // Return usage info so client can refresh display
       const updatedUsage = await getUsage(user.id);
-
-      return NextResponse.json({ questions, sessionId: sessionRow.id, session: sessionRow, usage: updatedUsage });
+      return NextResponse.json({ questions, sessionId: savedSessionId, session: savedSession, usage: updatedUsage });
     }
 
     // Provide feedback on an answer
