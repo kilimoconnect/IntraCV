@@ -1170,26 +1170,41 @@ function CVBuilderPage() {
     (s) => !CORE_KEYS.has(s.key) && !sectionHasData(s.key) && !manuallyShown.has(s.key)
   );
 
-  // ─── Robust date parser — handles all common CV date formats ───
+  // ─── Universal date parser — handles virtually any CV date format ───
   const parseExpDate = (dateStr: string, endOfPeriod = false): Date | null => {
     if (!dateStr?.trim()) return null;
-    const s = dateStr.trim();
-    if (/^(present|current|now|ongoing|till\s*date|to\s*date)$/i.test(s)) return new Date();
-    // Standard parse (ISO, "Jan 1 2020", etc.)
+    const s = dateStr.trim().replace(/\s+/g, " ");
+    // "Present" / "Current" / "Now" / "Till Date" / "To Date" / "Ongoing" / "Till Now" / "Up to date"
+    if (/^(present|current|now|ongoing|till\s*(date|now)|to\s*date|up\s*to\s*date|date|today|continues?)$/i.test(s)) return new Date();
+    // Standard JS parse first (handles ISO 8601, RFC 2822, "Month Day, Year", etc.)
     const d = new Date(s);
     if (!isNaN(d.getTime())) return d;
-    // "Jan 2020" or "January 2020" (abbrev or full month name)
-    const m1 = s.match(/^(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[,.\s]+(\d{4})$/i);
-    if (m1) { const p = new Date(`${m1[1].slice(0,3)} 1, ${m1[2]}`); if (!isNaN(p.getTime())) return p; }
-    // "2020" year only
-    if (/^\d{4}$/.test(s)) return new Date(parseInt(s), endOfPeriod ? 11 : 0, endOfPeriod ? 31 : 1);
-    // "09/2020" MM/YYYY
-    const m2 = s.match(/^(\d{1,2})\/(\d{4})$/);
-    if (m2) return new Date(parseInt(m2[2]), parseInt(m2[1]) - 1, 1);
-    // "2020/09" or "2020-09" YYYY/MM or YYYY-MM
-    const m3 = s.match(/^(\d{4})[\/\-](\d{1,2})$/);
-    if (m3) return new Date(parseInt(m3[1]), parseInt(m3[2]) - 1, 1);
-    return null;
+    // Extract 4-digit year anywhere in the string
+    const yearMatch = s.match(/\b(\d{4})\b/);
+    const year = yearMatch ? parseInt(yearMatch[1]) : null;
+    if (!year || year < 1900 || year > 2100) return null;
+    // Full or abbreviated English month name anywhere: "Jan 2020", "January 2020", "2020 Jan", "Jan, 2020"
+    const MONTHS: Record<string, number> = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11, january:0,february:1,march:2,april:3,june:5,july:6,august:7,september:8,october:9,november:10,december:11 };
+    const monthMatch = s.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i);
+    if (monthMatch) {
+      const month = MONTHS[monthMatch[1].toLowerCase()];
+      return new Date(year, endOfPeriod ? month : month, endOfPeriod ? new Date(year, month + 1, 0).getDate() : 1);
+    }
+    // Numeric-only formats — extract month if present
+    // "MM/YYYY" or "M/YYYY"
+    const mmYYYY = s.match(/^(\d{1,2})[\/\-\.](\d{4})$/);
+    if (mmYYYY) return new Date(parseInt(mmYYYY[2]), parseInt(mmYYYY[1]) - 1, 1);
+    // "YYYY/MM" or "YYYY-MM" or "YYYY.MM"
+    const yyyyMM = s.match(/^(\d{4})[\/\-\.](\d{1,2})$/);
+    if (yyyyMM) return new Date(parseInt(yyyyMM[1]), parseInt(yyyyMM[2]) - 1, 1);
+    // "DD/MM/YYYY" or "DD-MM-YYYY" or "DD.MM.YYYY"
+    const ddmmyyyy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+    if (ddmmyyyy) return new Date(parseInt(ddmmyyyy[3]), parseInt(ddmmyyyy[2]) - 1, parseInt(ddmmyyyy[1]));
+    // "YYYY/DD/MM" or "YYYY-DD-MM"
+    const yyyyddmm = s.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+    if (yyyyddmm) return new Date(parseInt(yyyyddmm[1]), parseInt(yyyyddmm[3]) - 1, parseInt(yyyyddmm[2]));
+    // Year only (already extracted above)
+    return new Date(year, endOfPeriod ? 11 : 0, endOfPeriod ? 31 : 1);
   };
 
   // ─── Calculate Years of Experience ───
