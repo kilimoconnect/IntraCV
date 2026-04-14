@@ -136,10 +136,10 @@ Candidate's Answer: "${answer}"
 Provide feedback in this JSON format:
 {
   "score": <number 1-10>,
-  "strengths": ["specific strength with explanation", "another strength with why it works"],
-  "improvements": ["specific improvement with how to fix it", "another actionable improvement"],
+  "strengths": ["strength 1", "strength 2"],
+  "improvements": ["improvement 1", "improvement 2"],
   "suggestedAnswer": "A comprehensive model answer (4-6 sentences) showing the ideal structure, key points to cover, specific language or frameworks to use (e.g. STAR), and how to close strongly. Write it as if delivering the answer in an interview.",
-  "overallFeedback": "A detailed paragraph (4-5 sentences) covering: what the candidate did well, what is missing or weak, how the answer would land with a hiring manager, and one specific action to improve for next time."
+  "overallFeedback": "2-3 sentence summary of the feedback"
 }`;
 
       const completion = await openai.chat.completions.create({
