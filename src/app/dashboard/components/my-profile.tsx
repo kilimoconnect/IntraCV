@@ -58,6 +58,64 @@ interface CategoryResult {
   recommendedSections: { key: string; label: string }[];
 }
 
+const SECTIONS_BY_CAT: Record<CareerCategory, { required: { key: string; label: string }[]; recommended: { key: string; label: string }[] }> = {
+  junior: {
+    required: [
+      { key: "personal", label: "Personal Info" },
+      { key: "summary", label: "Professional Summary" },
+      { key: "experience", label: "Experience" },
+      { key: "education", label: "Education" },
+      { key: "skills", label: "Skills" },
+      { key: "referees", label: "References" },
+    ],
+    recommended: [
+      { key: "projects", label: "Projects" },
+      { key: "certifications", label: "Certifications" },
+      { key: "volunteer", label: "Volunteer Experience" },
+      { key: "languages", label: "Languages" },
+    ],
+  },
+  "mid-senior": {
+    required: [
+      { key: "personal", label: "Personal Info" },
+      { key: "summary", label: "Professional Summary" },
+      { key: "experience", label: "Experience" },
+      { key: "education", label: "Education" },
+      { key: "skills", label: "Core Competencies" },
+      { key: "achievements", label: "Key Achievements" },
+      { key: "referees", label: "References" },
+    ],
+    recommended: [
+      { key: "certifications", label: "Certifications" },
+      { key: "awards", label: "Awards & Recognition" },
+      { key: "memberships", label: "Professional Memberships" },
+      { key: "tools", label: "Tools & Software" },
+      { key: "languages", label: "Languages" },
+      { key: "projects", label: "Projects" },
+    ],
+  },
+  executive: {
+    required: [
+      { key: "personal", label: "Personal Info" },
+      { key: "summary", label: "Executive Profile" },
+      { key: "experience", label: "Professional Experience" },
+      { key: "education", label: "Education" },
+      { key: "skills", label: "Core Leadership Competencies" },
+      { key: "achievements", label: "Career Highlights" },
+      { key: "boardRoles", label: "Board & Advisory Roles" },
+      { key: "referees", label: "References" },
+    ],
+    recommended: [
+      { key: "execTraining", label: "Executive Training" },
+      { key: "publications", label: "Publications & Speaking" },
+      { key: "awards", label: "Awards & Recognition" },
+      { key: "certifications", label: "Certifications" },
+      { key: "memberships", label: "Professional Affiliations" },
+      { key: "languages", label: "Languages" },
+    ],
+  },
+};
+
 function categorizeProfile(
   experiences: any[],
   education: any[],
@@ -140,65 +198,6 @@ function categorizeProfile(
     junior: "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border-emerald-200/80 shadow-sm shadow-emerald-100/50",
     "mid-senior": "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border-amber-200/80 shadow-sm shadow-amber-100/50",
     executive: "bg-[#004aad]/5 text-[#004aad] border-[#004aad]/20 shadow-sm",
-  };
-
-  // ── Required & recommended sections per category ──
-  const SECTIONS_BY_CAT: Record<CareerCategory, { required: { key: string; label: string }[]; recommended: { key: string; label: string }[] }> = {
-    junior: {
-      required: [
-        { key: "personal", label: "Personal Info" },
-        { key: "summary", label: "Professional Summary" },
-        { key: "experience", label: "Experience" },
-        { key: "education", label: "Education" },
-        { key: "skills", label: "Skills" },
-        { key: "referees", label: "References" },
-      ],
-      recommended: [
-        { key: "projects", label: "Projects" },
-        { key: "certifications", label: "Certifications" },
-        { key: "volunteer", label: "Volunteer Experience" },
-        { key: "languages", label: "Languages" },
-      ],
-    },
-    "mid-senior": {
-      required: [
-        { key: "personal", label: "Personal Info" },
-        { key: "summary", label: "Professional Summary" },
-        { key: "experience", label: "Experience" },
-        { key: "education", label: "Education" },
-        { key: "skills", label: "Core Competencies" },
-        { key: "achievements", label: "Key Achievements" },
-        { key: "referees", label: "References" },
-      ],
-      recommended: [
-        { key: "certifications", label: "Certifications" },
-        { key: "awards", label: "Awards & Recognition" },
-        { key: "memberships", label: "Professional Memberships" },
-        { key: "tools", label: "Tools & Software" },
-        { key: "languages", label: "Languages" },
-        { key: "projects", label: "Projects" },
-      ],
-    },
-    executive: {
-      required: [
-        { key: "personal", label: "Personal Info" },
-        { key: "summary", label: "Executive Profile" },
-        { key: "experience", label: "Professional Experience" },
-        { key: "education", label: "Education" },
-        { key: "skills", label: "Core Leadership Competencies" },
-        { key: "achievements", label: "Career Highlights" },
-        { key: "boardRoles", label: "Board & Advisory Roles" },
-        { key: "referees", label: "References" },
-      ],
-      recommended: [
-        { key: "execTraining", label: "Executive Training" },
-        { key: "publications", label: "Publications & Speaking" },
-        { key: "awards", label: "Awards & Recognition" },
-        { key: "certifications", label: "Certifications" },
-        { key: "memberships", label: "Professional Affiliations" },
-        { key: "languages", label: "Languages" },
-      ],
-    },
   };
 
   return {
@@ -384,7 +383,7 @@ export default function MyProfile({
   );
   const dbCategory = (cvData as any)?.careerCategory as CareerCategory | null | undefined;
   const categoryResult: CategoryResult = dbCategory
-    ? { ...computedCategory, category: dbCategory, label: { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" }[dbCategory], color: { junior: "bg-emerald-50 text-emerald-700 border-emerald-200", "mid-senior": "bg-[#ff751f]/10 text-[#ff751f] border-[#ff751f]/20", executive: "bg-[#004aad]/5 text-[#004aad] border-[#004aad]/20" }[dbCategory], requiredSections: computedCategory.requiredSections, recommendedSections: computedCategory.recommendedSections }
+    ? { ...computedCategory, category: dbCategory, label: { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" }[dbCategory], color: { junior: "bg-emerald-50 text-emerald-700 border-emerald-200", "mid-senior": "bg-[#ff751f]/10 text-[#ff751f] border-[#ff751f]/20", executive: "bg-[#004aad]/5 text-[#004aad] border-[#004aad]/20" }[dbCategory], requiredSections: SECTIONS_BY_CAT[dbCategory].required, recommendedSections: SECTIONS_BY_CAT[dbCategory].recommended }
     : computedCategory;
 
   // ─── Section content checks ───
