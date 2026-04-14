@@ -1621,6 +1621,15 @@ function CVBuilderPage() {
               className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 flex items-center gap-2 px-3"
               style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))', paddingTop: '10px' }}
             >
+              {/* Upload New */}
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="flex items-center justify-center w-9 h-9 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 shrink-0"
+                title="Upload New"
+              >
+                <Upload className="h-4 w-4" />
+              </button>
+
               {/* Prev */}
               <button
                 onClick={() => safeIdx > 0 && setActiveTab(SECTIONS[safeIdx - 1].key)}
