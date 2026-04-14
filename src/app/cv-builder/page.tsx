@@ -1163,11 +1163,28 @@ function CVBuilderPage() {
   // Only show optional sections that have data or were manually added
   // Use sectionCounts (strict item count) for sidebar visibility, not sectionHasContent (which is broader, for validation)
   const sectionHasData = (key: string) => (sectionCounts[key] ?? 0) > 0;
+
+  // Also always show sections that are REQUIRED for the user's detected category
+  // (so the user can see what's needed without having to manually add them first)
+  const _quickYears = (() => {
+    const now = new Date();
+    let m = 0;
+    experiences.forEach((exp) => {
+      const s = exp.startDate?.trim(); if (!s) return;
+      const sd = new Date(s); if (isNaN(sd.getTime())) { const ym = s.match(/\b(\d{4})\b/); if (!ym) return; sd.setFullYear(parseInt(ym[1]), 0, 1); }
+      const ed = /^(present|current|now|ongoing)$/i.test(exp.endDate?.trim() || "") || !exp.endDate ? now : (() => { const d = new Date(exp.endDate); if (!isNaN(d.getTime())) return d; const ym = exp.endDate.match(/\b(\d{4})\b/); return ym ? new Date(parseInt(ym[1]), 11, 31) : now; })();
+      if (ed >= sd) m += (ed.getFullYear() - sd.getFullYear()) * 12 + (ed.getMonth() - sd.getMonth());
+    });
+    return m / 12;
+  })();
+  const _quickCategory = categorizeProfile(experiences, education, boardRoles, publications, execTraining, _quickYears);
+  const requiredKeys = new Set(_quickCategory.requiredSections.map((s) => s.key));
+
   const SECTIONS = ALL_SECTIONS.filter(
-    (s) => CORE_KEYS.has(s.key) || sectionHasData(s.key) || manuallyShown.has(s.key)
+    (s) => CORE_KEYS.has(s.key) || requiredKeys.has(s.key) || sectionHasData(s.key) || manuallyShown.has(s.key)
   );
   const hiddenSections = ALL_SECTIONS.filter(
-    (s) => !CORE_KEYS.has(s.key) && !sectionHasData(s.key) && !manuallyShown.has(s.key)
+    (s) => !CORE_KEYS.has(s.key) && !requiredKeys.has(s.key) && !sectionHasData(s.key) && !manuallyShown.has(s.key)
   );
 
   // ─── Universal date parser — handles virtually any CV date format ───
