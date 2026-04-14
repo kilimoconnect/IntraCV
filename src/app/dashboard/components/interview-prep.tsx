@@ -265,6 +265,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
   const [simRole, setSimRole] = useState("");
   const [simCompany, setSimCompany] = useState("");
   const [simJobDescription, setSimJobDescription] = useState("");
+  const [isEditingDetails, setIsEditingDetails] = useState(true);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [addingMore, setAddingMore] = useState(false);
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
@@ -384,6 +385,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     setExpandedQuestion(qs.length > 0 ? qs[0].id : null);
     setLastSaved(s.updated_at ? new Date(s.updated_at) : null);
     setLoadingFeedback({});
+    setIsEditingDetails(false);
   }
 
   // ─── Switch session ───
@@ -402,6 +404,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     setSimRole(""); setSimCompany(""); setSimJobDescription("");
     setQuestions([]); setAnswers({}); setFeedbacks({});
     setExpandedQuestion(null); setLastSaved(null);
+    setIsEditingDetails(true);
   }
 
   // ─── Save / update current session ───
@@ -489,6 +492,7 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
       if (error) throw error;
       setCurrentSessionId(newRow.id);
+      setIsEditingDetails(false);
       setLastSaved(new Date());
       setSessions((prev) => [newRow as SessionRow, ...prev]);
     } catch (err: any) {
@@ -808,8 +812,10 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
                   {currentSessionId ? (simRole || "Interview Session") : "New Session"}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {currentSessionId
+                  {currentSessionId && !isEditingDetails
                     ? "Answer the questions below or add more to this session"
+                    : currentSessionId
+                    ? "Edit session details below"
                     : "Fill in the role details and generate tailored questions"}
                 </p>
               </div>
@@ -823,48 +829,80 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
               </div>
             )}
           </div>
-          <div className="p-5 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-600">Job Role <span className="text-red-400">*</span></Label>
-                <Input
-                  value={simRole}
-                  onChange={(e) => setSimRole(e.target.value)}
-                  placeholder="e.g. Senior Software Engineer"
-                  className="rounded-xl border-slate-200 text-sm"
-                />
+          {/* ── Collapsed summary (after questions generated) ── */}
+          {currentSessionId && !isEditingDetails ? (
+            <div className="px-5 py-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">{simRole}</p>
+                {simCompany && <p className="text-xs text-slate-500 truncate">{simCompany}</p>}
+                {simJobDescription && (
+                  <p className="text-xs text-slate-400 truncate mt-0.5">{simJobDescription.slice(0, 80)}{simJobDescription.length > 80 ? "…" : ""}</p>
+                )}
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-slate-600">Company <span className="text-slate-400">(optional)</span></Label>
-                <Input
-                  value={simCompany}
-                  onChange={(e) => setSimCompany(e.target.value)}
-                  placeholder="e.g. Google"
-                  className="rounded-xl border-slate-200 text-sm"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-600">Job Description <span className="text-red-400">*</span></Label>
-              <Textarea
-                value={simJobDescription}
-                onChange={(e) => setSimJobDescription(e.target.value)}
-                rows={3}
-                placeholder="Paste the job description here..."
-                className="rounded-xl border-slate-200 text-sm resize-none"
-              />
-            </div>
-            {!currentSessionId && (
               <Button
-                onClick={generateQuestions}
-                disabled={generatingQuestions}
-                className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] border-0 shadow-sm shadow-[#ff751f]/20 text-white"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditingDetails(true)}
+                className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 shrink-0 text-xs"
               >
-                {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                Generate Questions
+                Edit
               </Button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-600">Job Role <span className="text-red-400">*</span></Label>
+                  <Input
+                    value={simRole}
+                    onChange={(e) => setSimRole(e.target.value)}
+                    placeholder="e.g. Senior Software Engineer"
+                    className="rounded-xl border-slate-200 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-600">Company <span className="text-slate-400">(optional)</span></Label>
+                  <Input
+                    value={simCompany}
+                    onChange={(e) => setSimCompany(e.target.value)}
+                    placeholder="e.g. Google"
+                    className="rounded-xl border-slate-200 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-600">Job Description <span className="text-red-400">*</span></Label>
+                <Textarea
+                  value={simJobDescription}
+                  onChange={(e) => setSimJobDescription(e.target.value)}
+                  rows={3}
+                  placeholder="Paste the job description here..."
+                  className="rounded-xl border-slate-200 text-sm resize-none"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                {!currentSessionId ? (
+                  <Button
+                    onClick={generateQuestions}
+                    disabled={generatingQuestions}
+                    className="rounded-xl bg-[#ff751f] hover:bg-[#e8661a] border-0 shadow-sm shadow-[#ff751f]/20 text-white"
+                  >
+                    {generatingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate Questions
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingDetails(false)}
+                    className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50 text-xs"
+                  >
+                    Done
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Usage indicator ── */}
