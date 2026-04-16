@@ -1717,7 +1717,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
   const C = themes[theme];
   const SIDE = 185;
   const SP = 14;
-  const SKILLS_STRIP_H = 58;
+  const SKILLS_STRIP_H = 76;
   const MAIN_X = SIDE + 20;
   const MAIN_W = A4_W - SIDE - 20 - 26; // 26px right margin
   const PAGE_BUDGET = A4_H - SKILLS_STRIP_H - 8 - PRINT_MARGIN.bottom;
