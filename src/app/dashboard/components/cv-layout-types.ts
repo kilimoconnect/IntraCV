@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════
 
 export type CareerCategory = "junior" | "mid-senior" | "executive";
-export type LayoutVariant = "A" | "B" | "C";
+export type LayoutVariant = "A" | "B" | "C" | "D" | "E" | "F";
 
 export interface LayoutOption {
   variant: LayoutVariant;
@@ -14,8 +14,11 @@ export interface LayoutOption {
 export const LAYOUT_OPTIONS: Record<CareerCategory, LayoutOption[]> = {
   junior: [
     { variant: "A", name: "Modern Banner",    description: "Centered banner header with accent contact strip, single-column body, pill-shaped skills" },
-    { variant: "B", name: "Clean Sidebar",     description: "Thin left accent bar with contact info, clean right body, minimal and airy" },
-    { variant: "C", name: "Split Header",      description: "Name left and contact right header, two-column skills and education grid below" },
+    { variant: "B", name: "Clean Sidebar",    description: "Thin left accent bar with contact info, clean right body, minimal and airy" },
+    { variant: "C", name: "Split Header",     description: "Name left and contact right header, two-column skills and education grid below" },
+    { variant: "D", name: "Dual Band",        description: "Split colored header band with name left and contact right, balanced two-column body with dot-grid skills" },
+    { variant: "E", name: "Stripe Minimal",   description: "Thin top accent stripe, large left-aligned name with inline contact row, clean single-column body" },
+    { variant: "F", name: "Right Sidebar",    description: "Distinct right sidebar with skills and education, clean main area with experience and profile" },
   ],
   "mid-senior": [
     { variant: "A", name: "Dark Sidebar",      description: "Full-height dark left sidebar with contact and skills, timeline experience on right" },
