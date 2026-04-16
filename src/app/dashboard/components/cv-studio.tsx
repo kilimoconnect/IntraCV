@@ -414,18 +414,238 @@ function ExecutiveMiniPreview() {
   );
 }
 
+// Junior D — dual-band header (dark left + light right), balanced two-column body with dot-grid skills
+function JuniorDMiniPreview() {
+  return (
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <div style={{ width: "100%", height: "14%", display: "flex" }}>
+        <div style={{ flex: 1.45, backgroundColor: "#1E293B", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 6%" }}>
+          <div style={{ width: "75%", height: 5, backgroundColor: "#fff", borderRadius: 2, opacity: 0.9, marginBottom: 2 }} />
+          <div style={{ width: "48%", height: 2.5, backgroundColor: "#fff", borderRadius: 1, opacity: 0.5 }} />
+        </div>
+        <div style={{ flex: 1, backgroundColor: "#F8FAFC", borderLeft: "2px solid #4F46E5", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 5%" }}>
+          {[65, 75, 58].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#94A3B8", borderRadius: 1, marginBottom: 2 }} />)}
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4%", padding: "4% 6%" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}><div style={{ width: "45%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          {[100, 88, 94].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2.5, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 1 }} />)}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginTop: 2 }}><div style={{ width: "40%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          {[62, 95, 85, 90].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 1 }} />)}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}><div style={{ width: "40%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 4px" }}>
+            {[85, 80, 90, 75, 88, 70].map((w, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <div style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#4F46E5", flexShrink: 0 }} />
+                <div style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1 }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginTop: 2 }}><div style={{ width: "45%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          {[85, 65].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Junior E — thin top stripe, large name, inline contact row, 3-col dot skills, single column body
+function JuniorEMiniPreview() {
+  return (
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <div style={{ width: "100%", height: "3.5%", backgroundColor: "#4F46E5" }} />
+      <div style={{ padding: "4% 8% 2%" }}>
+        <div style={{ width: "60%", height: 7, backgroundColor: "#1E293B", borderRadius: 2, marginBottom: 2 }} />
+        <div style={{ width: "38%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2, marginBottom: 2 }} />
+        <div style={{ display: "flex", gap: 5, marginTop: 3 }}>
+          {[30, 25, 28].map((w, i) => <div key={i} style={{ width: w, height: 2, backgroundColor: "#CBD5E1", borderRadius: 1 }} />)}
+        </div>
+      </div>
+      <div style={{ width: "84%", height: 1, backgroundColor: "#4F46E5", opacity: 0.2, margin: "0 8%" }} />
+      <div style={{ padding: "3% 8%", display: "flex", flexDirection: "column", gap: "3%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "3px 5px", marginBottom: 2 }}>
+          {[88, 82, 78, 90, 75, 85].map((w, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#4F46E5", flexShrink: 0 }} />
+              <div style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1 }} />
+            </div>
+          ))}
+        </div>
+        <div><div style={{ width: "40%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2, marginBottom: 1 }} /><div style={{ width: 22, height: 1.5, backgroundColor: "#4F46E5", borderRadius: 1 }} /></div>
+        {[100, 88, 94].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2.5, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 1 }} />)}
+        <div style={{ marginTop: 1 }}><div style={{ width: "38%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2, marginBottom: 1 }} /><div style={{ width: 22, height: 1.5, backgroundColor: "#4F46E5", borderRadius: 1 }} /></div>
+        {[64, 95, 82, 90].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 1 }} />)}
+      </div>
+    </div>
+  );
+}
+
+// Junior F — right sidebar (light bg + left primary border), main content left with bold header underline
+function JuniorFMiniPreview() {
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex" }}>
+      <div style={{ flex: 1, padding: "6% 5% 4%", display: "flex", flexDirection: "column" }}>
+        <div style={{ marginBottom: 3 }}>
+          <div style={{ width: "70%", height: 6, backgroundColor: "#1E293B", borderRadius: 2, marginBottom: 2 }} />
+          <div style={{ width: "44%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} />
+        </div>
+        <div style={{ width: "100%", height: 2, backgroundColor: "#4F46E5", marginBottom: 5 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 3 }}>
+          <div style={{ width: 3, height: 10, backgroundColor: "#4F46E5", borderRadius: 1 }} />
+          <div style={{ width: "40%", height: 3, backgroundColor: "#1E293B", borderRadius: 2 }} />
+        </div>
+        {[100, 88].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2.5, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+        <div style={{ display: "flex", alignItems: "center", gap: 3, marginBottom: 3, marginTop: 3 }}>
+          <div style={{ width: 3, height: 10, backgroundColor: "#4F46E5", borderRadius: 1 }} />
+          <div style={{ width: "38%", height: 3, backgroundColor: "#1E293B", borderRadius: 2 }} />
+        </div>
+        {[64, 95, 82, 90].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+      </div>
+      <div style={{ width: "30%", height: "100%", backgroundColor: "#F8FAFC", borderLeft: "2px solid #4F46E5", padding: "6% 4%", display: "flex", flexDirection: "column", gap: "5%" }}>
+        <div><div style={{ width: "60%", height: 2, backgroundColor: "#4F46E5", borderRadius: 1, marginBottom: 3 }} />{[80, 85, 70].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#CBD5E1", borderRadius: 1, marginBottom: 2 }} />)}</div>
+        <div>
+          <div style={{ width: "50%", height: 2, backgroundColor: "#4F46E5", borderRadius: 1, marginBottom: 3 }} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            {[55, 65, 48, 58, 50].map((w, i) => <div key={i} style={{ width: `${w}%`, maxWidth: 28, height: 6, backgroundColor: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 8 }} />)}
+          </div>
+        </div>
+        <div><div style={{ width: "55%", height: 2, backgroundColor: "#4F46E5", borderRadius: 1, marginBottom: 3 }} />{[90, 65].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#CBD5E1", borderRadius: 1, marginBottom: 2 }} />)}</div>
+      </div>
+    </div>
+  );
+}
+
+// Mid-Senior D — split header band (dark left + light right), two-column body (experience left, skills/education right)
+function MidSeniorDMiniPreview() {
+  return (
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <div style={{ width: "100%", height: "13%", display: "flex" }}>
+        <div style={{ flex: 1.45, backgroundColor: "#1E293B", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 6%" }}>
+          <div style={{ width: "70%", height: 5, backgroundColor: "#fff", borderRadius: 2, opacity: 0.9, marginBottom: 2 }} />
+          <div style={{ width: "48%", height: 2.5, backgroundColor: "#fff", borderRadius: 1, opacity: 0.5 }} />
+        </div>
+        <div style={{ flex: 1, backgroundColor: "#F8FAFC", borderLeft: "2.5px solid #4F46E5", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 5%" }}>
+          {[70, 80, 60].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#94A3B8", borderRadius: 1, marginBottom: 2 }} />)}
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "58fr 42fr", gap: "4%", padding: "3.5% 5%" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}><div style={{ width: "38%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          {[100, 88, 94].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2.5, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 1 }} />)}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginTop: 2 }}><div style={{ width: "35%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          <div style={{ borderLeft: "2px solid #4F46E5", paddingLeft: 5 }}>
+            {[62, 95, 82, 88].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}><div style={{ width: "42%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 4px" }}>
+            {[88, 82, 90, 78, 85, 80].map((w, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <div style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#4F46E5", flexShrink: 0 }} />
+                <div style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1 }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginTop: 2 }}><div style={{ width: "48%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2 }} /><div style={{ flex: 1, height: 1, backgroundColor: "#E2E8F0" }} /></div>
+          {[88, 65].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mid-Senior E — thin top stripe, large name, skills pills row, single-column timeline body
+function MidSeniorEMiniPreview() {
+  return (
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <div style={{ width: "100%", height: "3%", backgroundColor: "#4F46E5" }} />
+      <div style={{ padding: "4% 8% 2%" }}>
+        <div style={{ width: "62%", height: 7, backgroundColor: "#1E293B", borderRadius: 2, marginBottom: 2 }} />
+        <div style={{ width: "40%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2, marginBottom: 2 }} />
+        <div style={{ display: "flex", gap: 6, marginTop: 3 }}>
+          {[28, 24, 26].map((w, i) => <div key={i} style={{ width: w, height: 2, backgroundColor: "#CBD5E1", borderRadius: 1 }} />)}
+        </div>
+      </div>
+      <div style={{ width: "84%", height: 1, backgroundColor: "#4F46E5", opacity: 0.2, margin: "0 8%" }} />
+      <div style={{ padding: "2.5% 8%", display: "flex", flexDirection: "column", gap: "3%" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 2.5 }}>
+          {[40, 52, 35, 45, 38, 50].map((w, i) => (
+            <div key={i} style={{ width: `${w}%`, maxWidth: 42, height: 8, backgroundColor: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 8 }} />
+          ))}
+        </div>
+        <div><div style={{ width: "38%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2, marginBottom: 1 }} /><div style={{ width: 22, height: 1.5, backgroundColor: "#4F46E5", borderRadius: 1 }} /></div>
+        {[100, 88].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2.5, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 1 }} />)}
+        <div style={{ marginTop: 1 }}><div style={{ width: "35%", height: 3, backgroundColor: "#4F46E5", borderRadius: 2, marginBottom: 1 }} /><div style={{ width: 22, height: 1.5, backgroundColor: "#4F46E5", borderRadius: 1 }} /></div>
+        <div style={{ borderLeft: "2px solid #4F46E5", paddingLeft: 5 }}>
+          {[62, 95, 85, 90].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+        </div>
+        {[85, 90].map((w, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 4, border: "1px solid #4F46E5", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 4, color: "#4F46E5", fontWeight: 700 }}>{i + 1}</span>
+            </div>
+            <div style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Mid-Senior F — white left sidebar with right border, colored skills strip across right main top, body below
+function MidSeniorFMiniPreview() {
+  return (
+    <div style={{ width: "100%", height: "100%", display: "flex" }}>
+      <div style={{ width: "27%", height: "100%", backgroundColor: "#fff", borderRight: "2.5px solid #4F46E5", padding: "6% 4%", display: "flex", flexDirection: "column", gap: "5%", boxShadow: "inset -1px 0 0 #E2E8F0" }}>
+        <div>
+          <div style={{ width: "85%", height: 5, backgroundColor: "#1E293B", borderRadius: 2, marginBottom: 2 }} />
+          <div style={{ width: "60%", height: 2.5, backgroundColor: "#4F46E5", borderRadius: 1.5 }} />
+        </div>
+        <div><div style={{ width: "55%", height: 2, backgroundColor: "#4F46E5", borderRadius: 1, marginBottom: 3 }} />{[80, 85, 70].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#CBD5E1", borderRadius: 1, marginBottom: 2 }} />)}</div>
+        <div><div style={{ width: "60%", height: 2, backgroundColor: "#4F46E5", borderRadius: 1, marginBottom: 3 }} /><div style={{ width: "88%", height: 2, backgroundColor: "#CBD5E1", borderRadius: 1, marginBottom: 2 }} /><div style={{ width: "65%", height: 2, backgroundColor: "#CBD5E1", borderRadius: 1 }} /></div>
+        <div><div style={{ width: "55%", height: 2, backgroundColor: "#4F46E5", borderRadius: 1, marginBottom: 3 }} />{[75, 80].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#CBD5E1", borderRadius: 1, marginBottom: 2 }} />)}</div>
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ backgroundColor: "#4F46E5", padding: "4% 5% 3%", display: "flex", flexWrap: "wrap", gap: 2.5 }}>
+          {[38, 48, 32, 42, 35, 44].map((w, i) => (
+            <div key={i} style={{ width: `${w}%`, maxWidth: 30, height: 6, borderRadius: 8, border: "1px solid rgba(255,255,255,0.4)" }} />
+          ))}
+        </div>
+        <div style={{ padding: "3.5% 5%", display: "flex", flexDirection: "column", gap: "3%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 3 }}><div style={{ width: 3, height: 10, backgroundColor: "#4F46E5", borderRadius: 1 }} /><div style={{ width: "40%", height: 3, backgroundColor: "#1E293B", borderRadius: 2 }} /></div>
+          {[100, 88].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2.5, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, marginTop: 2 }}><div style={{ width: 3, height: 10, backgroundColor: "#4F46E5", borderRadius: 1 }} /><div style={{ width: "35%", height: 3, backgroundColor: "#1E293B", borderRadius: 2 }} /></div>
+          <div style={{ borderLeft: "2px solid #4F46E5", paddingLeft: 5 }}>
+            {[60, 92, 80, 88].map((w, i) => <div key={i} style={{ width: `${w}%`, height: 2, backgroundColor: "#E2E8F0", borderRadius: 1, marginBottom: 2 }} />)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Variant Mini Preview Dispatcher ───
 
 function VariantMiniPreview({ category, variant }: { category: CareerCategory; variant: LayoutVariant }) {
   if (category === "junior") {
     if (variant === "A") return <JuniorMiniPreview />;
     if (variant === "B") return <JuniorBMiniPreview />;
-    return <JuniorCMiniPreview />;
+    if (variant === "C") return <JuniorCMiniPreview />;
+    if (variant === "D") return <JuniorDMiniPreview />;
+    if (variant === "E") return <JuniorEMiniPreview />;
+    if (variant === "F") return <JuniorFMiniPreview />;
   }
   if (category === "mid-senior") {
     if (variant === "A") return <MidSeniorMiniPreview />;
     if (variant === "B") return <MidSeniorBMiniPreview />;
-    return <MidSeniorCMiniPreview />;
+    if (variant === "C") return <MidSeniorCMiniPreview />;
+    if (variant === "D") return <MidSeniorDMiniPreview />;
+    if (variant === "E") return <MidSeniorEMiniPreview />;
+    if (variant === "F") return <MidSeniorFMiniPreview />;
   }
   if (variant === "A") return <ExecutiveMiniPreview />;
   if (variant === "B") return <ExecutiveBMiniPreview />;
