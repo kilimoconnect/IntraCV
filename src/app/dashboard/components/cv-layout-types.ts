@@ -21,9 +21,12 @@ export const LAYOUT_OPTIONS: Record<CareerCategory, LayoutOption[]> = {
     { variant: "F", name: "Right Sidebar",    description: "Distinct right sidebar with skills and education, clean main area with experience and profile" },
   ],
   "mid-senior": [
-    { variant: "A", name: "Dark Sidebar",      description: "Full-height dark left sidebar with contact and skills, timeline experience on right" },
-    { variant: "B", name: "Top Bar Split",      description: "Dark top header bar, light right sidebar with skills and education, left body" },
-    { variant: "C", name: "Full Width Cards",   description: "No sidebar — bold section dividers, card-based sections, modern full-width layout" },
+    { variant: "A", name: "Dark Sidebar",       description: "Full-height dark left sidebar with contact and skills, timeline experience on right" },
+    { variant: "B", name: "Top Bar Split",       description: "Dark top header bar, light right sidebar with skills and education, left body" },
+    { variant: "C", name: "Full Width Cards",    description: "No sidebar — bold section dividers, card-based sections, modern full-width layout" },
+    { variant: "D", name: "Dual Band Split",     description: "Colored split header band, two-column body with experience left and skills/education right" },
+    { variant: "E", name: "Stripe Professional", description: "Thin top accent stripe, large name with inline contact, skills pills at top, single-column timeline body" },
+    { variant: "F", name: "Editorial Sidebar",   description: "White left sidebar with name/contact/education, colored skills strip across top of main area" },
   ],
   executive: [
     { variant: "A", name: "Elegant Centered",  description: "Centered header with decorative lines, dark right sidebar, premium card board roles" },
