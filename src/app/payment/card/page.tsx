@@ -234,7 +234,8 @@ function CardForm() {
               <p className="text-2xl font-extrabold text-slate-800">
                 {currency} {amount.toFixed(2)}
               </p>
-              <p className="text-xs text-slate-500">One-time payment</p>
+              <p className="text-xs font-semibold text-emerald-600">✓ One-time payment</p>
+              <p className="text-[10px] text-slate-400">No subscription · No recurring charges</p>
             </div>
           </div>
         </div>

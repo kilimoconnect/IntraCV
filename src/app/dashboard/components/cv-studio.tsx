@@ -2360,6 +2360,10 @@ export default function CvStudio({ userId, cvData }: Props) {
                 ))}
             </div>
 
+            <div className="mt-3 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-2.5 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+              <p className="text-xs text-emerald-700 font-medium">One-time payment · No subscription, no recurring charges</p>
+            </div>
             <p className="text-center text-[11px] text-slate-400 mt-2">
               Powered by Pesapal · Secure &amp; Encrypted
             </p>
