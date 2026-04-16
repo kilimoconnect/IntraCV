@@ -1717,7 +1717,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
   const C = themes[theme];
   const SIDE = 185;
   const SP = 14;
-  const SKILLS_STRIP_H = 40;
+  const SKILLS_STRIP_H = 58;
   const MAIN_X = SIDE + 20;
   const MAIN_W = A4_W - SIDE - 20 - 26; // 26px right margin
   const PAGE_BUDGET = A4_H - SKILLS_STRIP_H - 8 - PRINT_MARGIN.bottom;
@@ -1796,7 +1796,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
 
         {/* Right: colored skills strip at top */}
         {d.skills?.length > 0 && (
-          <div style={{ position: "absolute", top: 0, left: SIDE, width: A4_W - SIDE, height: SKILLS_STRIP_H, backgroundColor: C.primary, display: "flex", alignItems: "center", padding: "0 20px", gap: 5, flexWrap: "nowrap", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: SIDE, width: A4_W - SIDE, height: SKILLS_STRIP_H, backgroundColor: C.primary, display: "flex", alignItems: "flex-start", padding: "8px 20px", gap: 5, flexWrap: "wrap", overflow: "hidden" }}>
             <span style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "1.2px", marginRight: 4, whiteSpace: "nowrap" }}>Skills</span>
             {d.skills.map((skill, i) => (
               <span key={i} data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: "#fff", padding: "2px 8px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.35)", whiteSpace: "nowrap" }}>{skill}</span>
