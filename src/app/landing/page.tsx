@@ -89,23 +89,33 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
 
   useEffect(() => {
     const update = () => {
-      if (!cvWrapRef.current || !cvCardRef.current) return;
-      const available = cvWrapRef.current.offsetWidth;
+      const wrap = cvWrapRef.current;
+      const card = cvCardRef.current;
+      if (!wrap || !card) return;
+      const available = wrap.getBoundingClientRect().width;
+      if (!available) return;
       const s = Math.min(1, available / CV_W);
       setCvScale(s);
-      // shrink outer wrapper height to match scaled card
-      cvWrapRef.current.style.height = `${cvCardRef.current.offsetHeight * s}px`;
+      // sync wrapper height so no whitespace gap below the scaled card
+      requestAnimationFrame(() => {
+        if (card && wrap) wrap.style.height = `${card.offsetHeight * s}px`;
+      });
     };
+    // run once immediately, then on every resize
     update();
+    window.addEventListener("resize", update);
     const ro = new ResizeObserver(update);
     if (cvWrapRef.current) ro.observe(cvWrapRef.current);
-    return () => ro.disconnect();
+    return () => {
+      window.removeEventListener("resize", update);
+      ro.disconnect();
+    };
   }, []);
 
   return (
-    <section id="hero" className="relative min-h-[100svh] flex items-center justify-center bg-white overflow-hidden px-6 pt-14">
-      {/* Background blobs */}
-      <div className="absolute inset-0 pointer-events-none">
+    <section id="hero" className="relative min-h-[100svh] flex items-center justify-center bg-white px-4 sm:px-6 pt-14 pb-10">
+      {/* Background blobs — overflow clipped here only, not on the whole section */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-[560px] h-[560px] rounded-full -translate-y-1/2 translate-x-1/3"
           style={{ background: "radial-gradient(circle, rgba(0,74,173,0.07) 0%, transparent 70%)" }} />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full translate-y-1/3 -translate-x-1/4"
@@ -175,18 +185,16 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
         </div>
 
         {/* Sample CV Preview — Mid-Senior Variant A */}
-        <div className="mt-16 relative mx-auto" style={{ maxWidth: CV_W, width: "100%" }}>
-          {/* scale outer: shrinks height to match scaled card */}
-          <div ref={cvWrapRef} style={{ width: "100%", position: "relative", overflow: "hidden" }}>
-            {/* scale inner: fixed CV width, scaled to fit */}
-            <div
-              ref={cvCardRef}
-              style={{
-                width: CV_W,
-                transformOrigin: "top left",
-                transform: `scale(${cvScale})`,
-              }}
-            >
+        <div ref={cvWrapRef} className="mt-12 relative mx-auto w-full" style={{ maxWidth: CV_W, overflow: "hidden" }}>
+          {/* scale inner: fixed CV width, scaled to fit */}
+          <div
+            ref={cvCardRef}
+            style={{
+              width: CV_W,
+              transformOrigin: "top left",
+              transform: `scale(${cvScale})`,
+            }}
+          >
           <div className="rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" style={{ background: "#fff" }}>
             {/* reset text-center from hero parent */}
             <div style={{ fontSize: 0, textAlign: "left" }}>
@@ -209,9 +217,9 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                       "✉  j.mitchell@email.com",
                       "☎  +44 7700 900 123",
                       "📍  London, UK",
-                      "in  linkedin.com/in/jamesmitchell",
+                      "in  linkedin.com/in/james",
                     ].map((line, i) => (
-                      <div key={i} style={{ fontSize: 8, color: "rgba(255,255,255,0.8)", lineHeight: "16px" }}>{line}</div>
+                      <div key={i} style={{ fontSize: 8, color: "rgba(255,255,255,0.8)", lineHeight: "16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{line}</div>
                     ))}
                   </div>
 
@@ -263,7 +271,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                 </div>
 
                 {/* ── RIGHT MAIN BODY ── */}
-                <div className="flex-1" style={{ padding: "22px 20px 22px 18px", background: "#fff", textAlign: "left" }}>
+                <div style={{ flex: 1, minWidth: 0, padding: "22px 20px 22px 18px", background: "#fff", textAlign: "left", overflow: "hidden" }}>
 
                   {/* Professional Summary */}
                   <div style={{ marginBottom: 16 }}>
@@ -353,11 +361,10 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
               </div>
             </div>
           </div>
-            </div>{/* end cvCardRef */}
-          </div>{/* end cvWrapRef */}
+          </div>{/* end cvCardRef */}
           {/* Glow */}
           <div className="absolute -inset-4 rounded-3xl -z-10 opacity-20 blur-2xl" style={{ background: "#004aad" }} />
-        </div>
+        </div>{/* end cvWrapRef */}
       </div>
     </section>
   );
