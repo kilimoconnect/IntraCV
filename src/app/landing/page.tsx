@@ -22,6 +22,9 @@ import {
   Star,
   ScrollText,
   MessageSquare,
+  Quote,
+  HelpCircle,
+  ChevronRight,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -255,7 +258,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                       <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
                     </div>
                     <p style={{ fontSize: 8.5, lineHeight: "14.5px", color: "#374151", margin: 0 }}>
-                      Results-driven Senior Marketing Manager with 9+ years of experience leading cross-functional teams and delivering high-impact campaigns across B2B and B2C markets. Proven track record of growing brand awareness, driving revenue, and aligning marketing strategy with business objectives.
+                      Results-driven Senior Marketing Manager with 9+ years of experience leading cross-functional teams and delivering high-impact campaigns across B2B and B2C markets. Proven track record of growing brand awareness, driving measurable revenue growth, and translating business objectives into focused marketing strategy. Adept at managing large budgets, mentoring high-performing teams, and building campaigns that consistently outperform targets across digital and traditional channels.
                     </p>
                   </div>
 
@@ -273,9 +276,10 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                         location: "London",
                         dates: "2020 – Present",
                         bullets: [
-                          "Led a team of 8 marketers, delivering a 42% increase in qualified pipeline",
-                          "Oversaw £2.4M annual marketing budget across digital, content and events",
-                          "Launched integrated campaign that drove 31% YoY revenue growth",
+                          "Led a team of 8 marketers, delivering a 42% increase in qualified pipeline year-on-year",
+                          "Oversaw £2.4M annual marketing budget across digital, content, events and paid media",
+                          "Launched integrated demand-gen campaign that drove 31% YoY revenue growth",
+                          "Introduced attribution modelling that improved reporting accuracy across all channels",
                         ],
                       },
                       {
@@ -285,7 +289,8 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                         dates: "2017 – 2020",
                         bullets: [
                           "Managed multi-channel campaigns for 12 enterprise clients simultaneously",
-                          "Grew client social engagement by an average of 68% within 6 months",
+                          "Grew client social engagement by an average of 68% within 6 months of onboarding",
+                          "Developed and implemented content strategy that reduced client churn by 22%",
                         ],
                       },
                     ].map((exp, i) => (
@@ -313,9 +318,10 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                       <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
                     </div>
                     {[
-                      "Delivered £4.1M in attributable revenue through targeted demand-gen programmes",
+                      "Delivered £4.1M in attributable revenue through targeted demand-gen programmes in FY2023",
                       "Shortlisted for Marketing Week Award – B2B Campaign of the Year 2022",
-                      "Built and scaled marketing team from 2 to 8 in under 18 months",
+                      "Built and scaled marketing team from 2 to 8 members in under 18 months",
+                      "Reduced cost-per-lead by 34% through funnel optimisation and systematic A/B testing",
                     ].map((ach, i) => (
                       <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 5 }}>
                         <div style={{ width: 15, height: 15, borderRadius: "50%", background: "rgba(0,74,173,0.08)", border: "1.5px solid #004aad", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
