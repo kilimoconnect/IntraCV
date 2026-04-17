@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -79,6 +79,26 @@ function Navbar({ onCTA }: { onCTA: () => void }) {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 function HeroSection({ onCTA }: { onCTA: () => void }) {
+  const cvWrapRef = useRef<HTMLDivElement>(null);
+  const cvCardRef = useRef<HTMLDivElement>(null);
+  const [cvScale, setCvScale] = useState(1);
+  const CV_W = 680;
+
+  useEffect(() => {
+    const update = () => {
+      if (!cvWrapRef.current || !cvCardRef.current) return;
+      const available = cvWrapRef.current.offsetWidth;
+      const s = Math.min(1, available / CV_W);
+      setCvScale(s);
+      // shrink outer wrapper height to match scaled card
+      cvWrapRef.current.style.height = `${cvCardRef.current.offsetHeight * s}px`;
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (cvWrapRef.current) ro.observe(cvWrapRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden px-6 pt-14">
       {/* Background blobs */}
@@ -152,10 +172,21 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
         </div>
 
         {/* Sample CV Preview — Mid-Senior Variant A */}
-        <div className="mt-16 relative mx-auto" style={{ maxWidth: 680 }}>
+        <div className="mt-16 relative mx-auto" style={{ maxWidth: CV_W, width: "100%" }}>
+          {/* scale outer: shrinks height to match scaled card */}
+          <div ref={cvWrapRef} style={{ width: "100%", position: "relative", overflow: "hidden" }}>
+            {/* scale inner: fixed CV width, scaled to fit */}
+            <div
+              ref={cvCardRef}
+              style={{
+                width: CV_W,
+                transformOrigin: "top left",
+                transform: `scale(${cvScale})`,
+              }}
+            >
           <div className="rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" style={{ background: "#fff" }}>
-            {/* scale wrapper — reset text-center from hero parent */}
-            <div style={{ transformOrigin: "top left", fontSize: 0, textAlign: "left" }}>
+            {/* reset text-center from hero parent */}
+            <div style={{ fontSize: 0, textAlign: "left" }}>
               <div className="flex" style={{ fontFamily: "Inter, sans-serif" }}>
 
                 {/* ── LEFT SIDEBAR ── */}
@@ -299,6 +330,8 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
               </div>
             </div>
           </div>
+            </div>{/* end cvCardRef */}
+          </div>{/* end cvWrapRef */}
           {/* Glow */}
           <div className="absolute -inset-4 rounded-3xl -z-10 opacity-20 blur-2xl" style={{ background: "#004aad" }} />
         </div>
