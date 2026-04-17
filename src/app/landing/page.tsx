@@ -100,11 +100,25 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           <span style={{ color: "#004aad" }}>Your Real Potential.</span>
         </h1>
 
-        <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed mb-8">
-          Whether you&apos;re applying for your first job, pursuing your next promotion,
-          changing careers, or presenting executive experience — FuseCV transforms your
-          current CV into a stronger professional version.
-        </p>
+        <ul className="text-base sm:text-lg text-slate-500 max-w-xl mx-auto mb-8 space-y-3 text-left">
+          {[
+            "Applying for your first job",
+            "Pursuing your next promotion",
+            "Changing careers",
+            "Presenting executive experience",
+          ].map((item, i) => (
+            <li key={i} className="flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#ff751f" }} />
+              <span>{item}</span>
+            </li>
+          ))}
+          <li className="flex items-start gap-3 pt-1">
+            <span className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ background: "#00c4cc" }} />
+            <span className="font-semibold" style={{ color: "#004aad" }}>
+              FuseCV transforms your current CV into a stronger professional version.
+            </span>
+          </li>
+        </ul>
 
         {/* Trust line */}
         <div className="flex items-center justify-center gap-1 text-sm text-slate-400 mb-10 flex-wrap">
