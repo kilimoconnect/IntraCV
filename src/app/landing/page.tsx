@@ -329,6 +329,7 @@ function FeaturesSection({ onCTA }: { onCTA: () => void }) {
         "Achievement-focused bullet points",
         "6 recruiter-ready layout variants",
         "ATS-friendly formatting",
+        "Tailored to the specific job you're applying for",
       ],
       accent: "#004aad",
       bg: "#eff6ff",
