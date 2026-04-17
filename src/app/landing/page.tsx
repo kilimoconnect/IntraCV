@@ -20,6 +20,8 @@ import {
   Palette,
   ThumbsUp,
   Star,
+  ScrollText,
+  MessageSquare,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -305,6 +307,123 @@ function AudienceSection() {
               <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: card.accent }}>{card.subtitle}</p>
               <h3 className="text-slate-900 font-bold text-lg mb-3">{card.title}</h3>
               <p className="text-slate-600 text-sm leading-relaxed">{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Features ────────────────────────────────────────────────────────────────
+
+function FeaturesSection({ onCTA }: { onCTA: () => void }) {
+  const features = [
+    {
+      icon: <FileText className="w-8 h-8" />,
+      tag: "CV",
+      title: "Professional CV",
+      headline: "Your experience, rewritten to impress.",
+      bullets: [
+        "AI-powered rewrite of every section",
+        "Achievement-focused bullet points",
+        "6 recruiter-ready layout variants",
+        "ATS-friendly formatting",
+      ],
+      accent: "#004aad",
+      bg: "#eff6ff",
+      border: "#bfdbfe",
+      tagBg: "rgba(0,74,173,0.1)",
+    },
+    {
+      icon: <ScrollText className="w-8 h-8" />,
+      tag: "Cover Letter",
+      title: "Tailored Cover Letter",
+      headline: "A compelling letter that opens doors.",
+      bullets: [
+        "Written to match the job you're applying for",
+        "Highlights your strongest selling points",
+        "Professional tone for any career level",
+        "Ready to personalise and send",
+      ],
+      accent: "#ff751f",
+      bg: "#fff7ed",
+      border: "#fed7aa",
+      tagBg: "rgba(255,117,31,0.1)",
+    },
+    {
+      icon: <MessageSquare className="w-8 h-8" />,
+      tag: "Interview Prep",
+      title: "Practice Questions",
+      headline: "Walk in prepared, walk out confident.",
+      bullets: [
+        "Role-specific interview questions",
+        "Model answers based on your experience",
+        "Competency, behavioural & technical questions",
+        "Practice at your own pace",
+      ],
+      accent: "#059669",
+      bg: "#f0fdf4",
+      border: "#a7f3d0",
+      tagBg: "rgba(5,150,105,0.1)",
+    },
+  ];
+
+  return (
+    <section id="features" className="py-24 px-6" style={{ background: "#F0F2F8" }}>
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <p className="font-bold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>
+            Everything You Need
+          </p>
+          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+            One Platform. Three Powerful Tools.
+          </h2>
+          <p className="text-slate-500 mt-4 text-lg max-w-xl mx-auto">
+            Everything you need to land your next role — built into a single, seamless experience.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {features.map((f, i) => (
+            <div
+              key={i}
+              className="rounded-2xl p-8 flex flex-col border hover:shadow-lg transition-all hover:-translate-y-0.5"
+              style={{ background: f.bg, borderColor: f.border }}
+            >
+              {/* Tag */}
+              <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider mb-6 w-fit"
+                style={{ background: f.tagBg, color: f.accent }}>
+                {f.tag}
+              </div>
+
+              {/* Icon */}
+              <div className="mb-4" style={{ color: f.accent }}>
+                {f.icon}
+              </div>
+
+              <h3 className="text-slate-900 font-black text-2xl mb-2">{f.title}</h3>
+              <p className="text-slate-500 text-sm mb-6 leading-relaxed">{f.headline}</p>
+
+              {/* Bullets */}
+              <ul className="space-y-3 flex-1">
+                {f.bullets.map((b, j) => (
+                  <li key={j} className="flex items-start gap-3 text-sm text-slate-700">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: f.accent }} />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA */}
+              <button
+                onClick={onCTA}
+                className="mt-8 w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                style={{ background: f.accent, color: "#fff" }}
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           ))}
         </div>
@@ -695,6 +814,7 @@ export default function LandingPage() {
       <HeroSection onCTA={handleCTA} />
       <SocialProofStrip />
       <AudienceSection />
+      <FeaturesSection onCTA={handleCTA} />
       <ProblemSection />
       <HowItWorksSection onCTA={handleCTA} />
       <ValueSection />
