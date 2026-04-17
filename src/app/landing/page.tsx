@@ -894,38 +894,38 @@ function TrustSection() {
 
 function FinalCTA({ onCTA }: { onCTA: () => void }) {
   return (
-    <section className="py-16 sm:py-28 px-6 relative overflow-hidden" style={{ background: "#0a1628" }}>
+    <section className="py-16 sm:py-28 px-4 sm:px-6 relative overflow-hidden" style={{ background: "#0a1628" }}>
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-3xl"
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full opacity-15 blur-3xl"
           style={{ background: "#004aad" }} />
       </div>
 
       <div className="relative max-w-3xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8 text-xs font-semibold"
+        <div className="inline-flex items-center gap-2 rounded-full px-3 sm:px-4 py-1.5 mb-6 sm:mb-8 text-xs font-semibold"
           style={{ background: "rgba(0,74,173,0.3)", border: "1px solid rgba(0,74,173,0.5)", color: "#00c4cc" }}>
-          <Sparkles className="w-3.5 h-3.5" />
+          <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           For every stage of your career
         </div>
 
-        <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-6">
+        <h2 className="text-2xl sm:text-4xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4 sm:mb-6">
           Your Next Opportunity Starts With Better Presentation.
         </h2>
 
-        <p className="text-lg mb-10 max-w-xl mx-auto leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+        <p className="text-sm sm:text-lg mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed px-2" style={{ color: "rgba(255,255,255,0.55)" }}>
           Don&apos;t let a weak CV stand between you and what you&apos;ve earned. Upload your CV now — it takes minutes.
         </p>
 
         <button
           onClick={onCTA}
-          className="text-white font-bold text-lg px-14 py-5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3 mx-auto"
+          className="w-full sm:w-auto text-white font-bold text-sm sm:text-lg px-8 sm:px-14 py-4 sm:py-5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 mx-auto"
           style={{ background: "#ff751f", boxShadow: "0 12px 40px rgba(255,117,31,0.3)" }}
         >
-          <Upload className="w-5 h-5" />
+          <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
           Upload My CV Now
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
-        <p className="text-sm mt-5" style={{ color: "rgba(255,255,255,0.3)" }}>
+        <p className="text-xs sm:text-sm mt-4 sm:mt-5" style={{ color: "rgba(255,255,255,0.3)" }}>
           No payment until satisfied · No credit card required
         </p>
       </div>
@@ -937,15 +937,15 @@ function FinalCTA({ onCTA }: { onCTA: () => void }) {
 
 function Footer() {
   return (
-    <footer className="py-8 px-6" style={{ background: "#0a1628", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer className="py-8 px-4 sm:px-6" style={{ background: "#0a1628", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
         <Image src="/fusecv-logo.png" alt="FuseCV" width={100} height={32} className="object-contain opacity-60" />
-        <div className="flex items-center gap-6 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
           <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
           <Link href="/register" className="hover:text-white transition-colors">Create Account</Link>
         </div>
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>
+        <p className="text-xs sm:text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>
           © {new Date().getFullYear()} FuseCV
         </p>
       </div>
