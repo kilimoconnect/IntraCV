@@ -151,52 +151,156 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           </button>
         </div>
 
-        {/* Mock CV preview */}
-        <div className="mt-16 relative mx-auto max-w-2xl">
-          <div className="bg-white rounded-2xl shadow-2xl shadow-slate-200/80 border border-slate-100 overflow-hidden">
-            <div className="px-8 py-5" style={{ background: "#004aad" }}>
-              <div className="w-40 h-5 rounded mb-2" style={{ background: "rgba(255,255,255,0.75)" }} />
-              <div className="w-24 h-3 rounded" style={{ background: "rgba(255,255,255,0.35)" }} />
-              <div className="flex gap-4 mt-3">
-                {[60, 48, 55].map((w, i) => (
-                  <div key={i} className="h-2 rounded" style={{ width: w, background: "rgba(255,255,255,0.22)" }} />
-                ))}
-              </div>
-            </div>
-            <div className="h-1" style={{ background: "#ff751f" }} />
-            <div className="px-8 py-6 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 rounded" style={{ background: "#004aad" }} />
-                  <div className="w-32 h-3 bg-slate-800 rounded" />
-                </div>
-                {[100, 90, 95].map((w, i) => (
-                  <div key={i} className="h-2.5 bg-slate-100 rounded" style={{ width: `${w}%` }} />
-                ))}
-              </div>
-              <div className="space-y-2 pt-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 rounded" style={{ background: "#004aad" }} />
-                  <div className="w-24 h-3 bg-slate-800 rounded" />
-                </div>
-                <div className="pl-3 space-y-1.5" style={{ borderLeft: "2px solid rgba(0,196,204,0.3)" }}>
-                  <div className="flex justify-between">
-                    <div className="w-36 h-2.5 bg-slate-700 rounded" />
-                    <div className="w-16 h-2 bg-slate-200 rounded" />
+        {/* Sample CV Preview — Mid-Senior Variant A */}
+        <div className="mt-16 relative mx-auto" style={{ maxWidth: 680 }}>
+          <div className="rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" style={{ background: "#fff" }}>
+            {/* scale wrapper */}
+            <div style={{ transformOrigin: "top left", fontSize: 0 }}>
+              <div className="flex" style={{ fontFamily: "Inter, sans-serif" }}>
+
+                {/* ── LEFT SIDEBAR ── */}
+                <div className="flex flex-col flex-shrink-0" style={{ width: 188, background: "#004aad", padding: "22px 14px" }}>
+
+                  {/* Name block */}
+                  <div style={{ paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 14 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: "1.2" }}>James Mitchell</div>
+                    <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>Senior Marketing Manager</div>
+                    <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.5)", marginTop: 4, fontStyle: "italic" }}>"Turning strategy into measurable growth"</div>
                   </div>
-                  {[95, 85, 90].map((w, i) => (
-                    <div key={i} className="h-2 bg-slate-100 rounded" style={{ width: `${w}%` }} />
-                  ))}
+
+                  {/* Contact */}
+                  <div style={{ paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 14 }}>
+                    <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>Contact</div>
+                    {[
+                      "✉  j.mitchell@email.com",
+                      "☎  +44 7700 900 123",
+                      "📍  London, UK",
+                      "in  linkedin.com/in/jamesmitchell",
+                    ].map((line, i) => (
+                      <div key={i} style={{ fontSize: 8, color: "rgba(255,255,255,0.8)", lineHeight: "16px" }}>{line}</div>
+                    ))}
+                  </div>
+
+                  {/* Skills */}
+                  <div style={{ paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 14 }}>
+                    <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>Core Competencies</div>
+                    {["Brand Strategy", "Digital Marketing", "Team Leadership", "Campaign Management", "Data Analytics", "Stakeholder Engagement", "Budget Planning"].map((s, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                        <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#00c4cc", flexShrink: 0 }} />
+                        <span style={{ fontSize: 8.5, color: "rgba(255,255,255,0.88)" }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Education */}
+                  <div style={{ paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 14 }}>
+                    <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>Education</div>
+                    <div style={{ fontSize: 8.5, fontWeight: 700, color: "#fff", lineHeight: "1.3" }}>BSc Marketing & Communications</div>
+                    <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>University of Manchester · 2013</div>
+                  </div>
+
+                  {/* Certifications */}
+                  <div>
+                    <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>Certifications</div>
+                    {[
+                      { name: "Google Analytics 4", issuer: "Google · 2023" },
+                      { name: "HubSpot Marketing", issuer: "HubSpot · 2022" },
+                    ].map((c, i) => (
+                      <div key={i} style={{ marginBottom: 6 }}>
+                        <div style={{ fontSize: 8.5, fontWeight: 600, color: "#fff", lineHeight: "1.2" }}>{c.name}</div>
+                        <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)" }}>{c.issuer}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {[44, 56, 38, 50, 42].map((w, i) => (
-                  <div key={i} className="h-6 rounded-full border" style={{ width: w, background: "rgba(0,196,204,0.08)", borderColor: "rgba(0,196,204,0.25)" }} />
-                ))}
+
+                {/* ── RIGHT MAIN BODY ── */}
+                <div className="flex-1" style={{ padding: "22px 20px 22px 18px", background: "#fff" }}>
+
+                  {/* Professional Summary */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: "#004aad", textTransform: "uppercase", letterSpacing: "1.5px" }}>Professional Summary</span>
+                      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+                    </div>
+                    <p style={{ fontSize: 8.5, lineHeight: "14.5px", color: "#374151", margin: 0 }}>
+                      Results-driven Senior Marketing Manager with 9+ years of experience leading cross-functional teams and delivering high-impact campaigns across B2B and B2C markets. Proven track record of growing brand awareness, driving revenue, and aligning marketing strategy with business objectives.
+                    </p>
+                  </div>
+
+                  {/* Experience */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: "#004aad", textTransform: "uppercase", letterSpacing: "1.5px" }}>Experience</span>
+                      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+                    </div>
+
+                    {[
+                      {
+                        role: "Senior Marketing Manager",
+                        company: "TechVentures Ltd",
+                        location: "London",
+                        dates: "2020 – Present",
+                        bullets: [
+                          "Led a team of 8 marketers, delivering a 42% increase in qualified pipeline",
+                          "Oversaw £2.4M annual marketing budget across digital, content and events",
+                          "Launched integrated campaign that drove 31% YoY revenue growth",
+                        ],
+                      },
+                      {
+                        role: "Marketing Manager",
+                        company: "BrightScale Agency",
+                        location: "Manchester",
+                        dates: "2017 – 2020",
+                        bullets: [
+                          "Managed multi-channel campaigns for 12 enterprise clients simultaneously",
+                          "Grew client social engagement by an average of 68% within 6 months",
+                        ],
+                      },
+                    ].map((exp, i) => (
+                      <div key={i} style={{ marginBottom: 11, paddingLeft: 10, borderLeft: "2px solid #004aad" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                          <span style={{ fontSize: 9.5, fontWeight: 700, color: "#1e293b" }}>{exp.role}</span>
+                          <span style={{ fontSize: 7.5, color: "#94a3b8", whiteSpace: "nowrap", marginLeft: 6 }}>{exp.dates}</span>
+                        </div>
+                        <div style={{ fontSize: 8.5, color: "#004aad", fontWeight: 600, marginBottom: 4 }}>
+                          {exp.company} — {exp.location}
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: 10, listStyleType: "disc" }}>
+                          {exp.bullets.map((b, bi) => (
+                            <li key={bi} style={{ fontSize: 8, lineHeight: "13.5px", color: "#374151", marginBottom: 2 }}>{b}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Key Achievements */}
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: "#004aad", textTransform: "uppercase", letterSpacing: "1.5px" }}>Key Achievements</span>
+                      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+                    </div>
+                    {[
+                      "Delivered £4.1M in attributable revenue through targeted demand-gen programmes",
+                      "Shortlisted for Marketing Week Award – B2B Campaign of the Year 2022",
+                      "Built and scaled marketing team from 2 to 8 in under 18 months",
+                    ].map((ach, i) => (
+                      <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 5 }}>
+                        <div style={{ width: 15, height: 15, borderRadius: "50%", background: "rgba(0,74,173,0.08)", border: "1.5px solid #004aad", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ fontSize: 7.5, fontWeight: 700, color: "#004aad" }}>{i + 1}</span>
+                        </div>
+                        <span style={{ fontSize: 8, lineHeight: "13.5px", color: "#374151", paddingTop: 1 }}>{ach}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
               </div>
             </div>
           </div>
-          <div className="absolute -inset-4 rounded-3xl -z-10 opacity-25 blur-xl" style={{ background: "#004aad" }} />
+          {/* Glow */}
+          <div className="absolute -inset-4 rounded-3xl -z-10 opacity-20 blur-2xl" style={{ background: "#004aad" }} />
         </div>
       </div>
     </section>
