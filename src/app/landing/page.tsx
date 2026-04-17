@@ -103,7 +103,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
   }, []);
 
   return (
-    <section id="hero" className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden px-6 pt-14">
+    <section id="hero" className="relative min-h-[100svh] flex items-center justify-center bg-white overflow-hidden px-6 pt-14">
       {/* Background blobs */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[560px] h-[560px] rounded-full -translate-y-1/2 translate-x-1/3"
@@ -120,12 +120,12 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           For your first opportunity, next opportunity, or biggest opportunity
         </div>
 
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6">
+        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6">
           Get a CV That Reflects{" "}
           <span style={{ color: "#004aad" }}>Your Real Potential.</span>
         </h1>
 
-        <ul className="text-base sm:text-lg text-slate-500 max-w-xl mx-auto mb-8 space-y-3 text-left">
+        <ul className="text-sm sm:text-base lg:text-lg text-slate-500 max-w-xl mx-auto mb-8 space-y-3 text-left">
           {[
             "Applying for your first job",
             "Pursuing your next promotion",
@@ -146,7 +146,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
         </ul>
 
         {/* Trust line */}
-        <div className="flex items-center justify-center gap-1 text-sm text-slate-400 mb-10 flex-wrap">
+        <div className="flex items-center justify-center gap-1 text-xs sm:text-sm text-slate-400 mb-10 flex-wrap">
           <Shield className="w-3.5 h-3.5" />
           <span>No payment until satisfied</span>
           <span className="mx-2 text-slate-200">•</span>
@@ -159,7 +159,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
             onClick={onCTA}
-            className="w-full sm:w-auto text-white font-bold text-base px-10 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full sm:w-auto text-white font-bold text-sm sm:text-base px-10 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}
           >
             <Upload className="w-5 h-5" />
@@ -167,7 +167,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           </button>
           <button
             onClick={() => scrollTo("how-it-works")}
-            className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-base px-10 py-4 rounded-xl shadow-sm transition-all hover:shadow flex items-center justify-center gap-2"
+            className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-sm sm:text-base px-10 py-4 rounded-xl shadow-sm transition-all hover:shadow flex items-center justify-center gap-2"
           >
             See How It Works
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -234,7 +234,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                   </div>
 
                   {/* Certifications */}
-                  <div>
+                  <div style={{ paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 14 }}>
                     <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>Certifications</div>
                     {[
                       { name: "Google Analytics 4", issuer: "Google · 2023" },
@@ -243,6 +243,20 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                       <div key={i} style={{ marginBottom: 6 }}>
                         <div style={{ fontSize: 8.5, fontWeight: 600, color: "#fff", lineHeight: "1.2" }}>{c.name}</div>
                         <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)" }}>{c.issuer}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Languages */}
+                  <div>
+                    <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>Languages</div>
+                    {[
+                      { lang: "English", level: "Native" },
+                      { lang: "Spanish", level: "Conversational" },
+                    ].map((l, i) => (
+                      <div key={i} style={{ marginBottom: 5 }}>
+                        <div style={{ fontSize: 8.5, fontWeight: 600, color: "#fff", lineHeight: "1.2" }}>{l.lang}</div>
+                        <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)" }}>{l.level}</div>
                       </div>
                     ))}
                   </div>
@@ -258,7 +272,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                       <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
                     </div>
                     <p style={{ fontSize: 8.5, lineHeight: "14.5px", color: "#374151", margin: 0 }}>
-                      Results-driven Senior Marketing Manager with 9+ years of experience leading cross-functional teams and delivering high-impact campaigns across B2B and B2C markets. Proven track record of growing brand awareness, driving measurable revenue growth, and translating business objectives into focused marketing strategy. Adept at managing large budgets, mentoring high-performing teams, and building campaigns that consistently outperform targets across digital and traditional channels.
+                      Results-driven Senior Marketing Manager with 9+ years of experience leading cross-functional teams and delivering high-impact campaigns across B2B and B2C markets. Proven track record of growing brand awareness, driving measurable revenue growth, and translating business objectives into focused marketing strategy, including a flagship demand-gen programme that generated £4.1M in attributable revenue in FY2023. Skilled at owning and optimising large marketing budgets — including a £2.4M annual spend — across digital, content, events and paid media channels. Equally effective operating at graduate level and executive level, adapting communication style, strategic framing and delivery approach to match the audience and career stage.
                     </p>
                   </div>
 
@@ -276,10 +290,11 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                         location: "London",
                         dates: "2020 – Present",
                         bullets: [
-                          "Led a team of 8 marketers, delivering a 42% increase in qualified pipeline year-on-year",
-                          "Oversaw £2.4M annual marketing budget across digital, content, events and paid media",
-                          "Launched integrated demand-gen campaign that drove 31% YoY revenue growth",
-                          "Introduced attribution modelling that improved reporting accuracy across all channels",
+                          "Led team of 8 marketers, delivering a 42% increase in qualified pipeline year-on-year",
+                          "Oversaw £2.4M annual budget across digital, content, events and paid media",
+                          "Launched integrated demand-gen campaign driving 31% YoY revenue growth",
+                          "Introduced attribution modelling improving reporting accuracy across all channels",
+                          "Partnered with Sales to align messaging, reducing sales cycle length by 18%",
                         ],
                       },
                       {
@@ -290,7 +305,8 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                         bullets: [
                           "Managed multi-channel campaigns for 12 enterprise clients simultaneously",
                           "Grew client social engagement by an average of 68% within 6 months of onboarding",
-                          "Developed and implemented content strategy that reduced client churn by 22%",
+                          "Developed content strategy that reduced client churn by 22%",
+                          "Trained and mentored a team of 3 junior marketers across content and paid channels",
                         ],
                       },
                     ].map((exp, i) => (
@@ -322,6 +338,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                       "Shortlisted for Marketing Week Award – B2B Campaign of the Year 2022",
                       "Built and scaled marketing team from 2 to 8 members in under 18 months",
                       "Reduced cost-per-lead by 34% through funnel optimisation and systematic A/B testing",
+                      "Spearheaded rebrand launch that increased website conversion rate by 27%",
                     ].map((ach, i) => (
                       <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 5 }}>
                         <div style={{ width: 15, height: 15, borderRadius: "50%", background: "rgba(0,74,173,0.08)", border: "1.5px solid #004aad", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -427,11 +444,11 @@ function AudienceSection() {
   ];
 
   return (
-    <section id="audience" className="py-24 px-6 bg-white">
+    <section id="audience" className="py-14 sm:py-24 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <p className="font-bold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Who It&apos;s For</p>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
             Built for Every Career Stage
           </h2>
           <p className="text-slate-500 mt-4 text-lg max-w-xl mx-auto">
@@ -514,13 +531,13 @@ function FeaturesSection({ onCTA }: { onCTA: () => void }) {
   ];
 
   return (
-    <section id="features" className="py-24 px-6" style={{ background: "#F0F2F8" }}>
+    <section id="features" className="py-14 sm:py-24 px-6" style={{ background: "#F0F2F8" }}>
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <p className="font-bold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>
             Everything You Need
           </p>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
             One Platform. Three Powerful Tools.
           </h2>
           <p className="text-slate-500 mt-4 text-lg max-w-xl mx-auto">
@@ -588,14 +605,14 @@ function ProblemSection() {
   ];
 
   return (
-    <section className="py-24 px-6" style={{ background: "#0a1628" }}>
+    <section className="py-14 sm:py-24 px-6" style={{ background: "#0a1628" }}>
       <div className="max-w-5xl mx-auto text-center">
         <p className="font-semibold text-sm uppercase tracking-widest mb-4" style={{ color: "#ff751f" }}>The Problem</p>
-        <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-6">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-6">
           Strong People Often Look<br />Weak on Paper.
         </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 my-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 my-8 sm:my-12">
           {problems.map((p, i) => (
             <div
               key={i}
@@ -650,11 +667,11 @@ function HowItWorksSection({ onCTA }: { onCTA: () => void }) {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 px-6 bg-white">
+    <section id="how-it-works" className="py-14 sm:py-24 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>The Process</p>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
             How FuseCV Works
           </h2>
           <p className="text-slate-500 mt-4 text-lg max-w-xl mx-auto">
@@ -708,11 +725,11 @@ function ValueSection() {
   ];
 
   return (
-    <section className="py-24 px-6" style={{ background: "linear-gradient(135deg, #004aad 0%, #002f7a 100%)" }}>
+    <section className="py-14 sm:py-24 px-6" style={{ background: "linear-gradient(135deg, #004aad 0%, #002f7a 100%)" }}>
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>What Changes</p>
-          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
             What We Improve
           </h2>
           <p className="mt-4 text-lg max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.65)" }}>
@@ -748,11 +765,11 @@ function ValueSection() {
 
 function BeforeAfterSection() {
   return (
-    <section className="py-24 px-6 bg-white">
+    <section className="py-14 sm:py-24 px-6 bg-white">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Real Results</p>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
             See the Difference
           </h2>
           <p className="text-slate-500 mt-4 text-lg">
@@ -823,12 +840,12 @@ function TrustSection() {
   ];
 
   return (
-    <section className="py-24 px-6" style={{ background: "#F0F2F8" }}>
+    <section className="py-14 sm:py-24 px-6" style={{ background: "#F0F2F8" }}>
       <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           <div>
             <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Why Trust FuseCV</p>
-            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-6">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-6">
               Safe, Simple,<br />Professional.
             </h2>
             <p className="text-slate-500 text-lg leading-relaxed">
@@ -870,7 +887,7 @@ function TrustSection() {
 
 function FinalCTA({ onCTA }: { onCTA: () => void }) {
   return (
-    <section className="py-28 px-6 relative overflow-hidden" style={{ background: "#0a1628" }}>
+    <section className="py-16 sm:py-28 px-6 relative overflow-hidden" style={{ background: "#0a1628" }}>
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-3xl"
           style={{ background: "#004aad" }} />
@@ -883,7 +900,7 @@ function FinalCTA({ onCTA }: { onCTA: () => void }) {
           For every stage of your career
         </div>
 
-        <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-6">
+        <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-6">
           Your Next Opportunity Starts With Better Presentation.
         </h2>
 
