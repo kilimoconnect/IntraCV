@@ -154,12 +154,12 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
         {/* Sample CV Preview — Mid-Senior Variant A */}
         <div className="mt-16 relative mx-auto" style={{ maxWidth: 680 }}>
           <div className="rounded-2xl shadow-2xl border border-slate-100 overflow-hidden" style={{ background: "#fff" }}>
-            {/* scale wrapper */}
-            <div style={{ transformOrigin: "top left", fontSize: 0 }}>
+            {/* scale wrapper — reset text-center from hero parent */}
+            <div style={{ transformOrigin: "top left", fontSize: 0, textAlign: "left" }}>
               <div className="flex" style={{ fontFamily: "Inter, sans-serif" }}>
 
                 {/* ── LEFT SIDEBAR ── */}
-                <div className="flex flex-col flex-shrink-0" style={{ width: 188, background: "#004aad", padding: "22px 14px" }}>
+                <div className="flex flex-col flex-shrink-0" style={{ width: 188, background: "#004aad", padding: "22px 14px", textAlign: "left" }}>
 
                   {/* Name block */}
                   <div style={{ paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 14 }}>
@@ -215,7 +215,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                 </div>
 
                 {/* ── RIGHT MAIN BODY ── */}
-                <div className="flex-1" style={{ padding: "22px 20px 22px 18px", background: "#fff" }}>
+                <div className="flex-1" style={{ padding: "22px 20px 22px 18px", background: "#fff", textAlign: "left" }}>
 
                   {/* Professional Summary */}
                   <div style={{ marginBottom: 16 }}>
@@ -266,9 +266,9 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
                         <div style={{ fontSize: 8.5, color: "#004aad", fontWeight: 600, marginBottom: 4 }}>
                           {exp.company} — {exp.location}
                         </div>
-                        <ul style={{ margin: 0, paddingLeft: 10, listStyleType: "disc" }}>
+                        <ul style={{ margin: 0, paddingLeft: 10, listStyleType: "disc", textAlign: "left" }}>
                           {exp.bullets.map((b, bi) => (
-                            <li key={bi} style={{ fontSize: 8, lineHeight: "13.5px", color: "#374151", marginBottom: 2 }}>{b}</li>
+                            <li key={bi} style={{ fontSize: 8, lineHeight: "13.5px", color: "#374151", marginBottom: 2, textAlign: "left" }}>{b}</li>
                           ))}
                         </ul>
                       </div>
