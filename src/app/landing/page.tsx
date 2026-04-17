@@ -2,7 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import {
+  ArrowRight,
+  Upload,
+  Sparkles,
+  FileText,
+  CheckCircle2,
+  ChevronDown,
+  Zap,
+  Shield,
+  Eye,
+  Target,
+  BarChart3,
+  Palette,
+  ThumbsUp,
+  Star,
+} from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -10,9 +28,9 @@ function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 
-function Navbar({ onUpload }: { onUpload: () => void }) {
+function Navbar({ onCTA }: { onCTA: () => void }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -24,16 +42,13 @@ function Navbar({ onUpload }: { onUpload: () => void }) {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/95 backdrop-blur-md shadow-sm" : "bg-transparent"
+        scrolled ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/60" : "bg-transparent"
       }`}
     >
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center">
-            <span className="text-white font-black text-sm">F</span>
-          </div>
-          <span className="font-bold text-slate-900 text-lg tracking-tight">FuseCV</span>
-        </div>
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <button onClick={() => scrollTo("hero")} className="flex items-center">
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={120} height={38} className="object-contain" />
+        </button>
         <div className="flex items-center gap-3">
           <button
             onClick={() => scrollTo("how-it-works")}
@@ -41,9 +56,15 @@ function Navbar({ onUpload }: { onUpload: () => void }) {
           >
             How it works
           </button>
+          <Link
+            href="/login"
+            className="hidden sm:block text-sm text-slate-600 hover:text-[#004aad] font-medium transition-colors"
+          >
+            Sign in
+          </Link>
           <button
-            onClick={onUpload}
-            className="bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg shadow-sm shadow-blue-200 transition-all"
+            onClick={onCTA}
+            className="bg-[#ff751f] hover:bg-[#e8661a] text-white text-sm font-semibold px-5 py-2 rounded-lg shadow-sm shadow-[#ff751f]/20 transition-all"
           >
             Get Started
           </button>
@@ -53,25 +74,30 @@ function Navbar({ onUpload }: { onUpload: () => void }) {
   );
 }
 
-function HeroSection({ onUpload }: { onUpload: () => void }) {
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+
+function HeroSection({ onCTA }: { onCTA: () => void }) {
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden px-6 pt-16">
-      {/* Background decoration */}
+    <section id="hero" className="relative min-h-screen flex items-center justify-center bg-white overflow-hidden px-6 pt-14">
+      {/* Background blobs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-50 rounded-full -translate-y-1/2 translate-x-1/3 opacity-60" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-slate-50 rounded-full translate-y-1/3 -translate-x-1/4" />
+        <div className="absolute top-0 right-0 w-[560px] h-[560px] rounded-full -translate-y-1/2 translate-x-1/3"
+          style={{ background: "radial-gradient(circle, rgba(0,74,173,0.07) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full translate-y-1/3 -translate-x-1/4"
+          style={{ background: "radial-gradient(circle, rgba(0,196,204,0.07) 0%, transparent 70%)" }} />
       </div>
 
       <div className="relative max-w-4xl mx-auto text-center">
-        {/* Brand badge */}
-        <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-8">
-          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 border text-xs font-semibold px-4 py-1.5 rounded-full mb-8"
+          style={{ background: "rgba(0,74,173,0.06)", borderColor: "rgba(0,74,173,0.15)", color: "#004aad" }}>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#00c4cc" }} />
           For your first opportunity, next opportunity, or biggest opportunity
         </div>
 
         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6">
           Get a CV That Reflects{" "}
-          <span className="text-blue-700">Your Real Potential.</span>
+          <span style={{ color: "#004aad" }}>Your Real Potential.</span>
         </h1>
 
         <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed mb-8">
@@ -82,48 +108,50 @@ function HeroSection({ onUpload }: { onUpload: () => void }) {
 
         {/* Trust line */}
         <div className="flex items-center justify-center gap-1 text-sm text-slate-400 mb-10 flex-wrap">
+          <Shield className="w-3.5 h-3.5" />
           <span>No payment until satisfied</span>
           <span className="mx-2 text-slate-200">•</span>
           <span>No credit card required</span>
           <span className="mx-2 text-slate-200">•</span>
-          <span>🔒 Secure upload</span>
+          <span>Secure upload</span>
         </div>
 
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={onUpload}
-            className="w-full sm:w-auto bg-blue-700 hover:bg-blue-800 text-white font-bold text-base px-10 py-4 rounded-xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            onClick={onCTA}
+            className="w-full sm:w-auto text-white font-bold text-base px-10 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}
           >
+            <Upload className="w-5 h-5" />
             Upload My CV
           </button>
           <button
             onClick={() => scrollTo("how-it-works")}
-            className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-base px-10 py-4 rounded-xl shadow-sm transition-all hover:shadow"
+            className="w-full sm:w-auto bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-base px-10 py-4 rounded-xl shadow-sm transition-all hover:shadow flex items-center justify-center gap-2"
           >
             See How It Works
+            <ChevronDown className="w-4 h-4 text-slate-400" />
           </button>
         </div>
 
-        {/* Preview mockup */}
+        {/* Mock CV preview */}
         <div className="mt-16 relative mx-auto max-w-2xl">
           <div className="bg-white rounded-2xl shadow-2xl shadow-slate-200/80 border border-slate-100 overflow-hidden">
-            {/* Mock CV header */}
-            <div className="bg-slate-900 px-8 py-5">
-              <div className="w-40 h-5 bg-white/80 rounded mb-2" />
-              <div className="w-24 h-3 bg-white/40 rounded" />
+            <div className="px-8 py-5" style={{ background: "#004aad" }}>
+              <div className="w-40 h-5 rounded mb-2" style={{ background: "rgba(255,255,255,0.75)" }} />
+              <div className="w-24 h-3 rounded" style={{ background: "rgba(255,255,255,0.35)" }} />
               <div className="flex gap-4 mt-3">
                 {[60, 48, 55].map((w, i) => (
-                  <div key={i} className="h-2 bg-white/25 rounded" style={{ width: w }} />
+                  <div key={i} className="h-2 rounded" style={{ width: w, background: "rgba(255,255,255,0.22)" }} />
                 ))}
               </div>
             </div>
-            <div className="bg-blue-700 h-1.5" />
-            {/* Mock CV body */}
+            <div className="h-1" style={{ background: "#ff751f" }} />
             <div className="px-8 py-6 space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-700 rounded" />
+                  <div className="w-1 h-4 rounded" style={{ background: "#004aad" }} />
                   <div className="w-32 h-3 bg-slate-800 rounded" />
                 </div>
                 {[100, 90, 95].map((w, i) => (
@@ -132,10 +160,10 @@ function HeroSection({ onUpload }: { onUpload: () => void }) {
               </div>
               <div className="space-y-2 pt-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 bg-blue-700 rounded" />
+                  <div className="w-1 h-4 rounded" style={{ background: "#004aad" }} />
                   <div className="w-24 h-3 bg-slate-800 rounded" />
                 </div>
-                <div className="pl-3 border-l-2 border-blue-200 space-y-1.5">
+                <div className="pl-3 space-y-1.5" style={{ borderLeft: "2px solid rgba(0,196,204,0.3)" }}>
                   <div className="flex justify-between">
                     <div className="w-36 h-2.5 bg-slate-700 rounded" />
                     <div className="w-16 h-2 bg-slate-200 rounded" />
@@ -147,18 +175,19 @@ function HeroSection({ onUpload }: { onUpload: () => void }) {
               </div>
               <div className="flex flex-wrap gap-2 pt-2">
                 {[44, 56, 38, 50, 42].map((w, i) => (
-                  <div key={i} className="h-6 bg-blue-50 border border-blue-100 rounded-full" style={{ width: w }} />
+                  <div key={i} className="h-6 rounded-full border" style={{ width: w, background: "rgba(0,196,204,0.08)", borderColor: "rgba(0,196,204,0.25)" }} />
                 ))}
               </div>
             </div>
           </div>
-          {/* Glow effect */}
-          <div className="absolute -inset-4 bg-blue-100 rounded-3xl -z-10 opacity-30 blur-xl" />
+          <div className="absolute -inset-4 rounded-3xl -z-10 opacity-25 blur-xl" style={{ background: "#004aad" }} />
         </div>
       </div>
     </section>
   );
 }
+
+// ─── Social Proof Strip ───────────────────────────────────────────────────────
 
 function SocialProofStrip() {
   const items = [
@@ -175,18 +204,18 @@ function SocialProofStrip() {
   ];
 
   return (
-    <section className="bg-slate-900 py-4 overflow-hidden">
+    <section className="py-4 overflow-hidden" style={{ background: "#004aad" }}>
       <div className="flex items-center gap-0">
-        <div className="flex items-center gap-10 animate-[marquee_20s_linear_infinite] whitespace-nowrap">
+        <div className="flex items-center gap-10 animate-[marquee_22s_linear_infinite] whitespace-nowrap">
           {items.map((item, i) => (
-            <span key={i} className="text-slate-400 text-sm font-medium flex-shrink-0">
+            <span key={i} className="text-sm font-semibold flex-shrink-0" style={{ color: "rgba(255,255,255,0.65)" }}>
               {item}
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-10 animate-[marquee_20s_linear_infinite] whitespace-nowrap" aria-hidden>
+        <div className="flex items-center gap-10 animate-[marquee_22s_linear_infinite] whitespace-nowrap" aria-hidden>
           {items.map((item, i) => (
-            <span key={i} className="text-slate-400 text-sm font-medium flex-shrink-0">
+            <span key={i} className="text-sm font-semibold flex-shrink-0" style={{ color: "rgba(255,255,255,0.65)" }}>
               {item}
             </span>
           ))}
@@ -196,43 +225,45 @@ function SocialProofStrip() {
   );
 }
 
+// ─── Audience ─────────────────────────────────────────────────────────────────
+
 function AudienceSection() {
   const cards = [
     {
-      emoji: "🎓",
+      icon: "🎓",
       title: "Students & Graduates",
       subtitle: "First Impression",
       desc: "Create a stronger first impression with a CV that highlights your potential, not just your lack of experience.",
-      color: "from-violet-50 to-purple-50",
-      accent: "text-violet-700",
-      border: "border-violet-100",
+      accent: "#7c3aed",
+      bg: "#faf5ff",
+      border: "#e9d5ff",
     },
     {
-      emoji: "🎯",
+      icon: "🎯",
       title: "Job Seekers",
       subtitle: "More Interviews",
       desc: "Increase interview opportunities with achievement-focused language that recruiters actually stop to read.",
-      color: "from-blue-50 to-sky-50",
-      accent: "text-blue-700",
-      border: "border-blue-100",
+      accent: "#004aad",
+      bg: "#eff6ff",
+      border: "#bfdbfe",
     },
     {
-      emoji: "📈",
+      icon: "📈",
       title: "Professionals",
       subtitle: "Next Level",
       desc: "Upgrade your CV for better roles and promotions. Show the depth of experience you've actually built.",
-      color: "from-emerald-50 to-teal-50",
-      accent: "text-emerald-700",
-      border: "border-emerald-100",
+      accent: "#059669",
+      bg: "#f0fdf4",
+      border: "#a7f3d0",
     },
     {
-      emoji: "🏆",
+      icon: "🏆",
       title: "Founders & Executives",
       subtitle: "Command Authority",
       desc: "Present your experience with the authority and gravitas that matches your actual level of leadership.",
-      color: "from-amber-50 to-orange-50",
-      accent: "text-amber-700",
-      border: "border-amber-100",
+      accent: "#d97706",
+      bg: "#fffbeb",
+      border: "#fde68a",
     },
   ];
 
@@ -240,7 +271,7 @@ function AudienceSection() {
     <section id="audience" className="py-24 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-blue-700 font-semibold text-sm uppercase tracking-widest mb-3">Who It&apos;s For</p>
+          <p className="font-bold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Who It&apos;s For</p>
           <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
             Built for Every Career Stage
           </h2>
@@ -253,10 +284,11 @@ function AudienceSection() {
           {cards.map((card, i) => (
             <div
               key={i}
-              className={`bg-gradient-to-br ${card.color} border ${card.border} rounded-2xl p-6 hover:shadow-lg transition-all hover:-translate-y-0.5`}
+              className="rounded-2xl p-6 hover:shadow-lg transition-all hover:-translate-y-0.5 border"
+              style={{ background: card.bg, borderColor: card.border }}
             >
-              <div className="text-3xl mb-4">{card.emoji}</div>
-              <p className={`text-xs font-bold uppercase tracking-wider ${card.accent} mb-1`}>{card.subtitle}</p>
+              <div className="text-3xl mb-4">{card.icon}</div>
+              <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: card.accent }}>{card.subtitle}</p>
               <h3 className="text-slate-900 font-bold text-lg mb-3">{card.title}</h3>
               <p className="text-slate-600 text-sm leading-relaxed">{card.desc}</p>
             </div>
@@ -267,19 +299,21 @@ function AudienceSection() {
   );
 }
 
+// ─── Problem ──────────────────────────────────────────────────────────────────
+
 function ProblemSection() {
   const problems = [
-    { icon: "📝", label: "Weak summaries" },
-    { icon: "📋", label: "Generic job descriptions" },
-    { icon: "🏅", label: "Missing achievements" },
-    { icon: "🗓", label: "Outdated formatting" },
-    { icon: "📐", label: "Poor structure" },
+    { icon: <FileText className="w-6 h-6" />, label: "Weak summaries" },
+    { icon: <BarChart3 className="w-6 h-6" />, label: "Generic descriptions" },
+    { icon: <Star className="w-6 h-6" />, label: "Missing achievements" },
+    { icon: <Palette className="w-6 h-6" />, label: "Outdated formatting" },
+    { icon: <Target className="w-6 h-6" />, label: "Poor structure" },
   ];
 
   return (
-    <section className="py-24 px-6 bg-slate-950">
+    <section className="py-24 px-6" style={{ background: "#0a1628" }}>
       <div className="max-w-5xl mx-auto text-center">
-        <p className="text-red-400 font-semibold text-sm uppercase tracking-widest mb-4">The Problem</p>
+        <p className="font-semibold text-sm uppercase tracking-widest mb-4" style={{ color: "#ff751f" }}>The Problem</p>
         <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-6">
           Strong People Often Look<br />Weak on Paper.
         </h2>
@@ -288,9 +322,10 @@ function ProblemSection() {
           {problems.map((p, i) => (
             <div
               key={i}
-              className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center hover:border-slate-700 transition-colors"
+              className="rounded-xl p-5 text-center transition-colors cursor-default"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
-              <div className="text-2xl mb-3">{p.icon}</div>
+              <div className="flex justify-center mb-3" style={{ color: "#00c4cc" }}>{p.icon}</div>
               <p className="text-slate-300 text-sm font-medium">{p.label}</p>
             </div>
           ))}
@@ -307,31 +342,33 @@ function ProblemSection() {
   );
 }
 
-function HowItWorksSection({ onUpload }: { onUpload: () => void }) {
+// ─── How It Works ─────────────────────────────────────────────────────────────
+
+function HowItWorksSection({ onCTA }: { onCTA: () => void }) {
   const steps = [
     {
       num: "01",
       title: "Upload Your Current CV",
       desc: "Share your existing CV in any format. We use it as the foundation, not the final product.",
-      icon: "⬆️",
+      icon: <Upload className="w-5 h-5 text-white" />,
     },
     {
       num: "02",
       title: "Complete Any Missing Details",
       desc: "A guided form helps fill in gaps. No experience gets lost — it gets reframed properly.",
-      icon: "✏️",
+      icon: <FileText className="w-5 h-5 text-white" />,
     },
     {
       num: "03",
       title: "Get a Professionally Upgraded Version",
       desc: "Our AI rewrites your CV using the right language, structure, and format for your career level.",
-      icon: "✨",
+      icon: <Sparkles className="w-5 h-5 text-white" />,
     },
     {
       num: "04",
       title: "Preview First, Unlock If Satisfied",
       desc: "See the full result before paying. You only pay when you're confident it's better.",
-      icon: "🔓",
+      icon: <Eye className="w-5 h-5 text-white" />,
     },
   ];
 
@@ -339,7 +376,7 @@ function HowItWorksSection({ onUpload }: { onUpload: () => void }) {
     <section id="how-it-works" className="py-24 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-blue-700 font-semibold text-sm uppercase tracking-widest mb-3">The Process</p>
+          <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>The Process</p>
           <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
             How FuseCV Works
           </h2>
@@ -350,14 +387,15 @@ function HowItWorksSection({ onUpload }: { onUpload: () => void }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {steps.map((step, i) => (
-            <div key={i} className="flex gap-5 p-6 rounded-2xl border border-slate-100 bg-slate-50 hover:shadow-md transition-all hover:border-blue-100">
+            <div key={i} className="flex gap-5 p-6 rounded-2xl border border-slate-100 bg-slate-50 hover:shadow-md transition-all"
+              style={{ ["--hover-border" as string]: "#004aad" }}>
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-xl bg-blue-700 flex items-center justify-center text-xl shadow-sm">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "#004aad" }}>
                   {step.icon}
                 </div>
               </div>
               <div>
-                <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-1">{step.num}</p>
+                <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#00c4cc" }}>{step.num}</p>
                 <h3 className="text-slate-900 font-bold text-lg mb-2">{step.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{step.desc}</p>
               </div>
@@ -367,9 +405,11 @@ function HowItWorksSection({ onUpload }: { onUpload: () => void }) {
 
         <div className="text-center mt-12">
           <button
-            onClick={onUpload}
-            className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-base px-10 py-4 rounded-xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]"
+            onClick={onCTA}
+            className="text-white font-bold text-base px-10 py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] flex items-center gap-2 mx-auto"
+            style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}
           >
+            <Zap className="w-5 h-5" />
             Start Now — Free to Try
           </button>
           <p className="text-slate-400 text-sm mt-3">No credit card required to get started</p>
@@ -379,40 +419,43 @@ function HowItWorksSection({ onUpload }: { onUpload: () => void }) {
   );
 }
 
+// ─── Value ────────────────────────────────────────────────────────────────────
+
 function ValueSection() {
   const benefits = [
-    { icon: "🎯", title: "Stronger Professional Summary", desc: "Replace vague intros with a sharp summary that clearly communicates your value." },
-    { icon: "📊", title: "Achievement-Focused Bullets", desc: "Every role gets rewritten to lead with impact, not just responsibilities." },
-    { icon: "🎨", title: "Recruiter-Ready Formatting", desc: "Clean, professional layouts optimised for human readers and ATS systems alike." },
-    { icon: "💪", title: "More Confidence & Credibility", desc: "Walk into every application knowing your CV does justice to your real experience." },
-    { icon: "👁", title: "Better First Impressions", desc: "The difference between ignored and shortlisted often comes down to how your CV reads." },
+    { icon: <Target className="w-7 h-7" />, title: "Stronger Professional Summary", desc: "Replace vague intros with a sharp summary that clearly communicates your value." },
+    { icon: <BarChart3 className="w-7 h-7" />, title: "Achievement-Focused Bullets", desc: "Every role gets rewritten to lead with impact, not just responsibilities." },
+    { icon: <Palette className="w-7 h-7" />, title: "Recruiter-Ready Formatting", desc: "Clean, professional layouts optimised for human readers and ATS systems alike." },
+    { icon: <ThumbsUp className="w-7 h-7" />, title: "More Confidence & Credibility", desc: "Walk into every application knowing your CV does justice to your real experience." },
+    { icon: <Eye className="w-7 h-7" />, title: "Better First Impressions", desc: "The difference between ignored and shortlisted often comes down to how your CV reads." },
   ];
 
   return (
-    <section className="py-24 px-6 bg-gradient-to-br from-blue-700 to-blue-900">
+    <section className="py-24 px-6" style={{ background: "linear-gradient(135deg, #004aad 0%, #002f7a 100%)" }}>
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-blue-200 font-semibold text-sm uppercase tracking-widest mb-3">What Changes</p>
+          <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>What Changes</p>
           <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
             What We Improve
           </h2>
-          <p className="text-blue-200 mt-4 text-lg max-w-xl mx-auto">
+          <p className="mt-4 text-lg max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.65)" }}>
             Every element of your CV gets upgraded for maximum impact.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {benefits.map((b, i) => (
-            <div key={i} className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-6 hover:bg-white/15 transition-all">
-              <div className="text-3xl mb-4">{b.icon}</div>
+            <div key={i} className="rounded-2xl p-6 transition-all hover:scale-[1.01]"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
+              <div className="mb-4" style={{ color: "#00c4cc" }}>{b.icon}</div>
               <h3 className="text-white font-bold text-lg mb-2">{b.title}</h3>
-              <p className="text-blue-100 text-sm leading-relaxed">{b.desc}</p>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>{b.desc}</p>
             </div>
           ))}
-          {/* Filler card with brand line */}
+          {/* Brand card */}
           <div className="bg-white rounded-2xl p-6 flex items-center justify-center text-center sm:col-span-2 lg:col-span-1">
             <div>
-              <div className="text-blue-700 text-4xl font-black mb-3">✦</div>
+              <Sparkles className="w-8 h-8 mx-auto mb-3" style={{ color: "#ff751f" }} />
               <p className="text-slate-900 font-bold text-lg leading-snug">
                 For your first opportunity, next opportunity, or biggest opportunity.
               </p>
@@ -424,12 +467,14 @@ function ValueSection() {
   );
 }
 
+// ─── Before / After ───────────────────────────────────────────────────────────
+
 function BeforeAfterSection() {
   return (
     <section className="py-24 px-6 bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-blue-700 font-semibold text-sm uppercase tracking-widest mb-3">Real Results</p>
+          <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Real Results</p>
           <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
             See the Difference
           </h2>
@@ -456,7 +501,7 @@ function BeforeAfterSection() {
             <ul className="mt-5 space-y-2">
               {["No measurable outcome", "No context or scale", "Reads like a task list"].map((item, i) => (
                 <li key={i} className="flex items-center gap-2 text-red-600 text-sm">
-                  <span className="text-red-400">✕</span> {item}
+                  <span className="text-red-400 font-bold">✕</span> {item}
                 </li>
               ))}
             </ul>
@@ -466,7 +511,7 @@ function BeforeAfterSection() {
           <div className="rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-8">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-bold">✓</span>
+                <CheckCircle2 className="w-4 h-4 text-white" />
               </div>
               <span className="text-emerald-700 font-bold text-sm uppercase tracking-wide">After FuseCV</span>
             </div>
@@ -479,7 +524,7 @@ function BeforeAfterSection() {
             <ul className="mt-5 space-y-2">
               {["Shows real impact", "Demonstrates scope and ownership", "Recruiter stops and reads"].map((item, i) => (
                 <li key={i} className="flex items-center gap-2 text-emerald-600 text-sm">
-                  <span className="text-emerald-500">✓</span> {item}
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" /> {item}
                 </li>
               ))}
             </ul>
@@ -490,32 +535,48 @@ function BeforeAfterSection() {
   );
 }
 
+// ─── Trust ────────────────────────────────────────────────────────────────────
+
 function TrustSection() {
   const bullets = [
-    { icon: "📄", text: "Use your existing CV — no blank form to fill" },
-    { icon: "🚀", text: "No need to start from zero" },
-    { icon: "👁", text: "Preview your upgraded CV before paying" },
-    { icon: "🧭", text: "Designed to feel easy, guided, and stress-free" },
+    { icon: <FileText className="w-5 h-5" />, text: "Use your existing CV — no blank form to fill" },
+    { icon: <Zap className="w-5 h-5" />, text: "No need to start from zero" },
+    { icon: <Eye className="w-5 h-5" />, text: "Preview your upgraded CV before paying" },
+    { icon: <Shield className="w-5 h-5" />, text: "Designed to feel easy, guided, and stress-free" },
   ];
 
   return (
-    <section className="py-24 px-6 bg-slate-50">
+    <section className="py-24 px-6" style={{ background: "#F0F2F8" }}>
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <p className="text-blue-700 font-semibold text-sm uppercase tracking-widest mb-3">Why Trust FuseCV</p>
+            <p className="font-semibold text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Why Trust FuseCV</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-6">
               Safe, Simple,<br />Professional.
             </h2>
             <p className="text-slate-500 text-lg leading-relaxed">
               We built FuseCV for people who want real results without complexity. No risk, no guesswork — just a better CV.
             </p>
+
+            {/* Icon brand mark */}
+            <div className="mt-8 flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl blur-md" style={{ background: "rgba(0,74,173,0.2)" }} />
+                <div className="relative h-14 w-14 rounded-xl flex items-center justify-center shadow-md overflow-hidden" style={{ background: "#004aad" }}>
+                  <Image src="/fusecv-icon.png" alt="FuseCV" width={40} height={56} className="object-contain" />
+                </div>
+              </div>
+              <div>
+                <p className="font-extrabold text-lg" style={{ color: "#004aad" }}>FuseCV</p>
+                <p className="text-slate-500 text-sm">Trusted by professionals at every stage</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
             {bullets.map((b, i) => (
               <div key={i} className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow transition-shadow">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(0,74,173,0.08)", color: "#004aad" }}>
                   {b.icon}
                 </div>
                 <p className="text-slate-700 font-semibold text-base leading-snug pt-1.5">{b.text}</p>
@@ -528,35 +589,42 @@ function TrustSection() {
   );
 }
 
-function FinalCTA({ onUpload }: { onUpload: () => void }) {
+// ─── Final CTA ────────────────────────────────────────────────────────────────
+
+function FinalCTA({ onCTA }: { onCTA: () => void }) {
   return (
-    <section className="py-28 px-6 bg-slate-950 relative overflow-hidden">
-      {/* Background decoration */}
+    <section className="py-28 px-6 relative overflow-hidden" style={{ background: "#0a1628" }}>
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-900 rounded-full opacity-20 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-15 blur-3xl"
+          style={{ background: "#004aad" }} />
       </div>
 
       <div className="relative max-w-3xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 bg-blue-900/50 border border-blue-800 text-blue-300 text-xs font-semibold px-4 py-1.5 rounded-full mb-8">
-          ✦ For every stage of your career
+        <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8 text-xs font-semibold"
+          style={{ background: "rgba(0,74,173,0.3)", border: "1px solid rgba(0,74,173,0.5)", color: "#00c4cc" }}>
+          <Sparkles className="w-3.5 h-3.5" />
+          For every stage of your career
         </div>
 
         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-6">
           Your Next Opportunity Starts With Better Presentation.
         </h2>
 
-        <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+        <p className="text-lg mb-10 max-w-xl mx-auto leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
           Don&apos;t let a weak CV stand between you and what you&apos;ve earned. Upload your CV now — it takes minutes.
         </p>
 
         <button
-          onClick={onUpload}
-          className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg px-14 py-5 rounded-xl shadow-2xl shadow-blue-900 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          onClick={onCTA}
+          className="text-white font-bold text-lg px-14 py-5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3 mx-auto"
+          style={{ background: "#ff751f", boxShadow: "0 12px 40px rgba(255,117,31,0.3)" }}
         >
+          <Upload className="w-5 h-5" />
           Upload My CV Now
+          <ArrowRight className="w-5 h-5" />
         </button>
 
-        <p className="text-slate-600 text-sm mt-5">
+        <p className="text-sm mt-5" style={{ color: "rgba(255,255,255,0.3)" }}>
           No payment until satisfied · No credit card required
         </p>
       </div>
@@ -564,32 +632,31 @@ function FinalCTA({ onUpload }: { onUpload: () => void }) {
   );
 }
 
+// ─── Footer ───────────────────────────────────────────────────────────────────
+
 function Footer() {
   return (
-    <footer className="bg-slate-950 border-t border-slate-900 py-8 px-6">
+    <footer className="py-8 px-6" style={{ background: "#0a1628", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-700 to-blue-500 flex items-center justify-center">
-            <span className="text-white font-black text-xs">F</span>
-          </div>
-          <span className="text-slate-400 text-sm">FuseCV © {new Date().getFullYear()}</span>
+        <Image src="/fusecv-logo.png" alt="FuseCV" width={100} height={32} className="object-contain opacity-60" />
+        <div className="flex items-center gap-6 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+          <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
+          <Link href="/register" className="hover:text-white transition-colors">Create Account</Link>
         </div>
-        <div className="flex items-center gap-6 text-slate-600 text-sm">
-          <a href="/privacy" className="hover:text-slate-400 transition-colors">Privacy Policy</a>
-          <a href="/login" className="hover:text-slate-400 transition-colors">Sign In</a>
-          <a href="/register" className="hover:text-slate-400 transition-colors">Create Account</a>
-        </div>
+        <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>
+          © {new Date().getFullYear()} FuseCV
+        </p>
       </div>
     </footer>
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const router = useRouter();
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -597,7 +664,7 @@ export default function LandingPage() {
     });
   }, [router]);
 
-  function handleUpload() {
+  function handleCTA() {
     router.push("/register");
   }
 
@@ -610,16 +677,16 @@ export default function LandingPage() {
         }
       `}</style>
 
-      <Navbar onUpload={handleUpload} />
-      <HeroSection onUpload={handleUpload} />
+      <Navbar onCTA={handleCTA} />
+      <HeroSection onCTA={handleCTA} />
       <SocialProofStrip />
       <AudienceSection />
       <ProblemSection />
-      <HowItWorksSection onUpload={handleUpload} />
+      <HowItWorksSection onCTA={handleCTA} />
       <ValueSection />
       <BeforeAfterSection />
       <TrustSection />
-      <FinalCTA onUpload={handleUpload} />
+      <FinalCTA onCTA={handleCTA} />
       <Footer />
     </>
   );
