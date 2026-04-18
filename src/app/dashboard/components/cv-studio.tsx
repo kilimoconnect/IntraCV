@@ -953,8 +953,10 @@ export default function CvStudio({ userId, cvData }: Props) {
       }
     };
 
-    // Initial frame delay so React can paint the preview step
-    rafId = requestAnimationFrame(() => { timerId = setTimeout(tryDownload, 200); });
+    // Two RAF frames so React has time to paint the preview step before we probe previewRef
+    rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => { timerId = setTimeout(tryDownload, 50); });
+    });
 
     return () => {
       cancelAnimationFrame(rafId);

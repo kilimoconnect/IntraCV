@@ -34,7 +34,13 @@ function DashboardPage() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const [loading, setLoading] = useState(true);
+  // If the user is returning from a payment redirect the CV Studio restores
+  // its own state from sessionStorage — skip the full-screen spinner so the
+  // auto-download can start as soon as the component mounts.
+  const returningFromPayment =
+    typeof window !== "undefined" &&
+    sessionStorage.getItem("fusecv-auto-download") === "1";
+  const [loading, setLoading] = useState(!returningFromPayment);
   const hasLoadedOnce = useRef(false);
   const activeTab = searchParams.get("tab") || "profile";
   const [tabLoading, setTabLoading] = useState(false);
@@ -68,10 +74,12 @@ function DashboardPage() {
   const hasData = personalInfo || summary || experiences.length || education.length || skills.length;
 
   useEffect(() => {
-    if (!loading && !hasData && user) {
+    // Don't redirect while auto-download is pending — the studio state comes
+    // from sessionStorage, not from the profile queries.
+    if (!loading && !hasData && user && !returningFromPayment) {
       router.push("/cv-builder");
     }
-  }, [loading, hasData, user, router]);
+  }, [loading, hasData, user, router, returningFromPayment]);
 
   const loadData = useCallback(async () => {
     if (!user) return;
