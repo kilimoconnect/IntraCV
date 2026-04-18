@@ -23,29 +23,42 @@ const coreGuides: Guide[] = [
   { slug: "why-not-getting-interviews", title: "Why You're Not Getting Interviews", description: "The 10 most common reasons CVs get no response — and the specific fix for each.", badge: "Must Read" },
   { slug: "how-long-should-a-cv-be", title: "How Long Should a CV Be?", description: "The definitive answer by experience level, country and industry — plus what to cut.", badge: "Common Question" },
   { slug: "employment-gaps-cv", title: "Employment Gaps on a CV", description: "How to handle career breaks honestly — what to write and how to address them in interviews.", badge: "Career Gaps" },
+  { slug: "cv-skills-examples", title: "CV Skills Examples — What to Put in Your Skills Section", description: "The best hard and soft skills for every industry — plus how to write your skills section for ATS.", badge: "High Impact" },
   { slug: "best-cv-format-uk", title: "Best CV Format in the UK", description: "The exact layout, length, sections and fonts that UK recruiters expect.", badge: "UK" },
 ];
 
 const summaryGuides: Guide[] = [
   { slug: "resume-summary-examples", title: "Resume Summary Examples", description: "15 professional summary examples across industries and career levels — plus the writing formula.", badge: "Examples" },
   { slug: "cv-personal-statement-examples", title: "CV Personal Statement Examples", description: "10 personal statement templates for graduates, professionals, career changers and executives.", badge: "Examples" },
+  { slug: "linkedin-summary-examples", title: "LinkedIn Summary Examples", description: "15 LinkedIn About section examples by role — plus the formula that gets recruiters to message you.", badge: "LinkedIn" },
 ];
 
 const careerLevelGuides: Guide[] = [
   { slug: "graduate-cv-no-experience", title: "Graduate CV With No Experience", description: "You have more to show than you think. How to write a graduate CV that actually gets responses.", badge: "Graduate" },
+  { slug: "internship-cv-example", title: "Internship CV Example", description: "Competitive internship applications with no experience — structure, sections and industry tips.", badge: "Student" },
   { slug: "career-change-cv-example", title: "Career Change CV Example", description: "How to reframe your existing experience for a completely different role.", badge: "Career Change" },
   { slug: "executive-cv-example", title: "Executive CV Example", description: "Senior CVs operate by different rules. How to position yourself at director and board level.", badge: "Executive" },
 ];
 
 const coverLetterGuides: Guide[] = [
+  { slug: "how-to-write-a-cover-letter", title: "How to Write a Cover Letter", description: "The complete cover letter writing guide — structure, examples and what hiring managers actually read.", badge: "Cover Letter" },
   { slug: "cover-letter-example-uk", title: "Cover Letter Example UK", description: "UK cover letter format — exactly what to write in each paragraph, with a full example.", badge: "Cover Letter" },
 ];
 
 const roleGuides: Guide[] = [
   { slug: "software-engineer-cv-example", title: "Software Engineer CV Example", description: "What hiring managers and technical recruiters actually look for in a tech CV.", badge: "Tech" },
-  { slug: "nurse-cv-example", title: "Nurse CV Example", description: "Clinical bullet points, registration details, mandatory training and nursing CV structure worldwide.", badge: "Healthcare" },
-  { slug: "project-manager-cv-example", title: "Project Manager CV Example", description: "Delivery-focused bullet points, certifications, and the PM metrics that matter to employers.", badge: "PM" },
+  { slug: "product-manager-resume", title: "Product Manager Resume", description: "Outcomes over features — how to write a PM resume that proves business impact.", badge: "Product" },
   { slug: "data-analyst-cv-example", title: "Data Analyst CV Example", description: "How to show business impact — not just tools — on a data analyst CV or resume.", badge: "Data" },
+  { slug: "project-manager-cv-example", title: "Project Manager CV Example", description: "Delivery-focused bullet points, certifications, and the PM metrics that matter to employers.", badge: "PM" },
+  { slug: "marketing-manager-cv-example", title: "Marketing Manager CV Example", description: "Channel expertise, campaign ROI and the growth metrics that marketing hiring managers need to see.", badge: "Marketing" },
+  { slug: "sales-cv-example", title: "Sales CV Example", description: "Quota attainment, ARR, deal size — how to prove your number on a sales CV.", badge: "Sales" },
+  { slug: "accountant-cv-example", title: "Accountant CV Example", description: "Qualifications, specialisms and the financial impact bullets that get accountants hired.", badge: "Finance" },
+  { slug: "hr-cv-example", title: "HR CV Example", description: "People metrics, CIPD qualifications and the business impact language HR hiring managers expect.", badge: "HR" },
+  { slug: "customer-service-cv-example", title: "Customer Service CV Example", description: "CSAT, FCR, NPS — the CX metrics and bullet examples that get customer service candidates hired.", badge: "CX" },
+  { slug: "graphic-designer-resume", title: "Graphic Designer Resume", description: "Portfolio links, design software, impact metrics and what creative agencies and in-house teams look for.", badge: "Design" },
+  { slug: "administrative-assistant-resume", title: "Administrative Assistant Resume", description: "Scope, software proficiency and impact — how to write an admin or EA CV that stands out.", badge: "Admin" },
+  { slug: "teacher-cv-example", title: "Teacher CV Example", description: "Subject specialisms, results, leadership and the structure UK and global schools expect.", badge: "Education" },
+  { slug: "nurse-cv-example", title: "Nurse CV Example", description: "Clinical bullet points, registration details, mandatory training and nursing CV structure worldwide.", badge: "Healthcare" },
 ];
 
 const countryGuides: Guide[] = [
@@ -54,6 +67,13 @@ const countryGuides: Guide[] = [
   { slug: "cv-format-canada", title: "CV Format Canada", description: "Canadian resume format — close to the US standard but with important local differences.", badge: "🇨🇦 Canada" },
   { slug: "cv-format-south-africa", title: "CV Format South Africa", description: "SA CV conventions — longer format, referees, BBBEE context and professional registrations.", badge: "🇿🇦 South Africa" },
   { slug: "cv-format-uae", title: "CV Format UAE", description: "Dubai and Gulf CV expectations — photo, nationality, visa status and sector-specific guidance.", badge: "🇦🇪 UAE" },
+  { slug: "cv-format-india", title: "CV Format India", description: "Indian CV conventions — length, sections, board results, IT sector expectations and tips.", badge: "🇮🇳 India" },
+  { slug: "cv-format-nigeria", title: "CV Format Nigeria", description: "Nigerian CV format — photo, NYSC, state of origin, professional certifications and sector tips.", badge: "🇳🇬 Nigeria" },
+  { slug: "cv-format-kenya", title: "CV Format Kenya", description: "Kenyan CV expectations — referees, ID number, sectors and what employers look for.", badge: "🇰🇪 Kenya" },
+  { slug: "cv-format-germany", title: "CV Format Germany — Lebenslauf Guide", description: "German Lebenslauf format — tabular structure, Bewerbungsfoto, Anschreiben and the full application package.", badge: "🇩🇪 Germany" },
+  { slug: "cv-format-singapore", title: "CV Format Singapore", description: "Singapore CV conventions — work pass status, MAS-regulated sectors, Fair Consideration Framework and format.", badge: "🇸🇬 Singapore" },
+  { slug: "cv-format-new-zealand", title: "CV Format New Zealand", description: "NZ CV format — referees, cover letters, visa status, sector registration and skilled migrant tips.", badge: "🇳🇿 New Zealand" },
+  { slug: "cv-format-ghana", title: "CV Format Ghana", description: "Ghanaian CV conventions — professional affiliations, ICAG, mining, banking and NGO sector guidance.", badge: "🇬🇭 Ghana" },
 ];
 
 const badgeColour: Record<string, string> = {
@@ -67,13 +87,24 @@ const badgeColour: Record<string, string> = {
   "Career Gaps":      "bg-yellow-100 text-yellow-700",
   "Examples":         "bg-teal-100 text-teal-700",
   "Graduate":         "bg-blue-100 text-blue-700",
+  "Student":          "bg-sky-100 text-sky-700",
   "Career Change":    "bg-violet-100 text-violet-700",
   "Executive":        "bg-slate-100 text-slate-700",
   "Cover Letter":     "bg-emerald-100 text-emerald-700",
   "Tech":             "bg-indigo-100 text-indigo-700",
   "Healthcare":       "bg-cyan-100 text-cyan-700",
   "PM":               "bg-purple-100 text-purple-700",
+  "Product":          "bg-violet-100 text-violet-700",
   "Data":             "bg-sky-100 text-sky-700",
+  "Marketing":        "bg-pink-100 text-pink-700",
+  "Sales":            "bg-green-100 text-green-700",
+  "Finance":          "bg-emerald-100 text-emerald-700",
+  "Education":        "bg-amber-100 text-amber-700",
+  "HR":               "bg-teal-100 text-teal-700",
+  "CX":               "bg-cyan-100 text-cyan-700",
+  "Design":           "bg-fuchsia-100 text-fuchsia-700",
+  "Admin":            "bg-slate-100 text-slate-600",
+  "LinkedIn":         "bg-blue-100 text-blue-700",
 };
 
 function GuideCard({ guide }: { guide: Guide }) {
@@ -106,7 +137,7 @@ export default function GuidesIndexPage() {
     <div>
       <div className="text-center mb-12">
         <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">CV &amp; Resume Guides</h1>
-        <p className="text-lg text-slate-500 max-w-2xl mx-auto">Practical, no-fluff advice on writing, formatting and improving your CV or resume — for job seekers worldwide. 23 guides across formats, roles and countries.</p>
+        <p className="text-lg text-slate-500 max-w-2xl mx-auto">Practical, no-fluff advice on writing, formatting and improving your CV or resume — for job seekers worldwide. 43 guides across formats, roles and countries.</p>
       </div>
 
       <Section title="Start Here — Core Guides" guides={coreGuides} />
