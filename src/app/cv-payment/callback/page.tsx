@@ -88,9 +88,12 @@ export default async function CvPaymentCallbackPage({
             // ── Email automation: cancel nurture flows, schedule post-purchase flows ──
             try {
               // Cancel all pre-purchase nurture flows
+              await cancelFlow(user.id, "checkout_abandon");
               await cancelFlow(user.id, "signup_no_purchase");
               await cancelFlow(user.id, "preview_no_purchase");
               await cancelFlow(user.id, "missing_info");
+              await cancelFlow(user.id, "executive_prestige");
+              await cancelFlow(user.id, "upload_started_no_finish");
               await cancelFlow(user.id, "dormant");
 
               // cv_purchased: cover letter upsell (email 2) + interview nudge (email 3)

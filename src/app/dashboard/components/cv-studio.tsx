@@ -968,22 +968,34 @@ export default function CvStudio({ userId, cvData }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoDownload, cvPaidReady, aiData, selectedCategory]);
 
-  // ── Preview-no-purchase trigger ──
-  // When the user sees the AI-generated CV preview but hasn't paid, schedule
-  // the high-intent follow-up email sequence. Fires once per browser session.
+  // ── Automation triggers (fire-and-forget, never affect UI) ──
+
+  // preview_no_purchase: CV preview rendered, user hasn't paid
   useEffect(() => {
-    if (!aiData) return;                                           // no preview yet
-    if (cvPaidReady || pdfDownloaded) return;                     // user paid / just downloaded
-    if (sessionStorage.getItem("fusecv-auto-download") === "1") return; // returning from payment
-    if (sessionStorage.getItem("fusecv-preview-tracked")) return; // already scheduled this session
+    if (!aiData) return;
+    if (cvPaidReady || pdfDownloaded) return;
+    if (sessionStorage.getItem("fusecv-auto-download") === "1") return;
+    if (sessionStorage.getItem("fusecv-preview-tracked")) return;
     sessionStorage.setItem("fusecv-preview-tracked", "1");
     fetch("/api/email-automation/trigger", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ flow: "preview_no_purchase" }),
-    }).catch(() => {}); // fire-and-forget — email scheduling, not critical path
+    }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiData]);
+
+  // executive_prestige: user profile classified as executive, hasn't paid
+  useEffect(() => {
+    if (selectedCategory !== "executive") return;
+    if (pdfDownloaded) return;
+    if (sessionStorage.getItem("fusecv-executive-tracked")) return;
+    sessionStorage.setItem("fusecv-executive-tracked", "1");
+    fetch("/api/email-automation/trigger", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flow: "executive_prestige" }),
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
   // ── Cached readiness: shared with profile page via sessionStorage + cv_readiness_cache ──
   useEffect(() => {
@@ -1642,6 +1654,12 @@ export default function CvStudio({ userId, cvData }: Props) {
 
     // Spin the button immediately
     setPaymentProcessing(true);
+
+    // Schedule checkout_abandon flow — cancelled in the payment callback if purchase completes
+    fetch("/api/email-automation/trigger", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flow: "checkout_abandon" }),
+    }).catch(() => {});
 
     // Store CV state (+ job fields + plan) so we can restore everything on return
     sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({

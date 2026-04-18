@@ -19,6 +19,9 @@ import { scheduleFlow, type FlowId } from "@/lib/email-automation";
 // Flows that are safe for the client to trigger
 const CLIENT_ALLOWED_FLOWS: FlowId[] = [
   "preview_no_purchase",
+  "checkout_abandon",
+  "upload_started_no_finish",
+  "executive_prestige",
 ];
 
 export async function POST(req: Request) {
