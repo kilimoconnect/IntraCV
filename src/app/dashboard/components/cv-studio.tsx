@@ -940,6 +940,8 @@ export default function CvStudio({ userId, cvData }: Props) {
 
     const tryDownload = async () => {
       if (previewRef.current) {
+        // Close the payment modal and open the PDF overlay in the same render — no gap
+        setPdfGenerating(true);
         setCvPaidReady(false);
         setAutoDownload(false);
         localStorage.setItem("fusecv-new-docs", "true");
@@ -2502,32 +2504,8 @@ export default function CvStudio({ userId, cvData }: Props) {
             </div>
             <div className="text-center">
               <h2 className="text-lg font-bold text-slate-800">Payment Confirmed!</h2>
-              <p className="text-sm text-slate-500 mt-1">
-                {autoDownload || downloadingPdf
-                  ? "Preparing your download…"
-                  : "Your CV is ready to download."}
-              </p>
-              {(autoDownload || downloadingPdf) && (
-                <p className="text-xs text-amber-600 font-medium mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  Please do not close or refresh this page until your download is complete.
-                </p>
-              )}
+              <p className="text-sm text-slate-500 mt-1">Preparing your download…</p>
             </div>
-            {!autoDownload && (
-              <button
-                onClick={async () => {
-                  setCvPaidReady(false);
-                  localStorage.setItem("fusecv-new-docs", "true");
-                  await executePdfDownload();
-                }}
-                disabled={downloadingPdf}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg transition-all"
-              >
-                {downloadingPdf
-                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating PDF…</>
-                  : <><Download className="h-4 w-4" /> Download My CV</>}
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -2610,6 +2588,9 @@ export default function CvStudio({ userId, cvData }: Props) {
             <div className="flex flex-col items-center gap-2">
               <p className="text-base font-semibold text-slate-800">Generating your PDF…</p>
               <p className="text-xs text-slate-500">This usually takes 5–15 seconds</p>
+              <p className="text-xs text-amber-600 font-medium mt-1 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+                Please do not close or refresh this page until your download is complete.
+              </p>
             </div>
             {/* Animated dots */}
             <div className="flex items-center gap-1.5">
