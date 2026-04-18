@@ -9,6 +9,8 @@ const FROM_EMAIL     = process.env.BREVO_FROM_EMAIL  || "noreply@fusecv.com";
 const FROM_NAME      = process.env.BREVO_FROM_NAME   || "FuseCV";
 const SITE_URL       = process.env.NEXT_PUBLIC_SITE_URL || "https://fusecv.com";
 const DASHBOARD_URL  = `${SITE_URL}/dashboard`;
+const DOCUMENTS_URL  = `${SITE_URL}/dashboard?tab=documents`;
+const INTERVIEW_URL  = `${SITE_URL}/dashboard?tab=interview`;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -171,11 +173,11 @@ function starterEmail(firstName: string) {
         item("6 premium recruiter-ready layout options"),
         item("Saved to your Documents for future access"),
       ].join(""),
-      ctaHref: `${DASHBOARD_URL}?tab=studio`,
-      ctaLabel: "Download My CV",
+      ctaHref: DOCUMENTS_URL,
+      ctaLabel: "View My Documents",
       footerNote: "Questions? Reply to this email and we&apos;ll help you out.",
     }),
-    text: `Hi ${firstName},\n\nYour CV is ready to download!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- ATS-optimized formatting\n- 6 premium layout options\n- Saved to your Documents\n\nGo to your dashboard to download: ${DASHBOARD_URL}?tab=studio\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour CV is ready to download!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- ATS-optimized formatting\n- 6 premium layout options\n- Saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
@@ -193,11 +195,11 @@ function professionalEmail(firstName: string) {
         item("6 premium recruiter-ready layout options"),
         item("Both documents saved to your Documents"),
       ].join(""),
-      ctaHref: `${DASHBOARD_URL}?tab=studio`,
-      ctaLabel: "Go to My Dashboard",
-      footerNote: "Find your cover letter under the <strong>Cover Letter</strong> tab in your dashboard.",
+      ctaHref: DOCUMENTS_URL,
+      ctaLabel: "View My Documents",
+      footerNote: "Find your cover letter under the <strong>Documents</strong> section in your dashboard.",
     }),
-    text: `Hi ${firstName},\n\nYour Professional Package is ready!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- Tailored cover letter\n- ATS-optimized formatting\n- 6 premium layout options\n- Both documents saved to your Documents\n\nGo to your dashboard: ${DASHBOARD_URL}?tab=studio\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour Professional Package is ready!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- Tailored cover letter\n- ATS-optimized formatting\n- 6 premium layout options\n- Both documents saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
@@ -216,11 +218,11 @@ function fullBundleEmail(firstName: string) {
         item("6 premium recruiter-ready layout options"),
         item("All content saved to your Documents"),
       ].join(""),
-      ctaHref: `${DASHBOARD_URL}?tab=studio`,
-      ctaLabel: "Go to My Dashboard",
+      ctaHref: DOCUMENTS_URL,
+      ctaLabel: "View My Documents",
       footerNote: "Access your interview questions under the <strong>Interview Prep</strong> tab.",
     }),
-    text: `Hi ${firstName},\n\nYour Full Bundle is ready!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- Tailored cover letter\n- 20 role-specific interview questions\n- ATS-optimized formatting\n- 6 premium layout options\n- All content saved to your Documents\n\nGo to your dashboard: ${DASHBOARD_URL}?tab=studio\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour Full Bundle is ready!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- Tailored cover letter\n- 20 role-specific interview questions\n- ATS-optimized formatting\n- 6 premium layout options\n- All content saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
@@ -238,11 +240,11 @@ function interviewEmail(firstName: string) {
         item("Practice at your own pace, as many times as you like"),
         item("Questions saved — pick up where you left off anytime"),
       ].join(""),
-      ctaHref: `${DASHBOARD_URL}?tab=interview`,
+      ctaHref: INTERVIEW_URL,
       ctaLabel: "Start Practising",
       footerNote: "Your questions are available under the <strong>Interview Prep</strong> tab in your dashboard.",
     }),
-    text: `Hi ${firstName},\n\nYour 20 interview questions are ready!\n\nWhat's included:\n- 20 role-specific questions added to your account\n- Competency, behavioural & technical types\n- Model answers based on your experience\n- Practice at your own pace\n\nStart practising: ${DASHBOARD_URL}?tab=interview\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour 20 interview questions are ready!\n\nWhat's included:\n- 20 role-specific questions added to your account\n- Competency, behavioural & technical types\n- Model answers based on your experience\n- Practice at your own pace\n\nStart practising: ${INTERVIEW_URL}\n\n— The FuseCV Team`,
   };
 }
 
