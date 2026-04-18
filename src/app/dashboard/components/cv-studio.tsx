@@ -2507,6 +2507,11 @@ export default function CvStudio({ userId, cvData }: Props) {
                   ? "Preparing your download…"
                   : "Your CV is ready to download."}
               </p>
+              {(autoDownload || downloadingPdf) && (
+                <p className="text-xs text-amber-600 font-medium mt-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Please do not close or refresh this page until your download is complete.
+                </p>
+              )}
             </div>
             {!autoDownload && (
               <button
