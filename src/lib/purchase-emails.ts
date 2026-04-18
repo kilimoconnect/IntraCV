@@ -165,7 +165,7 @@ function starterEmail(firstName: string) {
     subject: "Your CV has been downloaded — FuseCV",
     html: shell({
       preheader: "Your watermark-free CV has been downloaded automatically and saved to your Documents.",
-      headline: `Your CV is downloaded, ${firstName}! 🎉`,
+      headline: `Your CV is downloaded, ${firstName}`,
       intro: `Payment confirmed — your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. You&apos;ll also find it saved in your Documents any time you need it again.`,
       itemsHtml: [
         item("CV automatically downloaded in your chosen format &amp; theme"),
@@ -183,10 +183,10 @@ function starterEmail(firstName: string) {
 
 function professionalEmail(firstName: string) {
   return {
-    subject: "Your CV has been downloaded & cover letter is ready — FuseCV",
+    subject: "Your CV has been downloaded and cover letter is ready — FuseCV",
     html: shell({
       preheader: "Your CV was downloaded automatically. Your cover letter is saved and ready to use.",
-      headline: `Your CV & Cover Letter are ready, ${firstName}! 🎉`,
+      headline: `Your CV and Cover Letter are ready, ${firstName}`,
       intro: `Payment confirmed — your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your tailored cover letter is saved in your Documents, ready to personalise and send.`,
       itemsHtml: [
         item("CV automatically downloaded in your chosen format &amp; theme"),
@@ -208,21 +208,21 @@ function fullBundleEmail(firstName: string) {
     subject: "Your Full Bundle is ready — CV downloaded, everything unlocked — FuseCV",
     html: shell({
       preheader: "CV downloaded automatically. Cover letter and 20 interview questions are all ready to go.",
-      headline: `Everything is ready, ${firstName}! 🚀`,
-      intro: `Your Full Bundle is active. Your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your cover letter and 20 role-specific interview questions are unlocked and waiting in your dashboard.`,
+      headline: `Everything is ready, ${firstName}`,
+      intro: `Your Full Bundle is active. Your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your cover letter is saved in your Documents and your 20 role-specific interview questions are unlocked in the <strong>Interview Prep</strong> section.`,
       itemsHtml: [
         item("CV automatically downloaded in your chosen format &amp; theme"),
         item("Watermark-free, print-ready PDF"),
         item("Tailored cover letter saved to your Documents"),
-        item("20 role-specific interview questions unlocked"),
+        item("20 role-specific interview questions unlocked in Interview Prep"),
         item("ATS-optimized formatting for both documents"),
         item("All content saved and accessible any time"),
       ].join(""),
       ctaHref: DOCUMENTS_URL,
       ctaLabel: "View My Documents",
-      footerNote: "Access your interview questions under the <strong>Interview Prep</strong> tab in your dashboard.",
+      footerNote: "Access your 20 interview questions in the <strong>Interview Prep</strong> section of your dashboard.",
     }),
-    text: `Hi ${firstName},\n\nYour Full Bundle is ready!\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- 20 role-specific interview questions unlocked\n- ATS-optimized formatting for both documents\n- All content saved and accessible any time\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour Full Bundle is ready.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- 20 role-specific interview questions unlocked in Interview Prep\n- ATS-optimized formatting for both documents\n- All content saved and accessible any time\n\nView your documents: ${DOCUMENTS_URL}\nInterview Prep: ${INTERVIEW_URL}\n\n— The FuseCV Team`,
   };
 }
 
@@ -231,8 +231,8 @@ function interviewEmail(firstName: string) {
     subject: "20 interview questions unlocked — FuseCV",
     html: shell({
       preheader: "Your interview prep questions are ready. Practice them now and walk in confident.",
-      headline: `20 interview questions unlocked, ${firstName}! 🎯`,
-      intro: `Payment confirmed — your Interview Prep quota has been topped up with <strong>20 new questions</strong>. Head to the Interview Prep section in your dashboard to start practising.`,
+      headline: `20 interview questions unlocked, ${firstName}`,
+      intro: `Payment confirmed — your Interview Prep quota has been topped up with <strong>20 new questions</strong>. Head to the Interview Prep section to start practising.`,
       itemsHtml: [
         item("20 role-specific interview questions added to your account"),
         item("Competency, behavioural &amp; technical question types"),
