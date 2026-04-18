@@ -97,7 +97,7 @@ function CVSamplePreview() {
   }, []);
 
   return (
-    <div ref={wrapRef} style={{ width: "100%", overflow: "hidden", position: "relative" }}>
+    <div ref={wrapRef} style={{ width: "100%", overflow: "hidden", position: "relative", textAlign: "left" }}>
       <div ref={cardRef} style={{ width: 680, transformOrigin: "top left", transform: `scale(${scale})`, opacity: scale === 0 ? 0 : 1, transition: "opacity 0.2s" }}>
         <div style={{ display: "flex", fontFamily: "Inter, system-ui, sans-serif", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.12)", border: "1px solid #e2e8f0" }}>
           {/* SIDEBAR */}
