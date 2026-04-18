@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Block authenticated/private routes from indexing
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /cv-builder
+Disallow: /cv-builder/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /cv-payment/callback
+Disallow: /interview-payment/callback
+Disallow: /interview-payment/upgrade
+Disallow: /payment/
+
+Sitemap: https://fusecv.com/sitemap.xml
