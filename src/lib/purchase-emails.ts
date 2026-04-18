@@ -1,22 +1,20 @@
 /**
  * purchase-emails.ts
- * Server-side only — calls Brevo SMTP API directly (no HTTP round-trip).
- * Import only from Server Components / Route Handlers.
+ * Server-side Brevo email utility for post-purchase confirmation emails.
+ * Called directly from Server Components (callback pages) — no HTTP round-trip.
  */
-
-const BREVO_API_KEY  = process.env.BREVO_API_KEY!;
-const FROM_EMAIL     = process.env.BREVO_FROM_EMAIL  || "noreply@fusecv.com";
-const FROM_NAME      = process.env.BREVO_FROM_NAME   || "FuseCV";
-const SITE_URL       = process.env.NEXT_PUBLIC_SITE_URL || "https://fusecv.com";
-const DASHBOARD_URL  = `${SITE_URL}/dashboard`;
-const DOCUMENTS_URL  = `${SITE_URL}/dashboard?tab=documents`;
-const INTERVIEW_URL  = `${SITE_URL}/dashboard?tab=interview`;
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type PurchaseType = "starter" | "professional" | "full" | "interview";
 
-// ─── Low-level Brevo sender ───────────────────────────────────────────────────
+const BREVO_API_KEY = process.env.BREVO_API_KEY!;
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || "noreply@fusecv.com";
+const FROM_NAME = process.env.BREVO_FROM_NAME || "FuseCV";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://fusecv.com";
+
+const DOCUMENTS_URL = `${SITE_URL}/dashboard?tab=documents`;
+const INTERVIEW_URL = `${SITE_URL}/dashboard?tab=interview`;
+
+// ─── Brevo send helper ────────────────────────────────────────────────────────
 
 async function sendBrevoEmail(opts: {
   to: string;
@@ -26,41 +24,34 @@ async function sendBrevoEmail(opts: {
   text: string;
 }) {
   if (!BREVO_API_KEY) {
-    console.warn("[purchase-emails] BREVO_API_KEY not set — skipping email");
+    console.error("[purchase-emails] BREVO_API_KEY is not set");
     return;
   }
-  try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sender: { name: FROM_NAME, email: FROM_EMAIL },
-        to: [{ email: opts.to, name: opts.toName }],
-        subject: opts.subject,
-        htmlContent: opts.html,
-        textContent: opts.text,
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error("[purchase-emails] Brevo error:", err);
-    }
-  } catch (err) {
-    console.error("[purchase-emails] Failed to send:", err);
+
+  const payload = {
+    sender: { name: FROM_NAME, email: FROM_EMAIL },
+    to: [{ email: opts.to, name: opts.toName || opts.to }],
+    subject: opts.subject,
+    headers: { "X-Entity-Ref-ID": opts.to },
+    htmlContent: opts.html,
+    textContent: opts.text,
+  };
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Brevo error: ${JSON.stringify(err)}`);
   }
 }
 
 // ─── Shared email shell ───────────────────────────────────────────────────────
 
-function shell({
-  preheader,
-  headline,
-  intro,
-  itemsHtml,
-  ctaHref,
-  ctaLabel,
-  footerNote,
-}: {
+function shell(opts: {
   preheader: string;
   headline: string;
   intro: string;
@@ -68,7 +59,8 @@ function shell({
   ctaHref: string;
   ctaLabel: string;
   footerNote: string;
-}) {
+}): string {
+  const { preheader, headline, intro, itemsHtml, ctaHref, ctaLabel, footerNote } = opts;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,59 +76,41 @@ function shell({
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
 
-        <!-- Header -->
+        <!-- Logo header -->
         <tr><td style="border-radius:16px 16px 0 0;background:#ffffff;border:1px solid #e2e8f0;border-bottom:none;padding:24px 32px 20px;text-align:center">
-          <img src="${SITE_URL}/fusecv-logo.png" alt="FuseCV" width="150" height="46"
-            style="display:block;margin:0 auto 8px;max-width:150px;height:auto" />
-          <p style="color:#64748b;margin:0;font-size:12px;letter-spacing:0.3px">AI-Powered CV Builder</p>
+          <img src="${SITE_URL}/fusecv-logo.png" alt="FuseCV" width="150" height="46" style="display:block;margin:0 auto 8px;max-width:150px;height:auto" />
+          <p style="color:#64748b;margin:0;font-size:12px;letter-spacing:0.3px">Your AI-Powered CV Builder</p>
         </td></tr>
 
-        <!-- Top accent bar -->
+        <!-- Accent bar -->
         <tr><td style="background:#004aad;height:3px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0"></td></tr>
 
         <!-- Body -->
         <tr><td style="background:#ffffff;padding:36px 32px 32px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0">
+          <h2 style="color:#0f172a;font-size:22px;font-weight:700;margin:0 0 12px;letter-spacing:-0.3px">${headline}</h2>
+          <p style="color:#475569;font-size:15px;line-height:1.75;margin:0 0 24px">${intro}</p>
 
-          <!-- Headline -->
-          <h2 style="color:#0f172a;font-size:22px;font-weight:800;margin:0 0 12px;letter-spacing:-0.4px;line-height:1.3">
-            ${headline}
-          </h2>
+          ${itemsHtml}
 
-          <!-- Intro paragraph -->
-          <p style="color:#475569;font-size:15px;line-height:1.75;margin:0 0 24px">
-            ${intro}
-          </p>
-
-          <!-- What's included -->
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:28px">
-            <p style="color:#94a3b8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 14px">
-              What&apos;s included
-            </p>
-            ${itemsHtml}
-          </div>
-
-          <!-- CTA button -->
-          <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px">
-            <tr><td align="center">
-              <a href="${ctaHref}"
-                style="display:inline-block;padding:15px 40px;background:#ff751f;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;border-radius:12px;box-shadow:0 4px 15px rgba(255,117,31,0.35);letter-spacing:0.2px">
+          <!-- CTA -->
+          <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:28px">
+            <tr><td style="border-radius:12px;background:#ff751f;box-shadow:0 4px 15px rgba(255,117,31,0.35);text-align:center">
+              <a href="${ctaHref}" style="display:block;padding:15px 36px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 ${ctaLabel} &rarr;
               </a>
             </td></tr>
           </table>
 
-          <!-- Footer note -->
-          <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0;border-top:1px solid #f1f5f9;padding-top:20px;text-align:center">
-            ${footerNote}
-          </p>
-
+          <div style="border-top:1px solid #f1f5f9;padding-top:18px;margin-top:24px">
+            <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0">${footerNote}</p>
+          </div>
         </td></tr>
 
         <!-- Footer -->
-        <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 16px 16px;padding:18px 32px;text-align:center">
-          <p style="color:#94a3b8;font-size:11px;margin:0 0 6px;line-height:1.6">
+        <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center">
+          <p style="color:#94a3b8;font-size:11px;margin:0 0 8px;line-height:1.6">
             FuseCV &mdash; AI-Powered CV Builder &bull;
-            <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:underline">${SITE_URL.replace("https://", "")}</a>
+            <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:underline">fusecv.com</a>
           </p>
           <p style="color:#cbd5e1;font-size:11px;margin:0;line-height:1.6">
             <a href="${SITE_URL}/privacy" style="color:#94a3b8;text-decoration:underline">Privacy Policy</a>
@@ -150,129 +124,178 @@ function shell({
 </html>`;
 }
 
-// ─── Item row helper ──────────────────────────────────────────────────────────
-
-function item(text: string) {
-  return `<p style="color:#1e293b;font-size:14px;margin:0 0 10px;display:flex;align-items:flex-start;gap:10px;line-height:1.5">
-    <span style="color:#10b981;font-weight:700;flex-shrink:0">✓</span> ${text}
+function checkItem(text: string): string {
+  return `<p style="display:flex;align-items:flex-start;gap:10px;margin:0 0 10px;font-size:14px;color:#334155">
+    <span style="color:#10b981;font-weight:700;flex-shrink:0">&#10003;</span>
+    <span>${text}</span>
   </p>`;
 }
 
-// ─── Templates ────────────────────────────────────────────────────────────────
+// ─── Email templates ──────────────────────────────────────────────────────────
 
-function starterEmail(firstName: string) {
-  return {
-    subject: "Your CV has been downloaded — FuseCV",
-    html: shell({
-      preheader: "Your watermark-free CV has been downloaded automatically and saved to your Documents.",
-      headline: `Your CV is downloaded, ${firstName}`,
-      intro: `Payment confirmed — your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. You&apos;ll also find it saved in your Documents any time you need it again.`,
-      itemsHtml: [
-        item("CV automatically downloaded in your chosen format &amp; theme"),
-        item("Watermark-free, print-ready PDF"),
-        item("ATS-optimized formatting — passes automated screening"),
-        item("Saved to your Documents for future access"),
-      ].join(""),
-      ctaHref: DOCUMENTS_URL,
-      ctaLabel: "View My Documents",
-      footerNote: "Questions? Reply to this email and we&apos;ll help you out.",
-    }),
-    text: `Hi ${firstName},\n\nYour CV has been automatically downloaded in your chosen format and theme.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- ATS-optimized formatting\n- Saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
-  };
+function starterEmail(firstName: string): { subject: string; html: string; text: string } {
+  const subject = "Your CV has been downloaded — FuseCV";
+  const html = shell({
+    preheader: "Your watermark-free CV has been automatically downloaded.",
+    headline: `Your CV is ready, ${firstName}`,
+    intro: "Payment confirmed. Your watermark-free CV has been automatically downloaded in your chosen format and theme.",
+    itemsHtml: [
+      checkItem("Watermark-free CV — automatically downloaded"),
+      checkItem("Saved to your Documents for future access"),
+    ].join(""),
+    ctaHref: DOCUMENTS_URL,
+    ctaLabel: "View My Documents",
+    footerNote: "Need to re-download? Head to your Documents tab at any time.",
+  });
+  const text = `Your CV is ready, ${firstName}.
+
+Payment confirmed. Your watermark-free CV has been automatically downloaded in your chosen format and theme.
+
+- Watermark-free CV — automatically downloaded
+- Saved to your Documents for future access
+
+View your documents: ${DOCUMENTS_URL}
+
+Need to re-download? Head to your Documents tab at any time.
+
+— The FuseCV Team
+${SITE_URL}`;
+  return { subject, html, text };
 }
 
-function professionalEmail(firstName: string) {
-  return {
-    subject: "Your CV has been downloaded and cover letter is ready — FuseCV",
-    html: shell({
-      preheader: "Your CV was downloaded automatically. Your cover letter is saved and ready to use.",
-      headline: `Your CV and Cover Letter are ready, ${firstName}`,
-      intro: `Payment confirmed — your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your tailored cover letter is saved in your Documents, ready to personalise and send.`,
-      itemsHtml: [
-        item("CV automatically downloaded in your chosen format &amp; theme"),
-        item("Watermark-free, print-ready PDF"),
-        item("Tailored cover letter saved to your Documents"),
-        item("ATS-optimized formatting for both documents"),
-        item("Both documents available any time in your Documents"),
-      ].join(""),
-      ctaHref: DOCUMENTS_URL,
-      ctaLabel: "View My Documents",
-      footerNote: "Find your cover letter under the <strong>Documents</strong> section in your dashboard.",
-    }),
-    text: `Hi ${firstName},\n\nYour CV has been automatically downloaded and your cover letter is ready.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- ATS-optimized formatting for both documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
-  };
+function professionalEmail(firstName: string): { subject: string; html: string; text: string } {
+  const subject = "Your CV has been downloaded and cover letter is ready — FuseCV";
+  const html = shell({
+    preheader: "Your CV downloaded automatically and your cover letter is waiting in your dashboard.",
+    headline: `Your CV and cover letter are ready, ${firstName}`,
+    intro: "Payment confirmed. Your watermark-free CV has been automatically downloaded in your chosen format and theme. Your tailored cover letter is ready in your Documents.",
+    itemsHtml: [
+      checkItem("Watermark-free CV — automatically downloaded"),
+      checkItem("Tailored cover letter — ready in your Documents"),
+      checkItem("Saved for future access"),
+    ].join(""),
+    ctaHref: DOCUMENTS_URL,
+    ctaLabel: "View My Documents",
+    footerNote: "You can copy or download your cover letter from the Documents tab.",
+  });
+  const text = `Your CV and cover letter are ready, ${firstName}.
+
+Payment confirmed. Your watermark-free CV has been automatically downloaded in your chosen format and theme. Your tailored cover letter is ready in your Documents.
+
+- Watermark-free CV — automatically downloaded
+- Tailored cover letter — ready in your Documents
+- Saved for future access
+
+View your documents: ${DOCUMENTS_URL}
+
+You can copy or download your cover letter from the Documents tab.
+
+— The FuseCV Team
+${SITE_URL}`;
+  return { subject, html, text };
 }
 
-function fullBundleEmail(firstName: string) {
-  return {
-    subject: "Your Full Bundle is ready — CV downloaded, everything unlocked — FuseCV",
-    html: shell({
-      preheader: "CV downloaded automatically. Cover letter and 20 interview questions are all ready to go.",
-      headline: `Everything is ready, ${firstName}`,
-      intro: `Your Full Bundle is active. Your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your cover letter is saved in your Documents and your 20 role-specific interview questions are unlocked in the <strong>Interview Prep</strong> section.`,
-      itemsHtml: [
-        item("CV automatically downloaded in your chosen format &amp; theme"),
-        item("Watermark-free, print-ready PDF"),
-        item("Tailored cover letter saved to your Documents"),
-        item("20 role-specific interview questions unlocked in Interview Prep"),
-        item("ATS-optimized formatting for both documents"),
-        item("All content saved and accessible any time"),
-      ].join(""),
-      ctaHref: DOCUMENTS_URL,
-      ctaLabel: "View My Documents",
-      footerNote: "Access your 20 interview questions in the <strong>Interview Prep</strong> section of your dashboard.",
-    }),
-    text: `Hi ${firstName},\n\nYour Full Bundle is ready.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- 20 role-specific interview questions unlocked in Interview Prep\n- ATS-optimized formatting for both documents\n- All content saved and accessible any time\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
-  };
+function fullBundleEmail(firstName: string): { subject: string; html: string; text: string } {
+  const subject = "Your Full Bundle is ready — CV downloaded, everything unlocked — FuseCV";
+  const html = shell({
+    preheader: "CV downloaded, cover letter ready, and interview prep unlocked.",
+    headline: `Full bundle unlocked, ${firstName}`,
+    intro: "Payment confirmed. Your watermark-free CV has been automatically downloaded in your chosen format and theme. Everything else is waiting for you in your dashboard.",
+    itemsHtml: [
+      checkItem("Watermark-free CV — automatically downloaded"),
+      checkItem("Tailored cover letter — ready in your Documents"),
+      checkItem("20 interview questions — unlocked in Interview Prep"),
+      checkItem("All documents saved for future access"),
+    ].join(""),
+    ctaHref: DOCUMENTS_URL,
+    ctaLabel: "View My Documents",
+    footerNote: "Your interview questions are in the Interview Prep section of your dashboard.",
+  });
+  const text = `Full bundle unlocked, ${firstName}.
+
+Payment confirmed. Your watermark-free CV has been automatically downloaded in your chosen format and theme. Everything else is waiting in your dashboard.
+
+- Watermark-free CV — automatically downloaded
+- Tailored cover letter — ready in your Documents
+- 20 interview questions — unlocked in Interview Prep
+- All documents saved for future access
+
+View your documents: ${DOCUMENTS_URL}
+
+Your interview questions are in the Interview Prep section of your dashboard.
+
+— The FuseCV Team
+${SITE_URL}`;
+  return { subject, html, text };
 }
 
-function interviewEmail(firstName: string) {
-  return {
-    subject: "20 interview questions unlocked — FuseCV",
-    html: shell({
-      preheader: "Your interview prep questions are ready. Practice them now and walk in confident.",
-      headline: `20 interview questions unlocked, ${firstName}`,
-      intro: `Payment confirmed — your Interview Prep quota has been topped up with <strong>20 new questions</strong>. Head to the Interview Prep section to start practising.`,
-      itemsHtml: [
-        item("20 role-specific interview questions added to your account"),
-        item("Competency, behavioural &amp; technical question types"),
-        item("Model answers based on your own experience"),
-        item("Practice at your own pace, as many times as you like"),
-        item("Questions saved — pick up where you left off anytime"),
-      ].join(""),
-      ctaHref: INTERVIEW_URL,
-      ctaLabel: "Start Practising",
-      footerNote: "Your questions are available under the <strong>Interview Prep</strong> tab in your dashboard.",
-    }),
-    text: `Hi ${firstName},\n\nYour 20 interview questions are ready!\n\nWhat's included:\n- 20 role-specific questions added to your account\n- Competency, behavioural & technical types\n- Model answers based on your experience\n- Practice at your own pace\n\nStart practising: ${INTERVIEW_URL}\n\n— The FuseCV Team`,
-  };
+function interviewEmail(firstName: string): { subject: string; html: string; text: string } {
+  const subject = "Your interview questions are unlocked — FuseCV";
+  const html = shell({
+    preheader: "Your interview questions are ready. Practice before your next interview.",
+    headline: `Interview questions unlocked, ${firstName}`,
+    intro: "Payment confirmed. Your interview questions have been unlocked and are waiting for you in the Interview Prep section of your dashboard.",
+    itemsHtml: [
+      checkItem("Role-specific interview questions — unlocked"),
+      checkItem("Model answers tailored to your profile"),
+      checkItem("Practice as many times as you need"),
+    ].join(""),
+    ctaHref: INTERVIEW_URL,
+    ctaLabel: "Go to Interview Prep",
+    footerNote: "Questions are based on the job description you entered. You can generate more at any time.",
+  });
+  const text = `Interview questions unlocked, ${firstName}.
+
+Payment confirmed. Your interview questions have been unlocked and are waiting for you in the Interview Prep section of your dashboard.
+
+- Role-specific interview questions — unlocked
+- Model answers tailored to your profile
+- Practice as many times as you need
+
+Go to Interview Prep: ${INTERVIEW_URL}
+
+Questions are based on the job description you entered. You can generate more at any time.
+
+— The FuseCV Team
+${SITE_URL}`;
+  return { subject, html, text };
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+// ─── Public export ────────────────────────────────────────────────────────────
 
-/**
- * Send a post-purchase confirmation email.
- * Safe to call from Server Components — never throws, only logs on failure.
- */
-export async function sendPurchaseEmail({
-  type,
-  toEmail,
-  toName,
-}: {
+export async function sendPurchaseEmail(opts: {
   type: PurchaseType;
   toEmail: string;
   toName: string;
-}) {
-  const firstName = (toName || "").trim().split(" ")[0] || "there";
+}): Promise<void> {
+  const firstName = (opts.toName || "").trim().split(" ")[0] || "there";
 
-  const templates: Record<PurchaseType, ReturnType<typeof starterEmail>> = {
-    starter:      starterEmail(firstName),
-    professional: professionalEmail(firstName),
-    full:         fullBundleEmail(firstName),
-    interview:    interviewEmail(firstName),
-  };
+  let subject: string;
+  let html: string;
+  let text: string;
 
-  const { subject, html, text } = templates[type];
+  switch (opts.type) {
+    case "starter":
+      ({ subject, html, text } = starterEmail(firstName));
+      break;
+    case "professional":
+      ({ subject, html, text } = professionalEmail(firstName));
+      break;
+    case "full":
+      ({ subject, html, text } = fullBundleEmail(firstName));
+      break;
+    case "interview":
+      ({ subject, html, text } = interviewEmail(firstName));
+      break;
+    default:
+      throw new Error(`Unknown purchase type: ${opts.type}`);
+  }
 
-  await sendBrevoEmail({ to: toEmail, toName: toName || toEmail, subject, html, text });
+  await sendBrevoEmail({
+    to: opts.toEmail,
+    toName: opts.toName,
+    subject,
+    html,
+    text,
+  });
 }
