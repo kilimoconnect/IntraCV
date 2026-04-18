@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
+import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, FolderOpen, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -852,6 +852,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   // Allow experienced users to override the enforced category recommendation
   const [categoryOverride, setCategoryOverride] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfDownloaded, setPdfDownloaded] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
@@ -1532,6 +1533,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     } finally {
       setDownloadingPdf(false);
       setPdfGenerating(false);
+      setPdfDownloaded(true);
     }
   }, [aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter, userId]);
 
@@ -2309,14 +2311,25 @@ export default function CvStudio({ userId, cvData }: Props) {
                 <span className="ml-0.5 h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{overflowSections.size}</span>
               )}
             </button>
-            <button
-              onClick={() => setShowPricingModal(true)}
-              disabled={downloadingPdf || paymentProcessing}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-[#004aad] px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-[#ff751f]/20 transition-all duration-200 hover:shadow-xl hover:bg-[#e8661a] disabled:opacity-60"
-            >
-              {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
-              {downloadingPdf ? "Generating..." : "Download"}
-            </button>
+            {pdfDownloaded ? (
+              <a
+                href="/dashboard?tab=documents"
+                className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-emerald-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg transition-all duration-200 hover:bg-emerald-700"
+              >
+                <FolderOpen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">View Documents</span>
+                <span className="sm:hidden">Docs</span>
+              </a>
+            ) : (
+              <button
+                onClick={() => setShowPricingModal(true)}
+                disabled={downloadingPdf || paymentProcessing}
+                className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-[#004aad] px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg shadow-[#ff751f]/20 transition-all duration-200 hover:shadow-xl hover:bg-[#e8661a] disabled:opacity-60"
+              >
+                {downloadingPdf ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+                {downloadingPdf ? "Generating..." : "Download"}
+              </button>
+            )}
           </div>
         </div>
 
