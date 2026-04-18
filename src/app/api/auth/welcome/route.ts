@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { scheduleFlow } from "@/lib/email-automation";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY!;
 const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || "noreply@fusecv.com";
@@ -55,6 +56,17 @@ export async function POST(req: Request) {
     await admin.auth.admin.updateUserById(userId, {
       user_metadata: { ...user.user_metadata, welcome_sent: true },
     });
+
+    // ── Schedule automation flows ──
+    // Flow 1: nurture emails for users who signed up but haven't purchased (4 emails over 7 days)
+    // Flow 3: dormant reactivation emails at 30 and 60 days
+    // Both are cancelled automatically if/when the user purchases.
+    scheduleFlow(userId, "signup_no_purchase").catch((e) =>
+      console.error("[welcome] schedule signup_no_purchase error:", e)
+    );
+    scheduleFlow(userId, "dormant").catch((e) =>
+      console.error("[welcome] schedule dormant error:", e)
+    );
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

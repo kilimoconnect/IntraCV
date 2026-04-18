@@ -4,6 +4,7 @@ import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-serv
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { sendPurchaseEmail } from "@/lib/purchase-emails";
+import { cancelFlow, scheduleFlow } from "@/lib/email-automation";
 import CallbackClient from "./callback-client";
 
 export default async function CvPaymentCallbackPage({
@@ -82,6 +83,21 @@ export default async function CvPaymentCallbackPage({
               });
             } catch (e) {
               console.error("[cv-callback] email error:", e);
+            }
+
+            // ── Email automation: cancel nurture flows, schedule follow-ups ──
+            // Cancel Flow 1 (user purchased — stop no-purchase nurture sequence)
+            // Cancel Flow 3 (dormant — user is clearly active)
+            // For starter/professional: schedule Flow 2 follow-ups (cover letter + interview upsells)
+            // For full: no follow-ups needed (user has everything)
+            try {
+              await cancelFlow(user.id, "signup_no_purchase");
+              await cancelFlow(user.id, "dormant");
+              if (plan === "starter" || plan === "professional") {
+                await scheduleFlow(user.id, "cv_purchased", { plan });
+              }
+            } catch (e) {
+              console.error("[cv-callback] automation flow error:", e);
             }
           }
         }

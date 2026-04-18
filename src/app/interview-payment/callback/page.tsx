@@ -4,6 +4,7 @@ import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-serv
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { sendPurchaseEmail } from "@/lib/purchase-emails";
+import { cancelFlow } from "@/lib/email-automation";
 import InterviewCallbackClient from "./callback-client";
 import { FREE_QUOTA, PAID_BATCH } from "@/lib/interview-constants";
 
@@ -69,6 +70,14 @@ export default async function InterviewPaymentCallbackPage({
             });
           } catch (e) {
             console.error("[interview-callback] email error:", e);
+          }
+
+          // ── Email automation: cancel nurture flows (user is engaged and purchasing) ──
+          try {
+            await cancelFlow(user.id, "signup_no_purchase");
+            await cancelFlow(user.id, "dormant");
+          } catch (e) {
+            console.error("[interview-callback] automation flow error:", e);
           }
         }
       }
