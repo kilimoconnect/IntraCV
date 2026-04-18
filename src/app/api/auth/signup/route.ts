@@ -86,25 +86,17 @@ export async function POST(req: Request) {
           </p>
 
           <!-- CTA -->
-          <table cellpadding="0" cellspacing="0" style="margin-bottom:28px">
-            <tr><td style="border-radius:12px;background:#ff751f;box-shadow:0 4px 15px rgba(255,117,31,0.35)">
-              <a href="${confirmationUrl}" style="display:inline-block;padding:15px 36px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
+          <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom:24px">
+            <tr><td style="border-radius:12px;background:#ff751f;box-shadow:0 4px 15px rgba(255,117,31,0.35);text-align:center">
+              <a href="${confirmationUrl}" style="display:block;padding:15px 36px;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;letter-spacing:0.2px;border-radius:12px">
                 Activate My Account &rarr;
               </a>
             </td></tr>
           </table>
 
-          <!-- Fallback link -->
-          <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0 0 8px">
-            Button not working? Copy and paste this link into your browser:
-          </p>
-          <p style="margin:0 0 28px">
-            <a href="${confirmationUrl}" style="color:#00c4cc;font-size:11px;word-break:break-all">${confirmationUrl}</a>
-          </p>
-
           <div style="border-top:1px solid #f1f5f9;padding-top:20px">
             <p style="color:#94a3b8;font-size:12px;line-height:1.6;margin:0">
-              This link expires in <strong>24 hours</strong>. If you didn't create a FuseCV account, you can safely ignore this email.
+              This link expires in <strong>24 hours</strong>. If you did not create a FuseCV account, you can safely ignore this email.
             </p>
           </div>
         </td></tr>

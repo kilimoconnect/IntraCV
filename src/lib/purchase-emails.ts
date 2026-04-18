@@ -222,7 +222,7 @@ function fullBundleEmail(firstName: string) {
       ctaLabel: "View My Documents",
       footerNote: "Access your 20 interview questions in the <strong>Interview Prep</strong> section of your dashboard.",
     }),
-    text: `Hi ${firstName},\n\nYour Full Bundle is ready.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- 20 role-specific interview questions unlocked in Interview Prep\n- ATS-optimized formatting for both documents\n- All content saved and accessible any time\n\nView your documents: ${DOCUMENTS_URL}\nInterview Prep: ${INTERVIEW_URL}\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour Full Bundle is ready.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- 20 role-specific interview questions unlocked in Interview Prep\n- ATS-optimized formatting for both documents\n- All content saved and accessible any time\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
