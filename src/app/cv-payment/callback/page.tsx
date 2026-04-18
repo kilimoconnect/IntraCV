@@ -85,17 +85,28 @@ export default async function CvPaymentCallbackPage({
               console.error("[cv-callback] email error:", e);
             }
 
-            // ── Email automation: cancel nurture flows, schedule follow-ups ──
-            // Cancel Flow 1 (user purchased — stop no-purchase nurture sequence)
-            // Cancel Flow 3 (dormant — user is clearly active)
-            // For starter/professional: schedule Flow 2 follow-ups (cover letter + interview upsells)
-            // For full: no follow-ups needed (user has everything)
+            // ── Email automation: cancel nurture flows, schedule post-purchase flows ──
             try {
+              // Cancel all pre-purchase nurture flows
               await cancelFlow(user.id, "signup_no_purchase");
+              await cancelFlow(user.id, "preview_no_purchase");
+              await cancelFlow(user.id, "missing_info");
+              await cancelFlow(user.id, "social_proof");
               await cancelFlow(user.id, "dormant");
-              if (plan === "starter" || plan === "professional") {
+
+              // cv_purchased: cover letter upsell (email 2) + interview nudge (email 3)
+              // For professional/full: email 2 (cover letter) is auto-skipped in processQueue
+              if (plan !== "full") {
                 await scheduleFlow(user.id, "cv_purchased", { plan });
               }
+
+              // Dedicated interview upsell sequence for CV-only buyers
+              if (plan === "starter") {
+                await scheduleFlow(user.id, "interview_upsell", { plan });
+              }
+
+              // Re-engagement at 45d + 90d regardless of plan
+              await scheduleFlow(user.id, "repeat_buyer", { plan });
             } catch (e) {
               console.error("[cv-callback] automation flow error:", e);
             }

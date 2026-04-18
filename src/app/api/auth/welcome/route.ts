@@ -58,14 +58,19 @@ export async function POST(req: Request) {
     });
 
     // ── Schedule automation flows ──
-    // Flow 1: nurture emails for users who signed up but haven't purchased (4 emails over 7 days)
-    // Flow 3: dormant reactivation emails at 30 and 60 days
-    // Both are cancelled automatically if/when the user purchases.
+    // All fire-and-forget (don't block the welcome email response).
+    // Each flow has its own guards in processQueue (purchase check, profile completeness, etc.).
     scheduleFlow(userId, "signup_no_purchase").catch((e) =>
-      console.error("[welcome] schedule signup_no_purchase error:", e)
+      console.error("[welcome] schedule signup_no_purchase:", e)
     );
-    scheduleFlow(userId, "dormant").catch((e) =>
-      console.error("[welcome] schedule dormant error:", e)
+    scheduleFlow(userId, "missing_info").catch((e) =>    // cancelled in cron if profile is complete
+      console.error("[welcome] schedule missing_info:", e)
+    );
+    scheduleFlow(userId, "social_proof").catch((e) =>    // 2d + 5d social proof nudge
+      console.error("[welcome] schedule social_proof:", e)
+    );
+    scheduleFlow(userId, "dormant").catch((e) =>         // 30d + 60d reactivation
+      console.error("[welcome] schedule dormant:", e)
     );
 
     return NextResponse.json({ success: true });

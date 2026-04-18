@@ -968,6 +968,23 @@ export default function CvStudio({ userId, cvData }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoDownload, cvPaidReady, aiData, selectedCategory]);
 
+  // ── Preview-no-purchase trigger ──
+  // When the user sees the AI-generated CV preview but hasn't paid, schedule
+  // the high-intent follow-up email sequence. Fires once per browser session.
+  useEffect(() => {
+    if (!aiData) return;                                           // no preview yet
+    if (cvPaidReady || pdfDownloaded) return;                     // user paid / just downloaded
+    if (sessionStorage.getItem("fusecv-auto-download") === "1") return; // returning from payment
+    if (sessionStorage.getItem("fusecv-preview-tracked")) return; // already scheduled this session
+    sessionStorage.setItem("fusecv-preview-tracked", "1");
+    fetch("/api/email-automation/trigger", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flow: "preview_no_purchase" }),
+    }).catch(() => {}); // fire-and-forget — email scheduling, not critical path
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiData]);
+
   // ── Cached readiness: shared with profile page via sessionStorage + cv_readiness_cache ──
   useEffect(() => {
     let cancelled = false;
