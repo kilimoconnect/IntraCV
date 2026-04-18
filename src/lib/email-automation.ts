@@ -41,7 +41,6 @@ export type FlowId =
   | "missing_info"
   | "cv_purchased"
   | "interview_upsell"
-  | "social_proof"
   | "repeat_buyer"
   | "dormant";
 
@@ -102,11 +101,6 @@ const FLOW_SCHEDULES: Record<FlowId, FlowEmail[]> = {
   interview_upsell: [
     { emailNumber: 2, delayMinutes: 60 * 24 * 3 },
     { emailNumber: 3, delayMinutes: 60 * 24 * 7 },
-  ],
-  // Social proof for hesitant signups
-  social_proof: [
-    { emailNumber: 1, delayMinutes: 60 * 24 * 2 },
-    { emailNumber: 2, delayMinutes: 60 * 24 * 5 },
   ],
   // Re-engage past buyers who may be applying again
   repeat_buyer: [
@@ -214,7 +208,6 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
       if (
         (row.flow === "signup_no_purchase" ||
          row.flow === "preview_no_purchase" ||
-         row.flow === "social_proof" ||
          row.flow === "dormant") &&
         ctx.hasPurchased
       ) {
@@ -321,7 +314,6 @@ function buildEmail(
     case "missing_info":         return buildMissingInfoEmail(n, ctx);
     case "cv_purchased":         return buildCvPurchasedEmail(n, ctx);
     case "interview_upsell":     return buildInterviewUpsellEmail(n, ctx);
-    case "social_proof":         return buildSocialProofEmail(n, ctx);
     case "repeat_buyer":         return buildRepeatBuyerEmail(n, ctx);
     case "dormant":              return buildDormantEmail(n, ctx);
     default:                     return null;
@@ -473,32 +465,6 @@ function buildInterviewUpsellEmail(n: number, ctx: UserContext) {
       subject: "Your CV got attention — next is interview readiness",
       body: `If your stronger CV is getting responses, interviews will follow.\n\nMost candidates wing it. The ones who prepare are the ones who get offers.\n\nYour tailored interview questions are waiting — 20 questions specific to ${roleHint}.`,
       cta: INTERVIEW_URL, ctaLabel: "Prepare for My Interview",
-    },
-  };
-
-  const e = emails[n]; if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
-}
-
-// ─── Flow: social_proof ───────────────────────────────────────────────────────
-
-function buildSocialProofEmail(n: number, ctx: UserContext) {
-  const { firstName, careerCategory } = ctx;
-
-  const audienceNote = careerCategory === "executive"
-    ? "Senior professionals who update their CV positioning before a move report significantly better reception from headhunters and boards."
-    : "Candidates who tailor their CV to each role are three times more likely to get an interview call.";
-
-  const emails: Record<number, { subject: string; body: string; cta: string; ctaLabel: string }> = {
-    1: {
-      subject: "Why professionals upgrade before applying",
-      body: `${audienceNote}\n\nThe difference is rarely experience — it is presentation.\n\nMost CVs describe what people did. Strong CVs show the impact of what they did.\n\nYour upgraded version already reflects that difference.`,
-      cta: STUDIO_URL, ctaLabel: "See My Upgraded CV",
-    },
-    2: {
-      subject: "What stronger presentation can change",
-      body: `One application to the right company, with a CV that clearly communicates your value, can change the trajectory of your year.\n\nWe did not change your experience. We changed how it reads.\n\nYour improved version is still available.`,
-      cta: STUDIO_URL, ctaLabel: "View My Improved CV",
     },
   };
 

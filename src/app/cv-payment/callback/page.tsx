@@ -91,7 +91,6 @@ export default async function CvPaymentCallbackPage({
               await cancelFlow(user.id, "signup_no_purchase");
               await cancelFlow(user.id, "preview_no_purchase");
               await cancelFlow(user.id, "missing_info");
-              await cancelFlow(user.id, "social_proof");
               await cancelFlow(user.id, "dormant");
 
               // cv_purchased: cover letter upsell (email 2) + interview nudge (email 3)

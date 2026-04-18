@@ -77,7 +77,6 @@ export default async function InterviewPaymentCallbackPage({
             await cancelFlow(user.id, "signup_no_purchase");
             await cancelFlow(user.id, "preview_no_purchase");
             await cancelFlow(user.id, "missing_info");
-            await cancelFlow(user.id, "social_proof");
             await cancelFlow(user.id, "dormant");
             await cancelFlow(user.id, "interview_upsell");
             await cancelFlow(user.id, "cv_purchased"); // email 3 was interview nudge

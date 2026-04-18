@@ -66,9 +66,6 @@ export async function POST(req: Request) {
     scheduleFlow(userId, "missing_info").catch((e) =>    // cancelled in cron if profile is complete
       console.error("[welcome] schedule missing_info:", e)
     );
-    scheduleFlow(userId, "social_proof").catch((e) =>    // 2d + 5d social proof nudge
-      console.error("[welcome] schedule social_proof:", e)
-    );
     scheduleFlow(userId, "dormant").catch((e) =>         // 30d + 60d reactivation
       console.error("[welcome] schedule dormant:", e)
     );
