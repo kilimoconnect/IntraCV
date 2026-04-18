@@ -1,22 +1,26 @@
 /**
- * email-automation.ts — FuseCV Email Machine
+ * email-automation.ts — FuseCV Email Machine v4
  *
- * Flows (in priority order):
- *   1. checkout_abandon         — user initiated payment but didn't complete
- *   2. preview_no_purchase      — CV preview viewed, no payment (HOT INTENT)
- *   3. missing_info             — profile incomplete after signup
- *   4. interview_upsell         — post CV-purchase interview prep push
- *   5. cv_purchased             — cover letter + interview nudge after purchase
- *   6. signup_no_purchase       — nurture sequence (segmented by career stage)
- *   7. upload_started_no_finish — upload started but not completed
- *   8. executive_prestige       — premium positioning flow for executive users
- *   9. dormant                  — 30d + 60d reactivation (never purchased)
- *  10. repeat_buyer             — 45d + 90d re-engagement for past buyers
+ * Flows (exact priority, 1 = highest):
+ *   1.  checkout_abandon         — payment initiated but not completed
+ *   2.  payment_failed           — gateway confirmed failure
+ *   3.  preview_no_purchase      — CV preview viewed, no payment (HOT INTENT)
+ *   4.  missing_info             — profile incomplete after signup
+ *   5.  interview_upsell         — post CV-purchase interview prep push
+ *   6.  cv_purchased             — cover letter + interview nudge after purchase
+ *   7.  upload_started_no_finish — upload started, not completed
+ *   8.  signup_no_purchase       — nurture sequence (segmented by career stage)
+ *   9.  executive_prestige       — premium positioning for executive users
+ *  10.  dormant                  — 30d + 60d reactivation (never purchased)
+ *  11.  repeat_buyer             — 45d + 90d re-engagement for past buyers
  *
- * Rules:
+ * Frequency rules:
  *   - Max 1 marketing email per user per 24 hours
- *   - checkout_abandon bypasses the 24h rate limit (revenue recovery)
- *   - All pre-purchase flows cancelled automatically on purchase
+ *   - Max 2 marketing emails per user per 7 days
+ *   - checkout_abandon bypasses both limits (revenue recovery)
+ *   - Global suppression: if checkout_abandon is active (pending or sent within 72h),
+ *     flows with priority >= 7 are suppressed
+ *   - 48h purchase cooldown: no sales emails for 48h except onboarding flows (5 + 6)
  */
 
 import { createAdminSupabase } from "@/lib/supabase/admin";
@@ -37,12 +41,13 @@ const CV_BUILDER_URL = `${SITE_URL}/cv-builder`;
 
 export type FlowId =
   | "checkout_abandon"
+  | "payment_failed"
   | "preview_no_purchase"
   | "missing_info"
   | "interview_upsell"
   | "cv_purchased"
-  | "signup_no_purchase"
   | "upload_started_no_finish"
+  | "signup_no_purchase"
   | "executive_prestige"
   | "dormant"
   | "repeat_buyer";
@@ -59,30 +64,38 @@ interface UserContext {
   careerCategory: CareerCategory;
   hasPurchased: boolean;
   hasInterviewPurchase: boolean;
-  hasCompleteProfile: boolean;
+  hasCompleteProfile: boolean;  // experience + summary both present
   marketingUnsubscribed: boolean;
 }
 
-// ─── Priority (lower = higher priority) ──────────────────────────────────────
+// ─── Priority (1 = highest — unique, no ties) ─────────────────────────────────
 
-const FLOW_PRIORITY: Record<FlowId, number> = {
+export const FLOW_PRIORITY: Record<FlowId, number> = {
   checkout_abandon:         1,
-  preview_no_purchase:      2,
-  missing_info:             3,
-  interview_upsell:         4,
-  cv_purchased:             4,
-  signup_no_purchase:       5,
-  upload_started_no_finish: 5,
-  executive_prestige:       5,
-  dormant:                  6,
-  repeat_buyer:             7,
+  payment_failed:           2,
+  preview_no_purchase:      3,
+  missing_info:             4,
+  interview_upsell:         5,
+  cv_purchased:             6,
+  upload_started_no_finish: 7,
+  signup_no_purchase:       8,
+  executive_prestige:       9,
+  dormant:                 10,
+  repeat_buyer:            11,
 };
+
+// Flows suppressed when checkout_abandon is active (priority >= SUPPRESS_THRESHOLD)
+const CHECKOUT_SUPPRESS_THRESHOLD = 7;
 
 // ─── Schedules ────────────────────────────────────────────────────────────────
 
 const FLOW_SCHEDULES: Record<FlowId, FlowEmail[]> = {
   checkout_abandon: [
     { emailNumber: 1, delayMinutes: 30 },
+    { emailNumber: 2, delayMinutes: 60 * 24 },
+  ],
+  payment_failed: [
+    { emailNumber: 1, delayMinutes: 10 },
     { emailNumber: 2, delayMinutes: 60 * 24 },
   ],
   preview_no_purchase: [
@@ -95,24 +108,23 @@ const FLOW_SCHEDULES: Record<FlowId, FlowEmail[]> = {
     { emailNumber: 2, delayMinutes: 60 * 24 },
     { emailNumber: 3, delayMinutes: 60 * 24 * 3 },
   ],
-  // Email 1 already sent immediately by purchase-emails.ts
+  interview_upsell: [
+    { emailNumber: 2, delayMinutes: 60 * 24 * 3 },  // email 1 = purchase confirmation
+    { emailNumber: 3, delayMinutes: 60 * 24 * 7 },
+  ],
   cv_purchased: [
-    { emailNumber: 2, delayMinutes: 60 * 24 * 2 },
+    { emailNumber: 2, delayMinutes: 60 * 24 * 2 },  // email 1 = purchase confirmation
     { emailNumber: 3, delayMinutes: 60 * 24 * 5 },
   ],
-  interview_upsell: [
-    { emailNumber: 2, delayMinutes: 60 * 24 * 3 },
-    { emailNumber: 3, delayMinutes: 60 * 24 * 7 },
+  upload_started_no_finish: [
+    { emailNumber: 1, delayMinutes: 15 },
+    { emailNumber: 2, delayMinutes: 60 * 24 },
   ],
   signup_no_purchase: [
     { emailNumber: 1, delayMinutes: 30 },
     { emailNumber: 2, delayMinutes: 60 * 24 },
     { emailNumber: 3, delayMinutes: 60 * 24 * 3 },
     { emailNumber: 4, delayMinutes: 60 * 24 * 7 },
-  ],
-  upload_started_no_finish: [
-    { emailNumber: 1, delayMinutes: 15 },
-    { emailNumber: 2, delayMinutes: 60 * 24 },
   ],
   executive_prestige: [
     { emailNumber: 1, delayMinutes: 60 * 24 },
@@ -130,6 +142,7 @@ const FLOW_SCHEDULES: Record<FlowId, FlowEmail[]> = {
 
 // ─── Queue management ─────────────────────────────────────────────────────────
 
+/** Schedule a flow. Idempotent — safe to call multiple times. */
 export async function scheduleFlow(
   userId: string,
   flow: FlowId,
@@ -156,6 +169,26 @@ export async function scheduleFlow(
   if (error) console.error(`[email-automation] scheduleFlow(${flow}):`, error.message);
 }
 
+/**
+ * Reset a flow — delete pending/cancelled rows then reschedule fresh from now.
+ * Use for repeat_buyer on new purchase so the 45d/90d timer resets.
+ */
+export async function resetFlow(
+  userId: string,
+  flow: FlowId,
+  metadata: Record<string, string> = {}
+): Promise<void> {
+  const admin = createAdminSupabase();
+  await admin
+    .from("email_automation_queue")
+    .delete()
+    .eq("user_id", userId)
+    .eq("flow", flow)
+    .in("status", ["pending", "cancelled"]);
+  await scheduleFlow(userId, flow, metadata);
+}
+
+/** Cancel all pending emails in a flow. */
 export async function cancelFlow(userId: string, flow: FlowId): Promise<void> {
   const admin = createAdminSupabase();
   const { error } = await admin
@@ -168,6 +201,7 @@ export async function cancelFlow(userId: string, flow: FlowId): Promise<void> {
   if (error) console.error(`[email-automation] cancelFlow(${flow}):`, error.message);
 }
 
+/** Cancel all pending emails across all flows (e.g., on unsubscribe). */
 export async function cancelAllFlows(userId: string): Promise<void> {
   const admin = createAdminSupabase();
   await admin
@@ -183,7 +217,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   const admin = createAdminSupabase();
   let sent = 0, skipped = 0, failed = 0;
 
-  // Fetch more than we'll send so priority grouping works correctly
+  // Fetch more than we'll send so per-user priority sorting works correctly
   const { data: rows, error } = await admin
     .from("email_automation_queue")
     .select("id, user_id, flow, email_number, metadata")
@@ -195,33 +229,40 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   if (error) { console.error("[email-automation] fetch error:", error.message); return { sent: 0, skipped: 0, failed: 0 }; }
   if (!rows?.length) return { sent: 0, skipped: 0, failed: 0 };
 
-  // Group by user and sort by priority within each group
+  // Group by user, sort each group by priority
   const byUser: Record<string, QueueRow[]> = {};
   for (const row of rows as QueueRow[]) {
     (byUser[row.user_id] ??= []).push(row);
   }
-  for (const rows of Object.values(byUser)) {
-    rows.sort((a, b) => (FLOW_PRIORITY[a.flow] ?? 99) - (FLOW_PRIORITY[b.flow] ?? 99));
+  for (const userRows of Object.values(byUser)) {
+    userRows.sort((a, b) => (FLOW_PRIORITY[a.flow] ?? 99) - (FLOW_PRIORITY[b.flow] ?? 99));
   }
 
   for (const [userId, userRows] of Object.entries(byUser)) {
-    // Check rate limit: last email sent to this user
-    const lastSentAt = await getLastSentTime(userId);
-    const hoursSinceLast = lastSentAt
-      ? (Date.now() - lastSentAt.getTime()) / 3_600_000
-      : Infinity;
-    const isRateLimited = hoursSinceLast < 24;
+    // Fetch all rate-limit data in parallel (once per user)
+    const [sentLast24h, sentLast7d, checkoutActive] = await Promise.all([
+      getSentInWindow(userId, 24),
+      getSentInWindow(userId, 168),     // 7 days
+      isCheckoutAbandonActive(userId),
+    ]);
+    const isRateLimited = sentLast24h >= 1 || sentLast7d >= 2;
 
     let sentThisUser = false;
 
     for (const row of userRows) {
+      const priority = FLOW_PRIORITY[row.flow] ?? 99;
       const bypassRateLimit = row.flow === "checkout_abandon";
 
-      // Skip if we already sent one to this user this run, or they're rate-limited
-      if (sentThisUser || (isRateLimited && !bypassRateLimit)) {
-        skipped++;
-        continue;
+      // ── Global suppression: checkout_abandon active → pause low-priority flows ──
+      if (checkoutActive && priority >= CHECKOUT_SUPPRESS_THRESHOLD && row.flow !== "checkout_abandon") {
+        skipped++; continue;
       }
+
+      // ── Frequency cap: max 1/day, 2/week (checkout_abandon always bypasses) ──
+      if (isRateLimited && !bypassRateLimit) { skipped++; continue; }
+
+      // ── Only send one per user per cron run ──
+      if (sentThisUser && !bypassRateLimit) { skipped++; continue; }
 
       // Atomic claim
       const { count } = await admin
@@ -231,7 +272,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
         .eq("status", "pending")
         .select("id", { count: "exact", head: true });
 
-      if (!count) { skipped++; continue; } // another process claimed it
+      if (!count) { skipped++; continue; } // race — another process got it
 
       try {
         const ctx = await fetchUserContext(userId);
@@ -240,21 +281,23 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
 
         // ── Per-flow guards ──
 
-        const PRE_PURCHASE_FLOWS: FlowId[] = [
-          "checkout_abandon", "preview_no_purchase", "signup_no_purchase",
-          "missing_info", "upload_started_no_finish", "executive_prestige", "dormant",
+        const PRE_PURCHASE: FlowId[] = [
+          "checkout_abandon", "payment_failed", "preview_no_purchase",
+          "signup_no_purchase", "missing_info", "upload_started_no_finish",
+          "executive_prestige", "dormant",
         ];
-        if (PRE_PURCHASE_FLOWS.includes(row.flow) && ctx.hasPurchased) {
+        if (PRE_PURCHASE.includes(row.flow) && ctx.hasPurchased) {
           await cancelFlow(userId, row.flow);
           await markStatus(row.id, "cancelled"); skipped++; continue;
         }
 
+        // missing_info: cancel when profile is actually complete (experience + summary)
         if (row.flow === "missing_info" && ctx.hasCompleteProfile) {
           await cancelFlow(userId, "missing_info");
           await markStatus(row.id, "cancelled"); skipped++; continue;
         }
 
-        // Skip cover letter upsell for buyers who already have it
+        // cv_purchased email 2 (cover letter): skip for buyers who already have it
         if (row.flow === "cv_purchased" && row.email_number === 2) {
           const plan = row.metadata?.plan as CvPlan | undefined;
           if (plan === "professional" || plan === "full") {
@@ -262,6 +305,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
           }
         }
 
+        // interview_upsell: skip if user already bought interview questions
         if (row.flow === "interview_upsell" && ctx.hasInterviewPurchase) {
           await cancelFlow(userId, "interview_upsell");
           await markStatus(row.id, "cancelled"); skipped++; continue;
@@ -273,7 +317,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
         await sendBrevoEmail({ to: ctx.email, toName: ctx.firstName, ...emailOpts });
         await markStatus(row.id, "sent", new Date().toISOString());
         sent++;
-        sentThisUser = true;
+        if (!bypassRateLimit) sentThisUser = true;
 
       } catch (e) {
         console.error(`[email-automation] row ${row.id}:`, e);
@@ -286,17 +330,42 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   return { sent, skipped, failed };
 }
 
-async function getLastSentTime(userId: string): Promise<Date | null> {
+// ─── Rate-limit helpers ───────────────────────────────────────────────────────
+
+async function getSentInWindow(userId: string, hours: number): Promise<number> {
   const admin = createAdminSupabase();
-  const { data } = await admin
+  const since = new Date(Date.now() - hours * 3_600_000).toISOString();
+  const { count } = await admin
     .from("email_automation_queue")
-    .select("sent_at")
+    .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("status", "sent")
-    .order("sent_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return data?.sent_at ? new Date(data.sent_at) : null;
+    .gte("sent_at", since);
+  return count ?? 0;
+}
+
+async function isCheckoutAbandonActive(userId: string): Promise<boolean> {
+  const admin = createAdminSupabase();
+  const since72h = new Date(Date.now() - 72 * 3_600_000).toISOString();
+
+  const { count: pending } = await admin
+    .from("email_automation_queue")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("flow", "checkout_abandon")
+    .eq("status", "pending");
+
+  if ((pending ?? 0) > 0) return true;
+
+  const { count: recentlySent } = await admin
+    .from("email_automation_queue")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("flow", "checkout_abandon")
+    .eq("status", "sent")
+    .gte("sent_at", since72h);
+
+  return (recentlySent ?? 0) > 0;
 }
 
 async function markStatus(id: string, status: string, sentAt?: string): Promise<void> {
@@ -317,16 +386,23 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
       { data: tokens },
       { data: profile },
       { count: expCount },
+      { data: summaryRow },
     ] = await Promise.all([
       admin.auth.admin.getUserById(userId),
       admin.from("cv_personal_info").select("headline, career_category").eq("user_id", userId).maybeSingle(),
       admin.from("cv_download_tokens").select("id").eq("user_id", userId).limit(1),
       admin.from("profiles").select("interview_questions_paid_quota").eq("id", userId).maybeSingle(),
       admin.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      admin.from("cv_summary").select("summary").eq("user_id", userId).maybeSingle(),
     ]);
 
     if (!user?.email) return null;
     const fullName = user.user_metadata?.full_name || "";
+
+    // Complete profile = at least 1 experience entry AND a non-empty summary
+    const hasExp = (expCount ?? 0) > 0;
+    const hasSummary = !!summaryRow?.summary?.trim();
+
     return {
       email: user.email,
       firstName: fullName.trim().split(" ")[0] || "there",
@@ -334,7 +410,7 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
       careerCategory: (pi?.career_category as CareerCategory) || "junior",
       hasPurchased: (tokens?.length ?? 0) > 0,
       hasInterviewPurchase: (profile?.interview_questions_paid_quota ?? 0) > 0,
-      hasCompleteProfile: (expCount ?? 0) > 0,
+      hasCompleteProfile: hasExp && hasSummary,
       marketingUnsubscribed: !!user.user_metadata?.marketing_unsubscribed,
     };
   } catch (e) {
@@ -348,6 +424,7 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
 function buildEmail(flow: FlowId, n: number, ctx: UserContext) {
   switch (flow) {
     case "checkout_abandon":         return buildCheckoutAbandon(n, ctx);
+    case "payment_failed":           return buildPaymentFailed(n, ctx);
     case "preview_no_purchase":      return buildPreviewEmail(n, ctx);
     case "missing_info":             return buildMissingInfoEmail(n, ctx);
     case "cv_purchased":             return buildCvPurchasedEmail(n, ctx);
@@ -368,7 +445,7 @@ function buildCheckoutAbandon(n: number, ctx: UserContext) {
   const e = {
     1: {
       subject: "Your upgraded CV is one step away",
-      body: `You were close.\n\nYour improved CV is ready — professionally formatted, AI-optimised, watermark-free. The only thing left is completing your purchase.\n\nMost people who leave at this stage are not sure it is worth it. That is exactly why we let you preview the result first. You already saw the difference.\n\nClaim it here.`,
+      body: `You were close.\n\nYour improved CV is ready — professionally formatted, AI-optimised, watermark-free. The only thing left is completing your purchase.\n\nYou already saw the difference when you previewed it. The result is the same — it is still waiting.`,
       cta: STUDIO_URL, ctaLabel: "Complete My Download",
     },
     2: {
@@ -381,7 +458,27 @@ function buildCheckoutAbandon(n: number, ctx: UserContext) {
   return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
 }
 
-// ─── Flow: preview_no_purchase (HOT INTENT) ───────────────────────────────────
+// ─── Flow: payment_failed ─────────────────────────────────────────────────────
+
+function buildPaymentFailed(n: number, ctx: UserContext) {
+  const { firstName } = ctx;
+  const e = {
+    1: {
+      subject: "Your payment did not complete",
+      body: `Something went wrong with your payment — but your CV is still ready.\n\nThis is usually a temporary issue with the payment gateway. Your card has not been charged.\n\nTry again when you are ready — it usually goes through on the second attempt.`,
+      cta: STUDIO_URL, ctaLabel: "Try Again",
+    },
+    2: {
+      subject: "Your upgraded CV is still ready",
+      body: `Your payment did not complete yesterday, but nothing on our end has changed.\n\nYour improved CV — formatted, AI-optimised, watermark-free — is still here whenever you want to claim it.`,
+      cta: STUDIO_URL, ctaLabel: "Complete My Download",
+    },
+  }[n];
+  if (!e) return null;
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+}
+
+// ─── Flow: preview_no_purchase ────────────────────────────────────────────────
 
 function buildPreviewEmail(n: number, ctx: UserContext) {
   const { firstName, careerCategory } = ctx;
@@ -420,12 +517,12 @@ function buildMissingInfoEmail(n: number, ctx: UserContext) {
   const e = {
     1: {
       subject: "We found a few details that could strengthen your CV",
-      body: `Your profile is set up, but some sections that typically improve CV results are still empty.\n\nWork history, achievements, and skills are what the AI uses to rewrite your CV more powerfully. The more detail you provide, the stronger the output.\n\nTwo minutes is enough to fill the gaps.`,
+      body: `Your profile is set up, but some sections that typically improve CV results are still empty.\n\nWork history and a professional summary are what the AI uses to rewrite your CV more powerfully. The more detail you provide, the stronger the output.\n\nTwo minutes is enough to fill the gaps.`,
       cta: CV_BUILDER_URL, ctaLabel: "Strengthen My Profile",
     },
     2: {
       subject: "Two minutes can improve your final result",
-      body: `Your CV improvement is ready to generate — but it will be stronger with a complete profile.\n\nWe can only work with what you give us. A few more details on your experience and skills can meaningfully change how the AI presents you to recruiters.`,
+      body: `Your CV improvement is ready to generate — but it will be stronger with a complete profile.\n\nExperience entries and a clear professional summary give the AI what it needs to present you properly. Without them, the result will be generic.\n\nComplete your profile now.`,
       cta: CV_BUILDER_URL, ctaLabel: "Add My Details",
     },
     3: {
@@ -451,7 +548,7 @@ function buildCvPurchasedEmail(n: number, ctx: UserContext) {
     },
     3: {
       subject: "Interviews start after the CV — prepare now",
-      body: `A stronger CV means more responses. More responses mean more interviews.\n\nMost candidates wing it. The ones who prepare are the ones who get offers.\n\nWe created role-specific interview questions for ${roleHint} with model answers based on your profile. Better to have them now than scramble when a call comes in.`,
+      body: `A stronger CV means more responses. More responses mean more interviews.\n\nMost candidates wing it. The ones who prepare are the ones who get offers.\n\nWe created role-specific interview questions for ${roleHint} with model answers based on your profile.`,
       cta: INTERVIEW_URL, ctaLabel: "Practice Interview Questions",
     },
   }[n];
@@ -492,17 +589,16 @@ function buildInterviewUpsellEmail(n: number, ctx: UserContext) {
 function buildSignupEmail(n: number, ctx: UserContext) {
   const { firstName, careerCategory } = ctx;
 
-  // Each career stage gets a different angle, same structure
-  type EmailDef = { subject: string; body: string };
-  const byStage: Record<CareerCategory, Record<number, EmailDef>> = {
+  type ED = { subject: string; body: string };
+  const byStage: Record<CareerCategory, Record<number, ED>> = {
     junior: {
       1: {
-        subject: "Your first application matters more than you think",
+        subject: "Start with the CV you already have",
         body: `Even without years of experience, you have value.\n\nProjects, coursework, internships, initiative — these matter. But only if your CV presents them in a way that reads as professional.\n\nWe improved how your profile is presented. The upgraded version is ready to preview.`,
       },
       2: {
         subject: "Strong graduates get overlooked too — here is why",
-        body: `A first CV is rarely optimised. Most graduates use the same template, the same wording, the same layout.\n\nRecruiters see hundreds. Yours needs to stand out on the first read.\n\nWe rewrote the presentation of your experience to make it clearer and more compelling. Take a look.`,
+        body: `A first CV is rarely optimised. Most graduates use the same template, the same wording, the same layout.\n\nRecruiters see hundreds. Yours needs to stand out on the first read.\n\nWe rewrote the presentation of your experience to make it clearer and more compelling.`,
       },
       3: {
         subject: "Still using the draft CV?",
@@ -515,7 +611,7 @@ function buildSignupEmail(n: number, ctx: UserContext) {
     },
     "mid-senior": {
       1: {
-        subject: "Your stronger CV version is ready",
+        subject: "Start with the CV you already have",
         body: `We reviewed your CV and found clear opportunities to improve how your experience is presented.\n\nAt your stage, recruiters look for ownership, results, and progression. Your upgraded version makes all three more visible.`,
       },
       2: {
@@ -533,7 +629,7 @@ function buildSignupEmail(n: number, ctx: UserContext) {
     },
     executive: {
       1: {
-        subject: "Your executive CV has been reviewed",
+        subject: "Start with the CV you already have",
         body: `Senior candidates are not evaluated on experience alone. Positioning matters.\n\nThe way you frame scale, impact, and leadership in writing determines how seriously you are taken before any conversation begins.\n\nWe reviewed your CV with that in mind. Your upgraded version is ready.`,
       },
       2: {
@@ -546,14 +642,13 @@ function buildSignupEmail(n: number, ctx: UserContext) {
       },
       4: {
         subject: "Your positioning draft is still waiting",
-        body: `The strongest executive CVs do not just describe what someone did — they establish why that person's leadership mattered.\n\nYour draft reflects that approach.\n\nIt is still here whenever you are ready.`,
+        body: `The strongest executive CVs do not just describe what someone did — they establish why that person's leadership mattered.\n\nYour draft reflects that approach. It is still here whenever you are ready.`,
       },
     },
   };
 
-  const stageEmails = byStage[careerCategory] ?? byStage["mid-senior"];
-  const e = stageEmails[n];
-  if (!e) return null;
+  const emails = byStage[careerCategory] ?? byStage["mid-senior"];
+  const e = emails[n]; if (!e) return null;
   return fmt(firstName, e.subject, e.body, STUDIO_URL, "Preview Your CV");
 }
 
@@ -583,7 +678,7 @@ function buildExecutivePrestigeEmail(n: number, ctx: UserContext) {
   const { firstName } = ctx;
   const e = {
     1: {
-      subject: "Leadership experience deserves stronger presentation",
+      subject: "Leadership deserves stronger presentation",
       body: `Most CVs — even strong ones — undersell seniority.\n\nThey list what people did without communicating the scale of it. The budget they owned. The teams they led. The transformation they drove.\n\nAt your level, that context is the difference between being considered and being called.\n\nYour upgraded CV makes that context visible immediately.`,
       cta: STUDIO_URL, ctaLabel: "See My Executive CV",
     },
@@ -654,14 +749,9 @@ function buildRepeatBuyerEmail(n: number, ctx: UserContext) {
 // ─── HTML formatter ───────────────────────────────────────────────────────────
 
 function fmt(
-  firstName: string,
-  subject: string,
-  body: string,
-  ctaHref: string,
-  ctaLabel: string
+  firstName: string, subject: string, body: string, ctaHref: string, ctaLabel: string
 ): { subject: string; html: string; text: string } {
   const unsubBase = `${SITE_URL}/unsubscribe?email=`;
-
   const bodyHtml = body.split("\n\n").map(para => {
     if (para.startsWith("- ")) {
       const items = para.split("\n").map(i => i.replace(/^- /, "")).filter(Boolean);

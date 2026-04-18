@@ -4,7 +4,7 @@ import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-serv
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { sendPurchaseEmail } from "@/lib/purchase-emails";
-import { cancelFlow, scheduleFlow } from "@/lib/email-automation";
+import { cancelFlow, scheduleFlow, resetFlow } from "@/lib/email-automation";
 import CallbackClient from "./callback-client";
 
 export default async function CvPaymentCallbackPage({
@@ -28,16 +28,18 @@ export default async function CvPaymentCallbackPage({
     errorMsg = "Missing payment details. Please contact support.";
   } else {
     try {
+      // 1. Resolve user early so we can act on both success and failure paths
+      const serverSupabase = await createServerSupabase();
+      const { data: { user } } = await serverSupabase.auth.getUser();
+
       const pesapalToken = await getPesapalToken();
       const { completed, statusDescription } = await getPesapalTransactionStatus(
         pesapalToken,
         orderTrackingId
       );
+
       if (completed) {
         verified = true;
-
-        const serverSupabase = await createServerSupabase();
-        const { data: { user } } = await serverSupabase.auth.getUser();
 
         if (user) {
           const admin = createAdminSupabase();
@@ -89,6 +91,7 @@ export default async function CvPaymentCallbackPage({
             try {
               // Cancel all pre-purchase nurture flows
               await cancelFlow(user.id, "checkout_abandon");
+              await cancelFlow(user.id, "payment_failed");
               await cancelFlow(user.id, "signup_no_purchase");
               await cancelFlow(user.id, "preview_no_purchase");
               await cancelFlow(user.id, "missing_info");
@@ -107,8 +110,8 @@ export default async function CvPaymentCallbackPage({
                 await scheduleFlow(user.id, "interview_upsell", { plan });
               }
 
-              // Re-engagement at 45d + 90d regardless of plan
-              await scheduleFlow(user.id, "repeat_buyer", { plan });
+              // Re-engagement at 45d + 90d — reset so timer starts from this purchase
+              await resetFlow(user.id, "repeat_buyer", { plan });
             } catch (e) {
               console.error("[cv-callback] automation flow error:", e);
             }
@@ -116,6 +119,15 @@ export default async function CvPaymentCallbackPage({
         }
       } else {
         errorMsg = statusDescription || "Payment not yet confirmed. Please contact support.";
+
+        // ── Schedule payment_failed flow so the user gets recovery emails ──
+        if (user) {
+          try {
+            await scheduleFlow(user.id, "payment_failed");
+          } catch (e) {
+            console.error("[cv-callback] payment_failed schedule error:", e);
+          }
+        }
       }
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : "Verification failed. Please contact support.";
