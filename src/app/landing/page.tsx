@@ -462,9 +462,6 @@ function StorySection() {
             ))}
           </div>
         </div>
-        <p className="text-slate-400 text-xs sm:text-sm mt-10 text-center italic">
-          Use real user story when available
-        </p>
       </div>
     </section>
   );
