@@ -162,67 +162,67 @@ function item(text: string) {
 
 function starterEmail(firstName: string) {
   return {
-    subject: "Your CV is ready to download — FuseCV",
+    subject: "Your CV has been downloaded — FuseCV",
     html: shell({
-      preheader: "Your watermark-free CV is ready. Head to your dashboard to download it now.",
-      headline: `Your CV is ready, ${firstName}! 🎉`,
-      intro: `Great news — your payment has been confirmed and your professional CV is ready to download. Head to your dashboard and hit <strong>Download CV</strong> to get your watermark-free file.`,
+      preheader: "Your watermark-free CV has been downloaded automatically and saved to your Documents.",
+      headline: `Your CV is downloaded, ${firstName}! 🎉`,
+      intro: `Payment confirmed — your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. You&apos;ll also find it saved in your Documents any time you need it again.`,
       itemsHtml: [
-        item("Watermark-free CV download (PDF)"),
+        item("CV automatically downloaded in your chosen format &amp; theme"),
+        item("Watermark-free, print-ready PDF"),
         item("ATS-optimized formatting — passes automated screening"),
-        item("6 premium recruiter-ready layout options"),
         item("Saved to your Documents for future access"),
       ].join(""),
       ctaHref: DOCUMENTS_URL,
       ctaLabel: "View My Documents",
       footerNote: "Questions? Reply to this email and we&apos;ll help you out.",
     }),
-    text: `Hi ${firstName},\n\nYour CV is ready to download!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- ATS-optimized formatting\n- 6 premium layout options\n- Saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour CV has been automatically downloaded in your chosen format and theme.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- ATS-optimized formatting\n- Saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
 function professionalEmail(firstName: string) {
   return {
-    subject: "Your CV & Cover Letter are ready — FuseCV",
+    subject: "Your CV has been downloaded & cover letter is ready — FuseCV",
     html: shell({
-      preheader: "Your CV and tailored cover letter are both ready. Start applying with confidence.",
+      preheader: "Your CV was downloaded automatically. Your cover letter is saved and ready to use.",
       headline: `Your CV & Cover Letter are ready, ${firstName}! 🎉`,
-      intro: `Payment confirmed — your Professional Package is now active. You have a watermark-free CV <strong>and</strong> a tailored cover letter ready to go. Head to your dashboard to download and use them.`,
+      intro: `Payment confirmed — your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your tailored cover letter is saved in your Documents, ready to personalise and send.`,
       itemsHtml: [
-        item("Watermark-free CV download (PDF)"),
-        item("Tailored cover letter — matched to your target role"),
+        item("CV automatically downloaded in your chosen format &amp; theme"),
+        item("Watermark-free, print-ready PDF"),
+        item("Tailored cover letter saved to your Documents"),
         item("ATS-optimized formatting for both documents"),
-        item("6 premium recruiter-ready layout options"),
-        item("Both documents saved to your Documents"),
+        item("Both documents available any time in your Documents"),
       ].join(""),
       ctaHref: DOCUMENTS_URL,
       ctaLabel: "View My Documents",
       footerNote: "Find your cover letter under the <strong>Documents</strong> section in your dashboard.",
     }),
-    text: `Hi ${firstName},\n\nYour Professional Package is ready!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- Tailored cover letter\n- ATS-optimized formatting\n- 6 premium layout options\n- Both documents saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour CV has been automatically downloaded and your cover letter is ready.\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- ATS-optimized formatting for both documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
 function fullBundleEmail(firstName: string) {
   return {
-    subject: "Your Full Bundle is ready — FuseCV",
+    subject: "Your Full Bundle is ready — CV downloaded, everything unlocked — FuseCV",
     html: shell({
-      preheader: "CV, cover letter and 20 interview questions are all unlocked. Time to land that role.",
-      headline: `Everything is unlocked, ${firstName}! 🚀`,
-      intro: `Your Full Bundle is active. You now have a professional CV, a tailored cover letter, <strong>and</strong> 20 role-specific interview questions — everything you need to go from application to offer.`,
+      preheader: "CV downloaded automatically. Cover letter and 20 interview questions are all ready to go.",
+      headline: `Everything is ready, ${firstName}! 🚀`,
+      intro: `Your Full Bundle is active. Your CV has been <strong>automatically downloaded</strong> in your chosen format and theme. Your cover letter and 20 role-specific interview questions are unlocked and waiting in your dashboard.`,
       itemsHtml: [
-        item("Watermark-free CV download (PDF)"),
-        item("Tailored cover letter — matched to your target role"),
+        item("CV automatically downloaded in your chosen format &amp; theme"),
+        item("Watermark-free, print-ready PDF"),
+        item("Tailored cover letter saved to your Documents"),
         item("20 role-specific interview questions unlocked"),
         item("ATS-optimized formatting for both documents"),
-        item("6 premium recruiter-ready layout options"),
-        item("All content saved to your Documents"),
+        item("All content saved and accessible any time"),
       ].join(""),
       ctaHref: DOCUMENTS_URL,
       ctaLabel: "View My Documents",
-      footerNote: "Access your interview questions under the <strong>Interview Prep</strong> tab.",
+      footerNote: "Access your interview questions under the <strong>Interview Prep</strong> tab in your dashboard.",
     }),
-    text: `Hi ${firstName},\n\nYour Full Bundle is ready!\n\nWhat's included:\n- Watermark-free CV download (PDF)\n- Tailored cover letter\n- 20 role-specific interview questions\n- ATS-optimized formatting\n- 6 premium layout options\n- All content saved to your Documents\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
+    text: `Hi ${firstName},\n\nYour Full Bundle is ready!\n\nWhat's included:\n- CV downloaded in your chosen format & theme\n- Watermark-free, print-ready PDF\n- Tailored cover letter saved to your Documents\n- 20 role-specific interview questions unlocked\n- ATS-optimized formatting for both documents\n- All content saved and accessible any time\n\nView your documents: ${DOCUMENTS_URL}\n\n— The FuseCV Team`,
   };
 }
 
