@@ -70,13 +70,19 @@ export default async function CvPaymentCallbackPage({
           // ── Send purchase confirmation email ──
           // downloadTokenId is non-null only on the very first callback (unused token),
           // so this guards against re-sending if the user revisits the callback URL.
+          // Must be awaited — unawaited promises are killed when the Server Component
+          // finishes rendering and the serverless function terminates.
           if (downloadTokenId) {
             const fullName = user.user_metadata?.full_name || "";
-            sendPurchaseEmail({
-              type: plan,
-              toEmail: user.email!,
-              toName: fullName,
-            }).catch((e) => console.error("[cv-callback] email error:", e));
+            try {
+              await sendPurchaseEmail({
+                type: plan,
+                toEmail: user.email!,
+                toName: fullName,
+              });
+            } catch (e) {
+              console.error("[cv-callback] email error:", e);
+            }
           }
         }
       } else {

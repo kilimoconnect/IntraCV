@@ -57,13 +57,19 @@ export default async function InterviewPaymentCallbackPage({
           remaining = Math.max(0, FREE_QUOTA + paidQuota - generated);
           verified = true;
 
-          // ── Send purchase confirmation email (fire-and-forget) ──
+          // ── Send purchase confirmation email ──
+          // Must be awaited — unawaited promises are killed when the Server Component
+          // finishes rendering and the serverless function terminates.
           const fullName = user.user_metadata?.full_name || "";
-          sendPurchaseEmail({
-            type: "interview",
-            toEmail: user.email!,
-            toName: fullName,
-          }).catch((e) => console.error("[interview-callback] email error:", e));
+          try {
+            await sendPurchaseEmail({
+              type: "interview",
+              toEmail: user.email!,
+              toName: fullName,
+            });
+          } catch (e) {
+            console.error("[interview-callback] email error:", e);
+          }
         }
       }
     } catch (err) {
