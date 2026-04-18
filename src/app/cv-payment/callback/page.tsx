@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { sendPurchaseEmail } from "@/lib/purchase-emails";
 import CallbackClient from "./callback-client";
 
 export default async function CvPaymentCallbackPage({
@@ -64,6 +65,18 @@ export default async function CvPaymentCallbackPage({
             } catch (quotaErr) {
               console.error("[cv-callback] Failed to grant interview quota:", quotaErr);
             }
+          }
+
+          // ── Send purchase confirmation email ──
+          // downloadTokenId is non-null only on the very first callback (unused token),
+          // so this guards against re-sending if the user revisits the callback URL.
+          if (downloadTokenId) {
+            const fullName = user.user_metadata?.full_name || "";
+            sendPurchaseEmail({
+              type: plan,
+              toEmail: user.email!,
+              toName: fullName,
+            }).catch((e) => console.error("[cv-callback] email error:", e));
           }
         }
       } else {

@@ -3,6 +3,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { getPesapalToken, getPesapalTransactionStatus } from "@/lib/pesapal-server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { sendPurchaseEmail } from "@/lib/purchase-emails";
 import InterviewCallbackClient from "./callback-client";
 import { FREE_QUOTA, PAID_BATCH } from "@/lib/interview-constants";
 
@@ -55,6 +56,14 @@ export default async function InterviewPaymentCallbackPage({
           const paidQuota = profile?.interview_questions_paid_quota ?? 0;
           remaining = Math.max(0, FREE_QUOTA + paidQuota - generated);
           verified = true;
+
+          // ── Send purchase confirmation email (fire-and-forget) ──
+          const fullName = user.user_metadata?.full_name || "";
+          sendPurchaseEmail({
+            type: "interview",
+            toEmail: user.email!,
+            toName: fullName,
+          }).catch((e) => console.error("[interview-callback] email error:", e));
         }
       }
     } catch (err) {
