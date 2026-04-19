@@ -667,27 +667,46 @@ export default function MyProfile({
         /* ── Loading skeleton — shown until data is ready ── */
         if (loadingReadiness) {
           return (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-sm">
-              <div className="px-5 pt-5 pb-4 space-y-4">
-                <div className="h-5 bg-slate-200 rounded-lg animate-pulse w-3/4" />
-                <div className="space-y-1.5">
-                  <div className="flex justify-between">
-                    <div className="h-3.5 bg-slate-200 rounded animate-pulse w-40" />
-                    <div className="h-6 bg-slate-200 rounded animate-pulse w-12" />
+            <div className="rounded-2xl overflow-hidden relative" style={{ background: "linear-gradient(140deg, #07111f 0%, #001260 100%)" }}>
+              <style>{`.mp-skel{animation:mp-pulse 1.6s ease-in-out infinite;border-radius:6px;background:rgba(255,255,255,0.1)} @keyframes mp-pulse{0%,100%{opacity:.3}50%{opacity:.6}}`}</style>
+              {/* Dot grid */}
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
+              {/* Top: ring + text skeletons */}
+              <div className="px-5 pt-5 pb-4 flex items-center gap-5 relative z-10">
+                {/* Ring skeleton */}
+                <div className="relative flex-shrink-0 w-[80px] h-[80px]">
+                  <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r={34} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
+                    <circle cx="40" cy="40" r={34} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="7"
+                      strokeLinecap="round" strokeDasharray="54 160" transform="rotate(-90 40 40)"
+                      style={{ animation: "mp-pulse 1.6s ease-in-out infinite" }} />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin" style={{ color: "rgba(255,255,255,0.28)" }} />
                   </div>
-                  <div className="h-3 w-full bg-slate-200 rounded-full animate-pulse" />
                 </div>
-                <div className="h-3.5 bg-slate-200 rounded animate-pulse w-56" />
-                <div className="h-11 bg-slate-200 rounded-xl animate-pulse w-full" />
+                {/* Text + bar skeletons */}
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div className="mp-skel h-4 w-3/4" />
+                  <div className="mp-skel h-3 w-1/3" />
+                  <div className="mp-skel h-1.5 w-full rounded-full" />
+                </div>
               </div>
-              <div className="border-t border-slate-200 px-5 py-4 grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="h-3 bg-slate-200 rounded animate-pulse w-1/2" />
-                  {[80, 90, 70].map((w, i) => <div key={i} className="h-2.5 bg-slate-200 rounded animate-pulse" style={{ width: `${w}%` }} />)}
+              {/* CTA skeleton */}
+              <div className="px-5 pb-5 relative z-10 space-y-2.5">
+                <div className="mp-skel h-3 w-2/3" />
+                <div className="mp-skel h-11 w-full rounded-xl" />
+              </div>
+              {/* Bottom grid skeletons */}
+              <div className="grid sm:grid-cols-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="px-5 py-4 space-y-2 border-b sm:border-b-0 sm:border-r" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+                  <div className="mp-skel h-3 w-1/3" />
+                  {[75, 90, 65, 80, 70].map((w, i) => <div key={i} className="mp-skel h-2.5" style={{ width: `${w}%` }} />)}
                 </div>
-                <div className="space-y-2">
-                  <div className="h-3 bg-slate-200 rounded animate-pulse w-1/2" />
-                  {[75, 85, 65].map((w, i) => <div key={i} className="h-2.5 bg-slate-200 rounded animate-pulse" style={{ width: `${w}%` }} />)}
+                <div className="px-5 py-4 space-y-2">
+                  <div className="mp-skel h-3 w-2/5" />
+                  {[85, 70, 80, 60, 75].map((w, i) => <div key={i} className="mp-skel h-2.5" style={{ width: `${w}%` }} />)}
                 </div>
               </div>
             </div>
