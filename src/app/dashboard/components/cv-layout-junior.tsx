@@ -1160,14 +1160,11 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const HEADER_H = STRIPE_H + HEADER_CONTENT_H;
   const BODY_TOP = HEADER_H + 10;
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
-  const P2_CHROME = 36;
-  const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
   const measures = measureAllSections(d, COL_W);
   const sectionOrder: Parameters<typeof paginateSections>[0] = ["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references", "declaration"];
-  const plan = paginateSections(sectionOrder, measures, [PAGE_BUDGET, P2_BUDGET]);
+  const plan = paginateSections(sectionOrder, measures, [PAGE_BUDGET]);
   const show = new Set(plan.pages[0]?.sections ?? []);
-  const showP2 = new Set(plan.pages[1]?.sections ?? []);
 
   const SkillsGrid = ({ label }: { label: string }) => (
     <div style={{ marginBottom: 13, paddingBottom: 11, borderBottom: `1px solid ${C.divider}` }}>
@@ -1353,95 +1350,6 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
           )}
         </div>
       </div>
-
-      {/* Page 2 overflow */}
-      {showP2.size > 0 && (
-        <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: P2_CHROME, backgroundColor: C.sidebarBg, borderBottom: `2px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `0 ${MX}px` }}>
-            <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text }}>{d.fullName}</span>
-            <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>Page 2</span>
-          </div>
-          <div style={{ position: "absolute", top: P2_CHROME, left: MX, width: COL_W, maxHeight: P2_BUDGET, overflow: "hidden" }}>
-            {showP2.has("experience") && d.experience?.length > 0 && (
-              <div style={{ marginBottom: 13, paddingBottom: 11, borderBottom: `1px solid ${C.divider}` }}>
-                <HeadingUnderline C={C}>Experience</HeadingUnderline>
-                {d.experience.map((exp, i) => (
-                  <div key={i} style={{ marginBottom: i < d.experience.length - 1 ? 10 : 0 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text }}>{exp.role}</span>
-                      <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, whiteSpace: "nowrap" }}>{exp.dates}</span>
-                    </div>
-                    <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
-                    {exp.bullets?.length > 0 && (
-                      <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
-                          <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {showP2.has("achievements") && d.achievements && d.achievements.length > 0 && (
-              <div style={{ marginBottom: 13 }}>
-                <HeadingUnderline C={C}>Key Achievements</HeadingUnderline>
-                {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, lineHeight: "17px" }}>★</span>
-                    <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {showP2.has("skills") && d.skills?.length > 0 && (
-              <div style={{ marginBottom: 13 }}>
-                <HeadingUnderline C={C}>Skills</HeadingUnderline>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px 14px" }}>
-                  {d.skills.map((skill, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: C.primary, flexShrink: 0 }} />
-                      <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "10px", color: C.text }}>{skill}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {showP2.has("education") && d.education?.length > 0 && (
-              <div style={{ marginBottom: 13 }}>
-                <HeadingUnderline C={C}>Education</HeadingUnderline>
-                {d.education.map((edu, i) => (
-                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}>{edu.school} · {edu.year}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {showP2.has("references") && d.references?.length > 0 && (
-              <div style={{ marginBottom: 13 }}>
-                <HeadingUnderline C={C}>References</HeadingUnderline>
-                <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
-                  {d.references.map((ref, i) => (
-                    <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                      <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                      <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                      {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>☎ {ref.phone}</div>}
-                      {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>✉ {ref.email}</div>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {showP2.has("declaration") && d.declaration?.declaration && (
-              <div>
-                <HeadingUnderline C={C}>Declaration</HeadingUnderline>
-                <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
