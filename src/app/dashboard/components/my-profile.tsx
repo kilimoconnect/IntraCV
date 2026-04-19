@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import CVReadinessBanner from "./cv-readiness-banner";
 
 interface MyProfileProps {
   personalInfo: any;
@@ -695,84 +696,16 @@ export default function MyProfile({
 
         const score = cvReadiness?.strength ?? 0;
         const isReady = score >= 75;
-        const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-500" : "text-red-600";
-        const barColor  = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500"  : "bg-red-500";
 
         return (
-          <div className={`rounded-2xl border overflow-hidden shadow-sm ${isReady ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50" : "border-red-200 bg-gradient-to-br from-red-50 to-amber-50"}`}>
-
-            {/* Top section */}
-            <div className="px-5 pt-5 pb-4">
-
-              {/* Status headline */}
-              <div className="flex items-center gap-2 mb-4">
-                <span className={`text-base font-bold ${isReady ? "text-emerald-800" : "text-red-700"}`}>
-                  {isReady ? "Your CV looks strong and job-ready ✅" : "Your CV is not ready for job applications ❌"}
-                </span>
-              </div>
-
-              {/* Strength bar */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium text-slate-700">Your current CV strength</span>
-                  <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}%</span>
-                </div>
-                <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div className={`h-3 rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${score}%` }} />
-                </div>
-              </div>
-
-              {/* Improve text + CTA */}
-              <p className="text-sm font-semibold text-slate-700 mb-3">
-                {isReady ? "Keep your CV polished — generate or update it anytime" : "Improve your chances of getting hired"}
-              </p>
-              <button
-                onClick={handleGenerateCV}
-                disabled={isGeneratingCV}
-                className="w-full flex items-center justify-center gap-2 bg-[#ff751f] hover:bg-[#e8661a] disabled:opacity-70 text-white font-bold py-3 rounded-xl shadow-lg shadow-[#ff751f]/20 transition-all duration-200 text-sm"
-              >
-                {isGeneratingCV ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-                Generate Professional CV
-              </button>
-            </div>
-
-            {/* Issues + Improvements */}
-            {cvReadiness && (
-              <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-red-200/60 border-t border-red-200/40">
-
-                {/* Issues */}
-                {cvReadiness.issues.length > 0 && (
-                  <div className="px-5 py-4">
-                    <p className="text-[11px] font-bold text-red-700 uppercase tracking-wider mb-3">⚠️ Issues found in your CV</p>
-                    <ul className="space-y-2">
-                      {cvReadiness.issues.map((issue, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-red-800">
-                          <span className="text-red-400 shrink-0 mt-0.5 font-bold">–</span>
-                          {issue}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Improvements */}
-                {cvReadiness.improvements.length > 0 && (
-                  <div className="px-5 py-4 bg-emerald-50/60">
-                    <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-3">What we will improve</p>
-                    <ul className="space-y-2">
-                      {cvReadiness.improvements.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-xs text-emerald-800">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
+          <CVReadinessBanner
+            score={score}
+            isReady={isReady}
+            isAnalyzing={false}
+            cvReadiness={cvReadiness}
+            onGenerate={handleGenerateCV}
+            isGenerating={isGeneratingCV}
+          />
         );
       })()}
 

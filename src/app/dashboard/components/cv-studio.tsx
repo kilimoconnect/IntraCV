@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { generateTxRef } from "@/lib/flutterwave";
 import { detectCategory } from "@/lib/detect-category";
+import CVReadinessBanner from "./cv-readiness-banner";
 
 // ─── CV Pricing Plans ───
 const CURRENCY = "USD";
@@ -1948,10 +1949,8 @@ export default function CvStudio({ userId, cvData }: Props) {
 
   // ── Profile Analysis (initial step, auto-runs) ──
   if (step === "analyze-profile") {
-    const score = cvReadiness?.strength ?? 0;
-    const scoreColor = score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-500" : "text-red-600";
-    const barColor   = score >= 75 ? "bg-emerald-500"   : score >= 50 ? "bg-amber-500"   : "bg-red-500";
-    const isReady    = score >= 75;
+    const score    = cvReadiness?.strength ?? 0;
+    const isReady  = score >= 75;
 
     return (
       <div className="max-w-2xl mx-auto pt-4 pb-10 px-4 space-y-4">
@@ -1987,87 +1986,29 @@ export default function CvStudio({ userId, cvData }: Props) {
         )}
 
         {/* ── CV Readiness Banner ── */}
-        <div className={`rounded-2xl border overflow-hidden shadow-sm ${isReady ? "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50" : "border-red-200 bg-gradient-to-br from-red-50 to-amber-50"}`}>
-          <div className="px-5 pt-5 pb-4">
-
-            {/* Status */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className={`text-base font-bold ${isReady ? "text-emerald-800" : "text-red-700"}`}>
-                {profileAnalyzing && !cvReadiness
-                  ? "Analysing your profile…"
-                  : isReady
-                  ? "Your CV looks strong and job-ready ✅"
-                  : "Your CV is not ready for job applications ❌"}
-              </span>
-            </div>
-
-            {/* Strength bar */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-medium text-slate-700">Your current CV strength</span>
-                {profileAnalyzing && !cvReadiness
-                  ? <span className="text-sm text-slate-400 animate-pulse">Analysing…</span>
-                  : <span className={`text-2xl font-black tabular-nums ${scoreColor}`}>{score}%</span>
-                }
-              </div>
-              <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-3 rounded-full transition-all duration-700 ${profileAnalyzing && !cvReadiness ? "bg-slate-300 animate-pulse w-1/3" : barColor}`}
-                  style={profileAnalyzing && !cvReadiness ? {} : { width: `${score}%` }}
-                />
-              </div>
-            </div>
-
-          </div>
-
-          {/* Issues + Improvements */}
-          {cvReadiness && (cvReadiness.issues.length > 0 || cvReadiness.improvements.length > 0) && (
-            <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 border-t border-slate-200">
-              {cvReadiness.issues.length > 0 && (
-                <div className="px-5 py-4">
-                  <p className="text-[11px] font-bold text-red-700 uppercase tracking-wider mb-3">⚠️ Issues found in your CV</p>
-                  <ul className="space-y-2">
-                    {cvReadiness.issues.map((issue, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-red-800">
-                        <span className="text-red-400 shrink-0 mt-0.5 font-bold">–</span>
-                        {issue}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {cvReadiness.improvements.length > 0 && (
-                <div className="px-5 py-4 bg-emerald-50/60">
-                  <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-3">What we will improve</p>
-                  <ul className="space-y-2">
-                    {cvReadiness.improvements.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-emerald-800">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Missing sections / profile gaps — computed per detected category */}
+        <CVReadinessBanner
+          score={score}
+          isReady={isReady}
+          isAnalyzing={profileAnalyzing}
+          cvReadiness={cvReadiness}
+        >
+          {/* Missing sections — passed as children so they render inside the dark card */}
           {(() => {
             const detectedCat = detectedCategory;
             const categoryGaps = getCategoryGaps(detectedCat, cvData);
             if (categoryGaps.length === 0) return null;
             const catLabel = detectedCat === "mid-senior" ? "Mid-Senior" : detectedCat.charAt(0).toUpperCase() + detectedCat.slice(1);
             return (
-              <div className="border-t border-slate-200 px-5 py-4">
+              <div className="px-5 py-4">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(251,191,36,0.9)" }}>
                     📋 Missing for {catLabel} CV
                   </p>
                   <button
                     onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
                     disabled={navigatingToBuilder}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-[#004aad] hover:text-[#003a8c] bg-[#004aad]/5 hover:bg-[#004aad]/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.65)" }}
                   >
                     {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
                     Edit CV
@@ -2078,25 +2019,27 @@ export default function CvStudio({ userId, cvData }: Props) {
                     const isRec = gap.startsWith("[Recommended] ");
                     const text = isRec ? gap.replace("[Recommended] ", "") : gap;
                     return (
-                      <li key={i} className={`flex items-start gap-2 text-xs ${isRec ? "text-slate-500" : "text-amber-900"}`}>
-                        <span className={`shrink-0 mt-0.5 font-bold ${isRec ? "text-slate-400" : "text-amber-500"}`}>
+                      <li key={i} className="flex items-start gap-2 text-xs"
+                        style={{ color: isRec ? "rgba(255,255,255,0.3)" : "rgba(251,191,36,0.65)" }}>
+                        <span className="shrink-0 mt-0.5 font-bold"
+                          style={{ color: isRec ? "rgba(255,255,255,0.22)" : "rgba(251,191,36,0.55)" }}>
                           {isRec ? "○" : "•"}
                         </span>
                         <span>
-                          {isRec && <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mr-1">Recommended</span>}
+                          {isRec && <span className="text-[10px] font-semibold uppercase tracking-wide mr-1" style={{ color: "rgba(255,255,255,0.28)" }}>Recommended</span>}
                           {text}
                         </span>
                       </li>
                     );
                   })}
                 </ul>
-                <p className="mt-3 text-[11px] text-slate-500 italic">
+                <p className="mt-3 text-[11px] italic" style={{ color: "rgba(255,255,255,0.28)" }}>
                   You can still proceed to generate your CV — these items are optional but will improve your score.
                 </p>
               </div>
             );
           })()}
-        </div>
+        </CVReadinessBanner>
 
         {/* ── JD Section — only for "Apply for a job" path ── */}
         {cvPath === "apply" && (

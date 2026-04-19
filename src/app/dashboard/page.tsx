@@ -250,15 +250,20 @@ function DashboardPage() {
         return (
           <div className="mb-6 animate-fade-in-up">
             <div className="flex items-center gap-4">
-              <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center shadow-xl shrink-0 ring-2 ring-white/30`}>
-                <Icon className="h-7 w-7 text-white drop-shadow-sm" />
+              <div className="relative shrink-0">
+                {/* Glow ring */}
+                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${meta.gradient} blur-md opacity-40 scale-110`} />
+                <div className={`relative h-14 w-14 rounded-2xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}
+                  style={{ boxShadow: "0 8px 24px rgba(0,74,173,0.28), inset 0 1px 0 rgba(255,255,255,0.2)" }}>
+                  <Icon className="h-7 w-7 text-white drop-shadow-sm" />
+                </div>
               </div>
               <div>
                 <h2 className="text-2xl font-extrabold text-slate-900 leading-tight tracking-tight">{meta.label}</h2>
                 <p className="text-sm text-slate-500 mt-0.5">{meta.description}</p>
               </div>
             </div>
-            <div className="mt-4 h-px bg-gradient-to-r from-slate-200 via-slate-100 to-transparent" />
+            <div className="mt-4 h-px" style={{ background: "linear-gradient(90deg, rgba(0,74,173,0.2) 0%, rgba(0,196,204,0.1) 30%, transparent 100%)" }} />
           </div>
         );
       })()}

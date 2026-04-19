@@ -60,7 +60,7 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
     <div className="min-h-screen bg-[#F0F2F8] flex flex-col">
 
       {/* ── Top Header ── */}
-      <header className="h-14 bg-white border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50 shadow-sm">
+      <header className="h-14 bg-white/95 backdrop-blur-md border-b border-slate-200/70 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50" style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.06)" }}>
         <button
           onClick={() => router.push(user ? "/dashboard" : "/")}
           className="flex items-center group"
@@ -87,10 +87,11 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
 
         {/* ── Desktop Sidebar ── */}
         {!hideSidebar && (
-          <aside className="hidden md:flex flex-col w-64 shrink-0 bg-[#004aad] min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]">
+          <aside className="hidden md:flex flex-col w-64 shrink-0 min-h-[calc(100vh-3.5rem)] sticky top-14 h-[calc(100vh-3.5rem)]"
+            style={{ background: "linear-gradient(180deg, #004aad 0%, #003590 100%)" }}>
 
-            {/* Accent bar */}
-            <div className="h-0.5 w-full bg-[#004aad]" />
+            {/* Subtle top accent line */}
+            <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)" }} />
 
             {/* Nav items */}
             <nav className="flex-1 px-3 py-4 space-y-1">
@@ -105,11 +106,12 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
                     disabled={isLoading}
                     className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-left group relative overflow-hidden ${
                       isActive
-                        ? "bg-white text-[#004aad] shadow-lg"
+                        ? "bg-white text-[#004aad]"
                         : isLoading
                         ? "bg-white/10 text-white/40"
-                        : "text-white/85 hover:text-white hover:bg-white/15"
+                        : "text-white/85 hover:text-white hover:bg-white/12"
                     }`}
+                    style={isActive ? { boxShadow: "0 4px 16px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.5)" } : {}}
                   >
                     <span className={`shrink-0 mt-0.5 relative z-10 transition-transform duration-200 ${!isActive && !isLoading ? "group-hover:scale-110" : ""}`}>
                       {isLoading ? (
@@ -145,7 +147,8 @@ export default function AppShell({ children, activeNav, hideMobileNav, hideSideb
             {user && (
               <div className="p-3">
                 <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors cursor-default group">
-                  <div className="h-8 w-8 rounded-full bg-[#ff751f] flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-lg">
+                  <div className="h-8 w-8 rounded-full bg-[#ff751f] flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ boxShadow: "0 0 0 2px rgba(255,117,31,0.35), 0 0 12px rgba(255,117,31,0.25)" }}>
                     {userInitial}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -210,7 +210,7 @@ function DashboardMockup() {
                   {[["#1E293B","Corporate"],["#0C4A6E","Ocean"],["#14532D","Forest"],["#7C2D12","Sunset"],["#4C1D95","Royal"]].map(([c, n], i) => (
                     <div key={n} title={n}
                       className={`w-5 h-5 rounded-full cursor-pointer transition-transform hover:scale-110 ${i === 0 ? "ring-2 ring-offset-1" : ""}`}
-                      style={{ background: c, ringColor: BLUE }} />
+                      style={{ background: c }} />
                   ))}
                 </div>
                 {/* CV bullets */}
