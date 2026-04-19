@@ -22,7 +22,7 @@ import CVReadinessBanner from "./cv-readiness-banner";
 // ─── CV Pricing Plans ───
 const CURRENCY = "USD";
 const CV_PLANS = [
-  { id: "starter"      as const, label: "Starter",       amount: 3,  badge: null,              badgeClass: "",                                             desc: "CV only, saved to documents" },
+  { id: "starter"      as const, label: "Starter",       amount: 5,  badge: null,              badgeClass: "",                                             desc: "CV only, saved to documents" },
   { id: "professional" as const, label: "Professional",  amount: 7,  badge: "⭐ MOST POPULAR",  badgeClass: "bg-[#004aad]/10 text-[#004aad]",                desc: "CV and cover letter activated and saved to documents" },
   { id: "full"         as const, label: "Full Package",  amount: 10, badge: "🔥 BEST VALUE",    badgeClass: "bg-[#ff751f]/10 text-[#ff751f]",                  desc: "CV, cover letter and 20 interview questions unlocked" },
 ] as const;
