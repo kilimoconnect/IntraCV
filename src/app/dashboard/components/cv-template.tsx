@@ -286,7 +286,7 @@ function SH({ children, top, left, width, C }: { children: string; top: number; 
 }
 
 // ─── PAGE 1 ───
-function Page1({ d, theme }: { d: CVData; theme: ThemeName }) {
+export function Page1({ d, theme }: { d: CVData; theme: ThemeName }) {
   const sideInner = SIDE_W - PAD * 2;  // 192px
   const bodyInner = BODY_W - PAD * 2;  // 520px
   const C = themes[theme];

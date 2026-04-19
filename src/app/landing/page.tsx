@@ -12,15 +12,138 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Sparkles, FileText, CheckCircle2,
-  ChevronDown, Zap, Shield, Target, Star, Globe, Clock,
+  ChevronDown, Zap, Shield, Target, Star, Globe,
   X, BarChart2, Lock, RefreshCw, Briefcase,
   GraduationCap, TrendingUp, Repeat2, Trophy, Heart,
 } from "lucide-react";
+import { Page1 } from "@/app/dashboard/components/cv-template";
+import type { CVData } from "@/app/dashboard/components/cv-template";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
 const BLUE   = "#004aad";
 const ORANGE = "#ff751f";
 const TEAL   = "#00c4cc";
+
+// ─── Real CV Data (James Mitchell — demo) ─────────────────────────────────────
+const JAMES_CV: CVData = {
+  fullName: "James Mitchell",
+  title: "Senior Marketing Manager",
+  email: "j.mitchell@email.com",
+  phone: "+44 7700 900 123",
+  location: "London, UK",
+  linkedin: "linkedin.com/in/jmitchell",
+  website: "",
+  tagline: "Demand Generation & Brand Strategy | £4.1M ARR Generated FY2023",
+  profile:
+    "Results-driven Senior Marketing Manager with 9+ years delivering high-impact B2B campaigns across SaaS and professional services. Generated £4.1M in attributable revenue in FY2023 through integrated demand-generation programmes. Proven ability to align Marketing with Sales to accelerate pipeline velocity and reduce average deal cycle times by 18%. Led cross-functional teams of up to 8 marketers, driving brand equity and measurable commercial performance across EMEA.",
+  skills: [
+    "Demand Generation",    "Brand Strategy",
+    "Campaign Management",  "Digital Marketing",
+    "Budget Management",    "Data Analytics",
+    "Team Leadership",      "Stakeholder Mgmt",
+    "SEO / SEM",            "HubSpot CRM",
+    "Marketing Automation", "Content Strategy",
+    "Account-Based Mktg",   "Social Media Strategy",
+    "Email Marketing",      "Lead Scoring",
+    "A/B Testing",          "Google Ads",
+    "Salesforce CRM",       "Pardot",
+    "Market Research",      "PR & Communications",
+    "Event Management",     "Paid Media",
+  ],
+  experience: [
+    {
+      role: "Senior Marketing Manager",
+      company: "TechVentures Ltd",
+      dates: "Jan 2020 – Present",
+      location: "London, UK",
+      bullets: [
+        "Led demand-generation programme generating £4.1M ARR in FY2023, a +42% pipeline increase year-on-year against target.",
+        "Managed £2.4M multi-channel marketing budget across paid, owned, and earned media with verified 31% revenue attribution.",
+        "Aligned Marketing with Sales to introduce lead-scoring framework, reducing average enterprise deal cycle by 18%.",
+        "Built and managed a team of 8 marketing professionals, improving team retention by 35% through structured career development.",
+        "Launched ABM programme targeting 120 enterprise accounts, achieving 28% meeting-to-opportunity conversion rate.",
+        "Redesigned email nurture workflows in HubSpot, increasing MQL-to-SQL conversion by 22% within the first quarter.",
+        "Delivered full brand refresh across all digital and print channels within 14 weeks, improving NPS brand perception by 19 points.",
+        "Directed EMEA event strategy including Salesforce World Tour, generating 340 qualified leads at £62 CPL.",
+        "Consolidated agency relationships from 6 to 3 partners across PR, SEO, and paid media, saving £180K annually.",
+        "Presented quarterly marketing performance to board, credited with aligning Marketing to revenue targets for 3 consecutive years.",
+        "Introduced Salesforce attribution framework that improved reporting accuracy and reduced wasted ad spend by £340K in FY2023.",
+      ],
+    },
+    {
+      role: "Marketing Manager",
+      company: "BrightScale Agency",
+      dates: "Mar 2017 – Dec 2019",
+      location: "London, UK",
+      bullets: [
+        "Scaled social media audience from 8K to 34K followers across client portfolios, achieving an average 68% engagement rate uplift.",
+        "Managed integrated marketing campaigns for 12 enterprise clients with combined annual retained revenue of £6.8M.",
+        "Led content marketing strategy resulting in 140% increase in organic traffic across three key client accounts over 18 months.",
+        "Implemented marketing automation across 5 client accounts, reducing manual campaign management time by 30% per client.",
+        "Pitched and won three new business accounts worth £920K combined annual revenue, contributing 14% of agency ARR growth.",
+        "Produced quarterly campaign reports for client board presentations, consistently rated 9.2/10 in client satisfaction surveys.",
+        "Mentored a team of 3 junior marketers; two received promotions within 18 months under direct supervision.",
+        "Reduced average client campaign delivery time by 25% through agency-wide project management process improvements.",
+        "Won Agency Campaign of the Year at UK Marketing Excellence Awards 2018 for the BrightTech EMEA product launch.",
+      ],
+    },
+  ],
+  education: [
+    { degree: "BA (Hons) Marketing", school: "University of Leeds", year: "2011–2014 · First Class Honours" },
+    { degree: "CIM Professional Diploma", school: "Chartered Institute of Marketing", year: "2016 · Distinction" },
+  ],
+  certifications: [
+    { name: "HubSpot Marketing Hub Certified", issuer: "HubSpot Academy", year: "2023" },
+    { name: "Google Ads Search Certification", issuer: "Google", year: "2023" },
+    { name: "Salesforce Marketing Cloud", issuer: "Salesforce", year: "2022" },
+  ],
+  awards: [
+    { title: "Agency Campaign of the Year", description: "UK Marketing Excellence Awards 2018" },
+    { title: "Top Performer Q3 2023", description: "TechVentures Ltd" },
+  ],
+  history: [],
+  projects: [],
+  references: [],
+  languages: [
+    { name: "English", level: 100, label: "Native" },
+    { name: "French",  level: 65,  label: "Professional" },
+    { name: "Spanish", level: 40,  label: "Conversational" },
+  ],
+};
+
+// ─── Scaled Real CV Page ──────────────────────────────────────────────────────
+function ScaledCVPage({ rounded = true }: { rounded?: boolean }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale]   = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      if (wrapperRef.current) setScale(wrapperRef.current.offsetWidth / 794);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (wrapperRef.current) ro.observe(wrapperRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={{
+        width: "100%",
+        height: scale > 0 ? Math.round(1123 * scale) : 0,
+        overflow: "hidden",
+        borderRadius: rounded ? 12 : 0,
+      }}
+    >
+      {scale > 0 && (
+        <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: 794, height: 1123 }}>
+          <Page1 d={JAMES_CV} theme="corporate" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Motion Variants ─────────────────────────────────────────────────────────
 type BezierEase = [number, number, number, number];
@@ -113,66 +236,24 @@ function Navbar() {
   );
 }
 
-// ─── Hero CV Mockup (compact, used in hero) ───────────────────────────────────
-function CVMockup() {
-  return (
-    <div className="w-full bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
-      <div className="flex">
-        <div className="w-[38%] flex-shrink-0 p-4 sm:p-5" style={{ background: BLUE }}>
-          <div className="pb-3 mb-3 border-b border-white/20">
-            <div className="text-xs sm:text-sm font-bold text-white leading-tight">James Mitchell</div>
-            <div className="text-[9px] sm:text-[10px] text-white/80 mt-0.5">Senior Marketing Manager</div>
-          </div>
-          {[
-            ["Contact", ["j.mitchell@email.com", "+44 7700 900 123", "London, UK"]],
-            ["Skills", ["Brand Strategy", "Digital Marketing", "Campaign Mgmt", "Data Analytics"]],
-          ].map(([label, items]) => (
-            <div key={label as string} className="mb-3">
-              <div className="text-[7px] font-bold uppercase tracking-widest mb-1.5" style={{ color: TEAL }}>{label as string}</div>
-              {(items as string[]).map((item) => (
-                <div key={item} className="text-[8px] text-white/80 leading-4">{item}</div>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="flex-1 p-4 sm:p-5">
-          <div className="mb-3">
-            <div className="text-[7px] font-bold uppercase tracking-widest mb-1" style={{ color: BLUE }}>Summary</div>
-            <div className="h-px bg-slate-200 mb-2" />
-            <div className="text-[8px] leading-4 text-slate-600">Results-driven Senior Marketing Manager with 9+ years delivering high-impact campaigns. Generated £4.1M in attributable revenue in FY2023 through targeted demand-gen programmes.</div>
-          </div>
-          <div className="mb-3">
-            <div className="text-[7px] font-bold uppercase tracking-widest mb-1" style={{ color: BLUE }}>Experience</div>
-            <div className="h-px bg-slate-200 mb-2" />
-            {[
-              { role: "Senior Marketing Manager", co: "TechVentures Ltd", date: "2020–Present", bullets: ["Led team of 8 marketers, +42% pipeline YoY", "Managed £2.4M budget across all channels"] },
-              { role: "Marketing Manager", co: "BrightScale Agency", date: "2017–2020", bullets: ["Grew social engagement avg 68% per client"] },
-            ].map((e) => (
-              <div key={e.role} className="mb-2.5 pl-2 border-l-2" style={{ borderColor: BLUE }}>
-                <div className="flex justify-between">
-                  <span className="text-[8px] font-bold text-slate-800">{e.role}</span>
-                  <span className="text-[7px] text-slate-400">{e.date}</span>
-                </div>
-                <div className="text-[7.5px] font-semibold mb-1" style={{ color: BLUE }}>{e.co}</div>
-                {e.bullets.map((b) => <div key={b} className="text-[7px] text-slate-600 leading-3.5 mb-0.5">• {b}</div>)}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-// ─── Full Optimized CV (used in transformation section) ───────────────────────
-function FullOptimizedCV() {
+// ─── After FuseCV Showcase (transformation section) ───────────────────────────
+function AfterCVShowcase() {
   return (
-    <div className="relative">
+    <div className="relative pt-6">
+      {/* After FuseCV pill */}
+      <div
+        className="absolute top-0 left-4 z-20 text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full text-white shadow-md"
+        style={{ background: "#059669" }}
+      >
+        ✓ After FuseCV
+      </div>
+
       {/* Floating ATS badge */}
       <motion.div
         animate={{ y: [0, -5, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-4 -right-3 z-20 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-200"
+        className="absolute top-0 -right-2 z-20 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-200"
       >
         <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "#059669" }}>
           <CheckCircle2 size={12} className="text-white" />
@@ -183,151 +264,15 @@ function FullOptimizedCV() {
         </div>
       </motion.div>
 
-      {/* After FuseCV label */}
-      <div className="absolute -top-4 left-4 z-20 text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full text-white shadow-md"
-        style={{ background: "#059669" }}>
-        ✓ After FuseCV
-      </div>
-
       {/* Glow */}
-      <div className="absolute inset-0 rounded-2xl blur-2xl scale-95 opacity-50"
-        style={{ background: `linear-gradient(135deg, ${BLUE}33, ${TEAL}22)` }} />
+      <div
+        className="absolute inset-0 rounded-2xl blur-2xl scale-95 opacity-40"
+        style={{ background: `linear-gradient(135deg, ${BLUE}33, ${TEAL}22)` }}
+      />
 
-      {/* CV body */}
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-emerald-300 bg-white">
-        <div className="flex">
-
-          {/* ── Sidebar ── */}
-          <div className="w-[34%] sm:w-[32%] shrink-0 p-4 sm:p-5" style={{ background: BLUE }}>
-            {/* Avatar initials */}
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full mx-auto mb-4 flex items-center justify-center font-black text-base sm:text-lg text-white border-2"
-              style={{ background: `${TEAL}55`, borderColor: TEAL }}>
-              JM
-            </div>
-
-            {[
-              {
-                heading: "Contact",
-                items: ["j.mitchell@email.com", "+44 7700 900 123", "London, UK", "linkedin.com/in/jmitchell"],
-              },
-              {
-                heading: "Key Skills",
-                items: ["Demand Generation", "Brand Strategy", "Digital Marketing", "Budget Management", "Campaign Analytics", "Team Leadership", "Stakeholder Mgmt"],
-              },
-              {
-                heading: "Education",
-                items: ["BA Marketing", "University of Leeds", "2011–2014 · First Class"],
-              },
-            ].map(({ heading, items }) => (
-              <div key={heading} className="mb-4">
-                <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.18em] mb-2" style={{ color: TEAL }}>
-                  {heading}
-                </div>
-                {items.map((item) => (
-                  <div key={item} className="text-[8px] sm:text-[9px] text-white/80 leading-[1.55]">{item}</div>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {/* ── Main content ── */}
-          <div className="flex-1 p-4 sm:p-5 min-w-0">
-
-            {/* Name & title */}
-            <div className="pb-3 mb-4 border-b-2" style={{ borderColor: BLUE }}>
-              <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">James Mitchell</h2>
-              <div className="text-[10px] sm:text-xs font-bold mt-0.5" style={{ color: BLUE }}>Senior Marketing Manager</div>
-            </div>
-
-            {/* Summary */}
-            <div className="mb-4">
-              <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.15em] mb-1.5" style={{ color: BLUE }}>
-                Professional Summary
-              </div>
-              <p className="text-[8px] sm:text-[9px] text-slate-600 leading-[1.6]">
-                Results-driven Senior Marketing Manager with 9+ years delivering high-impact B2B campaigns. Generated{" "}
-                <strong className="text-slate-800">£4.1M attributable revenue</strong> in FY2023 through integrated demand-gen strategies. Proven ability to align Marketing with Sales to accelerate pipeline and reduce cycle times.
-              </p>
-            </div>
-
-            {/* Experience */}
-            <div className="mb-4">
-              <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.15em] mb-2.5" style={{ color: BLUE }}>
-                Experience
-              </div>
-              {[
-                {
-                  role: "Senior Marketing Manager",
-                  co: "TechVentures Ltd",
-                  date: "Jan 2020 – Present",
-                  bullets: [
-                    "Led demand-gen programme generating £4.1M ARR in FY2023 — +42% pipeline YoY",
-                    "Managed £2.4M multi-channel budget with 31% revenue growth attribution",
-                    "Aligned with Sales to reduce average deal cycle by 18% via lead scoring",
-                    "Built and led team of 8 marketers; improved team retention by 35%",
-                  ],
-                },
-                {
-                  role: "Marketing Manager",
-                  co: "BrightScale Agency",
-                  date: "Mar 2017 – Dec 2019",
-                  bullets: [
-                    "Scaled social audience from 8K → 34K across all client accounts — 68% engagement lift",
-                    "Managed integrated campaigns for 12 enterprise clients worth £6.8M combined revenue",
-                  ],
-                },
-              ].map((e) => (
-                <div key={e.role} className="mb-3 pl-2.5 sm:pl-3 border-l-2" style={{ borderColor: BLUE }}>
-                  <div className="flex items-start justify-between gap-2 mb-0.5 flex-wrap">
-                    <div>
-                      <div className="text-[9px] sm:text-[10px] font-extrabold text-slate-900">{e.role}</div>
-                      <div className="text-[8px] sm:text-[9px] font-semibold" style={{ color: BLUE }}>{e.co}</div>
-                    </div>
-                    <div className="text-[7px] sm:text-[8px] text-slate-400 shrink-0">{e.date}</div>
-                  </div>
-                  <ul className="mt-1 space-y-0.5">
-                    {e.bullets.map((b) => (
-                      <li key={b} className="text-[8px] sm:text-[9px] text-slate-600 leading-[1.5] flex items-start gap-1.5">
-                        <span className="mt-[5px] w-1 h-1 rounded-full shrink-0" style={{ background: TEAL }} />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-
-            {/* Metric highlights */}
-            <div>
-              <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.15em] mb-2" style={{ color: BLUE }}>
-                Key Metrics
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                {[
-                  { n: "£4.1M", label: "ARR generated" },
-                  { n: "+42%",  label: "Pipeline growth" },
-                  { n: "34K",   label: "Audience built" },
-                  { n: "−18%",  label: "Sales cycle" },
-                ].map(({ n, label }) => (
-                  <div key={label} className="rounded-lg px-2 py-1.5 text-center" style={{ background: `${BLUE}08` }}>
-                    <div className="text-[10px] sm:text-xs font-extrabold" style={{ color: BLUE }}>{n}</div>
-                    <div className="text-[7px] text-slate-500 leading-tight">{label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="px-4 py-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap"
-          style={{ background: "#f0fdf4" }}>
-          <span className="text-[8px] text-slate-500">Optimised by FuseCV · ATS-formatted · Ready to send</span>
-          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-full text-white"
-            style={{ background: "#059669" }}>
-            ATS Score: 94 / 100 ✓
-          </span>
-        </div>
+      {/* Real CV with green border */}
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-emerald-300">
+        <ScaledCVPage rounded={false} />
       </div>
     </div>
   );
@@ -487,7 +432,9 @@ function HeroSection() {
           </motion.div>
 
           <div className="absolute inset-0 rounded-2xl blur-2xl scale-95" style={{ background: `linear-gradient(135deg, ${BLUE}44, ${TEAL}33)` }} />
-          <div className="relative"><CVMockup /></div>
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+            <ScaledCVPage rounded={false} />
+          </div>
         </motion.div>
       </div>
 
@@ -716,9 +663,9 @@ function TransformationSection() {
               </div>
             </motion.div>
 
-            {/* ── After: Full optimized CV ── */}
+            {/* ── After: Real CV from app template ── */}
             <motion.div variants={slideLeft} className="pt-6 lg:pt-0">
-              <FullOptimizedCV />
+              <AfterCVShowcase />
             </motion.div>
           </div>
         </motion.div>
