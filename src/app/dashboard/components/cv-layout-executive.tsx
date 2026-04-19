@@ -12,6 +12,14 @@ import React, { useRef, useState, useEffect } from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
 import { PRINT_MARGIN } from "./cv-design-system";
 
+// ── Fields consumed by this layout — used by the pipeline to load only what's needed ──
+export const EXECUTIVE_REQUIRED_FIELDS: ReadonlyArray<keyof CategoryCVData> = [
+  "fullName", "title", "email", "phone", "linkedin", "website", "location", "tagline",
+  "profile", "skills", "experience", "history", "education", "certifications",
+  "languages", "tools", "memberships", "achievements", "boardRoles", "executiveTraining",
+  "publications", "references", "volunteer", "declaration", "awards", "projects",
+];
+
 interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
 
 const SIDE_W = 230;
@@ -141,20 +149,20 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
         {/* ── Elegant Centered Header ── */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: HEADER_H, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, width: A4_W, height: HEADER_H, backgroundColor: C.headerBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", overflow: "hidden" }}>
           {/* Decorative line above name */}
           <div style={{ width: 60, height: 2, backgroundColor: C.primary, marginBottom: 10 }} />
-          <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.headerText, letterSpacing: "2px", textTransform: "uppercase", lineHeight: "34px" }}>{d.fullName}</div>
-          <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 4, letterSpacing: "1px", textTransform: "uppercase", wordWrap: "break-word" }}>{d.title}</div>
+          <div data-cv-field="fullName" style={{ fontFamily: FONT, fontSize: "30px", fontWeight: 800, color: C.headerText, letterSpacing: "2px", textTransform: "uppercase", lineHeight: "34px", maxWidth: A4_W - 48, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.fullName}</div>
+          <div data-cv-field="title" style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 500, color: C.headerText, opacity: 0.9, marginTop: 4, letterSpacing: "1px", textTransform: "uppercase", maxWidth: A4_W - 48, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</div>
           {d.tagline && (
-            <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "10px", color: C.headerText, opacity: 0.55, marginTop: 6, fontStyle: "italic" }}>"{d.tagline}"</div>
+            <div data-cv-field="tagline" style={{ fontFamily: FONT, fontSize: "10px", color: C.headerText, opacity: 0.55, marginTop: 6, fontStyle: "italic", maxWidth: A4_W - 60, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{d.tagline}"</div>
           )}
           {/* Decorative line below */}
           <div style={{ width: 60, height: 2, backgroundColor: C.primary, marginTop: 10 }} />
         </div>
 
         {/* ── Contact strip ── */}
-        <div style={{ position: "absolute", top: HEADER_H, left: 0, width: A4_W, height: 22, backgroundColor: C.primaryDark, display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
+        <div style={{ position: "absolute", top: HEADER_H, left: 0, width: A4_W, height: 22, backgroundColor: C.primaryDark, display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 20, rowGap: 1, overflow: "hidden", paddingLeft: 16, paddingRight: 16 }}>
           {d.email && <span data-cv-field="email" style={{ fontFamily: FONT, fontSize: "9px", color: "#fff", opacity: 0.9 }}>✉ {d.email}</span>}
           {d.phone && <span data-cv-field="phone" style={{ fontFamily: FONT, fontSize: "9px", color: "#fff", opacity: 0.9 }}>☎ {d.phone}</span>}
           {d.location && <span data-cv-field="location" style={{ fontFamily: FONT, fontSize: "9px", color: "#fff", opacity: 0.9 }}>📍 {d.location}</span>}
@@ -171,9 +179,9 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
               <RightLabel C={C}>Core Competencies</RightLabel>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 8px" }}>
                 {d.skills.map((skill, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
                     <div style={{ width: 3, height: 3, backgroundColor: C.primary, flexShrink: 0 }} />
-                    <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.headerText, opacity: 0.85 }}>{skill}</span>
+                    <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.headerText, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{skill}</span>
                   </div>
                 ))}
               </div>
@@ -186,8 +194,8 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
               <RightLabel C={C}>Education</RightLabel>
               {d.education.map((edu, i) => (
                 <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
-                  <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.headerText, lineHeight: "12px" }}>{edu.degree}</div>
-                  <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.6 }}>{edu.school} · {edu.year}</div>
+                  <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.headerText, lineHeight: "12px", overflowWrap: "break-word" }}>{edu.degree}</div>
+                  <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.6, overflowWrap: "break-word" }}>{edu.school} · {edu.year}</div>
                 </div>
               ))}
             </div>
@@ -199,8 +207,8 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
               <RightLabel C={C}>Certifications</RightLabel>
               {d.certifications.map((cert, i) => (
                 <div key={i} style={{ marginBottom: 4 }}>
-                  <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.headerText, wordWrap: "break-word" }}>{cert.name}</div>
-                  <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "7.5px", color: C.headerText, opacity: 0.55 }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.headerText, overflowWrap: "break-word" }}>{cert.name}</div>
+                  <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "7.5px", color: C.headerText, opacity: 0.55, overflowWrap: "break-word" }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                 </div>
               ))}
             </div>
@@ -211,9 +219,9 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
               <RightLabel C={C}>Languages</RightLabel>
               {d.languages.map((lang, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9.5px", padding: "2px 0" }}>
-                  <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.headerText, wordWrap: "break-word" }}>{lang.name}</span>
-                  <span data-cv-field={`lang.${i}.label`} style={{ color: C.headerText, opacity: 0.5, fontSize: "9px" }}>{lang.label}</span>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "9.5px", padding: "2px 0", gap: 4 }}>
+                  <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.headerText, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lang.name}</span>
+                  <span data-cv-field={`lang.${i}.label`} style={{ color: C.headerText, opacity: 0.5, fontSize: "9px", flexShrink: 0 }}>{lang.label}</span>
                 </div>
               ))}
             </div>
@@ -360,12 +368,12 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Executive Training</BodySection>
               {d.executiveTraining.map((tr, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div>
-                    <span data-cv-field={`execTrain.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text, wordWrap: "break-word" }}>{tr.name}</span>
-                    {tr.institution && <span data-cv-field={`execTrain.${i}.institution`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}> — {tr.institution}</span>}
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span data-cv-field={`execTrain.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text, overflowWrap: "break-word" }}>{tr.name}</span>
+                    {tr.institution && <span data-cv-field={`execTrain.${i}.institution`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, overflowWrap: "break-word" }}> — {tr.institution}</span>}
                   </div>
-                  {tr.year && <span data-cv-field={`execTrain.${i}.year`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}>{tr.year}</span>}
+                  {tr.year && <span data-cv-field={`execTrain.${i}.year`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, flexShrink: 0 }}>{tr.year}</span>}
                 </div>
               ))}
             </div>
