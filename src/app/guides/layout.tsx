@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GuideJsonLd from "@/components/guide-json-ld";
 
 const allGuides = [
   { slug: "best-cv-format-uk",            title: "Best CV Format in the UK" },
@@ -30,6 +31,8 @@ export default function GuidesLayout({ children }: { children: React.ReactNode }
           </Link>
         </div>
       </nav>
+
+      <GuideJsonLd />
 
       {/* Page */}
       <main className="max-w-5xl mx-auto px-4 py-10">
