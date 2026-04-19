@@ -100,10 +100,9 @@ function Navbar({ onCTA }: { onCTA: () => void }) {
           </Link>
           <motion.button
             onClick={onCTA}
-            whileHover={{ scale: 1.04, boxShadow: "0 8px 28px rgba(255,117,31,0.4)" }}
+            whileHover={{ scale: 1.04, boxShadow: "0 8px 28px rgba(255,117,31,0.38)" }}
             whileTap={{ scale: 0.96 }}
-            className="shimmer-btn text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-lg shadow-sm"
-            style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)" }}
+            className="bg-[#ff751f] hover:bg-[#e8661a] text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-lg shadow-sm transition-colors"
           >
             Upload My CV Free
           </motion.button>
@@ -278,26 +277,17 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
     <section id="hero" className="relative bg-white pt-20 pb-12 px-4 sm:px-6 overflow-hidden">
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Dot grid */}
-        <div className="absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: "radial-gradient(circle, #004aad 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
         <motion.div
-          animate={{ scale: [1, 1.12, 1], opacity: [0.07, 0.14, 0.07] }}
+          animate={{ scale: [1, 1.12, 1], opacity: [0.07, 0.13, 0.07] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-0 right-0 w-80 h-80 sm:w-[560px] sm:h-[560px] rounded-full -translate-y-1/2 translate-x-1/3"
-          style={{ background: "radial-gradient(circle, rgba(0,74,173,0.22) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(0,74,173,0.18) 0%, transparent 70%)" }}
         />
         <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.07, 0.14, 0.07] }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.07, 0.13, 0.07] }}
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-0 left-0 w-60 h-60 sm:w-[400px] sm:h-[400px] rounded-full translate-y-1/3 -translate-x-1/4"
-          style={{ background: "radial-gradient(circle, rgba(0,196,204,0.18) 0%, transparent 70%)" }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.04, 0.09, 0.04] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full"
-          style={{ background: "radial-gradient(ellipse, rgba(255,117,31,0.15) 0%, transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(0,196,204,0.14) 0%, transparent 70%)" }}
         />
       </div>
 
@@ -308,7 +298,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: ez }}
           className="inline-flex items-center gap-2 border text-xs font-semibold px-3 sm:px-4 py-1.5 rounded-full mb-6 sm:mb-8"
-          style={{ background: "rgba(0,74,173,0.06)", borderColor: "rgba(0,74,173,0.22)", color: "#004aad", boxShadow: "0 0 0 4px rgba(0,74,173,0.05), inset 0 1px 0 rgba(255,255,255,0.6)" }}
+          style={{ background: "rgba(0,74,173,0.06)", borderColor: "rgba(0,74,173,0.15)", color: "#004aad" }}
         >
           <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ background: "#00c4cc" }} />
           <span>No card required · Preview before you pay</span>
@@ -321,7 +311,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.08] tracking-tight mb-5 sm:mb-6"
         >
           Your CV Might Be{" "}
-          <span className="grad-text-blue">Costing You Opportunities.</span>
+          <span style={{ color: "#004aad" }}>Costing You Opportunities.</span>
         </motion.h1>
 
         <motion.p
@@ -357,20 +347,19 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
         >
           <motion.button
             onClick={onCTA}
-            whileHover={{ scale: 1.03, boxShadow: "0 16px 48px rgba(255,117,31,0.45), 0 0 0 1px rgba(255,117,31,0.2)" }}
+            whileHover={{ scale: 1.03, boxShadow: "0 12px 36px rgba(255,117,31,0.35)" }}
             whileTap={{ scale: 0.97 }}
-            className="shimmer-btn flex items-center justify-center gap-2 text-white font-bold text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-xl"
-            style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 8px 28px rgba(255,117,31,0.3), inset 0 1px 0 rgba(255,255,255,0.15)" }}
+            className="flex items-center justify-center gap-2 text-white font-bold text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-xl transition-colors"
+            style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}
           >
             <Upload className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             Upload My CV Free
           </motion.button>
           <motion.button
             onClick={() => scrollTo("before-after")}
-            whileHover={{ scale: 1.02, boxShadow: "0 6px 20px rgba(0,0,0,0.09)", borderColor: "#94a3b8" }}
+            whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 font-semibold text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-xl transition-all"
-            style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 3px rgba(0,0,0,0.06)" }}
+            className="flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-xl shadow-sm transition-all"
           >
             See Before &amp; After
             <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -386,8 +375,7 @@ function HeroSection({ onCTA }: { onCTA: () => void }) {
           className="relative"
         >
           <CVSamplePreview />
-          <div className="absolute -inset-3 sm:-inset-6 rounded-3xl -z-10 blur-2xl" style={{ background: "linear-gradient(135deg, rgba(0,74,173,0.22) 0%, rgba(0,119,255,0.15) 50%, rgba(0,196,204,0.12) 100%)" }} />
-          <div className="absolute -inset-6 sm:-inset-10 rounded-3xl -z-10 blur-3xl opacity-[0.08]" style={{ background: "#004aad" }} />
+          <div className="absolute -inset-2 sm:-inset-4 rounded-3xl -z-10 opacity-15 blur-2xl" style={{ background: "#004aad" }} />
         </motion.div>
       </div>
     </section>
@@ -403,7 +391,7 @@ function MarqueeStrip() {
     "✦ Career Changers", "✦ Founders & Executives",
   ];
   return (
-    <div className="py-3 sm:py-4 overflow-hidden marquee-fade" style={{ background: "linear-gradient(135deg, #004aad 0%, #0055cc 100%)" }}>
+    <div className="py-3 sm:py-4 overflow-hidden" style={{ background: "#004aad" }}>
       <div className="flex">
         {[0, 1].map(k => (
           <div key={k} aria-hidden={k === 1}
@@ -422,12 +410,8 @@ function MarqueeStrip() {
 function PainSection() {
   const traits = ["Average", "Generic", "Forgettable", "Low impact"];
   return (
-    <section className="py-14 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg, #060d1f 0%, #0a1628 55%, #0c1e38 100%)" }}>
-      {/* Subtle noise texture */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E\")", backgroundRepeat: "repeat", backgroundSize: "128px" }} />
-      <div className="max-w-4xl mx-auto text-center relative">
+    <section className="py-14 sm:py-24 px-4 sm:px-6" style={{ background: "#0a1628" }}>
+      <div className="max-w-4xl mx-auto text-center">
         <motion.div variants={stagger(0.09)} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}>
           <motion.p variants={fadeUp} className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-4" style={{ color: "#ff751f" }}>The Problem</motion.p>
           <motion.h2 variants={fadeUp} className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-4">
@@ -442,9 +426,9 @@ function PainSection() {
               <motion.div
                 key={i}
                 variants={scaleIn}
-                whileHover={{ scale: 1.06, boxShadow: "0 8px 32px rgba(255,117,31,0.28), 0 0 0 1px rgba(255,117,31,0.3)" }}
+                whileHover={{ scale: 1.06, boxShadow: "0 8px 24px rgba(255,117,31,0.2)" }}
                 className="px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold cursor-default"
-                style={{ background: "rgba(255,117,31,0.08)", border: "1.5px solid rgba(255,117,31,0.22)", color: "#ff751f", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                style={{ background: "rgba(255,117,31,0.1)", border: "1.5px solid rgba(255,117,31,0.25)", color: "#ff751f" }}
               >
                 {t}
               </motion.div>
@@ -457,8 +441,8 @@ function PainSection() {
 
           <motion.div
             variants={scaleIn}
-            className="glass-card inline-block rounded-2xl px-6 sm:px-12 py-5 sm:py-7 max-w-xl"
-            style={{ border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)" }}
+            className="inline-block rounded-2xl px-6 sm:px-12 py-5 sm:py-7 max-w-xl"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
           >
             <p className="text-white font-bold text-lg sm:text-2xl leading-snug">
               Your experience may be valuable.
@@ -480,17 +464,14 @@ function StatCard({ icon, num, suffix, decimals, label }: { icon: React.ReactNod
     <motion.div
       ref={ref}
       variants={scaleIn}
-      whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(0,74,173,0.16), 0 0 0 1px rgba(0,74,173,0.07)" }}
-      className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center transition-shadow overflow-hidden"
+      whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(0,74,173,0.12)" }}
+      className="bg-white rounded-2xl p-4 sm:p-7 border border-slate-100 shadow-sm flex flex-col items-center gap-2 sm:gap-3 transition-shadow"
     >
-      <div className="w-full h-[3px] flex-shrink-0" style={{ background: "linear-gradient(90deg, #004aad 0%, #0077ff 50%, #00c4cc 100%)" }} />
-      <div className="flex flex-col items-center gap-2 sm:gap-3 px-4 sm:px-7 pb-4 sm:pb-7 pt-4 sm:pt-5 w-full">
-        <div style={{ color: "#004aad" }}>{icon}</div>
-        <p className="text-xl sm:text-4xl font-black grad-text-blue">
-          {value}{suffix}
-        </p>
-        <p className="text-slate-500 text-xs sm:text-sm text-center leading-snug">{label}</p>
-      </div>
+      <div style={{ color: "#004aad" }}>{icon}</div>
+      <p className="text-xl sm:text-4xl font-black" style={{ color: "#004aad" }}>
+        {value}{suffix}
+      </p>
+      <p className="text-slate-500 text-xs sm:text-sm text-center leading-snug">{label}</p>
     </motion.div>
   );
 }
@@ -540,7 +521,6 @@ function BeforeAfterSection() {
           <motion.div
             variants={slideRight} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}
             className="rounded-2xl border-2 border-red-100 bg-red-50 p-6 sm:p-8"
-            style={{ boxShadow: "0 8px 32px rgba(239,68,68,0.1), 0 2px 8px rgba(239,68,68,0.05)" }}
           >
             <div className="flex items-center gap-2 mb-5">
               <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
@@ -558,7 +538,6 @@ function BeforeAfterSection() {
           <motion.div
             variants={slideLeft} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}
             className="rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-6 sm:p-8"
-            style={{ boxShadow: "0 8px 32px rgba(16,185,129,0.1), 0 2px 8px rgba(16,185,129,0.05)" }}
           >
             <div className="flex items-center gap-2 mb-5">
               <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
@@ -621,7 +600,7 @@ function StorySection() {
           </motion.div>
 
           <div className="relative max-w-xl mx-auto">
-            <div className="absolute left-6 sm:left-8 top-6 bottom-6 w-px" style={{ background: "linear-gradient(to bottom, transparent 0%, rgba(0,74,173,0.3) 20%, rgba(0,196,204,0.2) 80%, transparent 100%)" }} />
+            <div className="absolute left-6 sm:left-8 top-6 bottom-6 w-px" style={{ background: "rgba(0,74,173,0.12)" }} />
             <motion.div variants={stagger(0.13)} className="space-y-5 sm:space-y-6">
               {steps.map((s, i) => (
                 <motion.div key={i} variants={slideRight} className="flex gap-5 sm:gap-6 items-center">
@@ -673,9 +652,9 @@ function HowItWorksSection({ onCTA }: { onCTA: () => void }) {
               <motion.div
                 key={i}
                 variants={fadeUp}
-                whileHover={{ y: -4, background: "rgba(255,255,255,0.09)", boxShadow: "0 0 0 1px rgba(0,196,204,0.18), 0 12px 40px rgba(0,74,173,0.16)" }}
-                className="flex gap-4 sm:gap-5 p-5 sm:p-6 rounded-2xl transition-all"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                whileHover={{ y: -4, background: "rgba(255,255,255,0.08)" }}
+                className="flex gap-4 sm:gap-5 p-5 sm:p-6 rounded-2xl transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center" style={{ background: "#004aad" }}>
@@ -694,10 +673,10 @@ function HowItWorksSection({ onCTA }: { onCTA: () => void }) {
           <motion.div variants={fadeUp} className="text-center mt-8 sm:mt-12">
             <motion.button
               onClick={onCTA}
-              whileHover={{ scale: 1.03, boxShadow: "0 16px 48px rgba(255,117,31,0.45), 0 0 0 1px rgba(255,117,31,0.2)" }}
+              whileHover={{ scale: 1.03, boxShadow: "0 16px 48px rgba(255,117,31,0.4)" }}
               whileTap={{ scale: 0.97 }}
-              className="shimmer-btn w-full sm:w-auto text-white font-bold text-sm sm:text-base px-8 sm:px-12 py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 mx-auto"
-              style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 8px 24px rgba(255,117,31,0.3), inset 0 1px 0 rgba(255,255,255,0.15)" }}
+              className="w-full sm:w-auto text-white font-bold text-sm sm:text-base px-8 sm:px-12 py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 mx-auto"
+              style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}
             >
               <Upload className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" /> Upload My CV Free
             </motion.button>
@@ -762,10 +741,10 @@ function OfferStackSection({ onCTA }: { onCTA: () => void }) {
               <p className="text-slate-900 font-bold text-base sm:text-lg mb-4">Start free. Pay only if you love it.</p>
               <motion.button
                 onClick={onCTA}
-                whileHover={{ scale: 1.04, boxShadow: "0 12px 36px rgba(255,117,31,0.4), 0 0 0 1px rgba(255,117,31,0.2)" }}
+                whileHover={{ scale: 1.04, boxShadow: "0 8px 28px rgba(255,117,31,0.3)" }}
                 whileTap={{ scale: 0.97 }}
-                className="shimmer-btn w-full py-3 rounded-xl text-white font-bold text-sm"
-                style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 6px 20px rgba(255,117,31,0.25), inset 0 1px 0 rgba(255,255,255,0.15)" }}
+                className="w-full py-3 rounded-xl text-white font-bold text-sm"
+                style={{ background: "#ff751f" }}
               >
                 Upload My CV Free
               </motion.button>
@@ -821,25 +800,19 @@ function AudienceSection() {
 function EmotionalSection() {
   return (
     <section className="py-14 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #003d99 0%, #001a66 40%, #0a1628 100%)" }}>
+      style={{ background: "linear-gradient(135deg, #004aad 0%, #002f7a 100%)" }}>
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.26, 0.15] }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.10, 0.18, 0.10] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 right-0 w-96 h-96 sm:w-[600px] sm:h-[600px] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"
+          className="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"
           style={{ background: "#00c4cc" }}
         />
         <motion.div
-          animate={{ scale: [1, 1.12, 1], opacity: [0.10, 0.20, 0.10] }}
+          animate={{ scale: [1, 1.10, 1], opacity: [0.08, 0.14, 0.08] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-          className="absolute bottom-0 left-0 w-80 h-80 sm:w-[480px] sm:h-[480px] rounded-full blur-3xl translate-y-1/3 -translate-x-1/4"
+          className="absolute bottom-0 left-0 w-60 h-60 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4"
           style={{ background: "#ff751f" }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.04, 0.10, 0.04] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 7 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-[380px] h-64 sm:h-[380px] rounded-full blur-3xl"
-          style={{ background: "#004aad" }}
         />
       </div>
       <div className="relative max-w-3xl mx-auto text-center">
@@ -902,7 +875,7 @@ function TrustSection() {
                 <motion.div
                   key={i}
                   variants={fadeUp}
-                  whileHover={{ y: -3, boxShadow: "0 10px 32px rgba(0,74,173,0.13), 0 0 0 1px rgba(0,74,173,0.06)" }}
+                  whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(0,74,173,0.09)" }}
                   className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-shadow"
                 >
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -944,10 +917,10 @@ function UrgencySection({ onCTA }: { onCTA: () => void }) {
           <motion.div variants={fadeUp}>
             <motion.button
               onClick={onCTA}
-              whileHover={{ scale: 1.03, boxShadow: "0 16px 48px rgba(255,117,31,0.45), 0 0 0 1px rgba(255,117,31,0.2)" }}
+              whileHover={{ scale: 1.03, boxShadow: "0 16px 48px rgba(255,117,31,0.4)" }}
               whileTap={{ scale: 0.97 }}
-              className="shimmer-btn w-full sm:w-auto text-white font-bold text-sm sm:text-base px-8 sm:px-12 py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 mx-auto"
-              style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 8px 24px rgba(255,117,31,0.3), inset 0 1px 0 rgba(255,255,255,0.15)" }}
+              className="w-full sm:w-auto text-white font-bold text-sm sm:text-base px-8 sm:px-12 py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 mx-auto"
+              style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}
             >
               <Upload className="w-4 h-4 flex-shrink-0" /> Upload My CV Free
             </motion.button>
@@ -982,10 +955,10 @@ function FinalCTA({ onCTA }: { onCTA: () => void }) {
           <motion.div variants={fadeUp}>
             <motion.button
               onClick={onCTA}
-              whileHover={{ scale: 1.04, boxShadow: "0 20px 60px rgba(255,117,31,0.5), 0 0 0 1px rgba(255,117,31,0.25)" }}
+              whileHover={{ scale: 1.04, boxShadow: "0 20px 60px rgba(255,117,31,0.45)" }}
               whileTap={{ scale: 0.97 }}
-              className="shimmer-btn w-full sm:w-auto text-white font-bold text-sm sm:text-lg px-8 sm:px-14 py-4 sm:py-5 rounded-xl flex items-center justify-center gap-3 mx-auto"
-              style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 12px 40px rgba(255,117,31,0.35), inset 0 1px 0 rgba(255,255,255,0.15)" }}
+              className="w-full sm:w-auto text-white font-bold text-sm sm:text-lg px-8 sm:px-14 py-4 sm:py-5 rounded-xl flex items-center justify-center gap-3 mx-auto"
+              style={{ background: "#ff751f", boxShadow: "0 12px 40px rgba(255,117,31,0.3)" }}
             >
               <Upload className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               Upload My CV Free
@@ -1082,10 +1055,10 @@ function ExitPopup({ onCTA }: { onCTA: () => void }) {
             </p>
             <motion.button
               onClick={() => { setShow(false); onCTA(); }}
-              whileHover={{ scale: 1.03, boxShadow: "0 12px 36px rgba(255,117,31,0.4), 0 0 0 1px rgba(255,117,31,0.2)" }}
+              whileHover={{ scale: 1.03, boxShadow: "0 12px 36px rgba(255,117,31,0.35)" }}
               whileTap={{ scale: 0.97 }}
-              className="shimmer-btn w-full py-3.5 rounded-xl text-white font-bold text-sm sm:text-base mb-3 flex items-center justify-center gap-2"
-              style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 8px 24px rgba(255,117,31,0.25), inset 0 1px 0 rgba(255,255,255,0.15)" }}
+              className="w-full py-3.5 rounded-xl text-white font-bold text-sm sm:text-base mb-3 flex items-center justify-center gap-2"
+              style={{ background: "#ff751f" }}
             >
               <Upload className="w-4 h-4 flex-shrink-0" />
               Fix My CV Free
@@ -1122,82 +1095,6 @@ export default function LandingPage() {
         @keyframes marquee {
           0%   { transform: translateX(0); }
           100% { transform: translateX(-50%); }
-        }
-        @keyframes btn-shine {
-          from { background-position: 200% center; }
-          to   { background-position: -200% center; }
-        }
-        .shimmer-btn {
-          position: relative;
-          overflow: hidden;
-        }
-        .shimmer-btn::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            105deg,
-            transparent 35%,
-            rgba(255,255,255,0.22) 50%,
-            transparent 65%
-          );
-          background-size: 250% auto;
-          animation: btn-shine 3.2s linear infinite;
-          pointer-events: none;
-          border-radius: inherit;
-        }
-        .grad-text-blue {
-          background: linear-gradient(135deg, #004aad 0%, #0077ff 50%, #00c4cc 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .grad-text-orange {
-          background: linear-gradient(135deg, #ff751f 0%, #ffab40 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .marquee-fade {
-          -webkit-mask-image: linear-gradient(
-            to right,
-            transparent 0%,
-            black 8%,
-            black 92%,
-            transparent 100%
-          );
-          mask-image: linear-gradient(
-            to right,
-            transparent 0%,
-            black 8%,
-            black 92%,
-            transparent 100%
-          );
-        }
-        .glass-card {
-          background: rgba(255,255,255,0.05);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-        }
-        .glass-card-white {
-          background: rgba(255,255,255,0.7);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-        }
-        .grad-border-card {
-          position: relative;
-        }
-        .grad-border-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          padding: 1.5px;
-          background: linear-gradient(135deg, rgba(0,74,173,0.35) 0%, rgba(0,196,204,0.2) 50%, rgba(0,74,173,0.1) 100%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
         }
       `}</style>
       <Navbar onCTA={handleCTA} />
