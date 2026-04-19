@@ -1,1049 +1,871 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import {
-  motion, useInView, useMotionValue, useSpring,
-  AnimatePresence, useScroll, useTransform,
-  type Variants,
-} from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Sparkles, FileText, CheckCircle2,
-  ChevronDown, Zap, Shield, Target, Star, Globe,
-  X, BarChart2, Lock, RefreshCw, Briefcase,
-  GraduationCap, TrendingUp, Repeat2, Trophy, Heart,
+  ChevronDown, Zap, Shield, Eye, Target,
+  Palette, ThumbsUp, Star, ScrollText, MessageSquare,
+  X, Globe, Clock,
 } from "lucide-react";
-import { Page1 } from "@/app/dashboard/components/cv-template";
-import type { CVData } from "@/app/dashboard/components/cv-template";
 
-// ─── Brand ────────────────────────────────────────────────────────────────────
-const BLUE   = "#004aad";
-const ORANGE = "#ff751f";
-const TEAL   = "#00c4cc";
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// ─── Real CV Data (James Mitchell — demo) ─────────────────────────────────────
-const JAMES_CV: CVData = {
-  fullName: "James Mitchell",
-  title: "Senior Marketing Manager",
-  email: "j.mitchell@email.com",
-  phone: "+44 7700 900 123",
-  location: "London, UK",
-  linkedin: "linkedin.com/in/jmitchell",
-  website: "",
-  tagline: "Demand Generation & Brand Strategy | £4.1M ARR Generated FY2023",
-  profile:
-    "Results-driven Senior Marketing Manager with 9+ years delivering high-impact B2B campaigns across SaaS and professional services. Generated £4.1M in attributable revenue in FY2023 through integrated demand-generation programmes. Proven ability to align Marketing with Sales to accelerate pipeline velocity and reduce average deal cycle times by 18%. Led cross-functional teams of up to 8 marketers, driving brand equity and measurable commercial performance across EMEA.",
-  skills: [
-    "Demand Generation",    "Brand Strategy",
-    "Campaign Management",  "Digital Marketing",
-    "Budget Management",    "Data Analytics",
-    "Team Leadership",      "Stakeholder Mgmt",
-    "SEO / SEM",            "HubSpot CRM",
-    "Marketing Automation", "Content Strategy",
-    "Account-Based Mktg",   "Social Media Strategy",
-    "Email Marketing",      "Lead Scoring",
-    "A/B Testing",          "Google Ads",
-    "Salesforce CRM",       "Pardot",
-    "Market Research",      "PR & Communications",
-    "Event Management",     "Paid Media",
-  ],
-  experience: [
-    {
-      role: "Senior Marketing Manager",
-      company: "TechVentures Ltd",
-      dates: "Jan 2020 – Present",
-      location: "London, UK",
-      bullets: [
-        "Led demand-generation programme generating £4.1M ARR in FY2023, a +42% pipeline increase year-on-year against target.",
-        "Managed £2.4M multi-channel marketing budget across paid, owned, and earned media with verified 31% revenue attribution.",
-        "Aligned Marketing with Sales to introduce lead-scoring framework, reducing average enterprise deal cycle by 18%.",
-        "Built and managed a team of 8 marketing professionals, improving team retention by 35% through structured career development.",
-        "Launched ABM programme targeting 120 enterprise accounts, achieving 28% meeting-to-opportunity conversion rate.",
-        "Redesigned email nurture workflows in HubSpot, increasing MQL-to-SQL conversion by 22% within the first quarter.",
-        "Delivered full brand refresh across all digital and print channels within 14 weeks, improving NPS brand perception by 19 points.",
-        "Directed EMEA event strategy including Salesforce World Tour, generating 340 qualified leads at £62 CPL.",
-        "Consolidated agency relationships from 6 to 3 partners across PR, SEO, and paid media, saving £180K annually.",
-        "Presented quarterly marketing performance to board, credited with aligning Marketing to revenue targets for 3 consecutive years.",
-        "Introduced Salesforce attribution framework that improved reporting accuracy and reduced wasted ad spend by £340K in FY2023.",
-      ],
-    },
-    {
-      role: "Marketing Manager",
-      company: "BrightScale Agency",
-      dates: "Mar 2017 – Dec 2019",
-      location: "London, UK",
-      bullets: [
-        "Scaled social media audience from 8K to 34K followers across client portfolios, achieving an average 68% engagement rate uplift.",
-        "Managed integrated marketing campaigns for 12 enterprise clients with combined annual retained revenue of £6.8M.",
-        "Led content marketing strategy resulting in 140% increase in organic traffic across three key client accounts over 18 months.",
-        "Implemented marketing automation across 5 client accounts, reducing manual campaign management time by 30% per client.",
-        "Pitched and won three new business accounts worth £920K combined annual revenue, contributing 14% of agency ARR growth.",
-        "Produced quarterly campaign reports for client board presentations, consistently rated 9.2/10 in client satisfaction surveys.",
-        "Mentored a team of 3 junior marketers; two received promotions within 18 months under direct supervision.",
-        "Reduced average client campaign delivery time by 25% through agency-wide project management process improvements.",
-        "Won Agency Campaign of the Year at UK Marketing Excellence Awards 2018 for the BrightTech EMEA product launch.",
-      ],
-    },
-  ],
-  education: [
-    { degree: "BA (Hons) Marketing", school: "University of Leeds", year: "2011–2014 · First Class Honours" },
-    { degree: "CIM Professional Diploma", school: "Chartered Institute of Marketing", year: "2016 · Distinction" },
-  ],
-  certifications: [
-    { name: "HubSpot Marketing Hub Certified", issuer: "HubSpot Academy", year: "2023" },
-    { name: "Google Ads Search Certification", issuer: "Google", year: "2023" },
-    { name: "Salesforce Marketing Cloud", issuer: "Salesforce", year: "2022" },
-  ],
-  awards: [
-    { title: "Agency Campaign of the Year", description: "UK Marketing Excellence Awards 2018" },
-    { title: "Top Performer Q3 2023", description: "TechVentures Ltd" },
-  ],
-  history: [],
-  projects: [],
-  references: [],
-  languages: [
-    { name: "English", level: 100, label: "Native" },
-    { name: "French",  level: 65,  label: "Professional" },
-    { name: "Spanish", level: 40,  label: "Conversational" },
-  ],
-};
+function scrollTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
 
-// ─── Scaled Real CV Page ──────────────────────────────────────────────────────
-function ScaledCVPage({ rounded = true }: { rounded?: boolean }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale]   = useState(0);
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 
+function Navbar({ onCTA }: { onCTA: () => void }) {
+  const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const update = () => {
-      if (wrapperRef.current) setScale(wrapperRef.current.offsetWidth / 794);
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    if (wrapperRef.current) ro.observe(wrapperRef.current);
-    return () => ro.disconnect();
+    const h = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
   }, []);
 
   return (
-    <div
-      ref={wrapperRef}
-      style={{
-        width: "100%",
-        height: scale > 0 ? Math.round(1123 * scale) : 0,
-        overflow: "hidden",
-        borderRadius: rounded ? 12 : 0,
-      }}
-    >
-      {scale > 0 && (
-        <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: 794, height: 1123 }}>
-          <Page1 d={JAMES_CV} theme="corporate" />
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/60" : "bg-transparent"}`}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <button onClick={() => scrollTo("hero")} className="flex items-center">
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={110} height={36} className="object-contain" />
+        </button>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button onClick={() => scrollTo("how-it-works")} className="hidden sm:block text-sm text-slate-600 hover:text-slate-900 font-medium transition-colors">
+            How it works
+          </button>
+          <Link href="/login" className="hidden sm:block text-sm text-slate-600 hover:text-[#004aad] font-medium transition-colors">
+            Sign in
+          </Link>
+          <button onClick={onCTA} className="bg-[#ff751f] hover:bg-[#e8661a] text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 rounded-lg shadow-sm transition-all">
+            Upload My CV Free
+          </button>
         </div>
-      )}
+      </div>
+    </nav>
+  );
+}
+
+// ─── CV Sample Preview (scaled) ───────────────────────────────────────────────
+
+function SideSection({ label, children, last }: { label: string; children: React.ReactNode; last?: boolean }) {
+  return (
+    <div style={{ paddingBottom: last ? 0 : 13, borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.15)", marginBottom: last ? 0 : 13 }}>
+      <div style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 6 }}>{label}</div>
+      {children}
     </div>
   );
 }
 
-// ─── Motion Variants ─────────────────────────────────────────────────────────
-type BezierEase = [number, number, number, number];
-const bez: BezierEase = [0.22, 1, 0.36, 1];
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 28 },
-  show:   { opacity: 1, y: 0, transition: { duration: 0.55, ease: bez } },
-};
-const stagger = (delay = 0.08): Variants => ({
-  hidden: {},
-  show:   { transition: { staggerChildren: delay } },
-});
-const slideRight: Variants = {
-  hidden: { opacity: 0, x: -30 },
-  show:   { opacity: 1, x: 0, transition: { duration: 0.6, ease: bez } },
-};
-const slideLeft: Variants = {
-  hidden: { opacity: 0, x: 30 },
-  show:   { opacity: 1, x: 0, transition: { duration: 0.6, ease: bez } },
-};
-
-// ─── Count-Up Hook ────────────────────────────────────────────────────────────
-function useCountUp(target: number, duration = 1.8) {
-  const ref    = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-50px" });
-  const mv     = useMotionValue(0);
-  const spring = useSpring(mv, { duration: duration * 1000, bounce: 0 });
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    const unsub = spring.on("change", (v) => setDisplay(Math.round(v)));
-    return unsub;
-  }, [spring]);
-
-  useEffect(() => {
-    if (inView) mv.set(target);
-  }, [inView, target, mv]);
-
-  return { ref, display };
-}
-
-// ─── Navbar ───────────────────────────────────────────────────────────────────
-function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const router   = useRouter();
-  const supabase = createClient();
-
-  useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", h, { passive: true });
-    return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
-
+function BodySection({ label, children, last }: { label: string; children: React.ReactNode; last?: boolean }) {
   return (
-    <motion.nav
-      initial={{ y: -60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/60" : "bg-transparent"
-      }`}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link href="/landing" className="flex items-center">
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={110} height={36} className="object-contain" priority />
-        </Link>
-        <div className="hidden sm:flex items-center gap-6 text-sm font-medium text-slate-600">
-          <button onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-[#004aad] transition-colors">How it works</button>
-          <button onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-[#004aad] transition-colors">Features</button>
-          <Link href="/guides" className="hover:text-[#004aad] transition-colors">Guides</Link>
-          <button onClick={() => document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-[#004aad] transition-colors">FAQ</button>
-          <Link href="/login" className="hover:text-[#004aad] transition-colors">Sign in</Link>
-        </div>
-        <motion.button
-          onClick={handleCTA}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="bg-[#ff751f] hover:bg-[#e8661a] text-white text-sm font-bold px-5 py-2 rounded-xl shadow-md transition-colors"
-        >
-          Upload My CV Free
-        </motion.button>
+    <div style={{ marginBottom: last ? 0 : 15 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, color: "#004aad", textTransform: "uppercase", letterSpacing: "1.5px", whiteSpace: "nowrap" }}>{label}</span>
+        <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
       </div>
-    </motion.nav>
+      {children}
+    </div>
   );
 }
 
+function CVSamplePreview() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
 
-// ─── After FuseCV Showcase (transformation section) ───────────────────────────
-function AfterCVShowcase() {
+  useEffect(() => {
+    const measure = () => {
+      const wrap = wrapRef.current;
+      const card = cardRef.current;
+      if (!wrap || !card) return;
+      const w = wrap.getBoundingClientRect().width;
+      if (!w) return;
+      const s = Math.min(1, w / 680);
+      setScale(s);
+      wrap.style.height = `${card.scrollHeight * s}px`;
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const ro = new ResizeObserver(measure);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => { window.removeEventListener("resize", measure); ro.disconnect(); };
+  }, []);
+
   return (
-    <div className="relative pt-6">
-      {/* After FuseCV pill */}
-      <div
-        className="absolute top-0 left-4 z-20 text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full text-white shadow-md"
-        style={{ background: "#059669" }}
-      >
-        ✓ After FuseCV
-      </div>
-
-      {/* Floating ATS badge */}
-      <motion.div
-        animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-0 -right-2 z-20 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-200"
-      >
-        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "#059669" }}>
-          <CheckCircle2 size={12} className="text-white" />
+    <div ref={wrapRef} style={{ width: "100%", overflow: "hidden", position: "relative", textAlign: "left" }}>
+      <div ref={cardRef} style={{ width: 680, transformOrigin: "top left", transform: `scale(${scale})`, opacity: scale === 0 ? 0 : 1, transition: "opacity 0.2s" }}>
+        <div style={{ display: "flex", fontFamily: "Inter, system-ui, sans-serif", background: "#fff", borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.12)", border: "1px solid #e2e8f0" }}>
+          {/* SIDEBAR */}
+          <div style={{ width: 190, flexShrink: 0, background: "#004aad", padding: "22px 14px", display: "flex", flexDirection: "column" }}>
+            <div style={{ paddingBottom: 13, borderBottom: "1px solid rgba(255,255,255,0.15)", marginBottom: 13 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>James Mitchell</div>
+              <div style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.85)", marginTop: 3 }}>Senior Marketing Manager</div>
+              <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.5)", marginTop: 4, fontStyle: "italic" }}>&ldquo;Turning strategy into measurable growth&rdquo;</div>
+            </div>
+            <SideSection label="Contact">
+              {["✉  j.mitchell@email.com", "☎  +44 7700 900 123", "📍  London, UK", "in  linkedin.com/in/james"].map((l, i) => (
+                <div key={i} style={{ fontSize: 8, color: "rgba(255,255,255,0.82)", lineHeight: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l}</div>
+              ))}
+            </SideSection>
+            <SideSection label="Core Competencies">
+              {["Brand Strategy", "Digital Marketing", "Team Leadership", "Campaign Management", "Data Analytics", "Stakeholder Engagement", "Budget Planning"].map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#00c4cc", flexShrink: 0 }} />
+                  <span style={{ fontSize: 8.5, color: "rgba(255,255,255,0.88)" }}>{s}</span>
+                </div>
+              ))}
+            </SideSection>
+            <SideSection label="Education">
+              <div style={{ fontSize: 8.5, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>BSc Marketing &amp; Communications</div>
+              <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>University of Manchester · 2013</div>
+            </SideSection>
+            <SideSection label="Certifications">
+              {[{ n: "Google Analytics 4", s: "Google · 2023" }, { n: "HubSpot Marketing", s: "HubSpot · 2022" }].map((c, i) => (
+                <div key={i} style={{ marginBottom: 5 }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 600, color: "#fff" }}>{c.n}</div>
+                  <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)" }}>{c.s}</div>
+                </div>
+              ))}
+            </SideSection>
+            <SideSection label="Languages" last>
+              {[{ l: "English", v: "Native" }, { l: "Spanish", v: "Conversational" }].map((x, i) => (
+                <div key={i} style={{ marginBottom: 4 }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 600, color: "#fff" }}>{x.l}</div>
+                  <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)" }}>{x.v}</div>
+                </div>
+              ))}
+            </SideSection>
+          </div>
+          {/* MAIN BODY */}
+          <div style={{ flex: 1, minWidth: 0, padding: "22px 20px 22px 18px", background: "#fff" }}>
+            <BodySection label="Professional Summary">
+              <p style={{ fontSize: 8.5, lineHeight: "14.5px", color: "#374151", margin: 0 }}>
+                Results-driven Senior Marketing Manager with 9+ years of experience leading cross-functional teams and delivering high-impact campaigns across B2B and B2C markets. Proven track record of growing brand awareness, driving measurable revenue growth, and translating business objectives into focused marketing strategy, including a flagship demand-gen programme that generated £4.1M in attributable revenue in FY2023. Skilled at owning and optimising large marketing budgets — including a £2.4M annual spend — across digital, content, events and paid media channels.
+              </p>
+            </BodySection>
+            <BodySection label="Experience">
+              {[
+                {
+                  role: "Senior Marketing Manager", company: "TechVentures Ltd", loc: "London", dates: "2020 – Present",
+                  bullets: [
+                    "Led team of 8 marketers, delivering a 42% increase in qualified pipeline year-on-year",
+                    "Oversaw £2.4M annual budget across digital, content, events and paid media",
+                    "Launched integrated demand-gen campaign driving 31% YoY revenue growth",
+                    "Introduced attribution modelling improving reporting accuracy across all channels",
+                    "Partnered with Sales to align messaging, reducing sales cycle length by 18%",
+                  ],
+                },
+                {
+                  role: "Marketing Manager", company: "BrightScale Agency", loc: "Manchester", dates: "2017 – 2020",
+                  bullets: [
+                    "Managed multi-channel campaigns for 12 enterprise clients simultaneously",
+                    "Grew client social engagement by an average of 68% within 6 months of onboarding",
+                    "Developed content strategy that reduced client churn by 22%",
+                    "Trained and mentored a team of 3 junior marketers across content and paid channels",
+                  ],
+                },
+              ].map((exp, i) => (
+                <div key={i} style={{ marginBottom: 11, paddingLeft: 10, borderLeft: "2px solid #004aad" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#1e293b" }}>{exp.role}</span>
+                    <span style={{ fontSize: 7.5, color: "#94a3b8", whiteSpace: "nowrap", marginLeft: 6 }}>{exp.dates}</span>
+                  </div>
+                  <div style={{ fontSize: 8.5, color: "#004aad", fontWeight: 600, marginBottom: 4 }}>{exp.company} — {exp.loc}</div>
+                  <ul style={{ margin: 0, paddingLeft: 10, listStyleType: "disc" }}>
+                    {exp.bullets.map((b, bi) => (
+                      <li key={bi} style={{ fontSize: 8, lineHeight: "13.5px", color: "#374151", marginBottom: 2 }}>{b}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </BodySection>
+            <BodySection label="Key Achievements" last>
+              {[
+                "Delivered £4.1M in attributable revenue through targeted demand-gen programmes in FY2023",
+                "Shortlisted for Marketing Week Award – B2B Campaign of the Year 2022",
+                "Built and scaled marketing team from 2 to 8 members in under 18 months",
+                "Reduced cost-per-lead by 34% through funnel optimisation and systematic A/B testing",
+                "Spearheaded rebrand launch that increased website conversion rate by 27%",
+              ].map((ach, i) => (
+                <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start", marginBottom: 5 }}>
+                  <div style={{ width: 15, height: 15, borderRadius: "50%", background: "rgba(0,74,173,0.08)", border: "1.5px solid #004aad", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: 7.5, fontWeight: 700, color: "#004aad" }}>{i + 1}</span>
+                  </div>
+                  <span style={{ fontSize: 8, lineHeight: "13.5px", color: "#374151", paddingTop: 1 }}>{ach}</span>
+                </div>
+              ))}
+            </BodySection>
+          </div>
         </div>
-        <div>
-          <div className="text-[9px] font-bold text-slate-800">ATS Score</div>
-          <div className="text-[9px] font-extrabold" style={{ color: "#059669" }}>94 / 100 ↑</div>
-        </div>
-      </motion.div>
-
-      {/* Glow */}
-      <div
-        className="absolute inset-0 rounded-2xl blur-2xl scale-95 opacity-40"
-        style={{ background: `linear-gradient(135deg, ${BLUE}33, ${TEAL}22)` }}
-      />
-
-      {/* Real CV with green border */}
-      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-emerald-300">
-        <ScaledCVPage rounded={false} />
       </div>
     </div>
   );
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-function HeroSection() {
-  const router   = useRouter();
-  const supabase = createClient();
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
-
-  const { scrollY } = useScroll();
-  const heroY = useTransform(scrollY, [0, 400], [0, 80]);
-
+function HeroSection({ onCTA }: { onCTA: () => void }) {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden pt-14" style={{ background: "#080f1e" }}>
-      {/* Gradient blobs */}
+    <section id="hero" className="relative bg-white pt-20 pb-12 px-4 sm:px-6">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.18, 0.28, 0.18] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-3xl"
-          style={{ background: `radial-gradient(circle, ${BLUE}55 0%, transparent 70%)` }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.12, 1], opacity: [0.12, 0.22, 0.12] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute -bottom-40 -right-20 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: `radial-gradient(circle, ${TEAL}44 0%, transparent 70%)` }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.05, 1], opacity: [0.1, 0.18, 0.1] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full blur-3xl"
-          style={{ background: `radial-gradient(ellipse, ${ORANGE}20 0%, transparent 65%)` }}
-        />
+        <div className="absolute top-0 right-0 w-80 h-80 sm:w-[560px] sm:h-[560px] rounded-full -translate-y-1/2 translate-x-1/3"
+          style={{ background: "radial-gradient(circle, rgba(0,74,173,0.07) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 w-60 h-60 sm:w-[400px] sm:h-[400px] rounded-full translate-y-1/3 -translate-x-1/4"
+          style={{ background: "radial-gradient(circle, rgba(0,196,204,0.07) 0%, transparent 70%)" }} />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 w-full py-16 sm:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-        {/* Left — Copy */}
-        <motion.div variants={stagger(0.1)} initial="hidden" animate="show">
-          <motion.div
-            variants={fadeUp}
-            className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full border text-xs font-semibold"
-            style={{ borderColor: `${TEAL}40`, background: `${TEAL}12`, color: TEAL }}
-          >
-            <Sparkles size={12} />
-            <span>AI-Powered · Trusted by thousands worldwide</span>
-          </motion.div>
+      <div className="relative max-w-4xl mx-auto text-center">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 border text-xs font-semibold px-3 sm:px-4 py-1.5 rounded-full mb-6 sm:mb-8"
+          style={{ background: "rgba(0,74,173,0.06)", borderColor: "rgba(0,74,173,0.15)", color: "#004aad" }}>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ background: "#00c4cc" }} />
+          <span>No card required · Preview before you pay</span>
+        </div>
 
-          <motion.h1
-            variants={fadeUp}
-            className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.12] tracking-tight text-white mb-5"
-          >
-            Your CV Is Costing You{" "}
-            <span className="relative inline-block">
-              <span style={{ color: ORANGE }}>Interviews</span>
-              <motion.svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" fill="none">
-                <motion.path
-                  d="M2 6 C50 2 150 2 198 6"
-                  stroke={ORANGE}
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.7, delay: 1 }}
-                />
-              </motion.svg>
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.08] tracking-tight mb-5 sm:mb-6">
+          Your CV Might Be{" "}
+          <span style={{ color: "#004aad" }}>Costing You Opportunities.</span>
+        </h1>
+
+        <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto mb-7 sm:mb-9 leading-relaxed">
+          FuseCV transforms your current CV into a recruiter-ready version that highlights your real value, wins more interviews, and helps you compete for better roles.
+        </p>
+
+        {/* Trust ticks */}
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500 mb-7 sm:mb-10">
+          {["No payment until satisfied", "No credit card required", "Secure upload"].map((t, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#10b981" }} />
+              {t}
             </span>
-          </motion.h1>
+          ))}
+        </div>
 
-          <motion.p variants={fadeUp} className="text-lg text-slate-300 leading-relaxed mb-8 max-w-lg">
-            FuseCV transforms weak, generic CVs into recruiter-ready versions that show your real value, pass ATS systems, and help you win more interviews — in as little as 60 seconds.
-          </motion.p>
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-14">
+          <button onClick={onCTA}
+            className="flex items-center justify-center gap-2 text-white font-bold text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}>
+            <Upload className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            Upload My CV Free
+          </button>
+          <button onClick={() => scrollTo("before-after")}
+            className="flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-xl shadow-sm transition-all hover:shadow">
+            See Before &amp; After
+            <ChevronDown className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          </button>
+        </div>
 
-          {/* CTAs */}
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 mb-10">
-            <motion.button
-              onClick={handleCTA}
-              whileHover={{ scale: 1.03, boxShadow: `0 0 30px ${ORANGE}55` }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-bold text-white text-base transition-all"
-              style={{ background: ORANGE }}
-            >
-              <Upload size={18} />
-              Upload My CV Free
-              <ArrowRight size={16} />
-            </motion.button>
-            <motion.button
-              onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-slate-300 text-base border border-white/10 hover:border-white/25 transition-all"
-            >
-              See How It Works
-              <ChevronDown size={16} />
-            </motion.button>
-          </motion.div>
-
-          {/* Trust bar */}
-          <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {[
-              { icon: <Shield size={13} />, text: "No credit card required" },
-              { icon: <Lock size={13} />,   text: "Secure private upload" },
-              { icon: <Globe size={13} />,  text: "Used in 30+ countries" },
-              { icon: <CheckCircle2 size={13} />, text: "Preview before payment" },
-            ].map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-1.5 text-xs text-slate-400">
-                <span style={{ color: TEAL }}>{icon}</span>
-                <span>{text}</span>
-              </div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        {/* Right — CV Mockup (visible on all screen sizes) */}
-        <motion.div style={{ y: heroY }} variants={slideLeft} initial="hidden" animate="show"
-          className="relative w-full max-w-sm mx-auto lg:max-w-none">
-
-          {/* Before badge */}
-          <motion.div
-            animate={{ y: [0, -7, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-5 left-3 sm:left-0 z-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-red-100"
-          >
-            <div className="text-[9px] font-bold text-red-500 uppercase tracking-wide mb-0.5">Before FuseCV</div>
-            <div className="text-[8px] text-slate-500">Generic · Weak wording · Low ATS</div>
-          </motion.div>
-
-          {/* After badge */}
-          <motion.div
-            animate={{ y: [0, 7, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute -bottom-4 right-3 sm:right-0 z-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-100"
-          >
-            <div className="text-[9px] font-bold uppercase tracking-wide mb-0.5" style={{ color: "#059669" }}>After FuseCV</div>
-            <div className="text-[8px] text-slate-500">Achievement-led · ATS-ready</div>
-          </motion.div>
-
-          {/* ATS score badge */}
-          <motion.div
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute top-1/3 -right-2 sm:right-0 lg:-right-6 z-10 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-slate-100"
-          >
-            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#059669" }}>
-              <CheckCircle2 size={12} className="text-white" />
-            </div>
-            <div>
-              <div className="text-[9px] font-bold text-slate-800">ATS Score</div>
-              <div className="text-[9px] font-semibold" style={{ color: "#059669" }}>94 / 100 ↑</div>
-            </div>
-          </motion.div>
-
-          <div className="absolute inset-0 rounded-2xl blur-2xl scale-95" style={{ background: `linear-gradient(135deg, ${BLUE}44, ${TEAL}33)` }} />
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-            <ScaledCVPage rounded={false} />
-          </div>
-        </motion.div>
+        {/* CV Preview */}
+        <div className="relative">
+          <CVSamplePreview />
+          <div className="absolute -inset-2 sm:-inset-4 rounded-3xl -z-10 opacity-15 blur-2xl" style={{ background: "#004aad" }} />
+        </div>
       </div>
-
-      <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.5, repeat: Infinity }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-        <div className="w-px h-8 bg-gradient-to-b from-transparent to-white/20" />
-        <ChevronDown size={16} className="text-white/30" />
-      </motion.div>
     </section>
   );
 }
 
-// ─── Social Proof Strip ───────────────────────────────────────────────────────
-function StatItem({ value, suffix, label }: { value: number; suffix: string; label: string }) {
-  const { ref, display } = useCountUp(value);
+// ─── Marquee Strip ────────────────────────────────────────────────────────────
+
+function MarqueeStrip() {
+  const items = [
+    "✦ Students & Graduates", "✦ Job Seekers", "✦ Mid-Level Professionals",
+    "✦ Career Changers", "✦ Founders & Executives",
+    "✦ Students & Graduates", "✦ Job Seekers", "✦ Mid-Level Professionals",
+    "✦ Career Changers", "✦ Founders & Executives",
+  ];
   return (
-    <motion.div variants={fadeUp} ref={ref} className="text-center">
-      <div className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: BLUE }}>
-        {display.toLocaleString()}{suffix}
+    <div className="py-3 sm:py-4 overflow-hidden" style={{ background: "#004aad" }}>
+      <div className="flex">
+        {[0, 1].map(k => (
+          <div key={k} aria-hidden={k === 1}
+            className="flex items-center gap-8 sm:gap-10 animate-[marquee_22s_linear_infinite] whitespace-nowrap flex-shrink-0">
+            {items.map((item, i) => (
+              <span key={i} className="text-xs sm:text-sm font-semibold" style={{ color: "rgba(255,255,255,0.65)" }}>{item}</span>
+            ))}
+          </div>
+        ))}
       </div>
-      <div className="text-sm text-slate-500 font-medium mt-1">{label}</div>
-    </motion.div>
+    </div>
   );
 }
 
-function StatsBar() {
+// ─── Pain / Agitation ─────────────────────────────────────────────────────────
+
+function PainSection() {
+  const traits = ["Average", "Generic", "Forgettable", "Low impact"];
+  return (
+    <section className="py-14 sm:py-24 px-4 sm:px-6" style={{ background: "#0a1628" }}>
+      <div className="max-w-4xl mx-auto text-center">
+        <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-4" style={{ color: "#ff751f" }}>The Problem</p>
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-4">
+          Good People Get Rejected Every Day
+        </h2>
+        <p className="text-slate-400 text-base sm:text-lg mb-8 sm:mb-10">
+          Not because they lack skill. Because their CV says:
+        </p>
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-8 sm:mb-10">
+          {traits.map((t, i) => (
+            <div key={i} className="px-5 sm:px-7 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold"
+              style={{ background: "rgba(255,117,31,0.1)", border: "1.5px solid rgba(255,117,31,0.25)", color: "#ff751f" }}>
+              {t}
+            </div>
+          ))}
+        </div>
+        <p className="text-slate-400 text-sm sm:text-base mb-8 italic">
+          While stronger candidates on paper get the interview.
+        </p>
+        <div className="inline-block rounded-2xl px-6 sm:px-12 py-5 sm:py-7 max-w-xl"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <p className="text-white font-bold text-lg sm:text-2xl leading-snug">
+            Your experience may be valuable.
+          </p>
+          <p className="text-slate-300 text-base sm:text-xl mt-2">
+            Your CV may be hiding it.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Social Proof ─────────────────────────────────────────────────────────────
+
+function SocialProofSection() {
   const stats = [
-    { value: 50000, suffix: "+", label: "CVs Improved" },
-    { value: 94,    suffix: "%", label: "ATS Pass Rate" },
-    { value: 60,    suffix: "s", label: "Average Time" },
-    { value: 30,    suffix: "+", label: "Countries" },
+    { icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6" />, value: "10,000+", label: "CVs upgraded" },
+    { icon: <Star className="w-5 h-5 sm:w-6 sm:h-6" />, value: "4.8★", label: "Average rating" },
+    { icon: <Globe className="w-5 h-5 sm:w-6 sm:h-6" />, value: "30+", label: "Countries" },
   ];
   return (
-    <section className="py-12 border-y border-slate-100 bg-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <p className="text-center text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">Trusted by Job Seekers Worldwide</p>
-        <motion.div variants={stagger(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((s) => <StatItem key={s.label} {...s} />)}
-        </motion.div>
+    <section className="py-12 sm:py-20 px-4 sm:px-6" style={{ background: "#F0F2F8" }}>
+      <div className="max-w-4xl mx-auto text-center">
+        <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Trusted Worldwide</p>
+        <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight mb-3">
+          Trusted by Ambitious Professionals<br className="hidden sm:block" /> at Every Career Stage
+        </h2>
+        <p className="text-slate-500 text-sm sm:text-base mb-8 sm:mb-12">
+          Students · Managers · Career Changers · Founders · Executives
+        </p>
+        <div className="grid grid-cols-3 gap-3 sm:gap-6 max-w-2xl mx-auto">
+          {stats.map((s, i) => (
+            <div key={i} className="bg-white rounded-2xl p-4 sm:p-7 border border-slate-100 shadow-sm flex flex-col items-center gap-2 sm:gap-3">
+              <div style={{ color: "#004aad" }}>{s.icon}</div>
+              <p className="text-xl sm:text-4xl font-black" style={{ color: "#004aad" }}>{s.value}</p>
+              <p className="text-slate-500 text-xs sm:text-sm text-center leading-snug">{s.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-// ─── Identity Section ─────────────────────────────────────────────────────────
-function IdentitySection() {
-  const personas = [
-    { icon: <GraduationCap size={22} />, color: BLUE,    emoji: "🎓", title: "Students & Graduates",        body: "Stand out even with limited experience. Let your projects, skills and potential do the talking." },
-    { icon: <Target size={22} />,        color: ORANGE,  emoji: "💼", title: "Job Seekers",                 body: "Turn silence into interviews. Get your CV past ATS and in front of the right people." },
-    { icon: <TrendingUp size={22} />,    color: TEAL,    emoji: "📈", title: "Mid-Level Professionals",     body: "Position yourself for promotions and better roles. Show your impact in numbers, not duties." },
-    { icon: <Repeat2 size={22} />,       color: "#7c3aed", emoji: "🔄", title: "Career Changers",           body: "Translate your existing experience into a new industry. Frame transferable skills with confidence." },
-    { icon: <Trophy size={22} />,        color: "#d97706", emoji: "🏆", title: "Founders & Executives",     body: "Present leadership with authority and credibility. Senior CVs require a completely different approach." },
-  ];
+// ─── Before / After ───────────────────────────────────────────────────────────
 
+function BeforeAfterSection() {
+  const reasons = ["Specific", "Credible", "Senior-level", "Impact-driven"];
   return (
-    <section className="py-20 bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: `${BLUE}10`, color: BLUE }}>
-              For Every Career Stage
+    <section id="before-after" className="py-12 sm:py-20 px-4 sm:px-6 bg-white">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8 sm:mb-14">
+          <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Real Results</p>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Same Person. Different Result.</h2>
+          <p className="text-slate-500 mt-3 text-sm sm:text-lg">One rewrite changes everything.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-5 sm:mb-6">
+          {/* Before */}
+          <div className="rounded-2xl border-2 border-red-100 bg-red-50 p-6 sm:p-8">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">✕</span>
+              </div>
+              <span className="text-red-700 font-bold text-sm uppercase tracking-wide">Before</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Built for Every Career Stage
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              Whether you are just starting out or leading a team, FuseCV helps you present yourself at your best.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {personas.map(({ icon, color, emoji, title, body }, i) => (
-              <motion.div key={title} variants={fadeUp} custom={i}
-                whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(0,0,0,0.09)" }}
-                className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all duration-300">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white shrink-0" style={{ background: color }}>
-                    {icon}
-                  </div>
-                  <h3 className="font-bold text-slate-900 text-sm leading-snug">{title}</h3>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">{body}</p>
-              </motion.div>
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-red-100 shadow-sm">
+              <p className="text-slate-400 text-xs uppercase tracking-wider font-medium mb-2">Experience bullet</p>
+              <p className="text-slate-400 text-sm sm:text-base leading-relaxed font-medium">Managed team and campaigns.</p>
+            </div>
+          </div>
+          {/* After */}
+          <div className="rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-emerald-700 font-bold text-sm uppercase tracking-wide">After</span>
+            </div>
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-emerald-100 shadow-sm">
+              <p className="text-slate-400 text-xs uppercase tracking-wider font-medium mb-2">Experience bullet</p>
+              <p className="text-slate-800 text-sm sm:text-base leading-relaxed font-semibold">
+                Led an 8-person team delivering 42% pipeline growth while managing a £2.4M annual marketing budget.
+              </p>
+            </div>
+          </div>
+        </div>
+        {/* Why recruiters prefer */}
+        <div className="rounded-2xl p-5 sm:p-6 border border-slate-100" style={{ background: "#F0F2F8" }}>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Why recruiters prefer this</p>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {reasons.map((r, i) => (
+              <span key={i} className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full"
+                style={{ background: "rgba(0,74,173,0.08)", color: "#004aad" }}>
+                <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                {r}
+              </span>
             ))}
-            {/* CTA card */}
-            <motion.div variants={fadeUp}
-              className="rounded-2xl p-6 text-white flex flex-col justify-between"
-              style={{ background: `linear-gradient(135deg, ${BLUE}, #0055cc)` }}>
-              <div>
-                <div className="text-2xl mb-3">✨</div>
-                <h3 className="font-bold text-base mb-2">Whoever you are,<br />your CV can be better.</h3>
-                <p className="text-blue-100 text-xs leading-relaxed">FuseCV adapts to your career level, industry and target role automatically.</p>
-              </div>
-              <Link href="/register" className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-white hover:text-blue-100 transition-colors">
-                Get started free <ArrowRight size={14} />
-              </Link>
-            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 }
 
-// ─── Problem Section ──────────────────────────────────────────────────────────
-function ProblemSection() {
-  const problems = [
-    "Sounds generic and could apply to anyone",
-    "Hides real achievements behind vague duties",
-    "Lacks the recruiter keywords that get shortlisted",
-    "Fails ATS screening before a human ever reads it",
-    "Undersells years of valuable experience",
+// ─── Story Section ────────────────────────────────────────────────────────────
+
+function StorySection() {
+  const steps = [
+    { emoji: "📄", text: "James applied for weeks with no replies." },
+    { emoji: "⬆️", text: "Uploaded his CV to FuseCV." },
+    { emoji: "⚡", text: "New version ready in minutes." },
+    { emoji: "🎯", text: "Landed 4 interviews in 14 days.", highlight: true },
   ];
-
   return (
-    <section className="py-20 bg-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: "#fee2e2", color: "#dc2626" }}>
-              The Problem
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Strong People Often Look Weak on Paper
-            </h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-              Most rejections are not about your ability. They happen because your CV is letting you down.
-            </p>
-          </motion.div>
-
-          <div className="max-w-2xl mx-auto">
-            <motion.div variants={stagger(0.07)} initial="hidden" whileInView="show" viewport={{ once: true }}
-              className="space-y-3 mb-10">
-              <p className="text-sm font-semibold text-slate-700 mb-4">Your CV might be getting rejected because it:</p>
-              {problems.map((text) => (
-                <motion.div key={text} variants={fadeUp}
-                  className="flex items-start gap-3 bg-red-50 rounded-xl p-4 border border-red-100">
-                  <X size={15} className="text-red-500 mt-0.5 shrink-0" />
-                  <span className="text-sm text-slate-700">{text}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            <motion.div variants={fadeUp}
-              className="rounded-2xl p-7 text-center text-white"
-              style={{ background: `linear-gradient(135deg, ${BLUE}, #0066cc)` }}>
-              <div className="text-lg font-bold mb-2">FuseCV fixes all of it — automatically.</div>
-              <p className="text-blue-100 text-sm">Upload your CV and AI rewrites, reformats and optimises it in under 60 seconds.</p>
-            </motion.div>
+    <section className="py-12 sm:py-20 px-4 sm:px-6 bg-white">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-10 sm:mb-14">
+          <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Real Story</p>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            What Happens When Your CV Finally<br className="hidden sm:block" /> Matches Your Ability
+          </h2>
+        </div>
+        <div className="relative max-w-xl mx-auto">
+          <div className="absolute left-6 sm:left-8 top-6 bottom-6 w-px" style={{ background: "rgba(0,74,173,0.12)" }} />
+          <div className="space-y-5 sm:space-y-6">
+            {steps.map((s, i) => (
+              <div key={i} className="flex gap-5 sm:gap-6 items-center">
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl sm:text-2xl relative z-10 shadow-sm ${s.highlight ? "" : "bg-white"}`}
+                  style={s.highlight ? { background: "#004aad" } : { border: "2px solid rgba(0,74,173,0.15)" }}>
+                  {s.emoji}
+                </div>
+                <p className={`text-base sm:text-xl font-semibold leading-snug ${s.highlight ? "font-bold" : "text-slate-700"}`}
+                  style={s.highlight ? { color: "#004aad" } : {}}>
+                  {s.text}
+                </p>
+              </div>
+            ))}
           </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Transformation Section ───────────────────────────────────────────────────
-function TransformationSection() {
-  const before = [
-    "Responsible for marketing activities",
-    "Worked with the sales team",
-    "Managed social media accounts",
-    "Helped with content creation",
-  ];
-
-  return (
-    <section className="py-20 bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: `${BLUE}12`, color: BLUE }}>
-              Transformation
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Same Experience. Completely Different Outcome.
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              The words you use to describe your experience determine whether you get the interview. FuseCV gets it right.
-            </p>
-          </motion.div>
-
-          {/* Layout: Before card left (compact) + Full optimized CV right (large) */}
-          <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-8 items-start">
-
-            {/* ── Before card ── */}
-            <motion.div variants={slideRight} className="flex flex-col gap-5">
-              <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-6">
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                    <X size={11} className="text-white" />
-                  </div>
-                  <span className="font-bold text-red-600 text-sm">Before FuseCV</span>
-                  <span className="ml-auto text-xs font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">ATS: 31%</span>
-                </div>
-                <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wide">Experience bullets on CV:</p>
-                <div className="space-y-2.5 mb-6">
-                  {before.map((b) => (
-                    <div key={b} className="flex items-start gap-2.5 text-sm text-red-700 bg-red-100/60 rounded-lg px-3 py-2">
-                      <X size={12} className="text-red-400 mt-0.5 shrink-0" />
-                      <span className="italic leading-snug">{b}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="rounded-xl bg-red-100 px-4 py-3 border border-red-200">
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-red-500 mb-0.5">Outcome</div>
-                  <div className="text-sm font-bold text-red-700">Rejected by ATS — never seen by a human</div>
-                </div>
-              </div>
-
-              {/* Arrow indicator */}
-              <div className="flex items-center gap-3 justify-center">
-                <div className="flex-1 h-px bg-slate-200" />
-                <div className="flex flex-col items-center gap-1 text-slate-400">
-                  <div className="text-xs font-bold uppercase tracking-widest">FuseCV rewrites this</div>
-                  <ArrowRight size={18} className="lg:rotate-90" />
-                </div>
-                <div className="flex-1 h-px bg-slate-200" />
-              </div>
-
-              {/* Result callout */}
-              <div className="rounded-2xl p-5 border-2 border-emerald-200 text-center" style={{ background: "#f0fdf4" }}>
-                <div className="text-emerald-600 text-2xl mb-2">🎯</div>
-                <div className="font-extrabold text-emerald-800 text-sm mb-1">Shortlisted. Interview-ready.</div>
-                <div className="text-xs text-emerald-600">ATS passes it · recruiter reads it · you get the call</div>
-              </div>
-            </motion.div>
-
-            {/* ── After: Real CV from app template ── */}
-            <motion.div variants={slideLeft} className="pt-6 lg:pt-0">
-              <AfterCVShowcase />
-            </motion.div>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 }
 
 // ─── How It Works ─────────────────────────────────────────────────────────────
-function HowItWorksSection() {
+
+function HowItWorksSection({ onCTA }: { onCTA: () => void }) {
   const steps = [
-    { n: "01", icon: <Upload size={22} />, title: "Upload Your CV", body: "PDF, Word doc, or start from scratch. AI reads every section instantly — no manual data entry needed." },
-    { n: "02", icon: <Target size={22} />, title: "Add the Job Description", body: "Paste any role you want to apply for. AI tailors your CV to match exactly what the recruiter is looking for." },
-    { n: "03", icon: <Sparkles size={22} />, title: "AI Rewrites Everything", body: "Better wording, ATS optimisation, stronger structure — your CV is transformed automatically in seconds." },
-    { n: "04", icon: <FileText size={22} />, title: "Download & Apply", body: "Your tailored, recruiter-ready version is ready in minutes. Repeat for every role without starting over." },
+    { num: "01", title: "Upload Your Current CV", desc: "Use what you already have.", icon: <Upload className="w-5 h-5 text-white" /> },
+    { num: "02", title: "Add Missing Details", desc: "Quick prompts uncover hidden achievements.", icon: <FileText className="w-5 h-5 text-white" /> },
+    { num: "03", title: "AI Rebuilds It Professionally", desc: "Sharper wording, stronger bullets, better structure.", icon: <Sparkles className="w-5 h-5 text-white" /> },
+    { num: "04", title: "Preview Before Paying", desc: "Only unlock if you're genuinely impressed.", icon: <Eye className="w-5 h-5 text-white" /> },
   ];
-
   return (
-    <section id="how-it-works" className="py-20 bg-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: `${ORANGE}15`, color: ORANGE }}>
-              How It Works
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              From Upload to Interview in 4 Steps
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              No CV writing experience needed. No hours spent reformatting. Just results.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {steps.map(({ n, icon, title, body }, i) => (
-              <motion.div key={n} variants={fadeUp} custom={i}
-                whileHover={{ y: -4, boxShadow: "0 16px 40px rgba(0,0,0,0.10)" }}
-                className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all duration-300 relative">
-                <div className="absolute top-4 right-4 text-5xl font-black select-none" style={{ color: `${BLUE}08` }}>{n}</div>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 text-white" style={{ background: BLUE }}>
-                  {icon}
-                </div>
-                <h3 className="font-bold text-slate-900 mb-2 text-sm">{title}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Features Section ─────────────────────────────────────────────────────────
-function FeaturesSection() {
-  const features = [
-    { icon: <Zap size={20} />,      color: ORANGE,    title: "ATS Optimisation",         body: "Pass hiring systems. AI formats your CV and adds the right keywords so your application actually gets seen." },
-    { icon: <Target size={20} />,   color: BLUE,      title: "Job Tailoring",             body: "Match every application. Paste any job description and your CV is instantly rewritten to fit." },
-    { icon: <FileText size={20} />, color: TEAL,      title: "Cover Letter Generator",   body: "Apply faster with stronger supporting letters. A compelling, job-specific cover letter in seconds." },
-    { icon: <BarChart2 size={20} />, color: "#7c3aed", title: "CV Scoring & Feedback",   body: "Know exactly what to improve. Instant ATS score and section-by-section suggestions." },
-    { icon: <Briefcase size={20} />, color: "#dc2626", title: "Interview Prep",           body: "Role-specific questions and answers. Walk into every interview knowing what to say." },
-    { icon: <RefreshCw size={20} />, color: "#059669", title: "Unlimited Rewrites",       body: "Tailor every role without starting over. Every version of your CV is saved in your dashboard." },
-  ];
-
-  return (
-    <section id="features" className="py-20 bg-slate-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: `${TEAL}12`, color: TEAL }}>
-              Everything You Need
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              One Platform. Everything You Need to Get Hired.
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              From first upload to interview-ready — every tool you need in one place.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map(({ icon, color, title, body }) => (
-              <motion.div key={title} variants={fadeUp} whileHover={{ y: -3, boxShadow: "0 12px 32px rgba(0,0,0,0.09)" }}
-                className="rounded-2xl p-6 border border-slate-100 bg-white shadow-sm transition-all duration-300">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 text-white" style={{ background: color }}>
-                  {icon}
-                </div>
-                <h3 className="font-bold text-slate-900 mb-2 text-sm">{title}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Emotional Benefits Section ───────────────────────────────────────────────
-function EmotionalSection() {
-  const benefits = [
-    { icon: "💪", text: "More confidence in every application" },
-    { icon: "✨", text: "Better first impressions with recruiters" },
-    { icon: "📬", text: "More interview invitations" },
-    { icon: "🚀", text: "Better opportunities and faster progression" },
-  ];
-
-  return (
-    <section className="py-20 bg-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left */}
-          <motion.div variants={stagger(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-            <motion.div variants={fadeUp}>
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-5 px-3 py-1 rounded-full" style={{ background: `${ORANGE}12`, color: ORANGE }}>
-                <Heart size={11} /> Why It Matters
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-5">
-                You Worked Too Hard<br />to Look Average on Paper
-              </h2>
-              <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                Years of effort, skill and dedication can be dismissed in seconds by an ATS or a busy recruiter. FuseCV helps your CV reflect what you have actually earned — and opens the doors you deserve.
-              </p>
-            </motion.div>
-            <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true }}
-              className="space-y-3">
-              {benefits.map(({ icon, text }) => (
-                <motion.div key={text} variants={fadeUp}
-                  className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
-                  <span className="text-lg">{icon}</span>
-                  <span className="text-sm font-medium text-slate-700">{text}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          {/* Right — quote card */}
-          <motion.div variants={slideLeft} initial="hidden" whileInView="show" viewport={{ once: true }}>
-            <div className="relative rounded-3xl p-8 text-white overflow-hidden" style={{ background: `linear-gradient(135deg, #080f1e, ${BLUE}cc)` }}>
-              <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20" style={{ background: TEAL }} />
-              <div className="relative">
-                <div className="text-4xl font-black mb-6" style={{ color: TEAL }}>&ldquo;</div>
-                <p className="text-lg font-medium leading-relaxed text-white mb-8">
-                  A strong CV doesn&apos;t get you the job. But a weak one guarantees you won&apos;t even get the chance to show what you can do.
-                </p>
-                <div className="border-t border-white/10 pt-6 flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" style={{ background: ORANGE }}>F</div>
-                  <div>
-                    <div className="font-bold text-white text-sm">FuseCV Team</div>
-                    <div className="text-xs text-white/50 mt-0.5">AI-powered CV optimisation</div>
-                  </div>
+    <section id="how-it-works" className="py-12 sm:py-20 px-4 sm:px-6" style={{ background: "#0a1628" }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-8 sm:mb-14">
+          <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>The Process</p>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">Four Steps. Zero Guesswork.</h2>
+          <p className="mt-3 text-sm sm:text-lg max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.55)" }}>
+            A result that actually changes outcomes.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          {steps.map((step, i) => (
+            <div key={i} className="flex gap-4 sm:gap-5 p-5 sm:p-6 rounded-2xl"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center" style={{ background: "#004aad" }}>
+                  {step.icon}
                 </div>
               </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#00c4cc" }}>{step.num}</p>
+                <h3 className="font-bold text-base sm:text-lg mb-1.5 text-white">{step.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{step.desc}</p>
+              </div>
             </div>
-          </motion.div>
+          ))}
+        </div>
+        <div className="text-center mt-8 sm:mt-12">
+          <button onClick={onCTA}
+            className="w-full sm:w-auto text-white font-bold text-sm sm:text-base px-8 sm:px-12 py-3.5 sm:py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mx-auto"
+            style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}>
+            <Upload className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" /> Upload My CV Free
+          </button>
+          <p className="text-xs sm:text-sm mt-3" style={{ color: "rgba(255,255,255,0.3)" }}>
+            No credit card required to get started
+          </p>
         </div>
       </div>
     </section>
   );
 }
 
-// ─── Testimonials ─────────────────────────────────────────────────────────────
-function TestimonialsSection() {
-  const testimonials = [
-    { name: "Sarah K.", role: "Software Engineer → Google",      text: "After FuseCV rewrote my CV, I got 4 interview invites in 2 weeks. I had been applying for 3 months with zero callbacks before that. The ATS optimisation was the game changer.", stars: 5 },
-    { name: "James O.", role: "Marketing Manager, Lagos",        text: "My old CV sounded generic. The new one actually showed my real impact with numbers. Got the job I wanted within a month of using FuseCV.", stars: 5 },
-    { name: "Priya M.", role: "Graduate, University of Delhi",   text: "As a graduate, I finally knew how to present myself professionally. I didn't know what to put on my CV — FuseCV helped me structure everything. Three internship offers.", stars: 5 },
-    { name: "David L.", role: "Finance Manager, London",         text: "Worth every penny. The job-tailoring feature means I apply to roles knowing my CV matches exactly what they're asking for. Highly recommend.", stars: 5 },
-    { name: "Amina B.", role: "Nurse, NHS",                      text: "So easy to use and the results were professional and polished. My ward manager said it was the best application she had received in months.", stars: 5 },
-    { name: "Kwame A.", role: "Product Manager, Accra",          text: "I tried three other CV tools. FuseCV is the only one that made my CV read like a senior PM's. The metrics framing advice alone is worth it.", stars: 5 },
+// ─── Offer Stack ──────────────────────────────────────────────────────────────
+
+function OfferStackSection({ onCTA }: { onCTA: () => void }) {
+  const items = [
+    { icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6" />, title: "Professional CV Upgrade", desc: "Rewritten for stronger first impressions.", accent: "#004aad", bg: "#eff6ff", border: "#bfdbfe" },
+    { icon: <Target className="w-5 h-5 sm:w-6 sm:h-6" />, title: "ATS Optimization", desc: "Built to pass screening systems.", accent: "#7c3aed", bg: "#faf5ff", border: "#e9d5ff" },
+    { icon: <ScrollText className="w-5 h-5 sm:w-6 sm:h-6" />, title: "Tailored Cover Letter", desc: "Match the role you want.", accent: "#ff751f", bg: "#fff7ed", border: "#fed7aa" },
+    { icon: <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />, title: "Interview Prep Questions", desc: "Role-specific preparation.", accent: "#059669", bg: "#f0fdf4", border: "#a7f3d0" },
+    { icon: <Palette className="w-5 h-5 sm:w-6 sm:h-6" />, title: "Multiple Layout Options", desc: "Choose premium recruiter-ready styles.", accent: "#d97706", bg: "#fffbeb", border: "#fde68a" },
   ];
-
   return (
-    <section className="py-20 bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: "#fef3c7", color: "#d97706" }}>
-              <Star size={11} className="fill-amber-500" /> Real Results
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Real Job Seekers. Real Results.
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              Used by professionals across 30+ countries — graduates, career changers, and executives.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {testimonials.map(({ name, role, text, stars }) => (
-              <motion.div key={name} variants={fadeUp} whileHover={{ y: -3 }}
-                className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm transition-all duration-300">
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: stars }).map((_, i) => (
-                    <Star key={i} size={13} className="fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="text-sm text-slate-600 leading-relaxed mb-5 italic">&ldquo;{text}&rdquo;</p>
-                <div className="border-t border-slate-100 pt-4">
-                  <div className="font-bold text-slate-900 text-sm">{name}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{role}</div>
-                </div>
-              </motion.div>
-            ))}
+    <section className="py-12 sm:py-20 px-4 sm:px-6" style={{ background: "#F0F2F8" }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-8 sm:mb-14">
+          <p className="font-bold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Everything Included</p>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">One Platform. Everything You Need.</h2>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 mt-4 sm:mt-5">
+            <span className="text-sm sm:text-base text-slate-500">Total Value: <strong className="text-slate-700">High</strong></span>
+            <span className="text-slate-300 hidden sm:inline">·</span>
+            <span className="text-sm sm:text-base text-slate-500">Your Risk: <strong style={{ color: "#004aad" }}>Zero upfront</strong></span>
           </div>
-        </motion.div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {items.map((item, i) => (
+            <div key={i} className="rounded-2xl p-5 sm:p-6 border hover:shadow-lg transition-all hover:-translate-y-0.5"
+              style={{ background: item.bg, borderColor: item.border }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+                style={{ background: `${item.accent}18`, color: item.accent }}>
+                {item.icon}
+              </div>
+              <h3 className="font-bold text-slate-900 text-base sm:text-lg mb-1.5">{item.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+          {/* CTA card */}
+          <div className="rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center text-center border hover:shadow-lg transition-all bg-white sm:col-span-2 lg:col-span-1"
+            style={{ borderColor: "rgba(0,74,173,0.2)" }}>
+            <Sparkles className="w-8 h-8 mb-3" style={{ color: "#ff751f" }} />
+            <p className="text-slate-900 font-bold text-base sm:text-lg mb-4">Start free. Pay only if you love it.</p>
+            <button onClick={onCTA}
+              className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
+              style={{ background: "#ff751f" }}>
+              Upload My CV Free
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-// ─── FAQ ──────────────────────────────────────────────────────────────────────
-function FAQSection() {
-  const [open, setOpen] = useState<number | null>(null);
-  const faqs = [
-    { q: "Is FuseCV free to try?",          a: "Yes. You can upload your CV, get your AI analysis and preview your improved version for free. Downloading the final PDF requires a one-time payment. No subscriptions, no hidden fees." },
-    { q: "Does it really pass ATS systems?", a: "Yes. FuseCV's AI is built specifically on ATS parsing logic. Formatting and keyword structure are optimised for modern screening tools — removing common failure points like tables, columns and incorrect header formats." },
-    { q: "Does it work outside the UK?",    a: "Absolutely. FuseCV is used in 30+ countries including the USA, Australia, Canada, UAE, India, Nigeria, Kenya, Singapore and more. Country-specific formatting conventions are applied automatically." },
-    { q: "What if I have little experience?", a: "We help students and graduates highlight projects, skills, education, and potential. FuseCV is especially effective at drawing out what you do have rather than apologising for what you don't." },
-    { q: "Is my data private?",             a: "Yes. Secure private upload process. Your CV is processed securely and never shared with third parties. You can delete your account and all associated data at any time from your dashboard." },
-    { q: "How long does it take?",          a: "Under 60 seconds for most CVs. Upload, paste a job description, and your tailored, ATS-optimised CV is ready to preview and download." },
+// ─── Who It's For ─────────────────────────────────────────────────────────────
+
+function AudienceSection() {
+  const cards = [
+    { icon: "🎓", title: "Students & Graduates", desc: "Look stronger than your limited experience. We reframe what you have into what recruiters want to see.", accent: "#7c3aed", bg: "#faf5ff", border: "#e9d5ff" },
+    { icon: "🎯", title: "Job Seekers", desc: "Increase interview chances fast. Achievement-focused language that recruiters actually stop to read.", accent: "#004aad", bg: "#eff6ff", border: "#bfdbfe" },
+    { icon: "📈", title: "Mid-Level Professionals", desc: "Compete for promotions and better roles. Show the depth of experience you've actually built.", accent: "#059669", bg: "#f0fdf4", border: "#a7f3d0" },
+    { icon: "🔄", title: "Career Changers", desc: "Translate transferable value clearly. Your experience applies — we help recruiters see that.", accent: "#d97706", bg: "#fffbeb", border: "#fde68a" },
+    { icon: "🏆", title: "Founders & Executives", desc: "Present authority and leadership. The gravitas your experience actually deserves.", accent: "#dc2626", bg: "#fef2f2", border: "#fecaca" },
   ];
-
   return (
-    <section id="faq" className="py-20 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <motion.div variants={stagger(0.08)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp} className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: `${BLUE}10`, color: BLUE }}>
-              FAQ
+    <section id="audience" className="py-12 sm:py-20 px-4 sm:px-6 bg-white">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8 sm:mb-14">
+          <p className="font-bold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Who It&apos;s For</p>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Built for Every Career Move</h2>
+          <p className="text-slate-500 mt-3 text-sm sm:text-lg max-w-xl mx-auto">One platform, tailored to where you are and where you want to go.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {cards.map((card, i) => (
+            <div key={i} className="rounded-2xl p-5 sm:p-6 border transition-all hover:shadow-lg hover:-translate-y-0.5"
+              style={{ background: card.bg, borderColor: card.border }}>
+              <div className="text-2xl sm:text-3xl mb-3">{card.icon}</div>
+              <h3 className="text-slate-900 font-bold text-base sm:text-lg mb-2">{card.title}</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">{card.desc}</p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-              Common Questions
-            </h2>
-          </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-          <div className="space-y-3">
-            {faqs.map(({ q, a }, i) => (
-              <motion.div key={q} variants={fadeUp} className="rounded-2xl border border-slate-200 overflow-hidden">
-                <button
-                  onClick={() => setOpen(open === i ? null : i)}
-                  className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-slate-50 transition-colors"
-                >
-                  <span className="font-semibold text-slate-900 text-sm">{q}</span>
-                  <motion.div animate={{ rotate: open === i ? 180 : 0 }} transition={{ duration: 0.25 }} className="shrink-0">
-                    <ChevronDown size={16} className="text-slate-400" />
-                  </motion.div>
-                </button>
-                <AnimatePresence initial={false}>
-                  {open === i && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <div className="px-6 pb-5 text-sm text-slate-500 leading-relaxed border-t border-slate-100 pt-4">{a}</div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+// ─── Emotional Section ────────────────────────────────────────────────────────
+
+function EmotionalSection() {
+  return (
+    <section className="py-14 sm:py-24 px-4 sm:px-6 relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #004aad 0%, #002f7a 100%)" }}>
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-10 blur-3xl -translate-y-1/2 translate-x-1/3"
+          style={{ background: "#00c4cc" }} />
+        <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full opacity-10 blur-3xl translate-y-1/3 -translate-x-1/4"
+          style={{ background: "#ff751f" }} />
+      </div>
+      <div className="relative max-w-3xl mx-auto text-center">
+        <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-4" style={{ color: "#00c4cc" }}>Remember This</p>
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-5">
+          You Worked Too Hard to<br className="hidden sm:block" /> Look Average on Paper
+        </h2>
+        <p className="text-base sm:text-xl mb-4 leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
+          Years of effort can be ignored in seconds.
+        </p>
+        <p className="text-base sm:text-xl font-semibold text-white">
+          FuseCV helps your CV reflect what you&apos;ve actually earned.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Trust Section ────────────────────────────────────────────────────────────
+
+function TrustSection() {
+  const bullets = [
+    { icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />, text: "No blank forms from scratch — uses your existing CV" },
+    { icon: <Eye className="w-4 h-4 sm:w-5 sm:h-5" />, text: "Preview first, pay only if satisfied" },
+    { icon: <Shield className="w-4 h-4 sm:w-5 sm:h-5" />, text: "Secure, private process" },
+    { icon: <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />, text: "Built for real outcomes" },
+    { icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />, text: "Fast — new version ready in minutes" },
+    { icon: <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5" />, text: "No risk. No guesswork." },
+  ];
+  return (
+    <section className="py-12 sm:py-20 px-4 sm:px-6" style={{ background: "#F0F2F8" }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-14 items-center">
+          <div>
+            <p className="font-semibold text-xs sm:text-sm uppercase tracking-widest mb-3" style={{ color: "#00c4cc" }}>Why People Choose FuseCV</p>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4 sm:mb-6">
+              Safe, Simple,<br />Professional.
+            </h2>
+            <p className="text-slate-500 text-sm sm:text-lg leading-relaxed">
+              We built FuseCV for people who want real results without complexity. No risk, no guesswork — just a better CV.
+            </p>
+            <div className="mt-6 sm:mt-8 flex items-center gap-4">
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 rounded-xl blur-md" style={{ background: "rgba(0,74,173,0.2)" }} />
+                <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-xl flex items-center justify-center shadow-md overflow-hidden" style={{ background: "#004aad" }}>
+                  <Image src="/fusecv-icon.png" alt="FuseCV" width={40} height={56} className="object-contain" />
+                </div>
+              </div>
+              <div>
+                <p className="font-extrabold text-base sm:text-lg" style={{ color: "#004aad" }}>FuseCV</p>
+                <p className="text-slate-500 text-xs sm:text-sm">Trusted by professionals at every stage</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {bullets.map((b, i) => (
+              <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(0,74,173,0.08)", color: "#004aad" }}>{b.icon}</div>
+                <p className="text-slate-700 font-semibold text-sm leading-snug pt-0.5">{b.text}</p>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Urgency Section ──────────────────────────────────────────────────────────
+
+function UrgencySection({ onCTA }: { onCTA: () => void }) {
+  return (
+    <section className="py-10 sm:py-16 px-4 sm:px-6" style={{ background: "#0a1628", borderTop: "1px solid rgba(255,117,31,0.2)" }}>
+      <div className="max-w-3xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 rounded-full px-3 sm:px-4 py-1.5 mb-5 text-xs font-semibold"
+          style={{ background: "rgba(255,117,31,0.12)", border: "1px solid rgba(255,117,31,0.25)", color: "#ff751f" }}>
+          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+          Don&apos;t Wait
+        </div>
+        <h2 className="text-xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight mb-4">
+          Every Week With a Weak CV<br className="hidden sm:block" /> Can Cost Real Opportunities
+        </h2>
+        <p className="text-slate-400 text-sm sm:text-base mb-2">
+          Jobs close. Recruiters move fast. Strong roles get flooded.
+        </p>
+        <p className="font-semibold text-white text-sm sm:text-base mb-8">
+          Your next opportunity may already be open.
+        </p>
+        <button onClick={onCTA}
+          className="w-full sm:w-auto text-white font-bold text-sm sm:text-base px-8 sm:px-12 py-3.5 sm:py-4 rounded-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mx-auto"
+          style={{ background: "#ff751f", boxShadow: "0 8px 24px rgba(255,117,31,0.25)" }}>
+          <Upload className="w-4 h-4 flex-shrink-0" /> Upload My CV Free
+        </button>
       </div>
     </section>
   );
 }
 
 // ─── Final CTA ────────────────────────────────────────────────────────────────
-function FinalCTA() {
-  const router   = useRouter();
-  const supabase = createClient();
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
-
+function FinalCTA({ onCTA }: { onCTA: () => void }) {
   return (
-    <section className="py-24 relative overflow-hidden" style={{ background: "#080f1e" }}>
+    <section className="py-14 sm:py-24 px-4 sm:px-6 relative overflow-hidden" style={{ background: "#0a1628" }}>
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: BLUE }} />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-15" style={{ background: TEAL }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 sm:w-[500px] h-72 sm:h-[500px] rounded-full opacity-15 blur-3xl"
+          style={{ background: "#004aad" }} />
       </div>
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-        <motion.div variants={stagger(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}>
-          <motion.div variants={fadeUp}
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-6 px-3 py-1.5 rounded-full border"
-            style={{ borderColor: `${TEAL}40`, background: `${TEAL}12`, color: TEAL }}>
-            <Sparkles size={11} /> Start for free today
-          </motion.div>
-          <motion.h2 variants={fadeUp} className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight mb-5 leading-tight">
-            Your Next Opportunity Starts<br />With Better Presentation
-          </motion.h2>
-          <motion.p variants={fadeUp} className="text-lg text-slate-400 mb-10 max-w-xl mx-auto leading-relaxed">
-            Don&apos;t let a weak CV block a strong future. Upload yours and see what a recruiter-ready version looks like — in 60 seconds.
-          </motion.p>
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.button
-              onClick={handleCTA}
-              whileHover={{ scale: 1.04, boxShadow: `0 0 40px ${ORANGE}55` }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-white text-base"
-              style={{ background: ORANGE }}
-            >
-              <Upload size={18} />
-              Upload My CV — It&apos;s Free
-              <ArrowRight size={16} />
-            </motion.button>
-          </motion.div>
-          <motion.div variants={fadeUp} className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
-            {["No card required", "Results in 60 seconds", "Preview before payment"].map((t) => (
-              <span key={t} className="flex items-center gap-1.5">
-                <CheckCircle2 size={12} style={{ color: TEAL }} />{t}
-              </span>
-            ))}
-          </motion.div>
-        </motion.div>
+      <div className="relative max-w-3xl mx-auto text-center">
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-2 sm:mb-3">
+          You Already Built the Experience.
+        </h2>
+        <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight mb-6 sm:mb-8"
+          style={{ color: "#ff751f" }}>
+          Now Present It Like It Matters.
+        </h2>
+        <button onClick={onCTA}
+          className="w-full sm:w-auto text-white font-bold text-sm sm:text-lg px-8 sm:px-14 py-4 sm:py-5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 mx-auto"
+          style={{ background: "#ff751f", boxShadow: "0 12px 40px rgba(255,117,31,0.3)" }}>
+          <Upload className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+          Upload My CV Free
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+        </button>
+        <p className="text-xs sm:text-sm mt-4" style={{ color: "rgba(255,255,255,0.3)" }}>
+          No card required · Preview first · Pay only if satisfied
+        </p>
       </div>
     </section>
   );
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
+
 function Footer() {
-  const links = {
-    Product: [{ l: "How it works", h: "#how-it-works" }, { l: "Features", h: "#features" }, { l: "Guides", h: "/guides" }, { l: "FAQ", h: "#faq" }],
-    Account: [{ l: "Sign up free", h: "/register" }, { l: "Sign in", h: "/login" }, { l: "Dashboard", h: "/dashboard" }],
-    Legal:   [{ l: "Privacy Policy", h: "/privacy" }],
-  };
   return (
-    <footer className="bg-slate-900 border-t border-white/5 pt-14 pb-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
-          <div className="col-span-2 sm:col-span-1">
-            <Image src="/fusecv-logo.png" alt="FuseCV" width={100} height={32} className="object-contain mb-3 brightness-0 invert" />
-            <p className="text-xs text-slate-500 leading-relaxed max-w-[180px]">
-              AI-powered CV builder for job seekers worldwide. ATS-optimised in 60 seconds.
-            </p>
-          </div>
-          {Object.entries(links).map(([section, items]) => (
-            <div key={section}>
-              <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">{section}</div>
-              <ul className="space-y-2.5">
-                {items.map(({ l, h }) => (
-                  <li key={l}><Link href={h} className="text-sm text-slate-500 hover:text-white transition-colors">{l}</Link></li>
-                ))}
-              </ul>
-            </div>
-          ))}
+    <footer className="py-7 sm:py-8 px-4 sm:px-6" style={{ background: "#0a1628", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="max-w-6xl mx-auto flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+        <Image src="/fusecv-logo.png" alt="FuseCV" width={90} height={28} className="object-contain opacity-60" />
+        <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-xs sm:text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+          <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
+          <Link href="/register" className="hover:text-white transition-colors">Create Account</Link>
         </div>
-        <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
-          <span>© {new Date().getFullYear()} FuseCV. All rights reserved.</span>
-          <span>Built for job seekers in 30+ countries worldwide.</span>
-        </div>
+        <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>© {new Date().getFullYear()} FuseCV</p>
       </div>
     </footer>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-export default function LandingPage() {
+// ─── Exit Popup ───────────────────────────────────────────────────────────────
+
+function ExitPopup({ onCTA }: { onCTA: () => void }) {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    let triggered = false;
+    const trigger = () => {
+      if (triggered) return;
+      try { if (sessionStorage.getItem("fusecv_exit_shown")) return; } catch { /* */ }
+      triggered = true;
+      try { sessionStorage.setItem("fusecv_exit_shown", "1"); } catch { /* */ }
+      setShow(true);
+    };
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 5) trigger();
+    };
+    // Wait 3s before enabling exit-intent so it doesn't fire immediately
+    const init = setTimeout(() => {
+      document.addEventListener("mouseleave", handleMouseLeave);
+    }, 3000);
+    // Mobile fallback: trigger after 45s on page
+    const mobile = setTimeout(trigger, 45000);
+
+    return () => {
+      clearTimeout(init);
+      clearTimeout(mobile);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
+
+  if (!show) return null;
+
   return (
-    <main className="overflow-x-hidden">
-      <Navbar />
-      <HeroSection />
-      <StatsBar />
-      <IdentitySection />
-      <ProblemSection />
-      <TransformationSection />
-      <HowItWorksSection />
-      <FeaturesSection />
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) setShow(false); }}>
+      <div className="relative bg-white rounded-3xl p-6 sm:p-10 max-w-md w-full text-center shadow-2xl">
+        <button onClick={() => setShow(false)}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+          aria-label="Close">
+          <X className="w-4 h-4 text-slate-500" />
+        </button>
+        <div className="text-3xl sm:text-4xl mb-4">⚠️</div>
+        <h3 className="text-lg sm:text-2xl font-black text-slate-900 mb-3 leading-snug">
+          Wait — Your CV Could Be the Only Thing Holding You Back
+        </h3>
+        <p className="text-slate-500 text-sm sm:text-base mb-6">
+          Upload it free now and see what changes in minutes.
+        </p>
+        <button
+          onClick={() => { setShow(false); onCTA(); }}
+          className="w-full py-3.5 rounded-xl text-white font-bold text-sm sm:text-base mb-3 transition-all hover:opacity-90 flex items-center justify-center gap-2"
+          style={{ background: "#ff751f" }}>
+          <Upload className="w-4 h-4 flex-shrink-0" />
+          Fix My CV Free
+        </button>
+        <button onClick={() => setShow(false)}
+          className="text-slate-400 text-xs hover:text-slate-600 transition-colors">
+          No thanks, I&apos;ll stay with my current CV
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function LandingPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace("/dashboard");
+    });
+  }, [router]);
+
+  function handleCTA() { router.push("/register"); }
+
+  return (
+    <div className="w-full overflow-x-hidden">
+      <style>{`
+        @keyframes marquee {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+      <Navbar onCTA={handleCTA} />
+      <HeroSection onCTA={handleCTA} />
+      <MarqueeStrip />
+      <PainSection />
+      <SocialProofSection />
+      <BeforeAfterSection />
+      <StorySection />
+      <HowItWorksSection onCTA={handleCTA} />
+      <OfferStackSection onCTA={handleCTA} />
+      <AudienceSection />
       <EmotionalSection />
-      <TestimonialsSection />
-      <FAQSection />
-      <FinalCTA />
+      <TrustSection />
+      <UrgencySection onCTA={handleCTA} />
+      <FinalCTA onCTA={handleCTA} />
       <Footer />
-    </main>
+      <ExitPopup onCTA={handleCTA} />
+    </div>
   );
 }
