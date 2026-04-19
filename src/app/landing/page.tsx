@@ -113,15 +113,15 @@ function Navbar() {
   );
 }
 
-// ─── CV Mockup ────────────────────────────────────────────────────────────────
+// ─── Hero CV Mockup (compact, used in hero) ───────────────────────────────────
 function CVMockup() {
   return (
     <div className="w-full bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
       <div className="flex">
-        <div className="w-[38%] flex-shrink-0 p-5" style={{ background: BLUE }}>
+        <div className="w-[38%] flex-shrink-0 p-4 sm:p-5" style={{ background: BLUE }}>
           <div className="pb-3 mb-3 border-b border-white/20">
-            <div className="text-sm font-bold text-white leading-tight">James Mitchell</div>
-            <div className="text-[10px] text-white/80 mt-0.5">Senior Marketing Manager</div>
+            <div className="text-xs sm:text-sm font-bold text-white leading-tight">James Mitchell</div>
+            <div className="text-[9px] sm:text-[10px] text-white/80 mt-0.5">Senior Marketing Manager</div>
           </div>
           {[
             ["Contact", ["j.mitchell@email.com", "+44 7700 900 123", "London, UK"]],
@@ -135,7 +135,7 @@ function CVMockup() {
             </div>
           ))}
         </div>
-        <div className="flex-1 p-5">
+        <div className="flex-1 p-4 sm:p-5">
           <div className="mb-3">
             <div className="text-[7px] font-bold uppercase tracking-widest mb-1" style={{ color: BLUE }}>Summary</div>
             <div className="h-px bg-slate-200 mb-2" />
@@ -158,6 +158,175 @@ function CVMockup() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Full Optimized CV (used in transformation section) ───────────────────────
+function FullOptimizedCV() {
+  return (
+    <div className="relative">
+      {/* Floating ATS badge */}
+      <motion.div
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -top-4 -right-3 z-20 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-200"
+      >
+        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "#059669" }}>
+          <CheckCircle2 size={12} className="text-white" />
+        </div>
+        <div>
+          <div className="text-[9px] font-bold text-slate-800">ATS Score</div>
+          <div className="text-[9px] font-extrabold" style={{ color: "#059669" }}>94 / 100 ↑</div>
+        </div>
+      </motion.div>
+
+      {/* After FuseCV label */}
+      <div className="absolute -top-4 left-4 z-20 text-[9px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full text-white shadow-md"
+        style={{ background: "#059669" }}>
+        ✓ After FuseCV
+      </div>
+
+      {/* Glow */}
+      <div className="absolute inset-0 rounded-2xl blur-2xl scale-95 opacity-50"
+        style={{ background: `linear-gradient(135deg, ${BLUE}33, ${TEAL}22)` }} />
+
+      {/* CV body */}
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-emerald-300 bg-white">
+        <div className="flex">
+
+          {/* ── Sidebar ── */}
+          <div className="w-[34%] sm:w-[32%] shrink-0 p-4 sm:p-5" style={{ background: BLUE }}>
+            {/* Avatar initials */}
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full mx-auto mb-4 flex items-center justify-center font-black text-base sm:text-lg text-white border-2"
+              style={{ background: `${TEAL}55`, borderColor: TEAL }}>
+              JM
+            </div>
+
+            {[
+              {
+                heading: "Contact",
+                items: ["j.mitchell@email.com", "+44 7700 900 123", "London, UK", "linkedin.com/in/jmitchell"],
+              },
+              {
+                heading: "Key Skills",
+                items: ["Demand Generation", "Brand Strategy", "Digital Marketing", "Budget Management", "Campaign Analytics", "Team Leadership", "Stakeholder Mgmt"],
+              },
+              {
+                heading: "Education",
+                items: ["BA Marketing", "University of Leeds", "2011–2014 · First Class"],
+              },
+            ].map(({ heading, items }) => (
+              <div key={heading} className="mb-4">
+                <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.18em] mb-2" style={{ color: TEAL }}>
+                  {heading}
+                </div>
+                {items.map((item) => (
+                  <div key={item} className="text-[8px] sm:text-[9px] text-white/80 leading-[1.55]">{item}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Main content ── */}
+          <div className="flex-1 p-4 sm:p-5 min-w-0">
+
+            {/* Name & title */}
+            <div className="pb-3 mb-4 border-b-2" style={{ borderColor: BLUE }}>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">James Mitchell</h2>
+              <div className="text-[10px] sm:text-xs font-bold mt-0.5" style={{ color: BLUE }}>Senior Marketing Manager</div>
+            </div>
+
+            {/* Summary */}
+            <div className="mb-4">
+              <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.15em] mb-1.5" style={{ color: BLUE }}>
+                Professional Summary
+              </div>
+              <p className="text-[8px] sm:text-[9px] text-slate-600 leading-[1.6]">
+                Results-driven Senior Marketing Manager with 9+ years delivering high-impact B2B campaigns. Generated{" "}
+                <strong className="text-slate-800">£4.1M attributable revenue</strong> in FY2023 through integrated demand-gen strategies. Proven ability to align Marketing with Sales to accelerate pipeline and reduce cycle times.
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-4">
+              <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.15em] mb-2.5" style={{ color: BLUE }}>
+                Experience
+              </div>
+              {[
+                {
+                  role: "Senior Marketing Manager",
+                  co: "TechVentures Ltd",
+                  date: "Jan 2020 – Present",
+                  bullets: [
+                    "Led demand-gen programme generating £4.1M ARR in FY2023 — +42% pipeline YoY",
+                    "Managed £2.4M multi-channel budget with 31% revenue growth attribution",
+                    "Aligned with Sales to reduce average deal cycle by 18% via lead scoring",
+                    "Built and led team of 8 marketers; improved team retention by 35%",
+                  ],
+                },
+                {
+                  role: "Marketing Manager",
+                  co: "BrightScale Agency",
+                  date: "Mar 2017 – Dec 2019",
+                  bullets: [
+                    "Scaled social audience from 8K → 34K across all client accounts — 68% engagement lift",
+                    "Managed integrated campaigns for 12 enterprise clients worth £6.8M combined revenue",
+                  ],
+                },
+              ].map((e) => (
+                <div key={e.role} className="mb-3 pl-2.5 sm:pl-3 border-l-2" style={{ borderColor: BLUE }}>
+                  <div className="flex items-start justify-between gap-2 mb-0.5 flex-wrap">
+                    <div>
+                      <div className="text-[9px] sm:text-[10px] font-extrabold text-slate-900">{e.role}</div>
+                      <div className="text-[8px] sm:text-[9px] font-semibold" style={{ color: BLUE }}>{e.co}</div>
+                    </div>
+                    <div className="text-[7px] sm:text-[8px] text-slate-400 shrink-0">{e.date}</div>
+                  </div>
+                  <ul className="mt-1 space-y-0.5">
+                    {e.bullets.map((b) => (
+                      <li key={b} className="text-[8px] sm:text-[9px] text-slate-600 leading-[1.5] flex items-start gap-1.5">
+                        <span className="mt-[5px] w-1 h-1 rounded-full shrink-0" style={{ background: TEAL }} />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* Metric highlights */}
+            <div>
+              <div className="text-[7px] sm:text-[8px] font-extrabold uppercase tracking-[0.15em] mb-2" style={{ color: BLUE }}>
+                Key Metrics
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {[
+                  { n: "£4.1M", label: "ARR generated" },
+                  { n: "+42%",  label: "Pipeline growth" },
+                  { n: "34K",   label: "Audience built" },
+                  { n: "−18%",  label: "Sales cycle" },
+                ].map(({ n, label }) => (
+                  <div key={label} className="rounded-lg px-2 py-1.5 text-center" style={{ background: `${BLUE}08` }}>
+                    <div className="text-[10px] sm:text-xs font-extrabold" style={{ color: BLUE }}>{n}</div>
+                    <div className="text-[7px] text-slate-500 leading-tight">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="px-4 py-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap"
+          style={{ background: "#f0fdf4" }}>
+          <span className="text-[8px] text-slate-500">Optimised by FuseCV · ATS-formatted · Ready to send</span>
+          <span className="text-[9px] font-extrabold px-2.5 py-1 rounded-full text-white"
+            style={{ background: "#059669" }}>
+            ATS Score: 94 / 100 ✓
+          </span>
         </div>
       </div>
     </div>
@@ -201,7 +370,7 @@ function HeroSection() {
         />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 w-full py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 w-full py-16 sm:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
         {/* Left — Copy */}
         <motion.div variants={stagger(0.1)} initial="hidden" animate="show">
           <motion.div
@@ -278,40 +447,42 @@ function HeroSection() {
           </motion.div>
         </motion.div>
 
-        {/* Right — CV Mockup */}
-        <motion.div style={{ y: heroY }} variants={slideLeft} initial="hidden" animate="show" className="relative hidden lg:block">
+        {/* Right — CV Mockup (visible on all screen sizes) */}
+        <motion.div style={{ y: heroY }} variants={slideLeft} initial="hidden" animate="show"
+          className="relative w-full max-w-sm mx-auto lg:max-w-none">
+
           {/* Before badge */}
           <motion.div
-            animate={{ y: [0, -8, 0] }}
+            animate={{ y: [0, -7, 0] }}
             transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-6 -left-6 z-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-red-100"
+            className="absolute -top-5 left-3 sm:left-0 z-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-red-100"
           >
             <div className="text-[9px] font-bold text-red-500 uppercase tracking-wide mb-0.5">Before FuseCV</div>
-            <div className="text-[8px] text-slate-500">Generic · Weak wording · Low ATS score</div>
+            <div className="text-[8px] text-slate-500">Generic · Weak wording · Low ATS</div>
           </motion.div>
 
           {/* After badge */}
           <motion.div
-            animate={{ y: [0, 8, 0] }}
+            animate={{ y: [0, 7, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute -bottom-5 -right-4 z-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-100"
+            className="absolute -bottom-4 right-3 sm:right-0 z-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-emerald-100"
           >
             <div className="text-[9px] font-bold uppercase tracking-wide mb-0.5" style={{ color: "#059669" }}>After FuseCV</div>
-            <div className="text-[8px] text-slate-500">Achievement-led · ATS-ready · Interview-ready</div>
+            <div className="text-[8px] text-slate-500">Achievement-led · ATS-ready</div>
           </motion.div>
 
           {/* ATS score badge */}
           <motion.div
             animate={{ y: [0, -5, 0] }}
             transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute top-1/3 -right-8 z-10 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-slate-100"
+            className="absolute top-1/3 -right-2 sm:right-0 lg:-right-6 z-10 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-slate-100"
           >
-            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "#059669" }}>
-              <CheckCircle2 size={14} className="text-white" />
+            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#059669" }}>
+              <CheckCircle2 size={12} className="text-white" />
             </div>
             <div>
-              <div className="text-[10px] font-bold text-slate-800">ATS Score</div>
-              <div className="text-[10px] font-semibold" style={{ color: "#059669" }}>94 / 100 ↑</div>
+              <div className="text-[9px] font-bold text-slate-800">ATS Score</div>
+              <div className="text-[9px] font-semibold" style={{ color: "#059669" }}>94 / 100 ↑</div>
             </div>
           </motion.div>
 
@@ -482,16 +653,10 @@ function TransformationSection() {
     "Managed social media accounts",
     "Helped with content creation",
   ];
-  const after = [
-    "Led demand-gen programmes generating £4.1M ARR in FY2023",
-    "Aligned with Sales to reduce cycle time by 18%",
-    "Scaled audience growth from 8K to 34K — 68% engagement lift",
-    "Built content engine that drove 42% YoY pipeline growth",
-  ];
 
   return (
     <section className="py-20 bg-slate-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <motion.div variants={stagger(0.1)} initial="hidden" whileInView="show" viewport={{ once: true }}>
           <motion.div variants={fadeUp} className="text-center mb-12">
             <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 px-3 py-1 rounded-full" style={{ background: `${BLUE}12`, color: BLUE }}>
@@ -505,51 +670,55 @@ function TransformationSection() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Before */}
-            <motion.div variants={slideRight} className="rounded-2xl border-2 border-red-200 bg-red-50 p-6">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                  <X size={11} className="text-white" />
-                </div>
-                <span className="font-bold text-red-600 text-sm">Before FuseCV</span>
-                <span className="ml-auto text-xs font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">ATS Score: 31%</span>
-              </div>
-              <div className="space-y-3 mb-6">
-                {before.map((b) => (
-                  <div key={b} className="flex items-start gap-2.5 text-sm text-red-700">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
-                    <span className="italic">{b}</span>
+          {/* Layout: Before card left (compact) + Full optimized CV right (large) */}
+          <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-8 items-start">
+
+            {/* ── Before card ── */}
+            <motion.div variants={slideRight} className="flex flex-col gap-5">
+              <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-6">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                    <X size={11} className="text-white" />
                   </div>
-                ))}
+                  <span className="font-bold text-red-600 text-sm">Before FuseCV</span>
+                  <span className="ml-auto text-xs font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">ATS: 31%</span>
+                </div>
+                <p className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wide">Experience bullets on CV:</p>
+                <div className="space-y-2.5 mb-6">
+                  {before.map((b) => (
+                    <div key={b} className="flex items-start gap-2.5 text-sm text-red-700 bg-red-100/60 rounded-lg px-3 py-2">
+                      <X size={12} className="text-red-400 mt-0.5 shrink-0" />
+                      <span className="italic leading-snug">{b}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl bg-red-100 px-4 py-3 border border-red-200">
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-red-500 mb-0.5">Outcome</div>
+                  <div className="text-sm font-bold text-red-700">Rejected by ATS — never seen by a human</div>
+                </div>
               </div>
-              <div className="rounded-lg bg-red-100 px-4 py-3 border border-red-200">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-red-500 mb-0.5">Result</div>
-                <div className="text-sm font-semibold text-red-700">Ignored or filtered out</div>
+
+              {/* Arrow indicator */}
+              <div className="flex items-center gap-3 justify-center">
+                <div className="flex-1 h-px bg-slate-200" />
+                <div className="flex flex-col items-center gap-1 text-slate-400">
+                  <div className="text-xs font-bold uppercase tracking-widest">FuseCV rewrites this</div>
+                  <ArrowRight size={18} className="lg:rotate-90" />
+                </div>
+                <div className="flex-1 h-px bg-slate-200" />
+              </div>
+
+              {/* Result callout */}
+              <div className="rounded-2xl p-5 border-2 border-emerald-200 text-center" style={{ background: "#f0fdf4" }}>
+                <div className="text-emerald-600 text-2xl mb-2">🎯</div>
+                <div className="font-extrabold text-emerald-800 text-sm mb-1">Shortlisted. Interview-ready.</div>
+                <div className="text-xs text-emerald-600">ATS passes it · recruiter reads it · you get the call</div>
               </div>
             </motion.div>
 
-            {/* After */}
-            <motion.div variants={slideLeft} className="rounded-2xl border-2 p-6" style={{ borderColor: `${TEAL}60`, background: `${TEAL}08` }}>
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#059669" }}>
-                  <CheckCircle2 size={11} className="text-white" />
-                </div>
-                <span className="font-bold text-sm" style={{ color: "#059669" }}>After FuseCV</span>
-                <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: "#059669", background: "#d1fae5" }}>ATS Score: 94%</span>
-              </div>
-              <div className="space-y-3 mb-6">
-                {after.map((a) => (
-                  <div key={a} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: TEAL }} />
-                    <span className="font-medium">{a}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-lg px-4 py-3 border" style={{ background: "#d1fae5", borderColor: "#a7f3d0" }}>
-                <div className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: "#059669" }}>Result</div>
-                <div className="text-sm font-semibold" style={{ color: "#065f46" }}>Shortlisted. Interview-ready.</div>
-              </div>
+            {/* ── After: Full optimized CV ── */}
+            <motion.div variants={slideLeft} className="pt-6 lg:pt-0">
+              <FullOptimizedCV />
             </motion.div>
           </div>
         </motion.div>
