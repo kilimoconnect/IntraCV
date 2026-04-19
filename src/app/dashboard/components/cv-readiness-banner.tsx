@@ -59,25 +59,6 @@ export default function CVReadinessBanner({
           ? "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)"
           : "radial-gradient(circle, rgba(0,74,173,0.14) 0%, transparent 70%)" }} />
 
-      {/* Status pill */}
-      <div className="absolute top-4 right-4 z-10">
-        {isAnalyzing && !cvReadiness ? (
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide"
-            style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}>
-            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Analysing
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide"
-            style={isReady
-              ? { background: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.28)", color: "#6ee7b7" }
-              : { background: "rgba(239,68,68,0.12)", borderColor: "rgba(239,68,68,0.28)", color: "#fca5a5" }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
-              style={{ background: isReady ? "#10b981" : "#ef4444" }} />
-            {isReady ? "Job Ready" : "Needs Work"}
-          </span>
-        )}
-      </div>
-
       {/* Score ring + headline */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-5 relative z-10">
         {/* SVG ring */}
@@ -105,15 +86,36 @@ export default function CVReadinessBanner({
           </div>
         </div>
 
-        {/* Headline + bar */}
-        <div className="flex-1 min-w-0 pr-16">
-          <p className="font-black text-white text-sm leading-snug mb-0.5">
-            {isAnalyzing && !cvReadiness
-              ? "Analysing your profile…"
-              : isReady
-              ? "Your CV looks strong and job-ready"
-              : "Your CV is not ready for applications"}
-          </p>
+        {/* Headline + badge + bar */}
+        <div className="flex-1 min-w-0">
+          {/* Headline row: text left, badge right — both in flow so they never overlap */}
+          <div className="flex items-start justify-between gap-3 mb-0.5">
+            <p className="font-black text-white text-sm leading-snug">
+              {isAnalyzing && !cvReadiness
+                ? "Analysing your profile…"
+                : isReady
+                ? "Your CV looks strong and job-ready"
+                : "Your CV is not ready for applications"}
+            </p>
+            {/* Status badge — inline so it wraps naturally on mobile */}
+            <div className="flex-shrink-0 mt-0.5">
+              {isAnalyzing && !cvReadiness ? (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide whitespace-nowrap"
+                  style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}>
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" /> Analysing
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide whitespace-nowrap"
+                  style={isReady
+                    ? { background: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.28)", color: "#6ee7b7" }
+                    : { background: "rgba(239,68,68,0.12)", borderColor: "rgba(239,68,68,0.28)", color: "#fca5a5" }}>
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
+                    style={{ background: isReady ? "#10b981" : "#ef4444" }} />
+                  {isReady ? "Job Ready" : "Needs Work"}
+                </span>
+              )}
+            </div>
+          </div>
           <p className="text-[11px] font-medium mb-3" style={{ color: "rgba(255,255,255,0.38)" }}>
             Current CV Strength
           </p>
