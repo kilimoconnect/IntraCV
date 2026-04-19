@@ -35,6 +35,52 @@ export default function CVReadinessBanner({
   const ringColor = isReady ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
   const glowColor = isReady ? "rgba(16,185,129,0.55)" : score >= 50 ? "rgba(245,158,11,0.55)" : "rgba(239,68,68,0.55)";
 
+  /* ── Loading skeleton ── */
+  if (isAnalyzing && !cvReadiness) {
+    return (
+      <div className="rounded-2xl overflow-hidden relative"
+        style={{ background: "linear-gradient(140deg, #07111f 0%, #001260 100%)" }}>
+        <style>{`
+          @keyframes cvb-pulse { 0%,100%{opacity:.35} 50%{opacity:.65} }
+          .cvb-skel { animation: cvb-pulse 1.6s ease-in-out infinite; border-radius: 6px; background: rgba(255,255,255,0.12); }
+        `}</style>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
+        <div className="px-5 pt-5 pb-5 flex items-center gap-5 relative z-10">
+          {/* Ring skeleton */}
+          <div className="relative flex-shrink-0 w-[80px] h-[80px]">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
+              <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="7"
+                strokeLinecap="round" strokeDasharray={`${circ * 0.25} ${circ * 0.75}`}
+                transform="rotate(-90 40 40)" style={{ animation: "cvb-pulse 1.6s ease-in-out infinite" }} />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
+            </div>
+          </div>
+          {/* Text skeletons */}
+          <div className="flex-1 min-w-0 space-y-3">
+            <div className="cvb-skel h-4 w-3/4" />
+            <div className="cvb-skel h-3 w-1/3" />
+            <div className="cvb-skel h-1.5 w-full rounded-full" />
+          </div>
+        </div>
+        {/* Bottom skeleton rows */}
+        <div className="grid sm:grid-cols-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="px-5 py-4 space-y-2 border-b sm:border-b-0 sm:border-r" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            <div className="cvb-skel h-3 w-1/3" />
+            {[75, 90, 65, 80].map((w, i) => <div key={i} className="cvb-skel h-2.5" style={{ width: `${w}%` }} />)}
+          </div>
+          <div className="px-5 py-4 space-y-2">
+            <div className="cvb-skel h-3 w-2/5" />
+            {[85, 70, 80, 60].map((w, i) => <div key={i} className="cvb-skel h-2.5" style={{ width: `${w}%` }} />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl overflow-hidden relative"
       style={{ background: "linear-gradient(140deg, #07111f 0%, #001260 100%)" }}>
@@ -91,29 +137,20 @@ export default function CVReadinessBanner({
           {/* Headline row: text left, badge right — both in flow so they never overlap */}
           <div className="flex items-start justify-between gap-3 mb-0.5">
             <p className="font-black text-white text-sm leading-snug">
-              {isAnalyzing && !cvReadiness
-                ? "Analysing your profile…"
-                : isReady
+              {isReady
                 ? "Your CV looks strong and job-ready"
                 : "Your CV is not ready for applications"}
             </p>
             {/* Status badge — inline so it wraps naturally on mobile */}
             <div className="flex-shrink-0 mt-0.5">
-              {isAnalyzing && !cvReadiness ? (
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide whitespace-nowrap"
-                  style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)" }}>
-                  <Loader2 className="w-2.5 h-2.5 animate-spin" /> Analysing
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide whitespace-nowrap"
-                  style={isReady
-                    ? { background: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.28)", color: "#6ee7b7" }
-                    : { background: "rgba(239,68,68,0.12)", borderColor: "rgba(239,68,68,0.28)", color: "#fca5a5" }}>
-                  <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
-                    style={{ background: isReady ? "#10b981" : "#ef4444" }} />
-                  {isReady ? "Job Ready" : "Needs Work"}
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wide whitespace-nowrap"
+                style={isReady
+                  ? { background: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.28)", color: "#6ee7b7" }
+                  : { background: "rgba(239,68,68,0.12)", borderColor: "rgba(239,68,68,0.28)", color: "#fca5a5" }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
+                  style={{ background: isReady ? "#10b981" : "#ef4444" }} />
+                {isReady ? "Job Ready" : "Needs Work"}
+              </span>
             </div>
           </div>
           <p className="text-[11px] font-medium mb-3" style={{ color: "rgba(255,255,255,0.38)" }}>
@@ -121,16 +158,12 @@ export default function CVReadinessBanner({
           </p>
           {/* Glowing thin bar */}
           <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-            {isAnalyzing && !cvReadiness ? (
-              <div className="h-1.5 rounded-full w-1/3 animate-pulse" style={{ background: "rgba(255,255,255,0.18)" }} />
-            ) : (
-              <div className="h-1.5 rounded-full" style={{
-                width: `${animScore}%`,
-                background: ringColor,
-                boxShadow: `0 0 8px ${glowColor}`,
-                transition: "width 1.3s cubic-bezier(0.22,1,0.36,1)",
-              }} />
-            )}
+            <div className="h-1.5 rounded-full" style={{
+              width: `${animScore}%`,
+              background: ringColor,
+              boxShadow: `0 0 8px ${glowColor}`,
+              transition: "width 1.3s cubic-bezier(0.22,1,0.36,1)",
+            }} />
           </div>
         </div>
       </div>
