@@ -512,7 +512,7 @@ function HeroSection() {
       {/* Subtle background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [1, 1, 1] }}
+          animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full -translate-y-1/2 translate-x-1/3 opacity-[0.04]"
           style={{ background: BLUE }}
