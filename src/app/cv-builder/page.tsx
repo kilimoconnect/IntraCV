@@ -293,6 +293,27 @@ function CVBuilderPage() {
   const [activeTab, setActiveTab] = useState("personal");
   const [manuallyShown, setManuallyShown] = useState<Set<string>>(new Set());
 
+  const SECTION_HINTS: Record<string, string> = {
+    personal: "Your contact details appear at the top of every CV. Make sure your name, email, phone and LinkedIn URL are all correct — these are how recruiters reach you.",
+    summary: "Write 3–5 sentences introducing yourself to the recruiter. Focus on your years of experience, core strengths, and what kind of role you are targeting.",
+    experience: "List every job you have held, starting with the most recent. Each entry needs a job title, company name, start and end dates, and a description of your key responsibilities and results.",
+    education: "Add your degrees, diplomas, and academic qualifications. Include the institution, the qualification name, and the year you completed it. List the most recent first.",
+    skills: "List your core professional skills — things like leadership, financial modelling, project management, or specific technical abilities. These act as keywords recruiters search for.",
+    certifications: "Add professional licences and credentials only — e.g. PMP, ACCA, CPA, AWS Certified, NEBOSH. Do not include school leaving certificates (O-Level, A-Level, KCSE, WAEC) — those belong in Education.",
+    achievements: "Highlight specific career wins and measurable results — e.g. 'Grew revenue by 40% in 12 months' or 'Led a team of 25 across 3 countries'. These are the lines that get CVs shortlisted.",
+    awards: "List any formal awards, prizes, or industry recognition you have received. Include the award name and a brief description of what it was for.",
+    memberships: "List the professional bodies or associations you belong to — e.g. ICPAK, CIPR, ICF, PMI, Law Society. These signal credibility in your field.",
+    projects: "Describe key projects you have led or contributed to. Include the project name, what it involved, the outcome, and any tools or technologies used.",
+    boardRoles: "Include any positions you hold or have held as a board member, trustee, or advisor to an organisation. These are important signals at executive level.",
+    execTraining: "Add executive education programmes or leadership courses you have completed — e.g. Harvard Executive Programme, INSEAD, IMD, or similar.",
+    publications: "List articles, research papers, books, or conference presentations where you are the author or contributor. These demonstrate thought leadership in your field.",
+    tools: "List the software, platforms, and tools you use regularly at work — e.g. SAP, Salesforce, Microsoft Excel, AutoCAD, Xero. Be specific.",
+    volunteer: "Include community service, pro bono work, or voluntary roles. This shows character and leadership beyond your day job.",
+    languages: "List each language you speak and your level — e.g. Native, Fluent, Professional, Conversational. Always include your mother tongue.",
+    referees: "Add at least 2 professional references — people who have managed you or worked closely with you. Include their name, title, organisation, and contact details.",
+    declaration: "A signed statement confirming your CV information is accurate. This is standard practice in many East African and South Asian job markets.",
+  };
+
   // Core sections always visible; optional sections only if they have data or user added them
   const CORE_KEYS = new Set(["personal", "summary", "experience", "education"]);
   const ALL_SECTIONS = [
@@ -1767,6 +1788,9 @@ function CVBuilderPage() {
 
               <Card>
                 <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
+                  {SECTION_HINTS[currentKey] && (
+                    <p className="text-sm text-muted-foreground border-b pb-3 mb-4">{SECTION_HINTS[currentKey]}</p>
+                  )}
                   {/* ── Personal Info ── */}
                   {currentKey === "personal" && (() => {
                     const piMissing = getItemMissing("personal", personalInfo);
