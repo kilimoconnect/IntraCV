@@ -1075,6 +1075,16 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                 ))}
               </div>
             )}
+            {d.tools && d.tools.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <CardHeading C={C}>Tools & Software</CardHeading>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {d.tools.map((tool, i) => (
+                    <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
+                  ))}
+                </div>
+              </div>
+            )}
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <CardHeading C={C}>Career History</CardHeading>
