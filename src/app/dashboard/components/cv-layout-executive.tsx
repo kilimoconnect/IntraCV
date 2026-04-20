@@ -167,7 +167,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <BodySection C={C}>Career Highlights</BodySection>
             {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
                 <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
                 </div>
@@ -345,7 +345,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Career Highlights</BodySection>
               {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
                   <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
                   </div>
@@ -432,7 +432,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Awards & Recognition</BodySection>
               {d.awards.map((award, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
@@ -831,7 +831,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Awards & Recognition</ExecBodyH>
               {d.awards.map((award, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{award.title}</span>
@@ -1231,7 +1231,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div style={{ marginBottom: 16 }}>
               <MinimalH C={C}>Awards & Recognition</MinimalH>
               {d.awards.map((award, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>🏆</span>
                   <div>
                     <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
