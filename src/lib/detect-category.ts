@@ -190,8 +190,11 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
     execTraining.length > 0,
   ].filter(Boolean).length;
 
-  // Mid-senior needs at least 2 page-2 sections to avoid a mostly-blank second page
-  if (page2Sections < 2) {
+  // Mid-senior needs page-2 content, but only cap junior if experience is also weak.
+  // Strong experience (10+ years, exec title, or 2+ mid titles) overrides the volume gate —
+  // a lean CV from a senior professional is still mid-senior.
+  const strongExperience = execTitleCount >= 1 || yearsExp >= 10 || (yearsExp >= 7 && midTitleCount >= 2);
+  if (page2Sections < 2 && !strongExperience) {
     score = Math.min(score, 29);
   }
 
