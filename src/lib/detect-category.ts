@@ -45,6 +45,13 @@ function calcYearsOfExperience(experiences: any[]): number {
       if (/present|current/i.test(s)) return new Date();
       const d = new Date(s);
       if (!isNaN(d.getTime())) return d;
+      // "Jan 2020" / "January 2020" — the format returned by the extract API
+      const monYear = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
+      if (monYear) {
+        const M: Record<string, number> = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,january:0,february:1,march:2,april:3,june:5,july:6,august:7,september:8,october:9,november:10,december:11};
+        const m = M[monYear[1].toLowerCase()];
+        if (m !== undefined) return new Date(parseInt(monYear[2]), m);
+      }
       const parts = s.split(/[\/\-]/);
       if (parts.length === 2) return new Date(parseInt(parts[1]), parseInt(parts[0]) - 1);
       if (parts.length === 1 && /^\d{4}$/.test(parts[0])) return new Date(parseInt(parts[0]), 0);
@@ -193,7 +200,7 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
   // Mid-senior needs page-2 content, but only cap junior if experience is also weak.
   // Strong experience (10+ years, exec title, or 2+ mid titles) overrides the volume gate —
   // a lean CV from a senior professional is still mid-senior.
-  const strongExperience = execTitleCount >= 1 || yearsExp >= 10 || (yearsExp >= 7 && midTitleCount >= 2);
+  const strongExperience = execTitleCount >= 1 || yearsExp >= 10 || midTitleCount >= 2 || (yearsExp >= 7 && midTitleCount >= 1);
   if (page2Sections < 2 && !strongExperience) {
     score = Math.min(score, 29);
   }
