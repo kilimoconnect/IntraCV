@@ -48,7 +48,6 @@ export function getCategoryGaps(category: CareerCategory, cvData: Record<string,
     if (memberships.length === 0) recommended.push("No professional memberships or associations");
     if (tools.length === 0)    recommended.push("No tools & software listed");
     if (projects.length === 0) recommended.push("No projects listed — strengthens technical depth");
-    if (volunteer.length === 0) recommended.push("No volunteer experience listed");
   }
 
   if (category === "executive") {
@@ -61,7 +60,6 @@ export function getCategoryGaps(category: CareerCategory, cvData: Record<string,
     if (memberships.length === 0) recommended.push("No professional memberships or associations");
     if (awards.length === 0)   recommended.push("No awards or recognition listed");
     if (tools.length === 0)    recommended.push("No tools & software listed");
-    if (volunteer.length === 0) recommended.push("No volunteer or community involvement listed");
   }
 
   return [
