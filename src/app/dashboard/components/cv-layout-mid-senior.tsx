@@ -921,7 +921,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           )}
           <div>
             {d.certifications && d.certifications.length > 0 && (
-              <div style={{ marginBottom: 10 }}>
+              <div>
                 <CardHeading C={C}>Certifications</CardHeading>
                 {d.certifications.map((cert, i) => (
                   <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
@@ -932,17 +932,6 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                       <div style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
                       <div style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {d.languages && d.languages.length > 0 && (
-              <div>
-                <CardHeading C={C}>Languages</CardHeading>
-                {d.languages.map((lang, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
-                    <span style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                    <span style={{ color: C.muted }}>{lang.label}</span>
                   </div>
                 ))}
               </div>
@@ -1045,7 +1034,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             )}
             <div>
               {d.certifications && d.certifications.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
+                <div>
                   <CardHeading C={C}>Certifications</CardHeading>
                   {d.certifications.map((cert, i) => (
                     <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
@@ -1056,17 +1045,6 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                         <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
                         <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {d.languages && d.languages.length > 0 && (
-                <div>
-                  <CardHeading C={C}>Languages</CardHeading>
-                  {d.languages.map((lang, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
-                      <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                      <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
                     </div>
                   ))}
                 </div>
@@ -1103,6 +1081,17 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                         ))}
                       </ul>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {d.languages && d.languages.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <CardHeading C={C}>Languages</CardHeading>
+                {d.languages.map((lang, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
+                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
                   </div>
                 ))}
               </div>
@@ -1458,8 +1447,8 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
   // ── Fixed section manifest (page 1 / page 2) ──
-  const show   = new Set(["profile", "experience", "achievements", "skills", "education", "certifications", "languages", "tools", "memberships"]);
-  const showP2 = new Set(["history", "projects", "awards", "references", "declaration"]);
+  const show   = new Set(["profile", "experience", "achievements", "skills", "education", "certifications", "memberships"]);
+  const showP2 = new Set(["history", "languages", "tools", "projects", "awards", "references", "declaration"]);
   const historyExps = d.history?.length ? d.history : (d.experience?.slice(2) ?? []);
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";
@@ -1686,6 +1675,27 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+            {showP2.has("languages") && d.languages && d.languages.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <EHeading C={C}>Languages</EHeading>
+                {d.languages.map((lang, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
+                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {showP2.has("tools") && d.tools && d.tools.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <EHeading C={C}>Tools & Software</EHeading>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 5px" }}>
+                  {d.tools.map((tool, i) => (
+                    <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
+                  ))}
+                </div>
               </div>
             )}
             {showP2.has("projects") && d.projects && d.projects.length > 0 && (
