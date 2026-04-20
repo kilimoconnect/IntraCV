@@ -1944,8 +1944,14 @@ export default function CvStudio({ userId, cvData }: Props) {
 
   // ── Profile Analysis (initial step, auto-runs) ──
   if (step === "analyze-profile") {
-    const score    = cvReadiness?.strength ?? 0;
+    const _gaps = getCategoryGaps(detectedCategory, cvData);
+    const _recGaps = _gaps.filter(g => g.startsWith("[Recommended] "));
+    const rawScore = cvReadiness?.strength ?? 0;
+    const score    = Math.max(0, rawScore - _recGaps.length * 5);
     const isReady  = score >= 75;
+    const augmentedReadiness = cvReadiness
+      ? { ...cvReadiness, issues: [...(cvReadiness.issues ?? []), ..._recGaps.map(g => g.replace("[Recommended] ", "Missing recommended section: "))] }
+      : cvReadiness;
 
     return (
       <div className="max-w-2xl mx-auto pt-4 pb-10 px-4 space-y-4">
@@ -1995,7 +2001,7 @@ export default function CvStudio({ userId, cvData }: Props) {
           score={score}
           isReady={isReady}
           isAnalyzing={profileAnalyzing}
-          cvReadiness={cvReadiness}
+          cvReadiness={augmentedReadiness}
         >
           {/* Missing sections — passed as children so they render inside the dark card */}
           {(() => {
