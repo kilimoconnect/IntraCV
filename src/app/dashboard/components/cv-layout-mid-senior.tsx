@@ -1064,6 +1064,17 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: MX, width: W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
            <div style={{ display: "flex", flexDirection: "column" }}>
+            {d.languages && d.languages.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <CardHeading C={C}>Languages</CardHeading>
+                {d.languages.map((lang, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
+                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <CardHeading C={C}>Career History</CardHeading>
@@ -1081,17 +1092,6 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                         ))}
                       </ul>
                     )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {d.languages && d.languages.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <CardHeading C={C}>Languages</CardHeading>
-                {d.languages.map((lang, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
-                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
                   </div>
                 ))}
               </div>
@@ -1656,27 +1656,6 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
             <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, marginLeft: 10 }}>Page 2</span>
           </div>
           <div style={{ position: "absolute", top: P2_CHROME, left: MX, width: COL_W, maxHeight: P2_BUDGET, overflow: "hidden" }}>
-            {historyExps.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <EHeading C={C}>Career History</EHeading>
-                {historyExps.map((exp, i) => (
-                  <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0, paddingLeft: 12, borderLeft: `2px solid ${C.divider}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.text }}>{exp.role}</span>
-                      <span data-cv-field={`hist.${i}.dates`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
-                    </div>
-                    <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
-                    {exp.bullets?.length > 0 && (
-                      <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
-                          <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
             {showP2.has("languages") && d.languages && d.languages.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <EHeading C={C}>Languages</EHeading>
@@ -1696,6 +1675,27 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
                   ))}
                 </div>
+              </div>
+            )}
+            {historyExps.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <EHeading C={C}>Career History</EHeading>
+                {historyExps.map((exp, i) => (
+                  <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0, paddingLeft: 12, borderLeft: `2px solid ${C.divider}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.text }}>{exp.role}</span>
+                      <span data-cv-field={`hist.${i}.dates`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8 }}>{exp.dates}</span>
+                    </div>
+                    <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                    {exp.bullets?.length > 0 && (
+                      <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
+                        {exp.bullets.map((b, bi) => (
+                          <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
             {showP2.has("projects") && d.projects && d.projects.length > 0 && (
