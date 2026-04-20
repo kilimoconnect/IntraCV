@@ -221,8 +221,11 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
     score = Math.min(score, 29);
   }
 
-  // Executive needs at least 2 page-3 sections to avoid a mostly-blank third page
-  if (page3Sections < 2) {
+  // Executive needs at least 2 page-3 sections to avoid a mostly-blank third page.
+  // Exception: a clearly senior executive (2+ exec titles, 10+ yrs, 5+ roles) has
+  // enough experience depth to fill pages regardless of board/publication presence.
+  const clearlyExecutive = execTitleCount >= 2 && yearsExp >= 10 && experiences.length >= 5;
+  if (page3Sections < 2 && !clearlyExecutive) {
     score = Math.min(score, 59);
   }
 
