@@ -75,6 +75,7 @@ export type ThemeName =
 export interface ThemeColors {
   primary: string;
   primaryDark: string;
+  accent: string;
   headerBg: string;
   headerText: string;
   sidebarBg: string;
@@ -88,36 +89,36 @@ export interface ThemeColors {
 
 export const themes: Record<ThemeName, ThemeColors> = {
   // ── Dark & Professional ──────────────────────────────────────────────────
-  corporate:  { primary: "#4F46E5", primaryDark: "#3730A3", headerBg: "#0F172A", headerText: "#F8FAFC", sidebarBg: "#F8FAFC", text: "#0F172A", muted: "#64748B", divider: "#E2E8F0", pillBg: "#EEF2FF", pillBorder: "#C7D2FE", cardBg: "#FAFBFF" },
-  midnight:   { primary: "#6366F1", primaryDark: "#4338CA", headerBg: "#020617", headerText: "#E0E7FF", sidebarBg: "#F1F5F9", text: "#0F172A", muted: "#475569", divider: "#CBD5E1", pillBg: "#E0E7FF", pillBorder: "#A5B4FC", cardBg: "#F8FAFC" },
-  slate:      { primary: "#475569", primaryDark: "#334155", headerBg: "#1E293B", headerText: "#F1F5F9", sidebarBg: "#F8FAFC", text: "#1E293B", muted: "#64748B", divider: "#E2E8F0", pillBg: "#F1F5F9", pillBorder: "#CBD5E1", cardBg: "#F8FAFC" },
-  monochrome: { primary: "#18181B", primaryDark: "#09090B", headerBg: "#09090B", headerText: "#FAFAFA", sidebarBg: "#FAFAFA", text: "#09090B", muted: "#71717A", divider: "#E4E4E7", pillBg: "#F4F4F5", pillBorder: "#D4D4D8", cardBg: "#FAFAFA" },
-  graphite:   { primary: "#374151", primaryDark: "#1F2937", headerBg: "#111827", headerText: "#F9FAFB", sidebarBg: "#F9FAFB", text: "#111827", muted: "#6B7280", divider: "#E5E7EB", pillBg: "#F3F4F6", pillBorder: "#D1D5DB", cardBg: "#F9FAFB" },
+  corporate:  { primary: "#4F46E5", primaryDark: "#3730A3", accent: "#4F46E5", headerBg: "#0F172A", headerText: "#F8FAFC", sidebarBg: "#F8FAFC", text: "#0F172A", muted: "#64748B", divider: "#E2E8F0", pillBg: "#EEF2FF", pillBorder: "#C7D2FE", cardBg: "#FAFBFF" },
+  midnight:   { primary: "#6366F1", primaryDark: "#4338CA", accent: "#6366F1", headerBg: "#020617", headerText: "#E0E7FF", sidebarBg: "#F1F5F9", text: "#0F172A", muted: "#475569", divider: "#CBD5E1", pillBg: "#E0E7FF", pillBorder: "#A5B4FC", cardBg: "#F8FAFC" },
+  slate:      { primary: "#475569", primaryDark: "#334155", accent: "#475569", headerBg: "#1E293B", headerText: "#F1F5F9", sidebarBg: "#F8FAFC", text: "#1E293B", muted: "#64748B", divider: "#E2E8F0", pillBg: "#F1F5F9", pillBorder: "#CBD5E1", cardBg: "#F8FAFC" },
+  monochrome: { primary: "#18181B", primaryDark: "#09090B", accent: "#18181B", headerBg: "#09090B", headerText: "#FAFAFA", sidebarBg: "#FAFAFA", text: "#09090B", muted: "#71717A", divider: "#E4E4E7", pillBg: "#F4F4F5", pillBorder: "#D4D4D8", cardBg: "#FAFAFA" },
+  graphite:   { primary: "#374151", primaryDark: "#1F2937", accent: "#374151", headerBg: "#111827", headerText: "#F9FAFB", sidebarBg: "#F9FAFB", text: "#111827", muted: "#6B7280", divider: "#E5E7EB", pillBg: "#F3F4F6", pillBorder: "#D1D5DB", cardBg: "#F9FAFB" },
 
   // ── Blues & Teals ────────────────────────────────────────────────────────
-  ocean:      { primary: "#0284C7", primaryDark: "#075985", headerBg: "#082F49", headerText: "#E0F2FE", sidebarBg: "#F0F9FF", text: "#0C4A6E", muted: "#64748B", divider: "#BAE6FD", pillBg: "#E0F2FE", pillBorder: "#7DD3FC", cardBg: "#F0F9FF" },
-  teal:       { primary: "#0D9488", primaryDark: "#0F766E", headerBg: "#134E4A", headerText: "#CCFBF1", sidebarBg: "#F0FDFA", text: "#134E4A", muted: "#5F7A76", divider: "#99F6E4", pillBg: "#CCFBF1", pillBorder: "#5EEAD4", cardBg: "#F0FDFA" },
-  azure:      { primary: "#2563EB", primaryDark: "#1D4ED8", headerBg: "#1E3A5F", headerText: "#DBEAFE", sidebarBg: "#EFF6FF", text: "#1E3A5F", muted: "#6B7280", divider: "#BFDBFE", pillBg: "#DBEAFE", pillBorder: "#93C5FD", cardBg: "#EFF6FF" },
+  ocean:      { primary: "#0284C7", primaryDark: "#075985", accent: "#0284C7", headerBg: "#082F49", headerText: "#E0F2FE", sidebarBg: "#F0F9FF", text: "#0C4A6E", muted: "#64748B", divider: "#BAE6FD", pillBg: "#E0F2FE", pillBorder: "#7DD3FC", cardBg: "#F0F9FF" },
+  teal:       { primary: "#0D9488", primaryDark: "#0F766E", accent: "#0D9488", headerBg: "#134E4A", headerText: "#CCFBF1", sidebarBg: "#F0FDFA", text: "#134E4A", muted: "#5F7A76", divider: "#99F6E4", pillBg: "#CCFBF1", pillBorder: "#5EEAD4", cardBg: "#F0FDFA" },
+  azure:      { primary: "#2563EB", primaryDark: "#1D4ED8", accent: "#2563EB", headerBg: "#1E3A5F", headerText: "#DBEAFE", sidebarBg: "#EFF6FF", text: "#1E3A5F", muted: "#6B7280", divider: "#BFDBFE", pillBg: "#DBEAFE", pillBorder: "#93C5FD", cardBg: "#EFF6FF" },
 
   // ── Greens ───────────────────────────────────────────────────────────────
-  emerald:    { primary: "#059669", primaryDark: "#047857", headerBg: "#022C22", headerText: "#D1FAE5", sidebarBg: "#ECFDF5", text: "#064E3B", muted: "#6B7280", divider: "#A7F3D0", pillBg: "#D1FAE5", pillBorder: "#6EE7B7", cardBg: "#ECFDF5" },
-  forest:     { primary: "#15803D", primaryDark: "#166534", headerBg: "#14532D", headerText: "#F0FDF4", sidebarBg: "#F0FDF4", text: "#14532D", muted: "#6B7280", divider: "#BBF7D0", pillBg: "#DCFCE7", pillBorder: "#86EFAC", cardBg: "#F0FDF4" },
-  sage:       { primary: "#4D7C5F", primaryDark: "#3D6B4F", headerBg: "#1A3A2A", headerText: "#E8F5E9", sidebarBg: "#F1F8F3", text: "#1A3A2A", muted: "#6B8A7A", divider: "#C8E6C9", pillBg: "#E8F5E9", pillBorder: "#A5D6A7", cardBg: "#F5FAF6" },
+  emerald:    { primary: "#059669", primaryDark: "#047857", accent: "#059669", headerBg: "#022C22", headerText: "#D1FAE5", sidebarBg: "#ECFDF5", text: "#064E3B", muted: "#6B7280", divider: "#A7F3D0", pillBg: "#D1FAE5", pillBorder: "#6EE7B7", cardBg: "#ECFDF5" },
+  forest:     { primary: "#15803D", primaryDark: "#166534", accent: "#15803D", headerBg: "#14532D", headerText: "#F0FDF4", sidebarBg: "#F0FDF4", text: "#14532D", muted: "#6B7280", divider: "#BBF7D0", pillBg: "#DCFCE7", pillBorder: "#86EFAC", cardBg: "#F0FDF4" },
+  sage:       { primary: "#4D7C5F", primaryDark: "#3D6B4F", accent: "#4D7C5F", headerBg: "#1A3A2A", headerText: "#E8F5E9", sidebarBg: "#F1F8F3", text: "#1A3A2A", muted: "#6B8A7A", divider: "#C8E6C9", pillBg: "#E8F5E9", pillBorder: "#A5D6A7", cardBg: "#F5FAF6" },
 
   // ── Purples ──────────────────────────────────────────────────────────────
-  royal:      { primary: "#7C3AED", primaryDark: "#6D28D9", headerBg: "#2E1065", headerText: "#F3E8FF", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#E9D5FF", pillBg: "#F3E8FF", pillBorder: "#D8B4FE", cardBg: "#FAF5FF" },
-  lavender:   { primary: "#8B5CF6", primaryDark: "#7C3AED", headerBg: "#3B0764", headerText: "#EDE9FE", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#DDD6FE", pillBg: "#EDE9FE", pillBorder: "#C4B5FD", cardBg: "#FAF5FF" },
-  plum:       { primary: "#9333EA", primaryDark: "#7E22CE", headerBg: "#581C87", headerText: "#F5D0FE", sidebarBg: "#FDF4FF", text: "#3B0764", muted: "#737373", divider: "#F0ABFC", pillBg: "#FAE8FF", pillBorder: "#E879F9", cardBg: "#FDF4FF" },
+  royal:      { primary: "#7C3AED", primaryDark: "#6D28D9", accent: "#7C3AED", headerBg: "#2E1065", headerText: "#F3E8FF", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#E9D5FF", pillBg: "#F3E8FF", pillBorder: "#D8B4FE", cardBg: "#FAF5FF" },
+  lavender:   { primary: "#8B5CF6", primaryDark: "#7C3AED", accent: "#8B5CF6", headerBg: "#3B0764", headerText: "#EDE9FE", sidebarBg: "#FAF5FF", text: "#1F2937", muted: "#6B7280", divider: "#DDD6FE", pillBg: "#EDE9FE", pillBorder: "#C4B5FD", cardBg: "#FAF5FF" },
+  plum:       { primary: "#9333EA", primaryDark: "#7E22CE", accent: "#9333EA", headerBg: "#581C87", headerText: "#F5D0FE", sidebarBg: "#FDF4FF", text: "#3B0764", muted: "#737373", divider: "#F0ABFC", pillBg: "#FAE8FF", pillBorder: "#E879F9", cardBg: "#FDF4FF" },
 
   // ── Reds & Pinks ─────────────────────────────────────────────────────────
-  cherry:     { primary: "#DC2626", primaryDark: "#B91C1C", headerBg: "#450A0A", headerText: "#FEE2E2", sidebarBg: "#FEF2F2", text: "#1F2937", muted: "#6B7280", divider: "#FECACA", pillBg: "#FEE2E2", pillBorder: "#FCA5A5", cardBg: "#FEF2F2" },
-  rose:       { primary: "#E11D48", primaryDark: "#BE123C", headerBg: "#4C0519", headerText: "#FFE4E6", sidebarBg: "#FFF1F2", text: "#1F2937", muted: "#71717A", divider: "#FECDD3", pillBg: "#FFE4E6", pillBorder: "#FDA4AF", cardBg: "#FFF1F2" },
-  coral:      { primary: "#F97316", primaryDark: "#EA580C", headerBg: "#431407", headerText: "#FFEDD5", sidebarBg: "#FFF7ED", text: "#431407", muted: "#78716C", divider: "#FED7AA", pillBg: "#FFEDD5", pillBorder: "#FDBA74", cardBg: "#FFF7ED" },
+  cherry:     { primary: "#DC2626", primaryDark: "#B91C1C", accent: "#DC2626", headerBg: "#450A0A", headerText: "#FEE2E2", sidebarBg: "#FEF2F2", text: "#1F2937", muted: "#6B7280", divider: "#FECACA", pillBg: "#FEE2E2", pillBorder: "#FCA5A5", cardBg: "#FEF2F2" },
+  rose:       { primary: "#E11D48", primaryDark: "#BE123C", accent: "#E11D48", headerBg: "#4C0519", headerText: "#FFE4E6", sidebarBg: "#FFF1F2", text: "#1F2937", muted: "#71717A", divider: "#FECDD3", pillBg: "#FFE4E6", pillBorder: "#FDA4AF", cardBg: "#FFF1F2" },
+  coral:      { primary: "#F97316", primaryDark: "#EA580C", accent: "#F97316", headerBg: "#431407", headerText: "#FFEDD5", sidebarBg: "#FFF7ED", text: "#431407", muted: "#78716C", divider: "#FED7AA", pillBg: "#FFEDD5", pillBorder: "#FDBA74", cardBg: "#FFF7ED" },
 
   // ── Warm & Rich ──────────────────────────────────────────────────────────
-  amber:      { primary: "#D97706", primaryDark: "#B45309", headerBg: "#451A03", headerText: "#FEF3C7", sidebarBg: "#FFFBEB", text: "#1F2937", muted: "#78716C", divider: "#FDE68A", pillBg: "#FEF3C7", pillBorder: "#FCD34D", cardBg: "#FFFBEB" },
-  copper:     { primary: "#B45930", primaryDark: "#9A4A25", headerBg: "#3C1A0B", headerText: "#FDE8D8", sidebarBg: "#FDF6F0", text: "#3C1A0B", muted: "#8B7355", divider: "#E8C4A8", pillBg: "#FDE8D8", pillBorder: "#D4A47C", cardBg: "#FDF8F4" },
-  burgundy:   { primary: "#881337", primaryDark: "#6B0F2B", headerBg: "#2D0A13", headerText: "#FDE4EA", sidebarBg: "#FDF2F4", text: "#2D0A13", muted: "#7A6B6E", divider: "#F5C6CE", pillBg: "#FDE4EA", pillBorder: "#F0A0B0", cardBg: "#FDF5F7" },
+  amber:      { primary: "#D97706", primaryDark: "#B45309", accent: "#D97706", headerBg: "#451A03", headerText: "#FEF3C7", sidebarBg: "#FFFBEB", text: "#1F2937", muted: "#78716C", divider: "#FDE68A", pillBg: "#FEF3C7", pillBorder: "#FCD34D", cardBg: "#FFFBEB" },
+  copper:     { primary: "#B45930", primaryDark: "#9A4A25", accent: "#B45930", headerBg: "#3C1A0B", headerText: "#FDE8D8", sidebarBg: "#FDF6F0", text: "#3C1A0B", muted: "#8B7355", divider: "#E8C4A8", pillBg: "#FDE8D8", pillBorder: "#D4A47C", cardBg: "#FDF8F4" },
+  burgundy:   { primary: "#881337", primaryDark: "#6B0F2B", accent: "#881337", headerBg: "#2D0A13", headerText: "#FDE4EA", sidebarBg: "#FDF2F4", text: "#2D0A13", muted: "#7A6B6E", divider: "#F5C6CE", pillBg: "#FDE4EA", pillBorder: "#F0A0B0", cardBg: "#FDF5F7" },
 };
 
 export const THEME_LIST: { name: ThemeName; label: string; color: string }[] = [

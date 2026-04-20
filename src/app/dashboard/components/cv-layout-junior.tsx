@@ -156,10 +156,13 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
               <div style={{ minWidth: 0 }}>
                 <Heading C={C}>Education</Heading>
                 {d.education.map((edu, i) => (
-                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
-                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, overflowWrap: "break-word" }}>{edu.degree}</div>
-                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.muted, overflowWrap: "break-word" }}>{edu.school} · {edu.year}</div>
-                    {edu.details && <div style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, fontStyle: "italic", overflowWrap: "break-word" }}>{edu.details}</div>}
+                  <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
+                    <div style={{ width: 2, flexShrink: 0, borderRadius: 1, background: C.accent, marginTop: 2 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, overflowWrap: "break-word" }}>{edu.degree}</div>
+                      <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.muted, overflowWrap: "break-word" }}>{edu.school} · {edu.year}</div>
+                      {edu.details && <div style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, fontStyle: "italic", overflowWrap: "break-word" }}>{edu.details}</div>}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -183,9 +186,14 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                 <div>
                   <Heading C={C}>Certifications</Heading>
                   {d.certifications.map((cert, i) => (
-                    <div key={i} style={{ marginBottom: 3 }}>
-                      <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                      <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                    <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
+                      <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                        <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                        <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -256,9 +264,12 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
             <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.divider}` }}>
               <HeadingLine C={C}>Education</HeadingLine>
               {d.education.map((edu, i) => (
-                <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                  <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                  <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
+                  <div style={{ width: 2, flexShrink: 0, borderRadius: 1, background: C.accent, marginTop: 2 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -280,9 +291,14 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
             <div style={{ padding: "12px 16px" }}>
               <HeadingLine C={C}>Certifications</HeadingLine>
               {d.certifications.map((cert, i) => (
-                <div key={i} style={{ marginBottom: 3 }}>
-                  <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                  <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
+                  <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -495,9 +511,12 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div style={{ marginBottom: 14 }}>
                 <HeadingUnderline C={C}>Education</HeadingUnderline>
                 {d.education.map((edu, i) => (
-                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
+                    <div style={{ width: 2, flexShrink: 0, borderRadius: 1, background: C.accent, marginTop: 2 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                      <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -517,9 +536,14 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div style={{ marginBottom: 14 }}>
                 <HeadingUnderline C={C}>Certifications</HeadingUnderline>
                 {d.certifications.map((cert, i) => (
-                  <div key={i} style={{ marginBottom: 3 }}>
-                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
+                    <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                      <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                      <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -674,9 +698,12 @@ function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div style={{ marginBottom: 13 }}>
                 <HeadingLine C={C}>Education</HeadingLine>
                 {d.education.map((edu, i) => (
-                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
+                    <div style={{ width: 2, flexShrink: 0, borderRadius: 1, background: C.accent, marginTop: 2 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                      <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -696,9 +723,14 @@ function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div style={{ marginBottom: 13 }}>
                 <HeadingLine C={C}>Certifications</HeadingLine>
                 {d.certifications.map((cert, i) => (
-                  <div key={i} style={{ marginBottom: 3 }}>
-                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
+                    <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                      <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                      <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -864,9 +896,12 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <div>
                 <HeadingUnderline C={C}>Education</HeadingUnderline>
                 {d.education.map((edu, i) => (
-                  <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
-                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.education.length - 1 ? 6 : 0 }}>
+                    <div style={{ width: 2, flexShrink: 0, borderRadius: 1, background: C.accent, marginTop: 2 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                      <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -887,9 +922,14 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
                 <div>
                   <HeadingUnderline C={C}>Certifications</HeadingUnderline>
                   {d.certifications.map((cert, i) => (
-                    <div key={i} style={{ marginBottom: 3 }}>
-                      <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                      <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                    <div key={i} style={{ display: "flex", gap: 4, marginBottom: 3 }}>
+                      <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                        <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                        <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -970,9 +1010,12 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
             <div style={{ padding: "11px 14px", borderBottom: `1px solid ${C.divider}` }}>
               <HeadingLine C={C}>Education</HeadingLine>
               {d.education.map((edu, i) => (
-                <div key={i} style={{ marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
-                  <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
-                  <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.education.length - 1 ? 7 : 0 }}>
+                  <div style={{ width: 2, flexShrink: 0, borderRadius: 1, background: C.accent, marginTop: 2 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div data-cv-field={`edu.${i}.degree`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text }}>{edu.degree}</div>
+                    <div data-cv-field={`edu.${i}.school`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{edu.school} · {edu.year}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -994,9 +1037,14 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
             <div style={{ padding: "11px 14px", borderBottom: `1px solid ${C.divider}` }}>
               <HeadingLine C={C}>Certifications</HeadingLine>
               {d.certifications.map((cert, i) => (
-                <div key={i} style={{ marginBottom: 4 }}>
-                  <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
-                  <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                <div key={i} style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+                  <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "9.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
+                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "8.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  </div>
                 </div>
               ))}
             </div>
