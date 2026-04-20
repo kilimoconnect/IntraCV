@@ -62,7 +62,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
   // ── Fixed section manifest — strictly 1 page ──
-  const show = new Set(["profile", "experience", "achievements", "skills", "education", "languages", "certifications"]);
+  const show = new Set(["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "references"]);
 
   return (
     <div>
@@ -193,6 +193,23 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
             </div>
           </div>
 
+          {/* References */}
+          {show.has("references") && d.references?.length > 0 && (
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.divider}` }}>
+              <Heading C={C}>References</Heading>
+              <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
+                {d.references.map((ref, i) => (
+                  <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
+                    <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text, overflowWrap: "break-word" }}>{ref.name}</div>
+                    <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, overflowWrap: "break-word" }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
+                    {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>☎ {ref.phone}</div>}
+                    {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>✉ {ref.email}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -214,7 +231,7 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const BODY_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
   // ── Fixed body sections (sidebar carries education/languages/certs) ──
-  const show = new Set(["profile", "experience", "achievements", "skills"]);
+  const show = new Set(["profile", "experience", "achievements", "skills", "references"]);
 
   return (
     <div>
@@ -385,7 +402,7 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
 
   // ── Fixed column sections — strictly 1 page ──
   const showL = new Set(["profile", "experience", "achievements"]);
-  const showR = new Set(["skills", "education", "languages", "certifications"]);
+  const showR = new Set(["skills", "education", "languages", "certifications", "references"]);
 
   return (
     <div>
@@ -568,7 +585,7 @@ function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Theme
 
   // ── Fixed column sections — strictly 1 page ──
   const showL = new Set(["profile", "experience", "achievements"]);
-  const showR = new Set(["skills", "education", "languages", "certifications"]);
+  const showR = new Set(["skills", "education", "languages", "certifications", "references"]);
 
   return (
     <div>
@@ -758,7 +775,7 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
   // ── Fixed sections — strictly 1-page, core content only ──
-  const show = new Set(["profile", "experience", "achievements", "skills", "education", "languages", "certifications"]);
+  const show = new Set(["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "references"]);
 
   const SkillsGrid = ({ label }: { label: string }) => (
     <div style={{ marginBottom: 13, paddingBottom: 11, borderBottom: `1px solid ${C.divider}` }}>
@@ -900,7 +917,7 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const BODY_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
   // ── Fixed body sections (sidebar carries skills/education/languages/certs) ──
-  const show = new Set(["profile", "experience", "achievements"]);
+  const show = new Set(["profile", "experience", "achievements", "references"]);
 
   return (
     <div>
