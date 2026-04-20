@@ -110,7 +110,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
-                      {exp.bullets.slice(0, 3).map((b, bi) => (
+                      {exp.bullets.slice(0, 5).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "16px", color: C.text, marginBottom: 1, overflowWrap: "break-word" }}>{b}</li>
                       ))}
                     </ul>
