@@ -826,13 +826,8 @@ async function aiCondense(sectionType: string, content: unknown, maxChars?: numb
 export default function CvStudio({ userId, cvData }: Props) {
   const supabase = createClient();
 
-  // Use the category saved by CV Builder as the authoritative value.
-  // Fall back to live detection only if the profile has never been saved through CV Builder.
-  const savedCategory = cvData.careerCategory as CareerCategory | null | undefined;
-  const detectedCategory: CareerCategory =
-    savedCategory && ["junior", "mid-senior", "executive"].includes(savedCategory)
-      ? savedCategory
-      : detectCategory(cvData);
+  // Always re-detect live so algorithm improvements apply to existing profiles.
+  const detectedCategory: CareerCategory = detectCategory(cvData);
   const [step, setStep] = useState<"choose-path" | "analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("choose-path");
   const [cvPath, setCvPath] = useState<"improve" | "apply" | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
