@@ -1064,25 +1064,29 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: MX, width: W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
            <div style={{ display: "flex", flexDirection: "column" }}>
-            {d.languages && d.languages.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <CardHeading C={C}>Languages</CardHeading>
-                {d.languages.map((lang, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
-                    <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
-                    <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
+            {(d.languages?.length > 0 || d.tools?.length > 0) && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                {d.languages && d.languages.length > 0 && (
+                  <div>
+                    <CardHeading C={C}>Languages</CardHeading>
+                    {d.languages.map((lang, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", fontFamily: FONT, fontSize: "10px", padding: "2px 0" }}>
+                        <span data-cv-field={`lang.${i}.name`} style={{ fontWeight: 600, color: C.text }}>{lang.name}</span>
+                        <span data-cv-field={`lang.${i}.label`} style={{ color: C.muted }}>{lang.label}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-            {d.tools && d.tools.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <CardHeading C={C}>Tools & Software</CardHeading>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {d.tools.map((tool, i) => (
-                    <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
-                  ))}
-                </div>
+                )}
+                {d.tools && d.tools.length > 0 && (
+                  <div>
+                    <CardHeading C={C}>Tools & Software</CardHeading>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {d.tools.map((tool, i) => (
+                        <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {historyExps.length > 0 && (
