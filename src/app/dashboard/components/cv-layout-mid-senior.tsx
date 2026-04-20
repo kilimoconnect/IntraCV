@@ -10,8 +10,6 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
-import { measureAllSections } from "./cv-constraint-engine";
-import { paginateSections } from "./cv-pagination-engine";
 import { PRINT_MARGIN } from "./cv-design-system";
 
 // ── Fields consumed by this layout — used by the pipeline to load only what's needed ──
@@ -1167,13 +1165,9 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
   const P2_W = A4_W - MX * 2;
 
-  const measL = measureAllSections(d, LEFT_W);
-  const planL = paginateSections(["profile", "experience", "achievements"], measL, [BODY_BUDGET]);
-  const showL = new Set(planL.pages[0]?.sections ?? []);
-
-  const measR = measureAllSections(d, RIGHT_W);
-  const planR = paginateSections(["skills", "education", "certifications", "languages", "tools", "memberships"], measR, [BODY_BUDGET]);
-  const showR = new Set(planR.pages[0]?.sections ?? []);
+  // ── Fixed column sections ──
+  const showL = new Set(["profile", "experience", "achievements"]);
+  const showR = new Set(["skills", "education", "certifications", "languages", "tools", "memberships"]);
 
   const historyExps = d.history?.length ? d.history : (d.experience?.slice(2) ?? []);
 
@@ -1431,14 +1425,9 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_CHROME = 36;
   const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
-  const measures = measureAllSections(d, COL_W);
-  const plan = paginateSections(
-    ["profile", "experience", "achievements", "skills", "education", "certifications", "languages", "tools", "memberships", "projects", "awards", "references", "declaration"],
-    measures,
-    [PAGE_BUDGET, P2_BUDGET],
-  );
-  const show = new Set(plan.pages[0]?.sections ?? []);
-  const showP2 = new Set(plan.pages[1]?.sections ?? []);
+  // ── Fixed section manifest (page 1 / page 2) ──
+  const show   = new Set(["profile", "experience", "achievements", "skills", "education", "certifications", "languages", "tools", "memberships"]);
+  const showP2 = new Set(["history", "projects", "awards", "references", "declaration"]);
   const historyExps = d.history?.length ? d.history : (d.experience?.slice(2) ?? []);
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";
@@ -1731,14 +1720,9 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_CHROME = 36;
   const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
-  const measures = measureAllSections(d, MAIN_W);
-  const plan = paginateSections(
-    ["profile", "experience", "achievements", "certifications", "tools", "projects", "awards", "references", "declaration"],
-    measures,
-    [PAGE_BUDGET, P2_BUDGET],
-  );
-  const show = new Set(plan.pages[0]?.sections ?? []);
-  const showP2 = new Set(plan.pages[1]?.sections ?? []);
+  // ── Fixed section manifest (page 1 / page 2) ──
+  const show   = new Set(["profile", "experience", "achievements", "certifications", "tools", "projects"]);
+  const showP2 = new Set(["history", "awards", "references", "declaration"]);
   const historyExps = d.history?.length ? d.history : (d.experience?.slice(2) ?? []);
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";

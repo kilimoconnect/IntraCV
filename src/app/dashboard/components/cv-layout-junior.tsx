@@ -9,8 +9,6 @@
 
 import React from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
-import { measureAllSections } from "./cv-constraint-engine";
-import { paginateSections, type PaginationResult } from "./cv-pagination-engine";
 import { PRINT_MARGIN } from "./cv-design-system";
 import { useDOMMeasure, buildFingerprint } from "./cv-dom-measure";
 
@@ -69,17 +67,9 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
   const P2_CHROME = 40;
   const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
-  // ── Engine: DOM measures (pixel-perfect) with approximate fallback ──
-  const approxMeasures = measureAllSections(d, COL_W);
-  const measures = domMeasures || approxMeasures;
-  const sectionOrder: Parameters<typeof paginateSections>[0] = ["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references", "declaration"];
-  const plan = paginateSections(
-    sectionOrder,
-    measures,
-    [PAGE_BUDGET, P2_BUDGET],
-  );
-  const show = new Set(plan.pages[0]?.sections ?? []);
-  const showP2 = new Set(plan.pages[1]?.sections ?? []);
+  // ── Fixed section manifest (page 1 / page 2) — no runtime fitting ──
+  const show   = new Set(["profile", "experience", "achievements", "skills", "education", "languages", "certifications"]);
+  const showP2 = new Set(["projects", "awards", "volunteer", "references", "declaration"]);
 
   return (
     <div>
@@ -594,14 +584,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const BODY_TOP = 28;
   const BODY_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
-  // ── Engine: measure + paginate body ──
-  const measures = measureAllSections(d, BODY_W);
-  const plan = paginateSections(
-    ["profile", "experience", "achievements", "skills", "projects", "awards", "references"],
-    measures,
-    [BODY_BUDGET],
-  );
-  const show = new Set(plan.pages[0]?.sections ?? []);
+  // ── Fixed body sections ──
+  const show = new Set(["profile", "experience", "achievements", "skills", "projects", "awards", "references"]);
 
   return (
     <div>
@@ -770,22 +754,9 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const LEFT_W = Math.floor((W - 24) * 1.4 / 2.4);
   const RIGHT_W = W - 24 - LEFT_W;
 
-  // ── Engine: measure + paginate both columns ──
-  const measL = measureAllSections(d, LEFT_W);
-  const planL = paginateSections(
-    ["profile", "experience", "achievements", "projects"],
-    measL,
-    [BODY_BUDGET],
-  );
-  const showL = new Set(planL.pages[0]?.sections ?? []);
-
-  const measR = measureAllSections(d, RIGHT_W);
-  const planR = paginateSections(
-    ["skills", "education", "languages", "certifications", "awards", "volunteer", "references"],
-    measR,
-    [BODY_BUDGET],
-  );
-  const showR = new Set(planR.pages[0]?.sections ?? []);
+  // ── Fixed column sections ──
+  const showL = new Set(["profile", "experience", "achievements", "projects"]);
+  const showR = new Set(["skills", "education", "languages", "certifications", "awards", "volunteer", "references"]);
 
   return (
     <div>
@@ -966,13 +937,9 @@ function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const COL_GAP = 20;
   const COL_W = Math.floor((W - COL_GAP) / 2);
 
-  const measL = measureAllSections(d, COL_W);
-  const planL = paginateSections(["profile", "experience", "achievements"], measL, [BODY_BUDGET]);
-  const showL = new Set(planL.pages[0]?.sections ?? []);
-
-  const measR = measureAllSections(d, COL_W);
-  const planR = paginateSections(["skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references"], measR, [BODY_BUDGET]);
-  const showR = new Set(planR.pages[0]?.sections ?? []);
+  // ── Fixed column sections ──
+  const showL = new Set(["profile", "experience", "achievements"]);
+  const showR = new Set(["skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references"]);
 
   return (
     <div>
@@ -1161,12 +1128,8 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const BODY_TOP = HEADER_H + 10;
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
-  const measures = measureAllSections(d, COL_W);
-  // Variant E is strictly 1-page. Only include sections that reliably fit (~900px).
-  // Projects/awards/volunteer/references/declaration are excluded to prevent overflow.
-  const sectionOrder: Parameters<typeof paginateSections>[0] = ["profile", "experience", "achievements", "skills", "education", "languages", "certifications"];
-  const plan = paginateSections(sectionOrder, measures, [PAGE_BUDGET]);
-  const show = new Set(plan.pages[0]?.sections ?? []);
+  // ── Fixed sections — strictly 1-page, core content only ──
+  const show = new Set(["profile", "experience", "achievements", "skills", "education", "languages", "certifications"]);
 
   const SkillsGrid = ({ label }: { label: string }) => (
     <div style={{ marginBottom: 13, paddingBottom: 11, borderBottom: `1px solid ${C.divider}` }}>
@@ -1307,13 +1270,8 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const BODY_TOP = HEADER_H + 6;
   const BODY_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
-  const measures = measureAllSections(d, MAIN_W);
-  const plan = paginateSections(
-    ["profile", "experience", "achievements", "projects", "volunteer", "awards", "references", "declaration"],
-    measures,
-    [BODY_BUDGET],
-  );
-  const show = new Set(plan.pages[0]?.sections ?? []);
+  // ── Fixed body sections ──
+  const show = new Set(["profile", "experience", "achievements", "projects", "volunteer", "awards", "references", "declaration"]);
 
   return (
     <div>
