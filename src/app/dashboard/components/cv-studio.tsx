@@ -1949,9 +1949,9 @@ export default function CvStudio({ userId, cvData }: Props) {
     const rawScore = cvReadiness?.strength ?? 0;
     const score    = Math.max(0, rawScore - _recGaps.length * 5);
     const isReady  = score >= 75;
-    const augmentedReadiness = cvReadiness
-      ? { ...cvReadiness, issues: [...(cvReadiness.issues ?? []), ..._recGaps.map(g => g.replace("[Recommended] ", "Missing recommended section: "))] }
-      : cvReadiness;
+    // Don't inject missing sections into Issues Found — the dedicated
+    // "📋 Missing for …" panel below already shows them.
+    const augmentedReadiness = cvReadiness;
 
     return (
       <div className="max-w-2xl mx-auto pt-4 pb-10 px-4 space-y-4">
