@@ -56,6 +56,7 @@ import {
   AlertCircle,
   XCircle,
   Clock,
+  Info,
 } from "lucide-react";
 
 // ─── Types ───
@@ -1789,7 +1790,10 @@ function CVBuilderPage() {
               <Card>
                 <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
                   {SECTION_HINTS[currentKey] && (
-                    <p className="text-sm text-muted-foreground border-b pb-3 mb-4">{SECTION_HINTS[currentKey]}</p>
+                    <div className="flex items-start gap-3 rounded-lg bg-[#004aad]/[0.05] border border-[#004aad]/20 px-4 py-3 mb-5">
+                      <Info className="h-4 w-4 text-[#004aad] shrink-0 mt-0.5" />
+                      <p className="text-sm text-slate-600 leading-relaxed">{SECTION_HINTS[currentKey]}</p>
+                    </div>
                   )}
                   {/* ── Personal Info ── */}
                   {currentKey === "personal" && (() => {
