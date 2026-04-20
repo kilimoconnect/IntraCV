@@ -42,20 +42,36 @@ function calcYearsOfExperience(experiences: any[]): number {
 
     const parseDate = (s: string): Date | null => {
       if (!s) return null;
-      if (/present|current/i.test(s)) return new Date();
-      const d = new Date(s);
-      if (!isNaN(d.getTime())) return d;
-      // "Jan 2020" / "January 2020" — the format returned by the extract API
-      const monYear = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
-      if (monYear) {
-        const M: Record<string, number> = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11,january:0,february:1,march:2,april:3,june:5,july:6,august:7,september:8,october:9,november:10,december:11};
-        const m = M[monYear[1].toLowerCase()];
-        if (m !== undefined) return new Date(parseInt(monYear[2]), m);
+      if (/present|current|now|ongoing|to\s*date|till\s*date/i.test(s)) return new Date();
+
+      const MONTHS: Record<string, number> = {
+        jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11,
+        january:0, february:1, march:2, april:3, june:5, july:6, august:7,
+        september:8, october:9, november:10, december:11,
+      };
+
+      // Extract a 4-digit year anywhere in the string
+      const yearMatch = s.match(/\b(19|20)\d{2}\b/);
+      if (!yearMatch) return null;
+      const year = parseInt(yearMatch[0], 10);
+
+      // Try to find a month name anywhere (e.g. "Jan 2020", "2020 January", "01-Jan-2020")
+      const monthNameMatch = s.match(/\b([A-Za-z]{3,9})\b/);
+      if (monthNameMatch) {
+        const m = MONTHS[monthNameMatch[1].toLowerCase()];
+        if (m !== undefined) return new Date(year, m);
       }
-      const parts = s.split(/[\/\-]/);
-      if (parts.length === 2) return new Date(parseInt(parts[1]), parseInt(parts[0]) - 1);
-      if (parts.length === 1 && /^\d{4}$/.test(parts[0])) return new Date(parseInt(parts[0]), 0);
-      return null;
+
+      // Try MM/YYYY, MM-YYYY, YYYY/MM, YYYY-MM
+      const numParts = s.replace(/[^\d]+/g, " ").trim().split(/\s+/).filter(Boolean);
+      if (numParts.length >= 2) {
+        const [a, b] = numParts.map(Number);
+        if (a >= 1 && a <= 12 && b > 1000) return new Date(b, a - 1);  // MM YYYY
+        if (b >= 1 && b <= 12 && a > 1000) return new Date(a, b - 1);  // YYYY MM
+      }
+
+      // Year only
+      return new Date(year, 0);
     };
 
     const s = parseDate(start);
