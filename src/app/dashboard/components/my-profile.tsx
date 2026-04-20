@@ -393,7 +393,7 @@ export default function MyProfile({
     personal: !!personalInfo?.fullName,
     summary: !!summary?.trim(),
     experience: experiences.length > 0,
-    education: education.length > 0,
+    education: education.length > 0 || certifications.length > 0,
     achievements: keyAchievements.length > 0,
     skills: skills.length > 0,
     certifications: certifications.length > 0,

@@ -25,7 +25,7 @@ export function getCategoryGaps(category: CareerCategory, cvData: Record<string,
   // ── Required for all categories ──
   if (!summary.trim())      required.push("No professional summary — add one to introduce yourself");
   if (!pi.linkedin?.trim()) required.push("Missing LinkedIn URL");
-  if (edu.length === 0)     required.push("No education entries added");
+  if (edu.length === 0 && certs.length === 0) required.push("No education entries added");
   if (skills.length === 0)  required.push("No skills listed");
   if (refs.length === 0)    required.push("No referees added");
 
