@@ -713,7 +713,10 @@ export default function MyProfile({
           );
         }
 
-        const score = cvReadiness?.strength ?? 0;
+        // Deduct 5 pts per missing recommended section (sections expected for this career level
+        // but not yet filled in — AI never sees these as "missing" without this adjustment).
+        const rawScore = cvReadiness?.strength ?? 0;
+        const score = Math.max(0, rawScore - missingRecommended.length * 5);
         const isReady = score >= 75;
 
         return (
