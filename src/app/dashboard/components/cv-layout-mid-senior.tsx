@@ -1795,8 +1795,22 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+            {showP2.has("awards") && d.awards && d.awards.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <EHeading C={C}>Awards & Recognition</EHeading>
+                {d.awards.map((award, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>🏆</span>
+                    <div>
+                      <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
+                      {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {showP2.has("references") && d.references?.length > 0 && (
-              <div>
+              <div style={{ marginBottom: 16 }}>
                 <EHeading C={C}>References</EHeading>
                 <div style={{ display: "grid", gridTemplateColumns: refCols, gap: 10 }}>
                   {d.references.map((ref, i) => (
@@ -1809,6 +1823,12 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {showP2.has("declaration") && d.declaration?.declaration && (
+              <div style={{ marginTop: 14 }}>
+                <EHeading C={C}>Declaration</EHeading>
+                <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
               </div>
             )}
             </div>
