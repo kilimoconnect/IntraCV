@@ -31,19 +31,17 @@ export function getCategoryGaps(category: CareerCategory, cvData: Record<string,
 
   if (category === "junior") {
     if (exps.length === 0)      required.push("No work experience added — even internships count");
-    if (certs.length === 0 && edu.length === 0) required.push("No certifications listed");
     if (langs.length === 0)     required.push("No languages listed");
+    if (certs.length === 0)     recommended.push("No professional certifications listed");
     if (projects.length === 0)  recommended.push("No projects — add personal or academic projects to stand out");
-    if (memberships.length === 0) recommended.push("No memberships or associations listed");
-    if (tools.length === 0)     recommended.push("No tools & software listed");
     if (volunteer.length === 0) recommended.push("No volunteer experience listed");
   }
 
   if (category === "mid-senior") {
     if (exps.length < 3)       required.push(`Only ${exps.length} experience entr${exps.length === 1 ? "y" : "ies"} — mid-senior CVs typically show 3–6 roles`);
     if (achieve.length === 0)  required.push("No key achievements listed — critical at mid-senior level");
-    if (certs.length === 0 && edu.length === 0) required.push("No certifications listed");
     if (langs.length === 0)    required.push("No languages listed");
+    if (certs.length === 0)    recommended.push("No professional certifications listed");
     if (awards.length === 0)   recommended.push("No awards or recognition listed");
     if (memberships.length === 0) recommended.push("No professional memberships or associations");
     if (tools.length === 0)    recommended.push("No tools & software listed");
@@ -55,8 +53,8 @@ export function getCategoryGaps(category: CareerCategory, cvData: Record<string,
     if (achieve.length === 0)  required.push("No key achievements listed — essential for executive profiles");
     if (boards.length === 0)   required.push("No board roles — add any board or advisory positions");
     if (pubs.length === 0 && execTrain.length === 0) required.push("No publications or executive training listed");
-    if (certs.length === 0 && edu.length === 0) required.push("No certifications listed");
     if (langs.length === 0)    required.push("No languages listed");
+    if (certs.length === 0)    recommended.push("No professional certifications listed");
     if (memberships.length === 0) recommended.push("No professional memberships or associations");
     if (awards.length === 0)   recommended.push("No awards or recognition listed");
     if (tools.length === 0)    recommended.push("No tools & software listed");

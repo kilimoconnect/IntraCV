@@ -524,9 +524,9 @@ SKILLS:
 - Focus on professional competencies like "Financial Management", "Strategic Planning", "Risk Assessment", etc.
 
 CERTIFICATIONS:
-- Extract name, issuing body, and year for each certification, license, or professional credential.
-- ALSO extract secondary / high school leaving certificates here too (they appear in BOTH education and certifications). This includes: CSEE, ACSEE, O-Level, A-Level, GCSE, WAEC, KCSE, ZIMSEC, NECO, IGCSE, Matric. Use the school name as the issuing body and the year range as the year.
-- If a CV section is labelled "Qualifications" or "Academic Qualifications", extract ALL entries as both education AND certifications.
+- Extract ONLY professional certifications, licenses, and credentials — e.g. PMP, CPA, ACCA, SHRM, AWS, Microsoft, Cisco, NEBOSH, ISO auditor, nursing registration, teaching license, etc.
+- Do NOT include secondary or high school leaving certificates (CSEE, ACSEE, O-Level, A-Level, GCSE, WAEC, KCSE, ZIMSEC, NECO, IGCSE, Matric) here — those belong only in education.
+- Do NOT include university degrees, diplomas, or academic qualifications here — those belong only in education.
 
 LANGUAGES:
 - Extract language name and proficiency level (e.g., "Native", "Fluent", "Intermediate", "Basic").

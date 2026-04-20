@@ -185,11 +185,11 @@ function categorizeProfile(
         { key: "experience", label: "Experience" },
         { key: "education", label: "Education" },
         { key: "skills", label: "Skills" },
-        { key: "certifications", label: "Certifications" },
         { key: "languages", label: "Languages" },
         { key: "referees", label: "References" },
       ],
       recommended: [
+        { key: "certifications", label: "Professional Certifications" },
         { key: "projects", label: "Projects" },
         { key: "volunteer", label: "Volunteer Experience" },
       ],
@@ -202,11 +202,11 @@ function categorizeProfile(
         { key: "education", label: "Education" },
         { key: "skills", label: "Core Competencies" },
         { key: "achievements", label: "Key Achievements" },
-        { key: "certifications", label: "Certifications" },
         { key: "languages", label: "Languages" },
         { key: "referees", label: "References" },
       ],
       recommended: [
+        { key: "certifications", label: "Professional Certifications" },
         { key: "awards", label: "Awards & Recognition" },
         { key: "memberships", label: "Professional Memberships" },
         { key: "tools", label: "Tools & Software" },
@@ -221,12 +221,12 @@ function categorizeProfile(
         { key: "education", label: "Education" },
         { key: "skills", label: "Core Leadership Competencies" },
         { key: "achievements", label: "Career Highlights" },
-        { key: "certifications", label: "Certifications" },
         { key: "languages", label: "Languages" },
         { key: "boardRoles", label: "Board & Advisory Roles" },
         { key: "referees", label: "References" },
       ],
       recommended: [
+        { key: "certifications", label: "Professional Certifications" },
         { key: "execTraining", label: "Executive Training" },
         { key: "publications", label: "Publications & Speaking" },
         { key: "awards", label: "Awards & Recognition" },
@@ -1094,7 +1094,7 @@ function CVBuilderPage() {
       case "experience": return experiences.length > 0;
       case "education": return education.length > 0 || certifications.length > 0;
       case "skills": return skills.length > 0;
-      case "certifications": return certifications.length > 0 || education.length > 0;
+      case "certifications": return certifications.length > 0;
       case "achievements": return keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0);
       case "awards": return awards.some(a => a.title && a.title.trim().length > 0);
       case "memberships": return memberships.length > 0;
