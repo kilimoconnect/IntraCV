@@ -54,6 +54,34 @@ function usePageFill(budget: number, maxZoom = 1.35) {
   return { ref, zoom };
 }
 
+// ── Bullet-trim hook: reduces maxBullets per entry until content fits within budget ──
+function useBulletTrim(
+  contentRef: React.RefObject<HTMLDivElement | null>,
+  budget: number,
+  resetKey: string
+) {
+  const [maxBullets, setMaxBullets] = useState(99);
+  const prevKeyRef = useRef(resetKey);
+
+  if (prevKeyRef.current !== resetKey) {
+    prevKeyRef.current = resetKey;
+    setMaxBullets(99);
+  }
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el || maxBullets === 0) return;
+    const id = requestAnimationFrame(() => {
+      if (el.offsetHeight > budget + 2) {
+        setMaxBullets(b => Math.max(0, b - 1));
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [maxBullets, budget]);
+
+  return maxBullets;
+}
+
 interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
 
 const SIDE_W = 240;
@@ -91,6 +119,14 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
   const p1MeasureRef = useRef<HTMLDivElement>(null);
   const [expSplit, setExpSplit] = useState(2);
   const expFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
+
+  // ── Bullet-trim refs and keys (must be before early returns — Rules of Hooks) ──
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(',');
+  const histKey = (d.history || d.experience?.slice(expSplit) || []).map(e => (e.bullets || []).length).join(',');
+  const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BODY_BUDGET, histKey);
 
   useEffect(() => {
     const el = p1MeasureRef.current;
@@ -298,7 +334,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
 
         {/* ── Right Main Body — Page 1 — flex distributes whitespace ── */}
         <div style={{ position: "absolute", top: P1_BODY_TOP, left: MAIN_X + 20, width: BODY_W, height: P1_BODY_BUDGET, overflow: "hidden" }}>
-         <div style={{ display: "flex", flexDirection: "column" }}>
+         <div ref={p1BodyRef} style={{ display: "flex", flexDirection: "column" }}>
 
           {/* Summary */}
           {d.profile && (
@@ -323,7 +359,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5, overflowWrap: "break-word" }}>{b}</li>
                       ))}
                     </ul>
@@ -365,7 +401,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
 
           {/* Page 2 body — flex distributes whitespace between sections */}
           <div style={{ position: "absolute", top: P2_CHROME, left: 26, width: P2_BODY_W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
-           <div style={{ display: "flex", flexDirection: "column" }}>
+           <div ref={p2BodyRef} style={{ display: "flex", flexDirection: "column" }}>
 
             {/* Career History — timeline */}
             {historyExps.length > 0 && (
@@ -382,7 +418,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
                     </div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1, overflowWrap: "break-word" }}>{b}</li>
                         ))}
                       </ul>
@@ -527,6 +563,13 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const topExps = d.experience?.slice(0, bExpSplit) || [];
   const historyExps = d.history?.length ? d.history : d.experience?.slice(bExpSplit) || [];
 
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(',');
+  const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
+  const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BODY_BUDGET, histKey);
+
   return (
     <div>
       {/* ── Hidden measurement container ── */}
@@ -659,7 +702,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
 
         {/* Left body — flex distributes whitespace */}
         <div style={{ position: "absolute", top: P1_CHROME, left: 22, width: BODY_W - 44, height: P1_BODY_BUDGET, overflow: "hidden" }}>
-         <div style={{ display: "flex", flexDirection: "column" }}>
+         <div ref={p1BodyRef} style={{ display: "flex", flexDirection: "column" }}>
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <BoldHeading C={C}>Professional Summary</BoldHeading>
@@ -678,7 +721,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
@@ -710,7 +753,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, height: P2_BODY_BUDGET, overflow: "hidden" }}>
-           <div style={{ display: "flex", flexDirection: "column" }}>
+           <div ref={p2BodyRef} style={{ display: "flex", flexDirection: "column" }}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <BoldHeading C={C}>Career History</BoldHeading>
@@ -723,7 +766,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                         ))}
                       </ul>
@@ -853,6 +896,13 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const topExps = d.experience?.slice(0, cExpSplit) || [];
   const historyExps = d.history?.length ? d.history : d.experience?.slice(cExpSplit) || [];
 
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(',');
+  const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
+  const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BODY_BUDGET, histKey);
+
   return (
     <div>
       {/* ── Hidden measurement container ── */}
@@ -958,7 +1008,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
 
         {/* Full-width body — flex distributes whitespace */}
         <div style={{ position: "absolute", top: P1_CHROME, left: MX, width: W, height: P1_BODY_BUDGET, overflow: "hidden" }}>
-         <div style={{ display: "flex", flexDirection: "column" }}>
+         <div ref={p1BodyRef} style={{ display: "flex", flexDirection: "column" }}>
           {d.profile && (
             <div style={{ marginBottom: 14 }}>
               <CardHeading C={C}>Professional Summary</CardHeading>
@@ -991,7 +1041,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
@@ -1063,7 +1113,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           </div>
           <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
           <div style={{ position: "absolute", top: 50, left: MX, width: W, height: P2_BODY_BUDGET, overflow: "hidden" }}>
-           <div style={{ display: "flex", flexDirection: "column" }}>
+           <div ref={p2BodyRef} style={{ display: "flex", flexDirection: "column" }}>
             {(d.languages?.length > 0 || d.tools?.length > 0) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 {d.languages && d.languages.length > 0 && (
@@ -1101,7 +1151,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                         ))}
                       </ul>
@@ -1200,6 +1250,13 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";
 
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(',');
+  const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
+  const p1MaxBullets = useBulletTrim(p1BodyRef, BODY_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BUDGET, histKey);
+
   return (
     <div>
       {/* ══ PAGE 1 ══ */}
@@ -1226,7 +1283,7 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
         <div style={{ position: "absolute", top: BODY_TOP, left: MX, width: W, maxHeight: BODY_BUDGET, overflow: "hidden", display: "grid", gridTemplateColumns: `${LEFT_W}px ${RIGHT_W}px`, gap: COL_GAP }}>
 
           {/* Left: profile / experience / achievements */}
-          <div style={{ overflow: "hidden" }}>
+          <div ref={p1BodyRef} style={{ overflow: "hidden" }}>
             {showL.has("profile") && d.profile && (
               <div style={{ marginBottom: 14 }}>
                 <DHeading C={C}>Professional Summary</DHeading>
@@ -1245,7 +1302,7 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15.5px", color: C.text, marginBottom: 1 }}>{b}</li>
                         ))}
                       </ul>
@@ -1352,6 +1409,7 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
           <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.headerText, opacity: 0.5, marginLeft: 10 }}>Page 2</span>
         </div>
         <div style={{ position: "absolute", top: P2_CHROME, left: MX, width: P2_W, maxHeight: P2_BUDGET, overflow: "hidden" }}>
+          <div ref={p2BodyRef}>
           {historyExps.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <DHeading C={C}>Career History</DHeading>
@@ -1364,7 +1422,7 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                       ))}
                     </ul>
@@ -1423,6 +1481,7 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
@@ -1467,6 +1526,13 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";
 
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(',');
+  const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
+  const p1MaxBullets = useBulletTrim(p1BodyRef, PAGE_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BUDGET, histKey);
+
   return (
     <div>
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
@@ -1494,6 +1560,7 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
 
         {/* Body */}
         <div style={{ position: "absolute", top: BODY_TOP, left: MX, width: COL_W, maxHeight: PAGE_BUDGET, overflow: "hidden" }}>
+          <div ref={p1BodyRef}>
           {show.has("skills") && d.skills?.length > 0 && (
             <div style={{ marginBottom: 14, paddingBottom: 10, borderBottom: `1px solid ${C.divider}` }}>
               <EHeading C={C}>Core Competencies</EHeading>
@@ -1522,7 +1589,7 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
@@ -1659,6 +1726,7 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -1670,6 +1738,7 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
             <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, marginLeft: 10 }}>Page 2</span>
           </div>
           <div style={{ position: "absolute", top: P2_CHROME, left: MX, width: COL_W, maxHeight: P2_BUDGET, overflow: "hidden" }}>
+            <div ref={p2BodyRef}>
             {showP2.has("languages") && d.languages && d.languages.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <EHeading C={C}>Languages</EHeading>
@@ -1703,7 +1772,7 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                         ))}
                       </ul>
@@ -1742,6 +1811,7 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -1790,6 +1860,13 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
   const historyExps = d.history?.length ? d.history : (d.experience?.slice(2) ?? []);
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";
+
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(',');
+  const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
+  const p1MaxBullets = useBulletTrim(p1BodyRef, PAGE_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BUDGET, histKey);
 
   return (
     <div>
@@ -1881,6 +1958,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
 
         {/* Right main body */}
         <div style={{ position: "absolute", top: SKILLS_STRIP_H + 10, left: MAIN_X, width: MAIN_W, maxHeight: PAGE_BUDGET, overflow: "hidden" }}>
+          <div ref={p1BodyRef}>
           {show.has("profile") && d.profile && (
             <div style={{ marginBottom: 14 }}>
               <FMainHeading C={C}>Professional Summary</FMainHeading>
@@ -1899,7 +1977,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
@@ -1999,6 +2077,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -2010,6 +2089,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
             <span style={{ fontFamily: FONT, fontSize: "9.5px", color: "rgba(255,255,255,0.6)", marginLeft: 10 }}>Page 2</span>
           </div>
           <div style={{ position: "absolute", top: P2_CHROME, left: 26, width: A4_W - 52, maxHeight: P2_BUDGET, overflow: "hidden" }}>
+            <div ref={p2BodyRef}>
             {historyExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <FMainHeading C={C}>Career History</FMainHeading>
@@ -2022,7 +2102,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                         ))}
                       </ul>
@@ -2075,6 +2155,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
