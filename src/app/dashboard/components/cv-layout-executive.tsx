@@ -167,7 +167,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           <div data-mid="achievements" style={{ marginBottom: 16 }}>
             <BodySection C={C}>Career Highlights</BodySection>
             {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.achievements.length - 1 ? 6 : 0 }}>
                 <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
                 </div>
@@ -345,7 +345,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Career Highlights</BodySection>
               {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.awards.length - 1 ? 6 : 0 }}>
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < d.achievements.length - 1 ? 6 : 0 }}>
                   <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
                   </div>
