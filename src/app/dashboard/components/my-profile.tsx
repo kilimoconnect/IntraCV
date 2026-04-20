@@ -396,7 +396,7 @@ export default function MyProfile({
     education: education.length > 0 || certifications.length > 0,
     achievements: keyAchievements.length > 0,
     skills: skills.length > 0,
-    certifications: certifications.length > 0,
+    certifications: certifications.length > 0 || education.length > 0,
     languages: languages.length > 0,
     projects: projects.length > 0,
     boardRoles: boardRoles.length > 0,
