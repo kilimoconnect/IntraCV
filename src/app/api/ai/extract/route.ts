@@ -510,10 +510,10 @@ EXPERIENCES:
 - startDate/endDate: Always Month+Year format. Drop day numbers. Use "Present" for current roles.
 
 EDUCATION:
-- Extract ALL academic qualifications from universities, colleges, polytechnics, institutes, and any post-secondary institution: degrees, diplomas, HND, postgraduate certificates, professional academic programmes, etc.
-- EXCEPTION: Secondary / high school leaving certificates (CSEE, ACSEE, O-Level, A-Level, GCSE, WAEC, KCSE, Matric, IGCSE, ZIMSEC, NECO, etc.) must go in CERTIFICATIONS, NOT here.
-- "year" should be the graduation/completion year (or year range like "2015-2019").
-- "description" should include honors, GPA, thesis title, or relevant coursework if mentioned.
+- Extract ALL academic qualifications: degrees, diplomas, HND, postgraduate certificates from universities, colleges, polytechnics, institutes, and any academic institution — including secondary / high schools.
+- Secondary school leaving certificates (CSEE, ACSEE, O-Level, A-Level, GCSE, WAEC, KCSE, Matric, IGCSE, ZIMSEC, NECO, etc.) MUST appear here as education entries (degree = certificate name, institution = school name, year = year range).
+- "year" should be the graduation/completion year (or year range like "2003-2005").
+- "description" should include subjects, honors, GPA, or relevant coursework if mentioned.
 
 SKILLS:
 - Extract ALL professional competencies and skills — from dedicated Skills sections AND from bullet-point or dash-separated lists embedded inside a Professional Profile, Executive Summary, or Career Objective section.
@@ -525,8 +525,8 @@ SKILLS:
 
 CERTIFICATIONS:
 - Extract name, issuing body, and year for each certification, license, or professional credential.
-- ALSO extract secondary/high school leaving certificates and national examination results as certifications. This includes: CSEE (Certificate of Secondary Education), ACSEE (Advanced Certificate of Secondary Education), O-Level / A-Level results, GCSE, WAEC, KCSE, ZIMSEC, NECO, IGCSE, Matric, and any similar national secondary school certificates. Use the school name as the issuing body and the year range (e.g. "1999–2002") as the year.
-- If a CV section is labelled "Qualifications", "Academic Qualifications", or similar and lists certificates with school names and year ranges, extract ALL entries there as certifications.
+- ALSO extract secondary/high school leaving certificates here as well (they appear in BOTH education and certifications). This includes: CSEE, ACSEE, O-Level, A-Level, GCSE, WAEC, KCSE, ZIMSEC, NECO, IGCSE, Matric. Use the school name as the issuing body and the year range as the year.
+- If a CV section is labelled "Qualifications", "Academic Qualifications", or similar, extract ALL entries as both education AND certifications.
 
 LANGUAGES:
 - Extract language name and proficiency level (e.g., "Native", "Fluent", "Intermediate", "Basic").
