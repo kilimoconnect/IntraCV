@@ -1162,7 +1162,9 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const PAGE_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
 
   const measures = measureAllSections(d, COL_W);
-  const sectionOrder: Parameters<typeof paginateSections>[0] = ["profile", "experience", "achievements", "skills", "education", "languages", "certifications", "projects", "awards", "volunteer", "references", "declaration"];
+  // Variant E is strictly 1-page. Only include sections that reliably fit (~900px).
+  // Projects/awards/volunteer/references/declaration are excluded to prevent overflow.
+  const sectionOrder: Parameters<typeof paginateSections>[0] = ["profile", "experience", "achievements", "skills", "education", "languages", "certifications"];
   const plan = paginateSections(sectionOrder, measures, [PAGE_BUDGET]);
   const show = new Set(plan.pages[0]?.sections ?? []);
 
@@ -1284,70 +1286,6 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
             </div>
           </div>
 
-          {show.has("projects") && d.projects && d.projects.length > 0 && (
-            <div style={{ marginBottom: 13, paddingBottom: 11, borderBottom: `1px solid ${C.divider}` }}>
-              <HeadingUnderline C={C}>Projects</HeadingUnderline>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {d.projects.map((proj, i) => (
-                  <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{proj.name}</div>
-                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: "2px 0" }}>{proj.description}</p>
-                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary }}>{proj.tech}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {show.has("awards") && d.awards && d.awards.length > 0 && (
-            <div style={{ marginBottom: 13 }}>
-              <HeadingUnderline C={C}>Awards & Recognition</HeadingUnderline>
-              {d.awards.map((award, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 4 }}>
-                  <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>🏆</span>
-                  <div>
-                    <span data-cv-field={`award.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 700, color: C.text }}>{award.title}</span>
-                    {award.description && <span data-cv-field={`award.${i}.description`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted, marginLeft: 4 }}>— {award.description}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {show.has("volunteer") && d.volunteer && d.volunteer.length > 0 && (
-            <div style={{ marginBottom: 13 }}>
-              <HeadingUnderline C={C}>Volunteer Experience</HeadingUnderline>
-              {d.volunteer.map((v, i) => (
-                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 3 }}>
-                  <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, marginTop: 1 }}>●</span>
-                  <span data-cv-field={`vol.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{v}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {show.has("references") && d.references?.length > 0 && (
-            <div style={{ marginBottom: 13 }}>
-              <HeadingUnderline C={C}>References</HeadingUnderline>
-              <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 2 ? "1fr 1fr" : "1fr", gap: 8 }}>
-                {d.references.map((ref, i) => (
-                  <div key={i} style={{ padding: "6px 10px", borderRadius: 6, backgroundColor: C.cardBg, border: `1px solid ${C.divider}` }}>
-                    <div data-cv-field={`ref.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{ref.name}</div>
-                    <div data-cv-field={`ref.${i}.title`} style={{ fontFamily: FONT, fontSize: "10px", color: C.muted }}>{ref.title}{ref.company ? `, ${ref.company}` : ""}</div>
-                    {ref.phone && <div data-cv-field={`ref.${i}.phone`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>☎ {ref.phone}</div>}
-                    {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>✉ {ref.email}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {show.has("declaration") && d.declaration?.declaration && (
-            <div>
-              <HeadingUnderline C={C}>Declaration</HeadingUnderline>
-              <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
-              <div style={{ display: "flex", gap: 24, marginTop: 3, fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>
-                {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
-                {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
