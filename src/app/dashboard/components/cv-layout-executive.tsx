@@ -101,9 +101,8 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           if (mid) heights[mid] = Math.ceil(child.getBoundingClientRect().height);
         }
         const profileH = heights["profile"] || 0;
-        const achievementsH = heights["achievements"] || 0;
         const expHeadingH = 30;
-        let used = profileH + achievementsH + expHeadingH + 6;
+        let used = profileH + expHeadingH + 6;
         let count = 0;
         for (let i = 0; i < (d.experience?.length || 0); i++) {
           const h = heights[`exp-${i}`] || 0;
@@ -320,20 +319,6 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             </div>
           )}
 
-          {/* Career Highlights — star badges */}
-          {d.achievements && d.achievements.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <BodySection C={C}>Career Highlights</BodySection>
-              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
-                  <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
-                  </div>
-                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, paddingTop: 2, wordWrap: "break-word" }}>{ach}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -354,6 +339,21 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
 
         {/* Page 2 body — full width */}
         <div ref={p2BodyRef} style={{ position: "absolute", top: CONT_CHROME, left: 24, width: A4_W - 54, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+
+          {/* Career Highlights */}
+          {d.achievements && d.achievements.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <BodySection C={C}>Career Highlights</BodySection>
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
+                  </div>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, paddingTop: 2, wordWrap: "break-word" }}>{ach}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Career History */}
           {historyExps.length > 0 && (
@@ -579,9 +579,8 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           if (mid) heights[mid] = Math.ceil(child.getBoundingClientRect().height);
         }
         const profileH = heights["profile"] || 0;
-        const achievementsH = heights["achievements"] || 0;
         const expHeadingH = 30;
-        let used = profileH + achievementsH + expHeadingH + 6;
+        let used = profileH + expHeadingH + 6;
         let count = 0;
         for (let i = 0; i < (d.experience?.length || 0); i++) {
           const h = heights[`exp-${i}`] || 0;
@@ -747,17 +746,6 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               ))}
             </div>
           )}
-          {d.achievements && d.achievements.length > 0 && (
-            <div>
-              <ExecBodyH C={C}>Career Highlights</ExecBodyH>
-              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 5 }}>
-                  <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
-                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -769,6 +757,17 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         </div>
         <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
         <div ref={p2BodyRef} style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {d.achievements && d.achievements.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ExecBodyH C={C}>Career Highlights</ExecBodyH>
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
+                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 5 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
+                </div>
+              ))}
+            </div>
+          )}
           {historyExps.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Career History</ExecBodyH>
@@ -957,10 +956,9 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           if (mid) heights[mid] = Math.ceil(child.getBoundingClientRect().height);
         }
         const profileH = heights["profile"] || 0;
-        const achievementsH = heights["achievements"] || 0;
         const boardH = heights["board"] || 0;
         const expHeadingH = 30;
-        let used = profileH + achievementsH + boardH + expHeadingH + 6;
+        let used = profileH + boardH + expHeadingH + 6;
         let count = 0;
         for (let i = 0; i < (d.experience?.length || 0); i++) {
           const h = heights[`exp-${i}`] || 0;
@@ -1084,17 +1082,6 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                 ))}
               </div>
             )}
-            {d.achievements && d.achievements.length > 0 && (
-              <div>
-                <MinimalH C={C}>Career Highlights</MinimalH>
-                {d.achievements.filter(a => a?.trim()).map((ach, i) => (
-                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
-                    <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary }}>—</span>
-                    <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Right — sidebar content */}
@@ -1170,6 +1157,17 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>Page 2</span>
         </div>
         <div ref={p2BodyRef} style={{ position: "absolute", top: 60, left: MX, width: W, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+          {d.achievements && d.achievements.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <MinimalH C={C}>Career Highlights</MinimalH>
+              {d.achievements.filter(a => a?.trim()).map((ach, i) => (
+                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                  <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary }}>—</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
+                </div>
+              ))}
+            </div>
+          )}
           {historyExps.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <MinimalH C={C}>Career History</MinimalH>
