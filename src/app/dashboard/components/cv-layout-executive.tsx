@@ -1052,7 +1052,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
         </div>
 
         {/* Two-column body */}
-        <div style={{ position: "absolute", top: P1_BODY_TOP, left: MX, width: W, maxHeight: P1_BODY_BUDGET, overflow: "hidden", display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 28 }}>
+        <div style={{ position: "absolute", top: P1_BODY_TOP, left: MX, width: W, maxHeight: P1_BODY_BUDGET, overflow: "hidden", display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 28, backgroundColor: "#fff" }}>
           {/* Left — main content */}
           <div ref={p1BodyRef} style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
             {d.profile && (
