@@ -16,6 +16,7 @@ import {
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import CVReadinessBanner from "./cv-readiness-banner";
+import { getCategoryGaps } from "@/lib/category-gaps";
 
 interface MyProfileProps {
   personalInfo: any;
@@ -713,14 +714,14 @@ export default function MyProfile({
           );
         }
 
-        // Deduct 5 pts per missing recommended section (sections expected for this career level
-        // but not yet filled in — AI never sees these as "missing" without this adjustment).
+        // Use shared getCategoryGaps so scores match CV Studio exactly.
+        const _gaps = getCategoryGaps(categoryResult.category, cvData as Record<string, unknown>);
+        const _recGaps = _gaps.filter(g => g.startsWith("[Recommended] "));
         const rawScore = cvReadiness?.strength ?? 0;
-        const score = Math.max(0, rawScore - missingRecommended.length * 5);
+        const score = Math.max(0, rawScore - _recGaps.length * 5);
         const isReady = score >= 75;
 
-        // Inject missing recommended sections into the issues list
-        const missingIssues = missingRecommended.map(s => `Missing recommended section: ${s.label}`);
+        const missingIssues = _recGaps.map(g => g.replace("[Recommended] ", "Missing: "));
         const augmentedReadiness = cvReadiness
           ? { ...cvReadiness, issues: [...(cvReadiness.issues ?? []), ...missingIssues] }
           : cvReadiness;
