@@ -114,6 +114,7 @@ const SECTIONS_BY_CAT: Record<CareerCategory, { required: { key: string; label: 
       { key: "publications", label: "Publications & Speaking" },
       { key: "awards", label: "Awards & Recognition" },
       { key: "memberships", label: "Professional Affiliations" },
+      { key: "projects", label: "Projects" },
     ],
   },
 };

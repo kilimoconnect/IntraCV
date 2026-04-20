@@ -231,6 +231,7 @@ function categorizeProfile(
         { key: "publications", label: "Publications & Speaking" },
         { key: "awards", label: "Awards & Recognition" },
         { key: "memberships", label: "Professional Affiliations" },
+        { key: "projects", label: "Projects" },
       ],
     },
   };
