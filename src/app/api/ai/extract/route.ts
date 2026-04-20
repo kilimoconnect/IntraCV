@@ -510,7 +510,8 @@ EXPERIENCES:
 - startDate/endDate: Always Month+Year format. Drop day numbers. Use "Present" for current roles.
 
 EDUCATION:
-- Extract ALL qualifications: degrees, diplomas, certificates from academic institutions.
+- Extract university/college level qualifications ONLY: bachelor's degrees, master's degrees, PhDs, diplomas, HND, foundation degrees, and other tertiary/higher education.
+- Do NOT put secondary school leaving certificates here — those go in CERTIFICATIONS (see below).
 - "year" should be the graduation/completion year (or year range like "2015-2019").
 - "description" should include honors, GPA, thesis title, or relevant coursework if mentioned.
 
@@ -524,6 +525,8 @@ SKILLS:
 
 CERTIFICATIONS:
 - Extract name, issuing body, and year for each certification, license, or professional credential.
+- ALSO extract secondary/high school leaving certificates and national examination results as certifications. This includes: CSEE (Certificate of Secondary Education), ACSEE (Advanced Certificate of Secondary Education), O-Level / A-Level results, GCSE, WAEC, KCSE, ZIMSEC, NECO, IGCSE, Matric, and any similar national secondary school certificates. Use the school name as the issuing body and the year range (e.g. "1999–2002") as the year.
+- If a CV section is labelled "Qualifications", "Academic Qualifications", or similar and lists certificates with school names and year ranges, extract ALL entries there as certifications.
 
 LANGUAGES:
 - Extract language name and proficiency level (e.g., "Native", "Fluent", "Intermediate", "Basic").
