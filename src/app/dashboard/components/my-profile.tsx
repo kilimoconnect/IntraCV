@@ -719,12 +719,18 @@ export default function MyProfile({
         const score = Math.max(0, rawScore - missingRecommended.length * 5);
         const isReady = score >= 75;
 
+        // Inject missing recommended sections into the issues list
+        const missingIssues = missingRecommended.map(s => `Missing recommended section: ${s.label}`);
+        const augmentedReadiness = cvReadiness
+          ? { ...cvReadiness, issues: [...(cvReadiness.issues ?? []), ...missingIssues] }
+          : cvReadiness;
+
         return (
           <CVReadinessBanner
             score={score}
             isReady={isReady}
             isAnalyzing={false}
-            cvReadiness={cvReadiness}
+            cvReadiness={augmentedReadiness}
             onGenerate={handleGenerateCV}
             isGenerating={isGeneratingCV}
           />
