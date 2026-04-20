@@ -835,7 +835,7 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
                   <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 2 }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 14, listStyleType: "disc" }}>
-                      {exp.bullets.slice(0, 3).map((b, bi) => (
+                      {exp.bullets.slice(0, 4).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "16px", color: C.text, marginBottom: 1 }}>{b}</li>
                       ))}
                     </ul>
