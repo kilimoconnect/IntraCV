@@ -510,8 +510,8 @@ EXPERIENCES:
 - startDate/endDate: Always Month+Year format. Drop day numbers. Use "Present" for current roles.
 
 EDUCATION:
-- Extract university/college level qualifications ONLY: bachelor's degrees, master's degrees, PhDs, diplomas, HND, foundation degrees, and other tertiary/higher education.
-- Do NOT put secondary school leaving certificates here — those go in CERTIFICATIONS (see below).
+- Extract ALL academic qualifications from universities, colleges, polytechnics, institutes, and any post-secondary institution: degrees, diplomas, HND, postgraduate certificates, professional academic programmes, etc.
+- EXCEPTION: Secondary / high school leaving certificates (CSEE, ACSEE, O-Level, A-Level, GCSE, WAEC, KCSE, Matric, IGCSE, ZIMSEC, NECO, etc.) must go in CERTIFICATIONS, NOT here.
 - "year" should be the graduation/completion year (or year range like "2015-2019").
 - "description" should include honors, GPA, thesis title, or relevant coursework if mentioned.
 
