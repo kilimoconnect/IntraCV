@@ -1813,6 +1813,23 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
               ))}
             </div>
           )}
+          {/* Certifications */}
+          {d.certifications && d.certifications.length > 0 && (
+            <div style={{ padding: `12px ${SP}px`, borderBottom: `1px solid ${C.divider}` }}>
+              <FSideLabel C={C}>Certifications</FSideLabel>
+              {d.certifications.map((cert, i) => (
+                <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.certifications.length - 1 ? 7 : 0 }}>
+                  <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{cert.name}</div>
+                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           {/* Languages */}
           {d.languages && d.languages.length > 0 && (
             <div style={{ padding: `12px ${SP}px`, borderBottom: `1px solid ${C.divider}` }}>
@@ -1827,27 +1844,10 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
           )}
           {/* Memberships */}
           {d.memberships && d.memberships.length > 0 && (
-            <div style={{ padding: `12px ${SP}px`, borderBottom: `1px solid ${C.divider}` }}>
+            <div style={{ padding: `12px ${SP}px` }}>
               <FSideLabel C={C}>Memberships</FSideLabel>
               {d.memberships.map((m, i) => (
                 <div key={i} data-cv-field={`memb.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.text, padding: "1.5px 0" }}>• {m}</div>
-              ))}
-            </div>
-          )}
-          {/* Certifications */}
-          {d.certifications && d.certifications.length > 0 && (
-            <div style={{ padding: `12px ${SP}px` }}>
-              <FSideLabel C={C}>Certifications</FSideLabel>
-              {d.certifications.map((cert, i) => (
-                <div key={i} style={{ display: "flex", gap: 5, marginBottom: i < d.certifications.length - 1 ? 7 : 0 }}>
-                  <div style={{ flexShrink: 0, width: 13, height: 13, borderRadius: 2, background: C.accent + "22", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
-                    <span style={{ fontFamily: FONT, fontSize: "8px", color: C.accent, lineHeight: 1, fontWeight: 700 }}>✓</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.text, wordWrap: "break-word" }}>{cert.name}</div>
-                    <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
-                  </div>
-                </div>
               ))}
             </div>
           )}
