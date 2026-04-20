@@ -68,13 +68,13 @@ const SECTIONS_BY_CAT: Record<CareerCategory, { required: { key: string; label: 
       { key: "experience", label: "Experience" },
       { key: "education", label: "Education" },
       { key: "skills", label: "Skills" },
+      { key: "certifications", label: "Certifications" },
+      { key: "languages", label: "Languages" },
       { key: "referees", label: "References" },
     ],
     recommended: [
       { key: "projects", label: "Projects" },
-      { key: "certifications", label: "Certifications" },
       { key: "volunteer", label: "Volunteer Experience" },
-      { key: "languages", label: "Languages" },
     ],
   },
   "mid-senior": {
