@@ -45,6 +45,33 @@ function BodySection({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
+function useBulletTrim(
+  contentRef: React.RefObject<HTMLDivElement | null>,
+  budget: number,
+  resetKey: string
+) {
+  const [maxBullets, setMaxBullets] = useState(99);
+  const prevKeyRef = useRef(resetKey);
+
+  if (prevKeyRef.current !== resetKey) {
+    prevKeyRef.current = resetKey;
+    setMaxBullets(99);
+  }
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el || maxBullets === 0) return;
+    const id = requestAnimationFrame(() => {
+      if (el.scrollHeight > budget + 2) {
+        setMaxBullets(b => Math.max(0, b - 1));
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [maxBullets, budget]);
+
+  return maxBullets;
+}
+
 export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Props) {
   // ── DOM measurement hooks (unconditional, before variant routing) ──
   const aMeasRef = useRef<HTMLDivElement>(null);
@@ -52,6 +79,13 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
   const aExpFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
   const P1_BODY_TOP_CONST = HEADER_H + 22 + SP;
   const P1_BODY_BUDGET_CONST = A4_H - P1_BODY_TOP_CONST - PRINT_MARGIN.bottom;
+  const A_CONT_BODY_BUDGET_CONST = A4_H - (38 + SP) - PRINT_MARGIN.bottom;
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(",");
+  const histKey = (d.history?.length ? d.history : (d.experience || [])).map(e => (e.bullets || []).length).join(",");
+  const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET_CONST, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, A_CONT_BODY_BUDGET_CONST, histKey);
 
   useEffect(() => {
     const el = aMeasRef.current;
@@ -251,7 +285,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
         </div>
 
         {/* ── LEFT Main Body — Page 1 ── */}
-        <div style={{ position: "absolute", top: P1_BODY_TOP, left: 24, width: MAIN_W - 48, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+        <div ref={p1BodyRef} style={{ position: "absolute", top: P1_BODY_TOP, left: 24, width: MAIN_W - 48, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
 
           {/* Executive Profile */}
           {d.profile && (
@@ -276,7 +310,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
@@ -319,7 +353,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
         <div style={{ position: "absolute", top: 38, right: 0, width: 6, height: A4_H - 38, backgroundColor: C.headerBg }} />
 
         {/* Page 2 body — full width */}
-        <div style={{ position: "absolute", top: CONT_CHROME, left: 24, width: A4_W - 54, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+        <div ref={p2BodyRef} style={{ position: "absolute", top: CONT_CHROME, left: 24, width: A4_W - 54, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
 
           {/* Career History */}
           {historyExps.length > 0 && (
@@ -336,7 +370,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                       ))}
                     </ul>
@@ -524,6 +558,12 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const bMeasRef = useRef<HTMLDivElement>(null);
   const [bExpSplit, setBExpSplit] = useState(2);
   const bExpFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(",");
+  const histKey = (d.history?.length ? d.history : (d.experience || [])).map(e => (e.bullets || []).length).join(",");
+  const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, CONT_BODY_BUDGET, histKey);
 
   useEffect(() => {
     const el = bMeasRef.current;
@@ -679,7 +719,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         </div>
 
         {/* Right main body */}
-        <div style={{ position: "absolute", top: P1_BODY_TOP, left: LS + 20, width: RS - 40, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+        <div ref={p1BodyRef} style={{ position: "absolute", top: P1_BODY_TOP, left: LS + 20, width: RS - 40, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Executive Profile</ExecBodyH>
@@ -698,7 +738,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                       ))}
                     </ul>
@@ -728,7 +768,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
           <span style={{ fontFamily: FONT, fontSize: "9px", color: C.headerText, opacity: 0.5 }}>Page 2</span>
         </div>
         <div style={{ position: "absolute", top: 32, left: 0, width: A4_W, height: 2, backgroundColor: C.primary }} />
-        <div style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+        <div ref={p2BodyRef} style={{ position: "absolute", top: 50, left: 22, width: A4_W - 44, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
           {historyExps.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Career History</ExecBodyH>
@@ -741,7 +781,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                       ))}
                     </ul>
@@ -896,6 +936,12 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
   const cMeasRef = useRef<HTMLDivElement>(null);
   const [cExpSplit, setCExpSplit] = useState(2);
   const cExpFP = d.experience?.map(e => e.bullets?.length || 0).join(",") || "";
+  const p1BodyRef = useRef<HTMLDivElement>(null);
+  const p2BodyRef = useRef<HTMLDivElement>(null);
+  const expKey = (d.experience || []).map(e => (e.bullets || []).length).join(",");
+  const histKey = (d.history?.length ? d.history : (d.experience || [])).map(e => (e.bullets || []).length).join(",");
+  const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
+  const p2MaxBullets = useBulletTrim(p2BodyRef, CONT_BODY_BUDGET, histKey);
 
   useEffect(() => {
     const el = cMeasRef.current;
@@ -1010,7 +1056,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
         {/* Two-column body */}
         <div style={{ position: "absolute", top: P1_BODY_TOP, left: MX, width: W, maxHeight: P1_BODY_BUDGET, overflow: "hidden", display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 28 }}>
           {/* Left — main content */}
-          <div style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
+          <div ref={p1BodyRef} style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
             {d.profile && (
               <div style={{ marginBottom: 16 }}>
                 <MinimalH C={C}>Executive Profile</MinimalH>
@@ -1029,7 +1075,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                     <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                        {exp.bullets.map((b, bi) => (
+                        {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
                           <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
                         ))}
                       </ul>
@@ -1123,7 +1169,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           <span style={{ fontFamily: FONT, fontSize: "14px", fontWeight: 800, color: C.text, letterSpacing: "1px", textTransform: "uppercase" }}>{d.fullName}</span>
           <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>Page 2</span>
         </div>
-        <div style={{ position: "absolute", top: 60, left: MX, width: W, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
+        <div ref={p2BodyRef} style={{ position: "absolute", top: 60, left: MX, width: W, maxHeight: CONT_BODY_BUDGET, overflow: "hidden" }}>
           {historyExps.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <MinimalH C={C}>Career History</MinimalH>
@@ -1136,7 +1182,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                   <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
-                      {exp.bullets.map((b, bi) => (
+                      {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
                         <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
                       ))}
                     </ul>
