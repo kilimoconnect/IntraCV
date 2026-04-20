@@ -1857,8 +1857,8 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
   const P2_BUDGET = A4_H - P2_CHROME - PRINT_MARGIN.bottom;
 
   // ── Fixed section manifest (page 1 / page 2) ──
-  const show   = new Set(["profile", "experience", "achievements", "tools", "projects"]);
-  const showP2 = new Set(["history", "awards", "references", "declaration"]);
+  const show   = new Set(["profile", "experience", "achievements"]);
+  const showP2 = new Set(["history", "projects", "awards", "references", "declaration"]);
   const historyExps = d.history?.length ? d.history : (d.experience?.slice(2) ?? []);
 
   const refCols = d.references?.length >= 3 ? "1fr 1fr 1fr" : d.references?.length === 2 ? "1fr 1fr" : "1fr";
@@ -1939,11 +1939,22 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
           )}
           {/* Memberships */}
           {d.memberships && d.memberships.length > 0 && (
-            <div style={{ padding: `12px ${SP}px` }}>
+            <div style={{ padding: `12px ${SP}px`, borderBottom: `1px solid ${C.divider}` }}>
               <FSideLabel C={C}>Memberships</FSideLabel>
               {d.memberships.map((m, i) => (
                 <div key={i} data-cv-field={`memb.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.text, padding: "1.5px 0" }}>• {m}</div>
               ))}
+            </div>
+          )}
+          {/* Tools & Software */}
+          {d.tools && d.tools.length > 0 && (
+            <div style={{ padding: `12px ${SP}px` }}>
+              <FSideLabel C={C}>Tools & Software</FSideLabel>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 4px" }}>
+                {d.tools.map((tool, i) => (
+                  <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 500, color: C.primary, padding: "2px 6px", borderRadius: 8, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -2014,30 +2025,6 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
                       <div data-cv-field={`cert.${i}.name`} style={{ fontFamily: FONT, fontSize: "10.5px", fontWeight: 600, color: C.text }}>{cert.name}</div>
                       <div data-cv-field={`cert.${i}.issuer`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {show.has("tools") && d.tools && d.tools.length > 0 && (
-            <div style={{ marginBottom: 14 }}>
-              <FMainHeading C={C}>Tools & Software</FMainHeading>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 5px" }}>
-                {d.tools.map((tool, i) => (
-                  <span key={i} data-cv-field={`tool.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 500, color: C.primary, padding: "2px 7px", borderRadius: 10, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{tool}</span>
-                ))}
-              </div>
-            </div>
-          )}
-          {show.has("projects") && d.projects && d.projects.length > 0 && (
-            <div style={{ marginBottom: 14 }}>
-              <FMainHeading C={C}>Projects</FMainHeading>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {d.projects.map((proj, i) => (
-                  <div key={i} style={{ padding: "8px 10px", borderRadius: 6, backgroundColor: C.cardBg, borderLeft: `3px solid ${C.primary}` }}>
-                    <div data-cv-field={`proj.${i}.name`} style={{ fontFamily: FONT, fontSize: "11px", fontWeight: 700, color: C.text }}>{proj.name}</div>
-                    <p data-cv-field={`proj.${i}.description`} data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: "3px 0" }}>{proj.description}</p>
-                    {proj.tech && <div data-cv-field={`proj.${i}.tech`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.primary }}>{proj.tech}</div>}
                   </div>
                 ))}
               </div>
