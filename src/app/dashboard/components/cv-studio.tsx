@@ -928,6 +928,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory);
         if (saved.selectedVariant) setSelectedVariant(saved.selectedVariant);
         if (saved.selectedTheme) setSelectedTheme(saved.selectedTheme);
+        if (saved.customColor) setCustomColor(saved.customColor);
         if (saved.coverLetter) {
           setCoverLetter(saved.coverLetter);
           setCoverLetterUnlocked(true);
@@ -1684,7 +1685,7 @@ export default function CvStudio({ userId, cvData }: Props) {
 
     // Store CV state (+ job fields + plan) so we can restore everything on return
     sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({
-      aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter,
+      aiData, selectedCategory, selectedVariant, selectedTheme, customColor, coverLetter,
       jobDescription, company, jobTitle, companyAddress, cvPath, plan,
     }));
 
