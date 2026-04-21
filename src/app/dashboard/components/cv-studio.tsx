@@ -1710,7 +1710,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error(msg);
       setPaymentProcessing(false);
     }
-  }, [aiData, cvData, selectedCategory, selectedVariant, selectedTheme, coverLetter, jobDescription, company, jobTitle, companyAddress, cvPath, paymentProcessing]);
+  }, [aiData, cvData, selectedCategory, selectedVariant, selectedTheme, customColor, coverLetter, jobDescription, company, jobTitle, companyAddress, cvPath, paymentProcessing]);
 
   const handlePlanSelect = useCallback((planId: PlanId) => {
     setSelectedPlan(planId);
