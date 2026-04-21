@@ -1556,6 +1556,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         studioCategory: selectedCategory,
         studioVariant: selectedVariant,
         studioTheme: selectedTheme,
+        studioCustomColor: selectedTheme === "custom" ? customColor : undefined,
       });
 
       // Read and immediately clear the one-time payment token
