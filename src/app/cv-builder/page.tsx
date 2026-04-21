@@ -351,9 +351,10 @@ function CVBuilderPage() {
   });
   const [summary, setSummary] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
-  const firstExpCardRef  = useRef<HTMLDivElement>(null);
-  const justAddedExpRef  = useRef(false);
-  const sectionCardRef   = useRef<HTMLDivElement>(null);
+  const firstExpCardRef      = useRef<HTMLDivElement>(null);
+  const justAddedExpRef      = useRef(false);
+  const sectionCardRef       = useRef<HTMLDivElement>(null);
+  const lastSavedCategoryRef = useRef<string | null>(null);
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [education, setEducation] = useState<Education[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -418,6 +419,7 @@ function CVBuilderPage() {
           linkedin: piRes.data.linkedin || "",
           website: piRes.data.website || "",
         });
+        if (piRes.data.career_category) lastSavedCategoryRef.current = piRes.data.career_category;
       }
       if (sumRes.data?.summary) {
         found = true;
@@ -1022,8 +1024,15 @@ function CVBuilderPage() {
         console.error("Some sections failed to save, indices:", failed, results.filter((_, i) => failed.includes(i)));
         toast.warning(`CV saved (${failed.length} section(s) had errors)`);
       } else {
-        toast.success("CV saved successfully!");
+        const prev = lastSavedCategoryRef.current;
+        const categoryLabels: Record<string, string> = { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" };
+        if (prev && prev !== detectedCareerCategory) {
+          toast.success(`CV saved — profile recategorised: ${categoryLabels[prev] ?? prev} → ${categoryLabels[detectedCareerCategory] ?? detectedCareerCategory}`);
+        } else {
+          toast.success("CV saved successfully!");
+        }
       }
+      lastSavedCategoryRef.current = detectedCareerCategory;
       setHasExistingData(true);
       return true;
     } catch (err: any) {
