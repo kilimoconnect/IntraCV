@@ -1932,47 +1932,25 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
 
         {/* Incomplete profile warning */}
-        {(missingRequired.length > 0 || missingRecommended.length > 0) && (
+        {missingRequired.length > 0 && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0 space-y-3">
-                {missingRequired.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800">Complete your profile first</p>
-                    <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                      Required sections missing — fill these in before generating your CV:
-                    </p>
-                    <ul className="mt-2 space-y-0.5">
-                      {missingRequired.map(s => (
-                        <li key={s.key} className="text-xs text-amber-700 flex items-center gap-1.5">
-                          <span className="h-1 w-1 rounded-full bg-amber-500 shrink-0" />
-                          <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-900">
-                            {s.label}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {missingRecommended.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-amber-700">Recommended sections</p>
-                    <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
-                      These sections strengthen your CV for your career level:
-                    </p>
-                    <ul className="mt-2 space-y-0.5">
-                      {missingRecommended.map(s => (
-                        <li key={s.key} className="text-xs text-amber-600 flex items-center gap-1.5">
-                          <span className="h-1 w-1 rounded-full bg-amber-400 shrink-0" />
-                          <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-800">
-                            {s.label}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-amber-800">Complete your profile first</p>
+                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                  Required sections missing — fill these in before generating your CV:
+                </p>
+                <ul className="mt-2 space-y-0.5">
+                  {missingRequired.map(s => (
+                    <li key={s.key} className="text-xs text-amber-700 flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-amber-500 shrink-0" />
+                      <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-900">
+                        {s.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
             <a
