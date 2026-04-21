@@ -58,23 +58,46 @@ export default function LoginPage() {
       if (authUser) {
         const { data: pi } = await supabase
           .from("cv_personal_info")
-          .select("full_name, email")
+          .select("full_name, email, career_category")
           .eq("user_id", authUser.id)
           .maybeSingle();
 
         if (!pi?.full_name || !pi?.email) {
           router.push("/cv-builder");
         } else {
-          const [expRes, skillRes, summaryRes] = await Promise.all([
-            supabase.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", authUser.id),
-            supabase.from("cv_skills").select("id", { count: "exact", head: true }).eq("user_id", authUser.id),
-            supabase.from("cv_summary").select("summary").eq("user_id", authUser.id).maybeSingle(),
+          const uid = authUser.id;
+          const [sumRes, expRes, eduRes, skillRes, langRes, refRes, achRes, boardRes] = await Promise.all([
+            supabase.from("cv_summary").select("summary").eq("user_id", uid).maybeSingle(),
+            supabase.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_education").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_skills").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_languages").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_referees").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_key_achievements").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_board_roles").select("id", { count: "exact", head: true }).eq("user_id", uid),
           ]);
-          const isComplete =
-            (expRes.count ?? 0) > 0 &&
-            (skillRes.count ?? 0) > 0 &&
-            !!(summaryRes.data?.summary?.trim());
-          router.push(isComplete ? "/dashboard" : "/cv-builder");
+
+          const has = {
+            summary:      !!(sumRes.data?.summary?.trim()),
+            experience:   (expRes.count  ?? 0) > 0,
+            education:    (eduRes.count  ?? 0) > 0,
+            skills:       (skillRes.count ?? 0) > 0,
+            languages:    (langRes.count  ?? 0) > 0,
+            referees:     (refRes.count   ?? 0) > 0,
+            achievements: (achRes.count   ?? 0) > 0,
+            boardRoles:   (boardRes.count  ?? 0) > 0,
+          };
+
+          const category = pi.career_category ?? "junior";
+          const universalOk = has.summary && has.experience && has.education && has.skills && has.languages && has.referees;
+          const categoryOk =
+            category === "executive"
+              ? universalOk && has.achievements && has.boardRoles
+              : category === "mid-senior"
+              ? universalOk && has.achievements
+              : universalOk;
+
+          router.push(categoryOk ? "/dashboard" : "/cv-builder");
         }
       } else {
         router.push("/cv-builder");
