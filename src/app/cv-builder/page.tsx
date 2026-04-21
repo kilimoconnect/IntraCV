@@ -1024,10 +1024,16 @@ function CVBuilderPage() {
         console.error("Some sections failed to save, indices:", failed, results.filter((_, i) => failed.includes(i)));
         toast.warning(`CV saved (${failed.length} section(s) had errors)`);
       } else {
-        const prev = lastSavedCategoryRef.current;
+        const prev = lastSavedCategoryRef.current ?? detectedCareerCategory;
         const categoryLabels: Record<string, string> = { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" };
-        if (prev && prev !== detectedCareerCategory) {
-          toast.success(`CV saved — profile recategorised: ${categoryLabels[prev] ?? prev} → ${categoryLabels[detectedCareerCategory] ?? detectedCareerCategory}`);
+        const catRank: Record<string, number> = { junior: 0, "mid-senior": 1, executive: 2 };
+        if (prev !== detectedCareerCategory) {
+          const upgraded = (catRank[detectedCareerCategory] ?? 0) > (catRank[prev] ?? 0);
+          if (upgraded) {
+            toast.success(`Profile upgraded: ${categoryLabels[prev] ?? prev} → ${categoryLabels[detectedCareerCategory] ?? detectedCareerCategory}`);
+          } else {
+            toast.info(`Profile recategorised: ${categoryLabels[prev] ?? prev} → ${categoryLabels[detectedCareerCategory] ?? detectedCareerCategory}`);
+          }
         } else {
           toast.success("CV saved successfully!");
         }
