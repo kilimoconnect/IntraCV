@@ -1200,6 +1200,7 @@ function CVBuilderPage() {
     education: [
       { field: "degree", label: "Degree" },
       { field: "institution", label: "Institution" },
+      { field: "year", label: "Year" },
     ],
     skills: [{ field: "name", label: "Skill Name" }],
     certifications: [{ field: "name", label: "Name" }],
@@ -2077,8 +2078,8 @@ function CVBuilderPage() {
                               <Input className={!edu.institution?.trim() ? "border-red-300 bg-red-50/30" : ""} value={edu.institution} onChange={(e) => setEducation(education.map((x) => x.id === edu.id ? { ...x, institution: e.target.value } : x))} />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">Year</Label>
-                              <Input value={edu.year} onChange={(e) => setEducation(education.map((x) => x.id === edu.id ? { ...x, year: e.target.value } : x))} />
+                              <Label className="text-xs">Year <span className="text-red-500">*</span></Label>
+                              <Input className={!edu.year?.trim() ? "border-red-300 bg-red-50/30" : ""} value={edu.year} onChange={(e) => setEducation(education.map((x) => x.id === edu.id ? { ...x, year: e.target.value } : x))} />
                             </div>
                           </div>
                           <div className="space-y-1">
