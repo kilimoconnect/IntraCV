@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
     const { email, name, redirectUrl, amount } = await req.json();
     if (!email) return NextResponse.json({ error: "Customer email is required" }, { status: 400 });
 
-    const VALID_AMOUNTS = [3, 7, 10];
-    const chargeAmount = VALID_AMOUNTS.includes(Number(amount)) ? Number(amount) : 3;
+    const VALID_AMOUNTS = [5, 7, 10];
+    const chargeAmount = VALID_AMOUNTS.includes(Number(amount)) ? Number(amount) : 5;
 
     const txRef = generateTxRef(user.id);
     const nameParts = (name || "FuseCV User").trim().split(" ");
