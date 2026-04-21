@@ -1210,7 +1210,7 @@ function CVBuilderPage() {
     });
     return m / 12;
   })();
-  const _quickCategory = categorizeProfile(experiences, education, boardRoles, publications, execTraining, _quickYears);
+  const _quickCategory = categorizeProfile(experiences, education, boardRoles, publications, execTraining, skills, keyAchievements, certifications, languages);
   const requiredKeys = new Set(_quickCategory.requiredSections.map((s) => s.key));
 
   const SECTIONS = ALL_SECTIONS.filter(
@@ -1307,17 +1307,41 @@ function CVBuilderPage() {
   const missingRequired = categoryResult.requiredSections.filter(s => !sectionHasContent(s.key));
   const missingRecommended = categoryResult.recommendedSections.filter(s => !sectionHasContent(s.key));
 
+  // Recomputes category from the latest React state and reveals any newly required sections
+  // in the sidebar so the user sees them before saving.
+  const recalculateCategoryAndUpdate = () => {
+    const fresh = categorizeProfile(
+      experiences, education, boardRoles, publications, execTraining,
+      skills, keyAchievements, certifications, languages,
+    );
+    setManuallyShown(prev => {
+      const next = new Set(prev);
+      fresh.requiredSections.forEach(s => next.add(s.key));
+      return next;
+    });
+    return fresh;
+  };
+
+  const handleSectionSave = async () => {
+    recalculateCategoryAndUpdate();
+    await saveToDatabase();
+  };
+
   // ─── Save & Continue (shared by top button and hook CTA) ───
   // Defined here — after missingRequired — to avoid TDZ in the dependency array.
   const handleSaveAndContinue = async () => {
     if (saving) return;
 
+    // Recalculate category fresh from current state before validating
+    const fresh = recalculateCategoryAndUpdate();
+    const freshMissing = fresh.requiredSections.filter(s => !sectionHasContent(s.key));
+
     // 1. Required sections missing → jump to first one
-    if (missingRequired.length > 0) {
-      setValidationErrors({ sections: missingRequired.map(s => s.label), firstKey: missingRequired[0].key });
-      setActiveTab(missingRequired[0].key);
-      if (!manuallyShown.has(missingRequired[0].key)) {
-        setManuallyShown(prev => new Set([...prev, missingRequired[0].key]));
+    if (freshMissing.length > 0) {
+      setValidationErrors({ sections: freshMissing.map(s => s.label), firstKey: freshMissing[0].key });
+      setActiveTab(freshMissing[0].key);
+      if (!manuallyShown.has(freshMissing[0].key)) {
+        setManuallyShown(prev => new Set([...prev, freshMissing[0].key]));
       }
       return;
     }
@@ -2452,7 +2476,7 @@ function CVBuilderPage() {
                 <Button
                   variant="outline"
                   className="flex-1 border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
-                  onClick={() => saveToDatabase()}
+                  onClick={handleSectionSave}
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -2490,7 +2514,7 @@ function CVBuilderPage() {
                   <Button
                     variant="outline"
                     className="border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
-                    onClick={() => saveToDatabase()}
+                    onClick={handleSectionSave}
                     disabled={saving}
                   >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
