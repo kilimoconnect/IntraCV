@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, FolderOpen, GraduationCap, Loader2, Lock, Palette, PenLine, Pipette, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
@@ -752,6 +752,21 @@ export default function CvStudio({ userId, cvData }: Props) {
 
   // Always re-detect live so algorithm improvements apply to existing profiles.
   const detectedCategory: CareerCategory = detectCategory(cvData);
+
+  // Required sections that must be filled before CV generation is allowed
+  const missingRequired = useMemo(() => {
+    const pi = asObject(cvData.personalInfo);
+    const fullName = ((pi.fullName || pi.full_name || "") as string).trim();
+    const email    = ((pi.email || "") as string).trim();
+    const summary  = ((cvData.summary || "") as string).trim();
+    const missing: string[] = [];
+    if (!fullName || !email)                                                        missing.push("Personal Info");
+    if (!summary)                                                                   missing.push("Professional Summary");
+    if (!Array.isArray(cvData.experiences) || cvData.experiences.length === 0)     missing.push("Work Experience");
+    if (!Array.isArray(cvData.education)   || cvData.education.length   === 0)     missing.push("Education");
+    if (!Array.isArray(cvData.skills)      || cvData.skills.length      === 0)     missing.push("Skills");
+    return missing;
+  }, [cvData]);
   const [step, setStep] = useState<"choose-path" | "analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("choose-path");
   const [cvPath, setCvPath] = useState<"improve" | "apply" | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
@@ -1831,12 +1846,42 @@ export default function CvStudio({ userId, cvData }: Props) {
           <p className="text-sm text-slate-500 mt-1">What do you want to do?</p>
         </div>
 
+        {/* Incomplete profile warning */}
+        {missingRequired.length > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-amber-800">Complete your profile first</p>
+                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                  The following required sections are missing — fill them in the CV Builder before generating your CV:
+                </p>
+                <ul className="mt-2 space-y-0.5">
+                  {missingRequired.map(s => (
+                    <li key={s} className="text-xs text-amber-700 flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-amber-500 shrink-0" />
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <a
+              href="/cv-builder"
+              className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
+            >
+              Go to CV Builder <ArrowLeft className="h-3.5 w-3.5 rotate-180" />
+            </a>
+          </div>
+        )}
+
         {/* Path cards */}
         <div className="space-y-4">
           {/* Path 1 — Improve my CV */}
           <button
-            onClick={() => { setCvPath("improve"); setStep("analyze-profile"); }}
-            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#004aad] hover:shadow-lg hover:shadow-[#004aad]/10 transition-all duration-200"
+            onClick={() => { if (missingRequired.length > 0) return; setCvPath("improve"); setStep("analyze-profile"); }}
+            disabled={missingRequired.length > 0}
+            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#004aad] hover:shadow-lg hover:shadow-[#004aad]/10 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:shadow-none"
           >
             <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-[#004aad]/5 text-[#004aad] group-hover:bg-[#004aad]/10 transition-colors">
               <FileText className="h-5 w-5" />
@@ -1850,8 +1895,9 @@ export default function CvStudio({ userId, cvData }: Props) {
 
           {/* Path 2 — Apply for a job */}
           <button
-            onClick={() => { setCvPath("apply"); setStep("analyze-profile"); }}
-            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#00c4cc] hover:shadow-lg hover:shadow-[#00c4cc]/10 transition-all duration-200"
+            onClick={() => { if (missingRequired.length > 0) return; setCvPath("apply"); setStep("analyze-profile"); }}
+            disabled={missingRequired.length > 0}
+            className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#00c4cc] hover:shadow-lg hover:shadow-[#00c4cc]/10 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:shadow-none"
           >
             <div className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-[#00c4cc]/10 text-[#00c4cc] group-hover:bg-[#00c4cc]/20 transition-colors">
               <Briefcase className="h-5 w-5" />
