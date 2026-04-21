@@ -354,6 +354,7 @@ function CVBuilderPage() {
   const firstExpCardRef      = useRef<HTMLDivElement>(null);
   const justAddedExpRef      = useRef(false);
   const sectionCardRef       = useRef<HTMLDivElement>(null);
+  const scrollToItemIdRef    = useRef<string | null>(null);
   const lastSavedCategoryRef = useRef<string | null>(null);
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [education, setEducation] = useState<Education[]>([]);
@@ -603,14 +604,27 @@ function CVBuilderPage() {
     return () => clearTimeout(timer);
   }, [experiences]);
 
-  // ─── Scroll to section card when goToSection triggers (even if tab unchanged) ───
+  // ─── Scroll to section card (and optionally a specific item) on goToSection ───
   useEffect(() => {
     if (scrollTrigger === 0) return;
-    const timer = setTimeout(() => {
+    const capturedItemId = scrollToItemIdRef.current;
+    scrollToItemIdRef.current = null;
+    const outer = setTimeout(() => {
       sectionCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      sectionCardRef.current?.querySelector<HTMLInputElement>("input, textarea")?.focus();
+      const inner = setTimeout(() => {
+        const el = capturedItemId
+          ? document.getElementById(capturedItemId)
+          : sectionCardRef.current?.querySelector<HTMLElement>('[id^="cv-item-"].border-red-300');
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.querySelector<HTMLInputElement>("input.border-red-300, textarea.border-red-300")?.focus();
+        } else {
+          sectionCardRef.current?.querySelector<HTMLInputElement>("input, textarea")?.focus();
+        }
+      }, 350);
+      return () => clearTimeout(inner);
     }, 300);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(outer);
   }, [scrollTrigger]);
 
   // ─── Handle ?tab= / ?section= query params ───
@@ -1427,21 +1441,21 @@ function CVBuilderPage() {
     }
 
     // 2. Per-item missing fields → jump to first incomplete section
-    const incompleteItems: { section: string; key: string; count: number }[] = [];
+    const incompleteItems: { section: string; key: string; count: number; itemId?: string }[] = [];
     const piMissing = getItemMissing("personal", personalInfo);
     if (piMissing.length > 0) incompleteItems.push({ section: "Personal Info", key: "personal", count: piMissing.length });
-    experiences.forEach((exp) => { if (getItemMissing("experience", exp).length > 0) incompleteItems.push({ section: "Experience", key: "experience", count: 0 }); });
-    education.forEach((edu) => { if (getItemMissing("education", edu).length > 0) incompleteItems.push({ section: "Education", key: "education", count: 0 }); });
-    skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) incompleteItems.push({ section: "Skills", key: "skills", count: 0 }); });
-    certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) incompleteItems.push({ section: "Certifications", key: "certifications", count: 0 }); });
-    languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) incompleteItems.push({ section: "Languages", key: "languages", count: 0 }); });
-    referees.forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0 }); });
-    keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) incompleteItems.push({ section: "Achievements", key: "achievements", count: 0 }); });
-    memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) incompleteItems.push({ section: "Memberships", key: "memberships", count: 0 }); });
-    projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) incompleteItems.push({ section: "Projects", key: "projects", count: 0 }); });
-    boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) incompleteItems.push({ section: "Board Roles", key: "boardRoles", count: 0 }); });
-    execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) incompleteItems.push({ section: "Exec Training", key: "execTraining", count: 0 }); });
-    publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) incompleteItems.push({ section: "Publications", key: "publications", count: 0 }); });
+    experiences.forEach((exp) => { if (getItemMissing("experience", exp).length > 0) incompleteItems.push({ section: "Experience", key: "experience", count: 0, itemId: `cv-item-${exp.id}` }); });
+    education.forEach((edu) => { if (getItemMissing("education", edu).length > 0) incompleteItems.push({ section: "Education", key: "education", count: 0, itemId: `cv-item-${edu.id}` }); });
+    skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) incompleteItems.push({ section: "Skills", key: "skills", count: 0, itemId: `cv-item-${s.id}` }); });
+    certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) incompleteItems.push({ section: "Certifications", key: "certifications", count: 0, itemId: `cv-item-${c.id}` }); });
+    languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) incompleteItems.push({ section: "Languages", key: "languages", count: 0, itemId: `cv-item-${l.id}` }); });
+    referees.forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0, itemId: `cv-item-${r.id}` }); });
+    keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) incompleteItems.push({ section: "Achievements", key: "achievements", count: 0, itemId: `cv-item-${a.id}` }); });
+    memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) incompleteItems.push({ section: "Memberships", key: "memberships", count: 0, itemId: `cv-item-${m.id}` }); });
+    projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) incompleteItems.push({ section: "Projects", key: "projects", count: 0, itemId: `cv-item-${p.id}` }); });
+    boardRoles.forEach((b) => { if (getItemMissing("boardRoles", b).length > 0) incompleteItems.push({ section: "Board Roles", key: "boardRoles", count: 0, itemId: `cv-item-${b.id}` }); });
+    execTraining.forEach((t) => { if (getItemMissing("execTraining", t).length > 0) incompleteItems.push({ section: "Exec Training", key: "execTraining", count: 0, itemId: `cv-item-${t.id}` }); });
+    publications.forEach((p) => { if (getItemMissing("publications", p).length > 0) incompleteItems.push({ section: "Publications", key: "publications", count: 0, itemId: `cv-item-${p.id}` }); });
     tools.forEach((t) => { if (!t?.name?.trim()) incompleteItems.push({ section: "Tools", key: "tools", count: 0 }); });
     volunteer.forEach((v) => { if (!v?.trim()) incompleteItems.push({ section: "Volunteer", key: "volunteer", count: 0 }); });
 
@@ -1452,6 +1466,8 @@ function CVBuilderPage() {
       if (!manuallyShown.has(incompleteItems[0].key)) {
         setManuallyShown(prev => new Set([...prev, incompleteItems[0].key]));
       }
+      if (incompleteItems[0].itemId) scrollToItemIdRef.current = incompleteItems[0].itemId;
+      setScrollTrigger(t => t + 1);
       return;
     }
 
@@ -1976,7 +1992,7 @@ function CVBuilderPage() {
                       {experiences.map((exp, i) => {
                         const expMissing = getItemMissing("experience", exp);
                         return (
-                        <div key={exp.id} ref={i === 0 ? firstExpCardRef : undefined} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${expMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={exp.id} id={`cv-item-${exp.id}`} ref={i === 0 ? firstExpCardRef : undefined} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${expMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -2037,7 +2053,7 @@ function CVBuilderPage() {
                       {education.map((edu, i) => {
                         const eduMissing = getItemMissing("education", edu);
                         return (
-                        <div key={edu.id} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${eduMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={edu.id} id={`cv-item-${edu.id}`} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${eduMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -2085,7 +2101,7 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No skills added yet</p>
                       )}
                       {skills.map((skill) => (
-                        <div key={skill.id} className={`rounded-lg border p-3 space-y-2 ${!skill.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                        <div key={skill.id} id={`cv-item-${skill.id}`} className={`rounded-lg border p-3 space-y-2 ${!skill.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
                           <div className="flex items-center justify-between gap-2">
                             <Input className={`flex-1 ${!skill.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Skill name *" value={skill.name} onChange={(e) => setSkills(skills.map((s) => s.id === skill.id ? { ...s, name: e.target.value } : s))} />
                             <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setSkills(skills.filter((s) => s.id !== skill.id))}>
@@ -2110,7 +2126,7 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No certifications added yet</p>
                       )}
                       {certifications.map((cert) => (
-                        <div key={cert.id} className={`rounded-lg border p-3 space-y-2 ${!cert.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                        <div key={cert.id} id={`cv-item-${cert.id}`} className={`rounded-lg border p-3 space-y-2 ${!cert.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
                           <div className="flex items-center justify-between gap-2">
                             <Input className={`flex-1 ${!cert.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Certification name *" value={cert.name} onChange={(e) => setCertifications(certifications.map((c) => c.id === cert.id ? { ...c, name: e.target.value } : c))} />
                             <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setCertifications(certifications.filter((c) => c.id !== cert.id))}>
@@ -2138,7 +2154,7 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No languages added yet</p>
                       )}
                       {languages.map((lang) => (
-                        <div key={lang.id} className={`rounded-lg border p-3 space-y-2 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                        <div key={lang.id} id={`cv-item-${lang.id}`} className={`rounded-lg border p-3 space-y-2 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
                           <div className="flex items-center justify-between gap-2">
                             <Input className={`flex-1 ${!lang.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Language *" value={lang.name} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, name: e.target.value } : l))} />
                             <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setLanguages(languages.filter((l) => l.id !== lang.id))}>
@@ -2165,7 +2181,7 @@ function CVBuilderPage() {
                       {referees.map((ref, i) => {
                         const refMissing = getItemMissing("referees", ref);
                         return (
-                        <div key={ref.id} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${refMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={ref.id} id={`cv-item-${ref.id}`} className={`border rounded-lg p-3 sm:p-4 space-y-3 ${refMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -2217,7 +2233,7 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No achievements added yet</p>
                       )}
                       {keyAchievements.map((ach) => (
-                        <div key={ach.id} className={`flex gap-2 items-center rounded-lg border p-2 ${!ach.achievement?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                        <div key={ach.id} id={`cv-item-${ach.id}`} className={`flex gap-2 items-center rounded-lg border p-2 ${!ach.achievement?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
                           <Input className={`flex-1 border-0 shadow-none focus-visible:ring-0 ${!ach.achievement?.trim() ? "placeholder:text-red-400" : ""}`} placeholder="Key achievement or accomplishment *" value={ach.achievement} onChange={(e) => setKeyAchievements(keyAchievements.map((a) => a.id === ach.id ? { ...a, achievement: e.target.value } : a))} />
                           <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setKeyAchievements(keyAchievements.filter((a) => a.id !== ach.id))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -2268,7 +2284,7 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No memberships added yet</p>
                       )}
                       {memberships.map((mem) => (
-                        <div key={mem.id} className={`flex gap-2 items-center rounded-lg border p-2 ${!mem.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
+                        <div key={mem.id} id={`cv-item-${mem.id}`} className={`flex gap-2 items-center rounded-lg border p-2 ${!mem.name?.trim() ? "border-red-300 bg-red-50/30" : "border-slate-200"}`}>
                           <Input className={`flex-1 border-0 shadow-none focus-visible:ring-0 ${!mem.name?.trim() ? "placeholder:text-red-400" : ""}`} placeholder="Professional membership or affiliation *" value={mem.name} onChange={(e) => setMemberships(memberships.map((m) => m.id === mem.id ? { ...m, name: e.target.value } : m))} />
                           <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setMemberships(memberships.filter((m) => m.id !== mem.id))}>
                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -2292,7 +2308,7 @@ function CVBuilderPage() {
                       {projects.map((proj, i) => {
                         const projMissing = getItemMissing("projects", proj);
                         return (
-                        <div key={proj.id} className={`border rounded-lg p-4 space-y-3 ${projMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={proj.id} id={`cv-item-${proj.id}`} className={`border rounded-lg p-4 space-y-3 ${projMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -2338,7 +2354,7 @@ function CVBuilderPage() {
                       {boardRoles.map((role, i) => {
                         const brMissing = getItemMissing("boardRoles", role);
                         return (
-                        <div key={role.id} className={`border rounded-lg p-4 space-y-3 ${brMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={role.id} id={`cv-item-${role.id}`} className={`border rounded-lg p-4 space-y-3 ${brMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
@@ -2390,7 +2406,7 @@ function CVBuilderPage() {
                         <p className="text-muted-foreground text-sm text-center py-8">No executive training added yet</p>
                       )}
                       {execTraining.map((tr) => (
-                        <div key={tr.id} className={`rounded-lg border p-3 space-y-2 ${!tr.name?.trim() ? "bg-red-50/30 border-red-300" : ""}`}>
+                        <div key={tr.id} id={`cv-item-${tr.id}`} className={`rounded-lg border p-3 space-y-2 ${!tr.name?.trim() ? "bg-red-50/30 border-red-300" : ""}`}>
                           <div className="flex gap-2">
                             <Input className={`flex-1 ${!tr.name?.trim() ? "border-red-300 bg-red-50/30" : ""}`} placeholder="Program name *" value={tr.name} onChange={(e) => setExecTraining(execTraining.map((t) => t.id === tr.id ? { ...t, name: e.target.value } : t))} />
                             <Button variant="ghost" size="sm" className="shrink-0" onClick={() => setExecTraining(execTraining.filter((t) => t.id !== tr.id))}>
@@ -2420,7 +2436,7 @@ function CVBuilderPage() {
                       {publications.map((pub, i) => {
                         const pubMissing = getItemMissing("publications", pub);
                         return (
-                        <div key={pub.id} className={`border rounded-lg p-4 space-y-3 ${pubMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
+                        <div key={pub.id} id={`cv-item-${pub.id}`} className={`border rounded-lg p-4 space-y-3 ${pubMissing.length > 0 ? "border-red-300 bg-red-50/30" : ""}`}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">#{i + 1}</Badge>
