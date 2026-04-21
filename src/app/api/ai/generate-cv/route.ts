@@ -282,6 +282,7 @@ function genSkills(cvData: any, tr: string, jd: string, p: Plan) {
     .map((e: any) => `${e.title || ""} at ${e.company || ""}`)
     .join(", ");
   const existingTools = (cvData.tools || []).map((t: any) => t.name || t).join(", ");
+  const expertise = (cvData.areasOfExpertise || []).map((a: any) => a.name || a).join(", ");
   return callAI(`You are a CV skills writer. Create a categorized skills list.
 
 SPACE: Container fits ~${t} skills. ${p.skillsFill}
@@ -289,13 +290,15 @@ SPACE: Container fits ~${t} skills. ${p.skillsFill}
 CANDIDATE EXPERIENCE: ${expCtx || "Not provided"}
 EXISTING TOOLS: ${existingTools || "None"}
 RAW SKILLS: ${JSON.stringify(cvData.skills || [], null, 2)}
+CORE COMPETENCIES: ${expertise || "None"}
 TARGET ROLE: ${tr || "Not specified"}
 JOB DESCRIPTION: ${jd || "Not provided"}
 
 Rules:
 - Return EXACTLY ${t} skills
+- Draw from both RAW SKILLS and CORE COMPETENCIES
 - Group into 2-4 categories (e.g. Technical, Leadership, Domain, Industry)
-- Only omit a skill if you are 100% certain it is irrelevant to the candidate's profession (e.g. "teamwork" for an engineer) — when in any doubt, keep it
+- Only omit a skill/competency if you are 100% certain it is irrelevant to the candidate's profession (e.g. "teamwork" for an engineer) — when in any doubt, keep it
 - Supplement with industry-standard skills inferred from the candidate's job titles and experience — filling gaps is expected and required
 - Prioritize skills matching the target role/JD
 - Each skill name: 1-3 words. Categories: 1-2 words.
