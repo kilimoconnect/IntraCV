@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, FolderOpen, GraduationCap, Loader2, Lock, Palette, PenLine, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
+import { AlertCircle, ArrowLeft, Award, BarChart3, Briefcase, CheckCircle2, Copy, CreditCard, Download, FileText, FolderOpen, GraduationCap, Loader2, Lock, Palette, PenLine, Pipette, RefreshCw, Sparkles, Target, UserPen, X, Zap } from "lucide-react";
 import CVCanvasPreview from "./cv-canvas-preview";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
@@ -2247,19 +2247,18 @@ export default function CvStudio({ userId, cvData }: Props) {
           </div>
         </div>
 
-        {/* Theme picker */}
+        {/* ── Preset Themes ── */}
         <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Palette className="h-3.5 w-3.5 text-[#004aad] shrink-0" />
-              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">CV Theme</span>
+              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Preset Themes</span>
             </div>
-            <span
-              key={selectedTheme}
-              className="text-[11px] font-bold text-[#004aad] animate-fade-in-up"
-            >
-              {selectedTheme === "custom" ? "Custom" : (THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme)}
-            </span>
+            {selectedTheme !== "custom" && (
+              <span key={selectedTheme} className="text-[11px] font-bold text-[#004aad] animate-fade-in-up">
+                {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {THEME_LIST.map((t, i) => {
@@ -2289,35 +2288,72 @@ export default function CvStudio({ userId, cvData }: Props) {
                 </button>
               );
             })}
-
-            {/* Custom colour swatch — opens native colour picker */}
-            <label
-              title="Custom colour — pick your own"
-              style={{
-                background: "conic-gradient(red 0deg, yellow 60deg, lime 120deg, aqua 180deg, blue 240deg, magenta 300deg, red 360deg)",
-                transform: selectedTheme === "custom" ? "scale(1.25)" : "scale(1)",
-                boxShadow: selectedTheme === "custom" ? `0 0 0 2px white, 0 0 0 4px ${customColor}` : "none",
-              }}
-              className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border cursor-pointer transition-all duration-200 shrink-0 overflow-hidden
-                ${selectedTheme === "custom"
-                  ? "border-transparent z-10"
-                  : "border-white/60 hover:scale-110 hover:z-10 hover:shadow-md"
-                }`}
-            >
-              <input
-                type="color"
-                value={customColor}
-                onChange={(e) => { setCustomColor(e.target.value); setSelectedTheme("custom"); }}
-                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-              />
-              {selectedTheme === "custom" && (
-                <span className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                  <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
-                </span>
-              )}
-            </label>
           </div>
           <p className="text-[10px] text-slate-400 leading-none">Tap any swatch to instantly preview it on your CV</p>
+        </div>
+
+        {/* ── Custom Colour ── */}
+        <div className={`rounded-xl border p-3 flex flex-col gap-2.5 transition-all duration-200 ${
+          selectedTheme === "custom"
+            ? "border-[#004aad]/40 bg-[#004aad]/[0.03] shadow-sm"
+            : "border-slate-200/80 bg-slate-50/60"
+        }`}>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <Pipette className="h-3.5 w-3.5 text-[#004aad] shrink-0" />
+              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Custom Colour</span>
+            </div>
+            {selectedTheme === "custom" && (
+              <span className="text-[10px] font-semibold text-[#004aad] bg-[#004aad]/10 px-2 py-0.5 rounded-full leading-tight">
+                Active
+              </span>
+            )}
+          </div>
+
+          {/* Body */}
+          <div className="flex items-center gap-3">
+            {/* Large colour preview swatch */}
+            <div
+              className="h-14 w-14 shrink-0 rounded-xl shadow-md border border-black/10 transition-colors duration-200"
+              style={{ backgroundColor: customColor }}
+            />
+
+            {/* Controls */}
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
+              <p className="text-[10px] text-slate-500 leading-relaxed">
+                Pick any brand colour — all tones are derived automatically.
+              </p>
+              <div className="flex items-center gap-2">
+                {/* Hex text input */}
+                <input
+                  type="text"
+                  value={customColor.toUpperCase()}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) {
+                      setCustomColor(v);
+                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) setSelectedTheme("custom");
+                    }
+                  }}
+                  maxLength={7}
+                  spellCheck={false}
+                  className="w-[4.8rem] text-[10px] font-mono font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#004aad]/40 tracking-wide"
+                />
+                {/* Choose colour button */}
+                <label className="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg bg-[#004aad] text-white text-[10px] font-semibold hover:bg-[#003a8c] active:scale-95 transition-all select-none">
+                  <Palette className="h-3 w-3 shrink-0" />
+                  Choose
+                  <input
+                    type="color"
+                    value={customColor}
+                    onChange={(e) => { setCustomColor(e.target.value); setSelectedTheme("custom"); }}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
