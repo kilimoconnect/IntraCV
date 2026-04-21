@@ -58,10 +58,24 @@ export default function LoginPage() {
       if (authUser) {
         const { data: pi } = await supabase
           .from("cv_personal_info")
-          .select("id")
+          .select("full_name, email")
           .eq("user_id", authUser.id)
           .maybeSingle();
-        router.push(pi ? "/dashboard" : "/cv-builder");
+
+        if (!pi?.full_name || !pi?.email) {
+          router.push("/cv-builder");
+        } else {
+          const [expRes, skillRes, summaryRes] = await Promise.all([
+            supabase.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", authUser.id),
+            supabase.from("cv_skills").select("id", { count: "exact", head: true }).eq("user_id", authUser.id),
+            supabase.from("cv_summary").select("summary").eq("user_id", authUser.id).maybeSingle(),
+          ]);
+          const isComplete =
+            (expRes.count ?? 0) > 0 &&
+            (skillRes.count ?? 0) > 0 &&
+            !!(summaryRes.data?.summary?.trim());
+          router.push(isComplete ? "/dashboard" : "/cv-builder");
+        }
       } else {
         router.push("/cv-builder");
       }
