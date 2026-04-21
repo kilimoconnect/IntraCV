@@ -278,19 +278,26 @@ Return ONLY JSON: { "summary": "" }`);
 
 function genSkills(cvData: any, tr: string, jd: string, p: Plan) {
   const t = p.skillTargetCount;
+  const expCtx = (cvData.experiences || cvData.experience || []).slice(0, 6)
+    .map((e: any) => `${e.title || ""} at ${e.company || ""}`)
+    .join(", ");
+  const existingTools = (cvData.tools || []).map((t: any) => t.name || t).join(", ");
   return callAI(`You are a CV skills writer. Create a categorized skills list.
 
 SPACE: Container fits ~${t} skills. ${p.skillsFill}
 
+CANDIDATE EXPERIENCE: ${expCtx || "Not provided"}
+EXISTING TOOLS: ${existingTools || "None"}
 RAW SKILLS: ${JSON.stringify(cvData.skills || [], null, 2)}
 TARGET ROLE: ${tr || "Not specified"}
 JOB DESCRIPTION: ${jd || "Not provided"}
 
 Rules:
 - Return EXACTLY ${t} skills
-- Group into 2-4 categories
+- Group into 2-4 categories (e.g. Technical, Leadership, Domain, Industry)
+- Omit clearly generic or irrelevant skills (e.g. "teamwork", "communication") that obviously don't match the candidate's profession — if unsure, keep them
+- Supplement with industry-standard skills inferred from the candidate's job titles and experience — filling gaps is expected and required
 - Prioritize skills matching the target role/JD
-- If adding new skills, infer from candidate's experience and industry
 - Each skill name: 1-3 words. Categories: 1-2 words.
 
 Return ONLY JSON: { "skills": [{ "name": "", "category": "" }] }`);
@@ -379,9 +386,14 @@ Return ONLY JSON: { "education": [{ "degree": "", "institution": "", "year": "",
 }
 
 function genAdditional(cvData: any, tr: string, jd: string, p: Plan) {
+  const expCtx = (cvData.experiences || cvData.experience || []).slice(0, 4)
+    .map((e: any) => `${e.title || ""} at ${e.company || ""}`)
+    .join(", ");
   return callAI(`You are a CV writer. Compile additional information.
 
 SPACE: Container fits ~${p.addlTargetItems} line items total.
+
+CANDIDATE EXPERIENCE: ${expCtx || "Not provided"}
 
 RAW DATA:
 - Languages: ${JSON.stringify(cvData.languages || [])}
@@ -398,6 +410,8 @@ RULES:
 - Keep items concise (each value ≤ 60 characters)
 - Prioritize items relevant to the target role
 - For languages: if proficiency is not stated, default to "Fluent"
+- For tools: if the list has fewer than 4 items, supplement with specific industry-standard software for the candidate's profession (e.g. "Salesforce CRM", "Power BI", "AutoCAD") — be specific, not generic
+- Omit tools that are clearly and obviously unrelated to the candidate's field — if unsure, keep them
 
 Return ONLY JSON:
 {

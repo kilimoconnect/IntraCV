@@ -643,10 +643,11 @@ EXPERIENCE: ${expSummary(cvData)}
 TOOLS: ${(cvData.tools || []).join(", ")}
 
 Return EXACTLY ${maxSkills} or fewer skills. Rules:
-- Include all skills by merging related ones (e.g. "MS Office Suite" not individual apps)
-- Organize into 2-4 categories: Core, Technical, Leadership, etc.
+- Omit clearly generic or irrelevant skills (e.g. "teamwork", "communication") that obviously don't match the candidate's profession — if unsure, keep them
+- Merge related items (e.g. "MS Office Suite" not individual apps)
+- Supplement with industry-standard skills inferred from the candidate's experience if needed — inferring field-relevant skills is expected
+- Organize into 2-4 categories: Technical, Leadership, Domain, Industry, etc.
 - Each skill name: 1-4 words max
-- Never fabricate — only rephrase/merge existing
 - COUNT: must be ≤ ${maxSkills} items total
 
 Return ONLY JSON: { "skills": [{ "name": "", "category": "" }] }`;
@@ -783,10 +784,14 @@ Return ONLY JSON: { "education": [{ "degree": "", "institution": "", "year": "",
 }
 
 function additionalPrompt(cvData: any, tr: string, jd: string): string {
+  const expCtx = (cvData.experiences || cvData.experience || []).slice(0, 4)
+    .map((e: any) => `${e.title || ""} at ${e.company || ""}`)
+    .join(", ");
   return `You are an expert CV writer. Curate additional information.
 
 TARGET ROLE: ${tr || "Not specified"}
 JOB DESCRIPTION: ${jd || "Not provided"}
+CANDIDATE EXPERIENCE: ${expCtx || "Not provided"}
 
 RAW DATA:
 - Languages: ${JSON.stringify(cvData.languages || [])}
@@ -797,7 +802,11 @@ RAW DATA:
 - Interests: ${JSON.stringify(cvData.interests || [])}
 - Certifications: ${JSON.stringify(cvData.certifications || [])}
 
-Rules: Include all items. Group tools. Keep languages as-is. Order by relevance. Empty arrays for missing categories.
+Rules:
+- Keep all provided items unless they are clearly and obviously unrelated to the candidate's field — if unsure, keep them
+- For tools: if the list has fewer than 4 items, supplement with specific industry-standard software inferred from the candidate's experience and target role
+- Tools added must be concrete named software/platforms (e.g. "Figma", "Jira", "Tableau") — never generic descriptors
+- Group tools by type where helpful. Keep languages as-is. Order by relevance. Empty arrays for missing categories.
 
 Return ONLY JSON:
 { "languages": [{"name":"","proficiency":""}], "tools": [""], "memberships": [""], "volunteer": [""], "projects": [{"name":"","description":"","tech":""}], "interests": [""] }`;
