@@ -1663,12 +1663,12 @@ function CVBuilderPage() {
                 </Button>
                 <Button
                   size="sm"
-                  className="w-full mt-2 bg-[#004aad] hover:bg-[#003a8c]"
-                  onClick={async () => { const ok = await saveToDatabase(); if (ok) router.push("/dashboard"); }}
+                  className="w-full mt-2 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
+                  onClick={handleSaveAndContinue}
                   disabled={saving}
                 >
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {saving ? "Saving..." : "Confirm & Save"}
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                  {saving ? "Saving..." : "Continue"}
                 </Button>
               </div>
             </aside>
