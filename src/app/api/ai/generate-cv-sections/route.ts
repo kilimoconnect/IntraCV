@@ -623,6 +623,7 @@ Return ONLY JSON: { "summary": "" }`;
 
 function skillsPrompt(cvData: any, tr: string, jd: string, c: ContainerSpec): string {
   const existing = (cvData.skills || []).map((s: any) => `${s.name || s}${s.category ? ` [${s.category}]` : ""}`).join(", ");
+  const expertise = (cvData.areasOfExpertise || []).map((a: any) => a.name || a).join(", ");
   const tagsPerRow = Math.floor(c.widthPx / 85);
   const maxRows = Math.floor(c.contentPx / 26);
   const maxSkills = tagsPerRow * maxRows;
@@ -639,11 +640,12 @@ HARD LIMIT: ${maxSkills} skills maximum.
 TARGET ROLE: ${tr || "Not specified"}
 JOB DESCRIPTION: ${jd || "Not provided"}
 ALL SKILLS: ${existing}
+CORE COMPETENCIES: ${expertise || "None"}
 EXPERIENCE: ${expSummary(cvData)}
 TOOLS: ${(cvData.tools || []).join(", ")}
 
-Return EXACTLY ${maxSkills} or fewer skills. Rules:
-- Only omit a skill if you are 100% certain it is irrelevant to the candidate's profession (e.g. "teamwork" for an engineer) — when in any doubt, keep it
+Return EXACTLY ${maxSkills} or fewer skills. Draw from both ALL SKILLS and CORE COMPETENCIES. Rules:
+- Only omit a skill/competency if you are 100% certain it is irrelevant to the candidate's profession (e.g. "teamwork" for an engineer) — when in any doubt, keep it
 - Merge related items (e.g. "MS Office Suite" not individual apps)
 - Supplement with industry-standard skills inferred from the candidate's experience if needed — inferring field-relevant skills is expected
 - Organize into 2-4 categories: Technical, Leadership, Domain, Industry, etc.
