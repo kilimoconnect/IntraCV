@@ -1422,6 +1422,43 @@ function CVBuilderPage() {
 
   const handleSectionSave = async () => {
     recalculateCategoryAndUpdate();
+
+    // Check for incomplete required fields in the current section before saving
+    const sectionItemMap: Record<string, { items: any[]; key: string }> = {
+      experience:   { items: experiences,    key: "experience" },
+      education:    { items: education,      key: "education" },
+      skills:       { items: skills,         key: "skills" },
+      certifications: { items: certifications, key: "certifications" },
+      languages:    { items: languages,      key: "languages" },
+      referees:     { items: referees,       key: "referees" },
+      achievements: { items: keyAchievements, key: "achievements" },
+      awards:       { items: awards,         key: "awards" },
+      memberships:  { items: memberships,    key: "memberships" },
+      projects:     { items: projects,       key: "projects" },
+      boardRoles:   { items: boardRoles,     key: "boardRoles" },
+      execTraining: { items: execTraining,   key: "execTraining" },
+      publications: { items: publications,   key: "publications" },
+    };
+
+    if (currentKey === "personal") {
+      const missing = getItemMissing("personal", personalInfo);
+      if (missing.length > 0) {
+        toast.warning(`Missing required fields: ${missing.join(", ")}`);
+        setScrollTrigger(t => t + 1);
+        return;
+      }
+    } else if (sectionItemMap[currentKey]) {
+      const { items, key } = sectionItemMap[currentKey];
+      const firstIncomplete = items.find(item => getItemMissing(key, item).length > 0);
+      if (firstIncomplete) {
+        const missing = getItemMissing(key, firstIncomplete);
+        toast.warning(`Missing required fields: ${missing.join(", ")}`);
+        scrollToItemIdRef.current = `cv-item-${firstIncomplete.id}`;
+        setScrollTrigger(t => t + 1);
+        return;
+      }
+    }
+
     await saveToDatabase();
   };
 
