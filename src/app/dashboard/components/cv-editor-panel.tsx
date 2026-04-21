@@ -6,7 +6,6 @@ import {
   User, FileText, Briefcase, GraduationCap, Star, Award,
   Globe, Languages, BookOpen, Wrench, Users, Heart,
   Trophy, Building2, FlaskConical, BookMarked, ClipboardList,
-  Save, Loader2, Check,
 } from "lucide-react";
 import { type CareerCategory, type CategoryCVData } from "./cv-layout-types";
 
@@ -41,15 +40,11 @@ function Field({
   );
 }
 
-type SaveState = "idle" | "saving" | "saved" | "error";
-
 function Section({
-  icon: Icon, title, count, children, defaultOpen = true, accent = "indigo", onSave, saveState = "idle",
+  icon: Icon, title, count, children, defaultOpen = true, accent = "indigo",
 }: {
   icon: React.ElementType; title: string; count?: number; children: React.ReactNode;
   defaultOpen?: boolean; accent?: string;
-  onSave?: () => void;
-  saveState?: SaveState;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -67,34 +62,7 @@ function Section({
         )}
         {open ? <ChevronDown className="h-3.5 w-3.5 text-slate-400" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
       </button>
-      {open && (
-        <div className="px-4 py-4 space-y-4 bg-white">
-          {children}
-          {onSave && (
-            <div className="flex justify-end pt-2 border-t border-slate-100">
-              <button
-                onClick={onSave}
-                disabled={saveState === "saving"}
-                className={`flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg font-semibold transition-all duration-200 active:scale-95 ${
-                  saveState === "saving" ? "bg-slate-100 text-slate-400 cursor-wait" :
-                  saveState === "saved"  ? "bg-emerald-500 text-white" :
-                  saveState === "error"  ? "bg-red-500 text-white" :
-                  "bg-[#004aad] text-white hover:bg-[#003a8c]"
-                }`}
-              >
-                {saveState === "saving" ? <Loader2 className="h-3 w-3 animate-spin" /> :
-                 saveState === "saved"  ? <Check className="h-3 w-3" /> :
-                 saveState === "error"  ? <X className="h-3 w-3" /> :
-                 <Save className="h-3 w-3" />}
-                {saveState === "saving" ? "Saving…" :
-                 saveState === "saved"  ? "Saved!" :
-                 saveState === "error"  ? "Error — retry" :
-                 "Save"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {open && <div className="px-4 py-4 space-y-4 bg-white">{children}</div>}
     </div>
   );
 }
@@ -156,13 +124,10 @@ interface Props {
   category: CareerCategory;
   onChange: (updater: (prev: CategoryCVData) => CategoryCVData) => void;
   onClose: () => void;
-  onSave?: () => void;
-  saveState?: SaveState;
 }
 
-export default function CVEditorPanel({ data, category, onChange, onClose, onSave, saveState = "idle" }: Props) {
+export default function CVEditorPanel({ data, category, onChange, onClose }: Props) {
   const upd = (patch: Partial<CategoryCVData>) => onChange(prev => ({ ...prev, ...patch }));
-  const sp = { onSave, saveState };
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-slate-200">
@@ -181,7 +146,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
 
         {/* ── Personal Info ── */}
-        <Section icon={User} title="Personal Information" defaultOpen {...sp}>
+        <Section icon={User} title="Personal Information" defaultOpen>
           <Field label="Full Name" value={data.fullName || ""} onChange={v => upd({ fullName: v })} placeholder="Jane Doe" />
           <Field label="Job Title" value={data.title || ""} onChange={v => upd({ title: v })} placeholder="Senior Accountant" />
           <div className="grid grid-cols-2 gap-3">
@@ -199,7 +164,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         </Section>
 
         {/* ── Profile Summary ── */}
-        <Section icon={FileText} title="Professional Summary" defaultOpen {...sp}>
+        <Section icon={FileText} title="Professional Summary" defaultOpen>
           <Field
             label="Summary"
             value={data.profile || ""}
@@ -210,7 +175,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         </Section>
 
         {/* ── Experience ── */}
-        <Section icon={Briefcase} title="Work Experience" count={data.experience?.length ?? 0} {...sp}>
+        <Section icon={Briefcase} title="Work Experience" count={data.experience?.length ?? 0}>
           <div className="space-y-4">
             {(data.experience || []).map((exp, i) => (
               <ItemCard key={i} onDelete={() => {
@@ -276,7 +241,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── History — always show for mid-senior/executive which use it ── */}
         {(category !== "junior") && (
-          <Section icon={Briefcase} title="Career History" count={data.history?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={Briefcase} title="Career History" count={data.history?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.history || []).map((h, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -329,7 +294,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         )}
 
         {/* ── Education ── */}
-        <Section icon={GraduationCap} title="Education" count={data.education?.length ?? 0} {...sp}>
+        <Section icon={GraduationCap} title="Education" count={data.education?.length ?? 0}>
           <div className="space-y-4">
             {(data.education || []).map((edu, i) => (
               <ItemCard key={i} onDelete={() => {
@@ -361,7 +326,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         </Section>
 
         {/* ── Skills ── */}
-        <Section icon={Star} title="Skills" count={data.skills?.length ?? 0} {...sp}>
+        <Section icon={Star} title="Skills" count={data.skills?.length ?? 0}>
           <StringArray
             values={data.skills || []}
             onChange={v => upd({ skills: v })}
@@ -371,7 +336,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Achievements ── */}
         {(category !== "junior" || (data.achievements && data.achievements.length > 0)) && (
-          <Section icon={Trophy} title="Key Achievements" count={data.achievements?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={Trophy} title="Key Achievements" count={data.achievements?.length ?? 0} defaultOpen={false}>
             <StringArray
               values={data.achievements || []}
               onChange={v => upd({ achievements: v })}
@@ -381,7 +346,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         )}
 
         {/* ── Certifications ── */}
-        <Section icon={Award} title="Certifications" count={data.certifications?.length ?? 0} defaultOpen={false} {...sp}>
+        <Section icon={Award} title="Certifications" count={data.certifications?.length ?? 0} defaultOpen={false}>
           <div className="space-y-4">
             {(data.certifications || []).map((c, i) => (
               <ItemCard key={i} onDelete={() => {
@@ -408,7 +373,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         </Section>
 
         {/* ── Languages ── */}
-        <Section icon={Languages} title="Languages" count={data.languages?.length ?? 0} defaultOpen={false} {...sp}>
+        <Section icon={Languages} title="Languages" count={data.languages?.length ?? 0} defaultOpen={false}>
           <div className="space-y-4">
             {(data.languages || []).map((l, i) => (
               <ItemCard key={i} onDelete={() => {
@@ -444,7 +409,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Projects ── */}
         {(category !== "executive" || (data.projects && data.projects.length > 0)) && (
-          <Section icon={FlaskConical} title="Projects" count={data.projects?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={FlaskConical} title="Projects" count={data.projects?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.projects || []).map((p, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -470,7 +435,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         )}
 
         {/* ── Awards ── */}
-        <Section icon={Trophy} title="Awards & Recognition" count={data.awards?.length ?? 0} defaultOpen={false} {...sp}>
+        <Section icon={Trophy} title="Awards & Recognition" count={data.awards?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.awards || []).map((a, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -493,7 +458,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Tools & Software ── */}
         {category !== "junior" && (
-          <Section icon={Wrench} title="Tools & Software" count={data.tools?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={Wrench} title="Tools & Software" count={data.tools?.length ?? 0} defaultOpen={false}>
             <StringArray
               values={data.tools || []}
               onChange={v => upd({ tools: v })}
@@ -503,7 +468,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         )}
 
         {/* ── Memberships ── */}
-        <Section icon={Users} title="Professional Memberships" count={data.memberships?.length ?? 0} defaultOpen={false} {...sp}>
+        <Section icon={Users} title="Professional Memberships" count={data.memberships?.length ?? 0} defaultOpen={false}>
           <StringArray
             values={data.memberships || []}
             onChange={v => upd({ memberships: v })}
@@ -512,7 +477,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         </Section>
 
         {/* ── Volunteer ── */}
-        <Section icon={Heart} title="Volunteer Experience" count={data.volunteer?.length ?? 0} defaultOpen={false} {...sp}>
+        <Section icon={Heart} title="Volunteer Experience" count={data.volunteer?.length ?? 0} defaultOpen={false}>
           <StringArray
             values={data.volunteer || []}
             onChange={v => upd({ volunteer: v })}
@@ -522,7 +487,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Board Roles (Executive) ── */}
         {category === "executive" && (
-          <Section icon={Building2} title="Board Roles" count={data.boardRoles?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={Building2} title="Board Roles" count={data.boardRoles?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.boardRoles || []).map((r, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -554,7 +519,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Executive Training ── */}
         {category === "executive" && (
-          <Section icon={BookMarked} title="Executive Training" count={data.executiveTraining?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={BookMarked} title="Executive Training" count={data.executiveTraining?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.executiveTraining || []).map((t, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -583,7 +548,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Publications ── */}
         {category === "executive" && (
-          <Section icon={BookOpen} title="Publications" count={data.publications?.length ?? 0} defaultOpen={false} {...sp}>
+          <Section icon={BookOpen} title="Publications" count={data.publications?.length ?? 0} defaultOpen={false}>
             <div className="space-y-4">
               {(data.publications || []).map((p, i) => (
                 <ItemCard key={i} onDelete={() => {
@@ -614,7 +579,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
         )}
 
         {/* ── References ── */}
-        <Section icon={Globe} title="References" count={data.references?.length ?? 0} defaultOpen={false} {...sp}>
+        <Section icon={Globe} title="References" count={data.references?.length ?? 0} defaultOpen={false}>
           <div className="space-y-4">
             {(data.references || []).map((r, i) => (
               <ItemCard key={i} onDelete={() => {
@@ -650,7 +615,7 @@ export default function CVEditorPanel({ data, category, onChange, onClose, onSav
 
         {/* ── Declaration ── */}
         {data.declaration !== undefined && (
-          <Section icon={ClipboardList} title="Declaration" defaultOpen={false} {...sp}>
+          <Section icon={ClipboardList} title="Declaration" defaultOpen={false}>
             <Field label="Declaration Text" value={data.declaration?.declaration || ""} onChange={v =>
               upd({ declaration: { ...(data.declaration || { declaration: "" }), declaration: v } })
             } multiline placeholder="I hereby declare that the information provided…" />

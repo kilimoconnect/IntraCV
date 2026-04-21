@@ -775,9 +775,6 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [pdfDownloaded, setPdfDownloaded] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
-  const [draftId, setDraftId] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const autoSavedRef = useRef(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -1433,52 +1430,6 @@ export default function CvStudio({ userId, cvData }: Props) {
       setStep("error");
     }
   }, [cvData, shouldAutoOptimize, jobDescription, jobAnalysis, company, companyAddress, jobTitle]);
-
-  const saveDraft = useCallback(async () => {
-    if (!aiData || !selectedCategory) return;
-    setSaveState("saving");
-    try {
-      const label = selectedCategory === "mid-senior" ? "Mid-Senior" : selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1);
-      const title = `${aiData.fullName || "CV"} — ${label} CV Draft`;
-      const content = JSON.stringify({
-        studioData: aiData,
-        studioCategory: selectedCategory,
-        studioVariant: selectedVariant,
-        studioTheme: selectedTheme,
-      });
-
-      if (draftId) {
-        await fetch("/api/documents/update-cv", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: draftId, title, content }),
-        });
-      } else {
-        const res = await fetch("/api/documents/save-cv", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          setDraftId(json.id);
-        }
-      }
-      setSaveState("saved");
-      setTimeout(() => setSaveState("idle"), 2500);
-    } catch {
-      setSaveState("error");
-      setTimeout(() => setSaveState("idle"), 3000);
-    }
-  }, [aiData, selectedCategory, selectedVariant, selectedTheme, draftId]);
-
-  // Auto-save once when CV generation completes
-  useEffect(() => {
-    if (step === "preview" && aiData && !autoSavedRef.current) {
-      autoSavedRef.current = true;
-      saveDraft();
-    }
-  }, [step, aiData, saveDraft]);
 
   const executePdfDownload = useCallback(async () => {
     const element = previewRef.current;
@@ -2754,8 +2705,6 @@ export default function CvStudio({ userId, cvData }: Props) {
               category={selectedCategory}
               onChange={(updater) => setAiData(prev => prev ? updater(prev) : prev)}
               onClose={() => { setEditMode(false); setInlineEditor(null); }}
-              onSave={saveDraft}
-              saveState={saveState}
             />
           </div>
         )}
