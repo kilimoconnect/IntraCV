@@ -1194,7 +1194,9 @@ function CVBuilderPage() {
     experience: [
       { field: "title", label: "Job Title" },
       { field: "company", label: "Company" },
+      { field: "location", label: "City, Country" },
       { field: "startDate", label: "Start Date" },
+      { field: "endDate", label: "End Date" },
       { field: "description", label: "Description" },
     ],
     education: [
@@ -2017,16 +2019,16 @@ function CVBuilderPage() {
                               <Input className={!exp.company?.trim() ? "border-red-300 bg-red-50/30" : ""} value={exp.company} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, company: e.target.value } : x))} />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">City, Country</Label>
-                              <Input value={exp.location} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, location: e.target.value } : x))} placeholder="e.g. Nairobi, Kenya" />
+                              <Label className="text-xs">City, Country <span className="text-red-500">*</span></Label>
+                              <Input className={!exp.location?.trim() ? "border-red-300 bg-red-50/30" : ""} value={exp.location} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, location: e.target.value } : x))} placeholder="e.g. Nairobi, Kenya" />
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Start Date <span className="text-red-500">*</span></Label>
                               <Input className={!exp.startDate?.trim() ? "border-red-300 bg-red-50/30" : ""} value={exp.startDate} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, startDate: e.target.value } : x))} placeholder="e.g. Jan 2020" />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs">End Date</Label>
-                              <Input value={exp.endDate} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, endDate: e.target.value } : x))} placeholder="e.g. Present" />
+                              <Label className="text-xs">End Date <span className="text-red-500">*</span></Label>
+                              <Input className={!exp.endDate?.trim() ? "border-red-300 bg-red-50/30" : ""} value={exp.endDate} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, endDate: e.target.value } : x))} placeholder="e.g. Present" />
                             </div>
                           </div>
                           <div className="space-y-1">
