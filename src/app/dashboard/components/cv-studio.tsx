@@ -753,20 +753,105 @@ export default function CvStudio({ userId, cvData }: Props) {
   // Always re-detect live so algorithm improvements apply to existing profiles.
   const detectedCategory: CareerCategory = detectCategory(cvData);
 
-  // Required sections that must be filled before CV generation is allowed
-  const missingRequired = useMemo(() => {
-    const pi = asObject(cvData.personalInfo);
-    const fullName = ((pi.fullName || pi.full_name || "") as string).trim();
-    const email    = ((pi.email || "") as string).trim();
-    const summary  = ((cvData.summary || "") as string).trim();
-    const missing: { key: string; label: string }[] = [];
-    if (!fullName || !email)                                                        missing.push({ key: "personal",    label: "Personal Info" });
-    if (!summary)                                                                   missing.push({ key: "summary",     label: "Professional Summary" });
-    if (!Array.isArray(cvData.experiences) || cvData.experiences.length === 0)     missing.push({ key: "experience",  label: "Work Experience" });
-    if (!Array.isArray(cvData.education)   || cvData.education.length   === 0)     missing.push({ key: "education",   label: "Education" });
-    if (!Array.isArray(cvData.skills)      || cvData.skills.length      === 0)     missing.push({ key: "skills",      label: "Skills" });
-    return missing;
-  }, [cvData]);
+  // Section definitions mirrored from cv-builder categorizeProfile
+  const CATEGORY_SECTIONS: Record<CareerCategory, { required: { key: string; label: string }[]; recommended: { key: string; label: string }[] }> = {
+    junior: {
+      required: [
+        { key: "personal", label: "Personal Info" },
+        { key: "summary", label: "Professional Summary" },
+        { key: "experience", label: "Experience" },
+        { key: "education", label: "Education" },
+        { key: "skills", label: "Skills" },
+        { key: "languages", label: "Languages" },
+        { key: "referees", label: "References" },
+      ],
+      recommended: [
+        { key: "certifications", label: "Professional Certifications" },
+        { key: "projects", label: "Projects" },
+        { key: "volunteer", label: "Volunteer Experience" },
+      ],
+    },
+    "mid-senior": {
+      required: [
+        { key: "personal", label: "Personal Info" },
+        { key: "summary", label: "Professional Summary" },
+        { key: "experience", label: "Experience" },
+        { key: "education", label: "Education" },
+        { key: "skills", label: "Skills" },
+        { key: "achievements", label: "Key Achievements" },
+        { key: "languages", label: "Languages" },
+        { key: "referees", label: "References" },
+      ],
+      recommended: [
+        { key: "certifications", label: "Professional Certifications" },
+        { key: "awards", label: "Awards & Recognition" },
+        { key: "memberships", label: "Professional Memberships" },
+        { key: "tools", label: "Tools & Software" },
+        { key: "projects", label: "Projects" },
+      ],
+    },
+    executive: {
+      required: [
+        { key: "personal", label: "Personal Info" },
+        { key: "summary", label: "Professional Summary" },
+        { key: "experience", label: "Experience" },
+        { key: "education", label: "Education" },
+        { key: "skills", label: "Skills" },
+        { key: "achievements", label: "Key Achievements" },
+        { key: "languages", label: "Languages" },
+        { key: "boardRoles", label: "Board & Advisory Roles" },
+        { key: "referees", label: "References" },
+      ],
+      recommended: [
+        { key: "certifications", label: "Professional Certifications" },
+        { key: "execTraining", label: "Executive Training" },
+        { key: "publications", label: "Publications & Speaking" },
+        { key: "awards", label: "Awards & Recognition" },
+        { key: "memberships", label: "Professional Memberships" },
+        { key: "projects", label: "Projects" },
+      ],
+    },
+  };
+
+  const cvSectionHasContent = (key: string): boolean => {
+    switch (key) {
+      case "personal": {
+        const pi = asObject(cvData.personalInfo);
+        const fullName = ((pi.fullName || pi.full_name || "") as string).trim();
+        const email = ((pi.email || "") as string).trim();
+        return !!(fullName && email);
+      }
+      case "summary": return ((cvData.summary || "") as string).trim().length > 10;
+      case "experience":     return Array.isArray(cvData.experiences)   && (cvData.experiences   as unknown[]).length > 0;
+      case "education":      return Array.isArray(cvData.education)     && (cvData.education     as unknown[]).length > 0;
+      case "skills":         return Array.isArray(cvData.skills)        && (cvData.skills        as unknown[]).length > 0;
+      case "certifications": return Array.isArray(cvData.certifications)&& (cvData.certifications as unknown[]).length > 0;
+      case "achievements":   return Array.isArray(cvData.keyAchievements)&&(cvData.keyAchievements as unknown[]).length > 0;
+      case "awards":         return Array.isArray(cvData.awards)        && (cvData.awards        as unknown[]).length > 0;
+      case "memberships":    return Array.isArray(cvData.memberships)   && (cvData.memberships   as unknown[]).length > 0;
+      case "projects":       return Array.isArray(cvData.projects)      && (cvData.projects      as unknown[]).length > 0;
+      case "boardRoles":     return Array.isArray(cvData.boardRoles)    && (cvData.boardRoles    as unknown[]).length > 0;
+      case "execTraining":   return Array.isArray(cvData.execTraining)  && (cvData.execTraining  as unknown[]).length > 0;
+      case "publications":   return Array.isArray(cvData.publications)  && (cvData.publications  as unknown[]).length > 0;
+      case "tools":          return Array.isArray(cvData.tools)         && (cvData.tools         as unknown[]).length > 0;
+      case "volunteer":      return Array.isArray(cvData.volunteer)     && (cvData.volunteer     as unknown[]).length > 0;
+      case "languages":      return Array.isArray(cvData.languages)     && (cvData.languages     as unknown[]).length > 0;
+      case "referees":       return Array.isArray(cvData.referees)      && (cvData.referees      as unknown[]).length > 0;
+      default: return false;
+    }
+  };
+
+  const missingRequired = useMemo(
+    () => CATEGORY_SECTIONS[detectedCategory].required.filter(s => !cvSectionHasContent(s.key)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cvData, detectedCategory],
+  );
+
+  const missingRecommended = useMemo(
+    () => CATEGORY_SECTIONS[detectedCategory].recommended.filter(s => !cvSectionHasContent(s.key)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cvData, detectedCategory],
+  );
   const [step, setStep] = useState<"choose-path" | "analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("choose-path");
   const [cvPath, setCvPath] = useState<"improve" | "apply" | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CareerCategory | null>(null);
@@ -1847,25 +1932,47 @@ export default function CvStudio({ userId, cvData }: Props) {
         </div>
 
         {/* Incomplete profile warning */}
-        {missingRequired.length > 0 && (
+        {(missingRequired.length > 0 || missingRecommended.length > 0) && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-amber-800">Complete your profile first</p>
-                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                  The following required sections are missing — fill them in the CV Builder before generating your CV:
-                </p>
-                <ul className="mt-2 space-y-0.5">
-                  {missingRequired.map(s => (
-                    <li key={s.key} className="text-xs text-amber-700 flex items-center gap-1.5">
-                      <span className="h-1 w-1 rounded-full bg-amber-500 shrink-0" />
-                      <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-900">
-                        {s.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+              <div className="flex-1 min-w-0 space-y-3">
+                {missingRequired.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Complete your profile first</p>
+                    <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                      Required sections missing — fill these in before generating your CV:
+                    </p>
+                    <ul className="mt-2 space-y-0.5">
+                      {missingRequired.map(s => (
+                        <li key={s.key} className="text-xs text-amber-700 flex items-center gap-1.5">
+                          <span className="h-1 w-1 rounded-full bg-amber-500 shrink-0" />
+                          <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-900">
+                            {s.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {missingRecommended.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-amber-700">Recommended sections</p>
+                    <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
+                      These sections strengthen your CV for your career level:
+                    </p>
+                    <ul className="mt-2 space-y-0.5">
+                      {missingRecommended.map(s => (
+                        <li key={s.key} className="text-xs text-amber-600 flex items-center gap-1.5">
+                          <span className="h-1 w-1 rounded-full bg-amber-400 shrink-0" />
+                          <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-800">
+                            {s.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
             <a
