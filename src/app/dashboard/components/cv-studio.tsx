@@ -10,7 +10,7 @@ import CVLayoutExecutive from "./cv-layout-executive";
 import CVInlineEditor, { type InlineEditorState } from "./cv-inline-editor";
 import CVEditorPanel from "./cv-editor-panel";
 import { useOverflowDetect } from "./cv-overflow-detect";
-import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, LAYOUT_OPTIONS, THEME_LIST } from "./cv-layout-types";
+import { type CareerCategory, type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, LAYOUT_OPTIONS, THEME_LIST, buildCustomTheme } from "./cv-layout-types";
 import { fitContentToLayout } from "./cv-content-fitter";
 import { printCvAsPdf } from "@/lib/printCv";
 import { createClient } from "@/lib/supabase/client";
@@ -758,7 +758,8 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [selectedVariant, setSelectedVariant] = useState<LayoutVariant>("A");
   const [aiData, setAiData] = useState<CategoryCVData | null>(null);
   const [error, setError] = useState("");
-  const [selectedTheme, setSelectedTheme] = useState<ThemeName>("corporate");
+  const [selectedTheme, setSelectedTheme] = useState<ThemeName | "custom">("corporate");
+  const [customColor, setCustomColor] = useState<string>("#4F46E5");
   const [editMode, setEditMode] = useState(false);
   const [inlineEditor, setInlineEditor] = useState<InlineEditorState | null>(null);
   const [navigatingToBuilder, setNavigatingToBuilder] = useState(false);
@@ -2257,7 +2258,7 @@ export default function CvStudio({ userId, cvData }: Props) {
               key={selectedTheme}
               className="text-[11px] font-bold text-[#004aad] animate-fade-in-up"
             >
-              {THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme}
+              {selectedTheme === "custom" ? "Custom" : (THEME_LIST.find(t => t.name === selectedTheme)?.label ?? selectedTheme)}
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -2288,6 +2289,33 @@ export default function CvStudio({ userId, cvData }: Props) {
                 </button>
               );
             })}
+
+            {/* Custom colour swatch — opens native colour picker */}
+            <label
+              title="Custom colour — pick your own"
+              style={{
+                background: "conic-gradient(red 0deg, yellow 60deg, lime 120deg, aqua 180deg, blue 240deg, magenta 300deg, red 360deg)",
+                transform: selectedTheme === "custom" ? "scale(1.25)" : "scale(1)",
+                boxShadow: selectedTheme === "custom" ? `0 0 0 2px white, 0 0 0 4px ${customColor}` : "none",
+              }}
+              className={`relative h-6 w-6 sm:h-7 sm:w-7 rounded-full border cursor-pointer transition-all duration-200 shrink-0 overflow-hidden
+                ${selectedTheme === "custom"
+                  ? "border-transparent z-10"
+                  : "border-white/60 hover:scale-110 hover:z-10 hover:shadow-md"
+                }`}
+            >
+              <input
+                type="color"
+                value={customColor}
+                onChange={(e) => { setCustomColor(e.target.value); setSelectedTheme("custom"); }}
+                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+              />
+              {selectedTheme === "custom" && (
+                <span className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <span className="h-2 w-2 rounded-full bg-white shadow-sm" />
+                </span>
+              )}
+            </label>
           </div>
           <p className="text-[10px] text-slate-400 leading-none">Tap any swatch to instantly preview it on your CV</p>
         </div>
@@ -2608,9 +2636,16 @@ export default function CvStudio({ userId, cvData }: Props) {
         {/* CV Canvas — shrinks when panel is open */}
         <div className={`relative min-w-0 ${editMode ? "lg:flex-1 w-full" : "w-full"}`}>
           <CVCanvasPreview previewRef={previewRef} editMode={editMode} onCvClick={handleCvClick}>
-            {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-            {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={selectedTheme} variant={selectedVariant} />}
-            {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={selectedTheme} variant={selectedVariant} />}
+            {(() => {
+              const activeTheme: ThemeName | ThemeColors = selectedTheme === "custom" ? buildCustomTheme(customColor) : selectedTheme;
+              return (
+                <>
+                  {selectedCategory === "junior" && <CVLayoutJunior data={aiData} theme={activeTheme} variant={selectedVariant} />}
+                  {selectedCategory === "mid-senior" && <CVLayoutMidSenior data={aiData} theme={activeTheme} variant={selectedVariant} />}
+                  {selectedCategory === "executive" && <CVLayoutExecutive data={aiData} theme={activeTheme} variant={selectedVariant} />}
+                </>
+              );
+            })()}
           </CVCanvasPreview>
           {inlineEditor && (
             <CVInlineEditor

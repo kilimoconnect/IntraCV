@@ -18,7 +18,7 @@ export const JUNIOR_REQUIRED_FIELDS: ReadonlyArray<keyof CategoryCVData> = [
   "references", "projects", "achievements", "volunteer", "awards", "declaration",
 ];
 
-interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
+interface Props { data: CategoryCVData; theme: ThemeName | ThemeColors; variant?: LayoutVariant; }
 
 function Heading({ children, C }: { children: string; C: ThemeColors }) {
   return (
@@ -53,7 +53,7 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
   if (variant === "D") return <JuniorVariantD data={d} theme={theme} />;
   if (variant === "E") return <JuniorVariantE data={d} theme={theme} />;
   if (variant === "F") return <JuniorVariantF data={d} theme={theme} />;
-  const C = themes[theme];
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 36;
   const COL_W = A4_W - MX * 2;
   const HEADER_H = 88; // compact: name + title only, no tagline in banner
@@ -229,8 +229,8 @@ export default function CVLayoutJunior({ data: d, theme, variant = "A" }: Props)
 // VARIANT B — Clean Sidebar: thin colored left bar + contact, clean right body
 // ═══════════════════════════════════════════════════════════
 
-function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const SIDE = 200;
   const MAIN_X = SIDE;
   const MAIN_W = A4_W - SIDE;
@@ -406,8 +406,8 @@ function JuniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Theme
 // VARIANT C — Split Header: name left + contact right, two-column body
 // ═══════════════════════════════════════════════════════════
 
-function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 32;
   const W = A4_W - MX * 2;
   const HEADER_H = 103; // 100px header + 3px border (increased from 83 to accommodate tagline)
@@ -597,8 +597,8 @@ function JuniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Theme
 // Body: equal two columns — left (profile/experience/achievements) right (skills/education/languages/certs/projects/awards/volunteer/references)
 // ═══════════════════════════════════════════════════════════
 
-function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 32;
   const W = A4_W - MX * 2;
   const HEADER_H = 82;
@@ -796,8 +796,8 @@ function JuniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Theme
 // Supports 2-page overflow.
 // ═══════════════════════════════════════════════════════════
 
-function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 36;
   const COL_W = A4_W - MX * 2;
   const STRIPE_H = 6;
@@ -966,8 +966,8 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
 // Header spans main area only — name/title/tagline left-aligned, bold underline.
 // ═══════════════════════════════════════════════════════════
 
-function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const SIDE = 210;
   const MAIN_MX = 36;
   const MAIN_W = A4_W - SIDE - MAIN_MX;

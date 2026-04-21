@@ -82,7 +82,7 @@ function useBulletTrim(
   return maxBullets;
 }
 
-interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
+interface Props { data: CategoryCVData; theme: ThemeName | ThemeColors; variant?: LayoutVariant; }
 
 const SIDE_W = 240;
 const MAIN_X = SIDE_W;
@@ -171,7 +171,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
   if (variant === "D") return <MidSeniorVariantD data={d} theme={theme} />;
   if (variant === "E") return <MidSeniorVariantE data={d} theme={theme} />;
   if (variant === "F") return <MidSeniorVariantF data={d} theme={theme} />;
-  const C = themes[theme];
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const topExps = d.experience?.slice(0, expSplit) || [];
   const historyExps = d.history?.length ? d.history : d.experience?.slice(expSplit) || [];
 
@@ -505,8 +505,8 @@ function BoldHeading({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const RSIDE = 220;
   const BODY_W = A4_W - RSIDE;
   const INNER_W = BODY_W - 44;
@@ -835,8 +835,8 @@ function CardHeading({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 32;
   const W = A4_W - MX * 2;
 
@@ -1219,8 +1219,8 @@ function DHeading({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 30;
   const HEADER_H = 82;
   const BODY_TOP = HEADER_H + 10;
@@ -1495,8 +1495,8 @@ function EHeading({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 36;
   const COL_W = A4_W - MX * 2;
   const STRIPE_H = 5;
@@ -1845,8 +1845,8 @@ function FMainHeading({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const SIDE = 185;
   const SP = 14;
   const SKILLS_STRIP_H = 76;

@@ -20,7 +20,7 @@ export const EXECUTIVE_REQUIRED_FIELDS: ReadonlyArray<keyof CategoryCVData> = [
   "publications", "references", "volunteer", "declaration", "awards", "projects",
 ];
 
-interface Props { data: CategoryCVData; theme: ThemeName; variant?: LayoutVariant; }
+interface Props { data: CategoryCVData; theme: ThemeName | ThemeColors; variant?: LayoutVariant; }
 
 const SIDE_W = 230;
 const MAIN_W = A4_W - SIDE_W;
@@ -123,7 +123,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
 
   if (variant === "B") return <ExecutiveVariantB data={d} theme={theme} />;
   if (variant === "C") return <ExecutiveVariantC data={d} theme={theme} />;
-  const C = themes[theme];
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const topExps = d.experience?.slice(0, aExpSplit) || [];
   const historyExps = d.history?.length ? d.history : d.experience?.slice(aExpSplit) || [];
 
@@ -539,8 +539,8 @@ function ExecBodyH({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const LS = 250;
   const RS = A4_W - LS;
   const INNER_W = RS - 44;
@@ -917,8 +917,8 @@ function MinimalH({ children, C }: { children: string; C: ThemeColors }) {
   );
 }
 
-function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName }) {
-  const C = themes[theme];
+function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
+  const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const MX = 36;
   const W = A4_W - MX * 2;
 
