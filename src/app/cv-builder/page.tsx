@@ -2654,15 +2654,17 @@ function CVBuilderPage() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Close</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => {
-                if (validationErrors) goToSection(validationErrors.firstKey);
-                setValidationErrors(null);
-              }}
-            >
-              Go to First Issue
-            </AlertDialogAction>
+            {(validationErrors?.sections.length ?? 0) > 1 && (
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700"
+                onClick={() => {
+                  if (validationErrors) goToSection(validationErrors.firstKey);
+                  setValidationErrors(null);
+                }}
+              >
+                Go to First Issue
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
