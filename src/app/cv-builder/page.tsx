@@ -353,6 +353,8 @@ function CVBuilderPage() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const firstExpCardRef  = useRef<HTMLDivElement>(null);
   const justAddedExpRef  = useRef(false);
+  const sectionCardRef   = useRef<HTMLDivElement>(null);
+  const scrollToSectionRef = useRef(false);
   const [education, setEducation] = useState<Education[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -598,6 +600,17 @@ function CVBuilderPage() {
     }, 350);
     return () => clearTimeout(timer);
   }, [experiences]);
+
+  // ─── Scroll to section card when goToSection triggers a tab change ───
+  useEffect(() => {
+    if (!scrollToSectionRef.current) return;
+    scrollToSectionRef.current = false;
+    const timer = setTimeout(() => {
+      sectionCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      sectionCardRef.current?.querySelector<HTMLInputElement>("input, textarea")?.focus();
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   // ─── Handle ?tab= / ?section= query params ───
   useEffect(() => {
@@ -1311,6 +1324,7 @@ function CVBuilderPage() {
   // Navigate to a section and add one blank item if the section is currently empty.
   const goToSection = (key: string) => {
     if (!manuallyShown.has(key)) setManuallyShown(prev => new Set([...prev, key]));
+    scrollToSectionRef.current = true;
     setActiveTab(key);
     switch (key) {
       case "experience":
@@ -1865,7 +1879,7 @@ function CVBuilderPage() {
                 </div>
               </div>
 
-              <Card>
+              <div ref={sectionCardRef}><Card>
                 <CardContent className="p-3 pt-4 sm:p-6 sm:pt-6">
                   {SECTION_HINTS[currentKey] && (
                     <div className="flex items-start gap-3 rounded-lg bg-[#004aad]/[0.05] border border-[#004aad]/20 px-4 py-3 mb-5">
@@ -2505,7 +2519,7 @@ function CVBuilderPage() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card></div>
 
               {/* ── Footer Navigation (mobile only) ── */}
               <div className="flex md:hidden items-center justify-between mt-4 gap-2">
