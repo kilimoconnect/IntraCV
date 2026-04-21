@@ -1203,7 +1203,7 @@ function CVBuilderPage() {
     ],
     skills: [{ field: "name", label: "Skill Name" }],
     certifications: [{ field: "name", label: "Name" }],
-    languages: [{ field: "name", label: "Language" }],
+    languages: [{ field: "name", label: "Language" }, { field: "proficiency", label: "Proficiency" }],
     referees: [{ field: "name", label: "Name" }],
     projects: [
       { field: "name", label: "Project Name" },
@@ -2176,7 +2176,7 @@ function CVBuilderPage() {
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
                           </div>
-                          <Input placeholder="Proficiency (e.g. Fluent, Native, Conversational)" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
+                          <Input className={!lang.proficiency?.trim() ? "border-red-300 bg-red-50/30" : ""} placeholder="Proficiency (e.g. Fluent, Native, Conversational) *" value={lang.proficiency} onChange={(e) => setLanguages(languages.map((l) => l.id === lang.id ? { ...l, proficiency: e.target.value } : l))} />
                         </div>
                         );
                       })}
