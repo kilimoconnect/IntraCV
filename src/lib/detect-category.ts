@@ -128,11 +128,16 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
 
   // 3. Years of experience (max 15 pts)
   const yearsExp = calcYearsOfExperience(experiences);
-  if      (yearsExp >= 15) score += 15;
-  else if (yearsExp >= 10) score += 11;
-  else if (yearsExp >= 6)  score += 7;
-  else if (yearsExp >= 3)  score += 4;
-  else if (yearsExp >= 1)  score += 2;
+  let yearsPoints = 0;
+  if      (yearsExp >= 15) yearsPoints = 15;
+  else if (yearsExp >= 10) yearsPoints = 11;
+  else if (yearsExp >= 6)  yearsPoints = 7;
+  else if (yearsExp >= 3)  yearsPoints = 4;
+  else if (yearsExp >= 1)  yearsPoints = 2;
+  score += yearsPoints;
+
+  // Track primary score (title + count + years) to use in clearlyExecutive gate below
+  const primaryScore = score;
 
   // ════════════════════════════════════════════════════════════
   // SECONDARY: Role content & other sections — max 35 pts
@@ -222,13 +227,9 @@ export function detectCategory(cvData: Record<string, unknown>): CareerCategory 
   }
 
   // Executive needs at least 2 page-3 sections to avoid a mostly-blank third page.
-  // Exception: a clearly senior executive has enough depth to fill pages regardless
-  // of board/publication presence:
-  //   - 2+ exec titles + 10+ yrs + 5+ roles  (e.g. two C-suite stints)
-  //   - 1+ exec title  + 12+ yrs + 7+ roles  (e.g. long-tenure CEO with deep career)
-  const clearlyExecutive =
-    (execTitleCount >= 2 && yearsExp >= 10 && experiences.length >= 5) ||
-    (execTitleCount >= 1 && yearsExp >= 12 && experiences.length >= 7);
+  // Exception: if primary factors (title + count + years) alone score ≥ 60, the
+  // profile is unambiguously executive — no board/pub/training needed to confirm it.
+  const clearlyExecutive = primaryScore >= 60;
   if (page3Sections < 2 && !clearlyExecutive) {
     score = Math.min(score, 59);
   }
