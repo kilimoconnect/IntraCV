@@ -185,21 +185,30 @@ function _hslToHex(h: number, s: number, l: number): string {
 
 /** Derive a full ThemeColors object from a single primary hex colour. */
 export function buildCustomTheme(hex: string): ThemeColors {
-  const [h, s] = _hexToHsl(hex);
-  const sat = Math.min(s, 80);
+  const [h, s, l] = _hexToHsl(hex);
+  const sat = Math.min(s, 85);
   return {
-    primary:    hex,
-    primaryDark: _hslToHex(h, sat,                   Math.max(_hexToHsl(hex)[2] - 14, 15)),
-    accent:     hex,
-    headerBg:   _hslToHex(h, Math.min(sat,      70),  12),
-    headerText: _hslToHex(h, Math.min(sat * 0.4, 30), 94),
-    sidebarBg:  _hslToHex(h, Math.min(sat * 0.15, 15), 97.5),
-    text:       _hslToHex(h, Math.min(sat * 0.3, 25),  13),
-    muted:      _hslToHex(h, Math.min(sat * 0.15, 15), 45),
-    divider:    _hslToHex(h, Math.min(sat * 0.3, 30),  88),
-    pillBg:     _hslToHex(h, Math.min(sat * 0.35, 35), 94),
-    pillBorder: _hslToHex(h, Math.min(sat * 0.45, 45), 82),
-    cardBg:     _hslToHex(h, Math.min(sat * 0.1, 10),  98),
+    primary:     hex,
+    primaryDark: _hslToHex(h, sat, Math.max(l - 14, 15)),
+    accent:      hex,
+    // Dark header: hue-tinted near-black — matches preset pattern
+    headerBg:    _hslToHex(h, Math.min(sat, 70),         13),
+    // Header text: near-white with gentle hue tint
+    headerText:  _hslToHex(h, Math.min(sat * 0.35, 30),  96),
+    // Sidebar: very light but properly hue-tinted (presets use 40-100% sat here)
+    sidebarBg:   _hslToHex(h, Math.min(sat * 0.7,  60),  97.5),
+    // Body text: near-black with slight hue
+    text:        _hslToHex(h, Math.min(sat * 0.3,  25),  13),
+    // Muted: medium grey with slight hue
+    muted:       _hslToHex(h, Math.min(sat * 0.2,  20),  47),
+    // Divider: light with real tint (presets use 80-100% sat)
+    divider:     _hslToHex(h, Math.min(sat * 0.8,  75),  90),
+    // Pill bg: near-white but vibrantly tinted (presets use 90-100% sat)
+    pillBg:      _hslToHex(h, Math.min(sat * 0.9,  80),  95),
+    // Pill border: medium-light, well-saturated (presets use 80-97% sat)
+    pillBorder:  _hslToHex(h, Math.min(sat * 0.85, 75),  82),
+    // Card bg: near-white with gentle hue tint
+    cardBg:      _hslToHex(h, Math.min(sat * 0.65, 55),  98),
   };
 }
 
