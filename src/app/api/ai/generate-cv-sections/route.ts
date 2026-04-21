@@ -643,7 +643,7 @@ EXPERIENCE: ${expSummary(cvData)}
 TOOLS: ${(cvData.tools || []).join(", ")}
 
 Return EXACTLY ${maxSkills} or fewer skills. Rules:
-- Omit clearly generic or irrelevant skills (e.g. "teamwork", "communication") that obviously don't match the candidate's profession — if unsure, keep them
+- Only omit a skill if you are 100% certain it is irrelevant to the candidate's profession (e.g. "teamwork" for an engineer) — when in any doubt, keep it
 - Merge related items (e.g. "MS Office Suite" not individual apps)
 - Supplement with industry-standard skills inferred from the candidate's experience if needed — inferring field-relevant skills is expected
 - Organize into 2-4 categories: Technical, Leadership, Domain, Industry, etc.
@@ -803,7 +803,7 @@ RAW DATA:
 - Certifications: ${JSON.stringify(cvData.certifications || [])}
 
 Rules:
-- Keep all provided items unless they are clearly and obviously unrelated to the candidate's field — if unsure, keep them
+- Only omit an item if you are 100% certain it is unrelated to the candidate's field — when in any doubt, keep it
 - For tools: if the list has fewer than 4 items, supplement with specific industry-standard software inferred from the candidate's experience and target role
 - Tools added must be concrete named software/platforms (e.g. "Figma", "Jira", "Tableau") — never generic descriptors
 - Group tools by type where helpful. Keep languages as-is. Order by relevance. Empty arrays for missing categories.

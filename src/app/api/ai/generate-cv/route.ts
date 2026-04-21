@@ -295,7 +295,7 @@ JOB DESCRIPTION: ${jd || "Not provided"}
 Rules:
 - Return EXACTLY ${t} skills
 - Group into 2-4 categories (e.g. Technical, Leadership, Domain, Industry)
-- Omit clearly generic or irrelevant skills (e.g. "teamwork", "communication") that obviously don't match the candidate's profession — if unsure, keep them
+- Only omit a skill if you are 100% certain it is irrelevant to the candidate's profession (e.g. "teamwork" for an engineer) — when in any doubt, keep it
 - Supplement with industry-standard skills inferred from the candidate's job titles and experience — filling gaps is expected and required
 - Prioritize skills matching the target role/JD
 - Each skill name: 1-3 words. Categories: 1-2 words.
@@ -411,7 +411,7 @@ RULES:
 - Prioritize items relevant to the target role
 - For languages: if proficiency is not stated, default to "Fluent"
 - For tools: if the list has fewer than 4 items, supplement with specific industry-standard software for the candidate's profession (e.g. "Salesforce CRM", "Power BI", "AutoCAD") — be specific, not generic
-- Omit tools that are clearly and obviously unrelated to the candidate's field — if unsure, keep them
+- Only omit a tool if you are 100% certain it is unrelated to the candidate's field — when in any doubt, keep it
 
 Return ONLY JSON:
 {
