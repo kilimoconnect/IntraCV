@@ -1307,6 +1307,59 @@ function CVBuilderPage() {
   const missingRequired = categoryResult.requiredSections.filter(s => !sectionHasContent(s.key));
   const missingRecommended = categoryResult.recommendedSections.filter(s => !sectionHasContent(s.key));
 
+  // Navigate to a section and add one blank item if the section is currently empty.
+  const goToSection = (key: string) => {
+    if (!manuallyShown.has(key)) setManuallyShown(prev => new Set([...prev, key]));
+    setActiveTab(key);
+    switch (key) {
+      case "experience":
+        if (experiences.length === 0) { justAddedExpRef.current = true; setExperiences([{ id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }]); }
+        break;
+      case "education":
+        if (education.length === 0) setEducation([{ id: uid(), degree: "", institution: "", year: "", description: "" }]);
+        break;
+      case "skills":
+        if (skills.length === 0) setSkills([{ id: uid(), name: "", category: "" }]);
+        break;
+      case "certifications":
+        if (certifications.length === 0) setCertifications([{ id: uid(), name: "", issuer: "", year: "" }]);
+        break;
+      case "languages":
+        if (languages.length === 0) setLanguages([{ id: uid(), name: "", proficiency: "" }]);
+        break;
+      case "referees":
+        if (referees.length === 0) setReferees([{ id: uid(), name: "", title: "", company: "", phone: "", email: "" }]);
+        break;
+      case "achievements":
+        if (keyAchievements.length === 0) setKeyAchievements([{ id: uid(), achievement: "" }]);
+        break;
+      case "awards":
+        if (awards.length === 0) setAwards([{ id: uid(), title: "", description: "" }]);
+        break;
+      case "memberships":
+        if (memberships.length === 0) setMemberships([{ id: uid(), name: "" }]);
+        break;
+      case "projects":
+        if (projects.length === 0) setProjects([{ id: uid(), name: "", description: "", tech: "" }]);
+        break;
+      case "boardRoles":
+        if (boardRoles.length === 0) setBoardRoles([{ id: uid(), title: "", organization: "", startDate: "", endDate: "", description: "" }]);
+        break;
+      case "execTraining":
+        if (execTraining.length === 0) setExecTraining([{ id: uid(), name: "", institution: "", year: "" }]);
+        break;
+      case "publications":
+        if (publications.length === 0) setPublications([{ id: uid(), title: "", publisher: "", year: "", type: "publication" }]);
+        break;
+      case "tools":
+        if (tools.length === 0) setTools([{ name: "", company: "" }]);
+        break;
+      case "volunteer":
+        if (volunteer.length === 0) setVolunteer([""]);
+        break;
+    }
+  };
+
   // Recomputes category from the latest React state and reveals any newly required sections
   // in the sidebar so the user sees them before saving.
   const recalculateCategoryAndUpdate = () => {
@@ -1548,12 +1601,7 @@ function CVBuilderPage() {
                       {missingRequired.map(s => (
                         <button
                           key={s.key}
-                          onClick={() => {
-                            if (!manuallyShown.has(s.key)) {
-                              setManuallyShown(prev => new Set([...prev, s.key]));
-                            }
-                            setActiveTab(s.key);
-                          }}
+                          onClick={() => goToSection(s.key)}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-red-200 rounded-md text-xs font-medium text-red-700 hover:bg-red-100 transition-colors"
                         >
                           <XCircle className="h-3 w-3" />
@@ -1573,12 +1621,7 @@ function CVBuilderPage() {
                       {missingRecommended.map(s => (
                         <button
                           key={s.key}
-                          onClick={() => {
-                            if (!manuallyShown.has(s.key)) {
-                              setManuallyShown(prev => new Set([...prev, s.key]));
-                            }
-                            setActiveTab(s.key);
-                          }}
+                          onClick={() => goToSection(s.key)}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-amber-200 rounded-md text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
                         >
                           <Plus className="h-3 w-3" />
