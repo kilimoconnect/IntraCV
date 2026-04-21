@@ -289,7 +289,7 @@ function CVBuilderPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showMobileAddSection, setShowMobileAddSection] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<{ sections: string[]; firstKey: string } | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{ sections: { key: string; label: string }[]; firstKey: string } | null>(null);
 
   // Section tab navigation
   const [activeTab, setActiveTab] = useState("personal");
@@ -599,17 +599,18 @@ function CVBuilderPage() {
     return () => clearTimeout(timer);
   }, [experiences]);
 
-  // ─── Handle ?tab= query param from My Profile ───
+  // ─── Handle ?tab= / ?section= query params ───
   useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab && !loadingProfile && hasExistingData) {
+    const tab = searchParams.get("tab") || searchParams.get("section");
+    if (tab && !loadingProfile) {
       setStep("edit");
       if (!manuallyShown.has(tab)) {
         setManuallyShown(prev => new Set([...prev, tab]));
       }
       setActiveTab(tab);
     }
-  }, [searchParams, loadingProfile, hasExistingData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, loadingProfile]);
 
   // ─── File Upload + AI Extract ───
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1391,7 +1392,7 @@ function CVBuilderPage() {
 
     // 1. Required sections missing → jump to first one
     if (freshMissing.length > 0) {
-      setValidationErrors({ sections: freshMissing.map(s => s.label), firstKey: freshMissing[0].key });
+      setValidationErrors({ sections: freshMissing.map(s => ({ key: s.key, label: s.label })), firstKey: freshMissing[0].key });
       setActiveTab(freshMissing[0].key);
       if (!manuallyShown.has(freshMissing[0].key)) {
         setManuallyShown(prev => new Set([...prev, freshMissing[0].key]));
@@ -1419,7 +1420,7 @@ function CVBuilderPage() {
     volunteer.forEach((v) => { if (!v?.trim()) incompleteItems.push({ section: "Volunteer", key: "volunteer", count: 0 }); });
 
     if (incompleteItems.length > 0) {
-      const uniqueSections = [...new Set(incompleteItems.map(i => i.section))];
+      const uniqueSections = [...new Map(incompleteItems.map(i => [i.key, { key: i.key, label: i.section }])).values()];
       setValidationErrors({ sections: uniqueSections, firstKey: incompleteItems[0].key });
       setActiveTab(incompleteItems[0].key);
       if (!manuallyShown.has(incompleteItems[0].key)) {
@@ -2598,10 +2599,14 @@ function CVBuilderPage() {
             </p>
             <div className="flex flex-wrap gap-2">
               {validationErrors?.sections.map((s) => (
-                <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-md text-sm font-medium text-red-700">
+                <button
+                  key={s.key}
+                  onClick={() => { setValidationErrors(null); goToSection(s.key); }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-md text-sm font-medium text-red-700 hover:bg-red-100 transition-colors cursor-pointer"
+                >
                   <XCircle className="h-3.5 w-3.5" />
-                  {s}
-                </span>
+                  {s.label}
+                </button>
               ))}
             </div>
           </div>
@@ -2610,13 +2615,7 @@ function CVBuilderPage() {
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               onClick={() => {
-                if (validationErrors) {
-                  const key = validationErrors.firstKey;
-                  if (!manuallyShown.has(key)) {
-                    setManuallyShown(prev => new Set([...prev, key]));
-                  }
-                  setActiveTab(key);
-                }
+                if (validationErrors) goToSection(validationErrors.firstKey);
                 setValidationErrors(null);
               }}
             >

@@ -759,12 +759,12 @@ export default function CvStudio({ userId, cvData }: Props) {
     const fullName = ((pi.fullName || pi.full_name || "") as string).trim();
     const email    = ((pi.email || "") as string).trim();
     const summary  = ((cvData.summary || "") as string).trim();
-    const missing: string[] = [];
-    if (!fullName || !email)                                                        missing.push("Personal Info");
-    if (!summary)                                                                   missing.push("Professional Summary");
-    if (!Array.isArray(cvData.experiences) || cvData.experiences.length === 0)     missing.push("Work Experience");
-    if (!Array.isArray(cvData.education)   || cvData.education.length   === 0)     missing.push("Education");
-    if (!Array.isArray(cvData.skills)      || cvData.skills.length      === 0)     missing.push("Skills");
+    const missing: { key: string; label: string }[] = [];
+    if (!fullName || !email)                                                        missing.push({ key: "personal",    label: "Personal Info" });
+    if (!summary)                                                                   missing.push({ key: "summary",     label: "Professional Summary" });
+    if (!Array.isArray(cvData.experiences) || cvData.experiences.length === 0)     missing.push({ key: "experience",  label: "Work Experience" });
+    if (!Array.isArray(cvData.education)   || cvData.education.length   === 0)     missing.push({ key: "education",   label: "Education" });
+    if (!Array.isArray(cvData.skills)      || cvData.skills.length      === 0)     missing.push({ key: "skills",      label: "Skills" });
     return missing;
   }, [cvData]);
   const [step, setStep] = useState<"choose-path" | "analyze-profile" | "select" | "pick-layout" | "generating" | "preview" | "error">("choose-path");
@@ -1858,9 +1858,11 @@ export default function CvStudio({ userId, cvData }: Props) {
                 </p>
                 <ul className="mt-2 space-y-0.5">
                   {missingRequired.map(s => (
-                    <li key={s} className="text-xs text-amber-700 flex items-center gap-1.5">
+                    <li key={s.key} className="text-xs text-amber-700 flex items-center gap-1.5">
                       <span className="h-1 w-1 rounded-full bg-amber-500 shrink-0" />
-                      {s}
+                      <a href={`/cv-builder?section=${s.key}`} className="underline underline-offset-2 hover:text-amber-900">
+                        {s.label}
+                      </a>
                     </li>
                   ))}
                 </ul>
