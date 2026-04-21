@@ -2637,7 +2637,9 @@ function CVBuilderPage() {
           </AlertDialogHeader>
           <div className="space-y-3 pt-2">
             <p className="text-sm text-muted-foreground">
-              The following sections have items with missing required information. Please complete all highlighted fields before continuing.
+              {(validationErrors?.sections.length ?? 0) === 1
+                ? "The following section has an item with missing required information. Please complete all highlighted fields before continuing."
+                : `The following ${validationErrors?.sections.length} sections have items with missing required information. Please complete all highlighted fields before continuing.`}
             </p>
             <div className="flex flex-wrap gap-2">
               {validationErrors?.sections.map((s) => (
