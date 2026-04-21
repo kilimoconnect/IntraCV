@@ -1125,7 +1125,7 @@ function CVBuilderPage() {
       case "personal": return !!(personalInfo.fullName && personalInfo.email);
       case "summary": return summary.trim().length > 10;
       case "experience": return experiences.length > 0;
-      case "education": return education.length > 0 || certifications.length > 0;
+      case "education": return education.length > 0;
       case "skills": return skills.length > 0;
       case "certifications": return certifications.length > 0;
       case "achievements": return keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0);
