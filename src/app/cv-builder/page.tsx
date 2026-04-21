@@ -617,10 +617,8 @@ function CVBuilderPage() {
     const tab = searchParams.get("tab") || searchParams.get("section");
     if (tab && !loadingProfile) {
       setStep("edit");
-      if (!manuallyShown.has(tab)) {
-        setManuallyShown(prev => new Set([...prev, tab]));
-      }
-      setActiveTab(tab);
+      // Use goToSection so scroll + auto-add fire the same as clicking a badge
+      goToSection(tab);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, loadingProfile]);
