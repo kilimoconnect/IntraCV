@@ -2020,7 +2020,7 @@ function CVBuilderPage() {
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">City, Country <span className="text-red-500">*</span></Label>
-                              <Input className={!exp.location?.trim() ? "border-red-300 bg-red-50/30" : ""} value={exp.location} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, location: e.target.value } : x))} placeholder="e.g. Nairobi, Kenya" />
+                              <Input className={!exp.location?.trim() ? "border-red-300 bg-red-50/30" : ""} value={exp.location} onChange={(e) => setExperiences(experiences.map((x) => x.id === exp.id ? { ...x, location: e.target.value } : x))} placeholder="e.g. London, United Kingdom" />
                             </div>
                             <div className="space-y-1">
                               <Label className="text-xs">Start Date <span className="text-red-500">*</span></Label>
