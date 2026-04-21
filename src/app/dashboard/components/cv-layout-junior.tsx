@@ -7,7 +7,7 @@
 // Distinctive look: top banner + accent underline + airy spacing.
 // ═══════════════════════════════════════════════════════════
 
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { type CategoryCVData, type LayoutVariant, type ThemeName, type ThemeColors, themes, A4_W, A4_H, FONT } from "./cv-layout-types";
 import { PRINT_MARGIN } from "./cv-design-system";
 
@@ -966,6 +966,29 @@ function JuniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Theme
 // Header spans main area only — name/title/tagline left-aligned, bold underline.
 // ═══════════════════════════════════════════════════════════
 
+function useSidebarSkillsTrim(
+  sidebarRef: React.RefObject<HTMLDivElement | null>,
+  budget: number,
+  totalSkills: number,
+  resetKey: string
+) {
+  const [maxSkills, setMaxSkills] = useState(totalSkills);
+  const prevKeyRef = useRef(resetKey);
+  if (prevKeyRef.current !== resetKey) {
+    prevKeyRef.current = resetKey;
+    setMaxSkills(totalSkills);
+  }
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el || maxSkills === 0) return;
+    const id = requestAnimationFrame(() => {
+      if (el.scrollHeight > budget + 2) setMaxSkills(s => Math.max(0, s - 1));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [maxSkills, budget, sidebarRef]);
+  return maxSkills;
+}
+
 function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: ThemeName | ThemeColors }) {
   const C = typeof theme === "string" ? themes[theme as ThemeName] : theme;
   const SIDE = 210;
@@ -974,6 +997,8 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
   const HEADER_H = 97;
   const BODY_TOP = HEADER_H + 6;
   const BODY_BUDGET = A4_H - BODY_TOP - PRINT_MARGIN.bottom;
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const maxSkills = useSidebarSkillsTrim(sidebarRef, A4_H, d.skills?.length || 0, (d.skills || []).join(","));
 
   // ── Fixed body sections (sidebar carries skills/education/languages/certs) ──
   const show = new Set(["profile", "experience", "achievements", "references"]);
@@ -983,7 +1008,7 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
         {/* Right sidebar — full height */}
-        <div style={{ position: "absolute", top: 0, left: A4_W - SIDE, width: SIDE, height: A4_H, backgroundColor: C.sidebarBg, borderLeft: `3px solid ${C.primary}`, overflow: "hidden" }}>
+        <div ref={sidebarRef} style={{ position: "absolute", top: 0, left: A4_W - SIDE, width: SIDE, height: A4_H, backgroundColor: C.sidebarBg, borderLeft: `3px solid ${C.primary}`, overflow: "hidden" }}>
           {/* Contact */}
           <div style={{ padding: "22px 14px 12px", borderBottom: `1px solid ${C.divider}` }}>
             <div style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 5 }}>Contact</div>
@@ -999,7 +1024,7 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
             <div style={{ padding: "11px 14px", borderBottom: `1px solid ${C.divider}` }}>
               <HeadingLine C={C}>Skills</HeadingLine>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 5px" }}>
-                {d.skills.map((skill, i) => (
+                {d.skills.slice(0, maxSkills).map((skill, i) => (
                   <span key={i} data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: C.primary, padding: "2px 8px", borderRadius: 20, backgroundColor: C.pillBg, border: `1px solid ${C.pillBorder}` }}>{skill}</span>
                 ))}
               </div>

@@ -82,6 +82,29 @@ function useBulletTrim(
   return maxBullets;
 }
 
+function useSidebarSkillsTrim(
+  sidebarRef: React.RefObject<HTMLDivElement | null>,
+  budget: number,
+  totalSkills: number,
+  resetKey: string
+) {
+  const [maxSkills, setMaxSkills] = useState(totalSkills);
+  const prevKeyRef = useRef(resetKey);
+  if (prevKeyRef.current !== resetKey) {
+    prevKeyRef.current = resetKey;
+    setMaxSkills(totalSkills);
+  }
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el || maxSkills === 0) return;
+    const id = requestAnimationFrame(() => {
+      if (el.scrollHeight > budget + 2) setMaxSkills(s => Math.max(0, s - 1));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [maxSkills, budget, sidebarRef]);
+  return maxSkills;
+}
+
 interface Props { data: CategoryCVData; theme: ThemeName | ThemeColors; variant?: LayoutVariant; }
 
 const SIDE_W = 240;
@@ -127,6 +150,8 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
   const histKey = (d.history || d.experience?.slice(expSplit) || []).map(e => (e.bullets || []).length).join(',');
   const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
   const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BODY_BUDGET, histKey);
+  const sidebarARef = useRef<HTMLDivElement>(null);
+  const maxSkillsA = useSidebarSkillsTrim(sidebarARef, A4_H - PRINT_MARGIN.bottom, d.skills?.length || 0, (d.skills || []).join(","));
 
   useEffect(() => {
     const el = p1MeasureRef.current;
@@ -229,7 +254,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
       <div className="cv-page-sheet" style={{ position: "relative", width: A4_W, height: A4_H, backgroundColor: "#fff", overflow: "hidden" }}>
 
         {/* ── Full-Height Left Sidebar ── */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: SIDE_W, height: A4_H, maxHeight: SIDEBAR_BUDGET, backgroundColor: C.headerBg, padding: `0 ${SP}px`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div ref={sidebarARef} style={{ position: "absolute", top: 0, left: 0, width: SIDE_W, height: A4_H, maxHeight: SIDEBAR_BUDGET, backgroundColor: C.headerBg, padding: `0 ${SP}px`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
           {/* Name block at top of sidebar */}
           <div style={{ paddingTop: 28, paddingBottom: 20, borderBottom: `1px solid rgba(255,255,255,0.15)`, overflow: "hidden" }}>
@@ -253,7 +278,7 @@ export default function CVLayoutMidSenior({ data: d, theme, variant = "A" }: Pro
           {d.skills?.length > 0 && (
             <div style={{ paddingTop: 14, paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.15)` }}>
               <SideLabel C={C}>Core Competencies</SideLabel>
-              {d.skills.map((skill, i) => (
+              {d.skills.slice(0, maxSkillsA).map((skill, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, minWidth: 0 }}>
                   <div style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: C.primary, flexShrink: 0 }} />
                   <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "10px", color: C.headerText, opacity: 0.9, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{skill}</span>
@@ -566,6 +591,8 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
   const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
   const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET, expKey);
   const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BODY_BUDGET, histKey);
+  const sidebarBRef = useRef<HTMLDivElement>(null);
+  const maxSkillsB = useSidebarSkillsTrim(sidebarBRef, P1_SIDEBAR_BUDGET, d.skills?.length || 0, (d.skills || []).join(","));
 
   return (
     <div>
@@ -627,11 +654,11 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         <div style={{ position: "absolute", top: 100, left: 0, width: A4_W, height: 3, backgroundColor: C.primary }} />
 
         {/* Light right sidebar */}
-        <div style={{ position: "absolute", top: 103, right: 0, width: RSIDE, height: A4_H - 103, backgroundColor: C.sidebarBg, borderLeft: `2px solid ${C.divider}`, padding: "16px 16px", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
+        <div ref={sidebarBRef} style={{ position: "absolute", top: 103, right: 0, width: RSIDE, height: A4_H - 103, backgroundColor: C.sidebarBg, borderLeft: `2px solid ${C.divider}`, padding: "16px 16px", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
           {d.skills?.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: FONT, fontSize: "10px", fontWeight: 700, color: C.primary, textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: 6 }}>Core Competencies</div>
-              {d.skills.map((skill, i) => (
+              {d.skills.slice(0, maxSkillsB).map((skill, i) => (
                 <div key={i} data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "10px", color: C.text, padding: "2.5px 0", borderBottom: i < d.skills.length - 1 ? `1px solid ${C.divider}` : "none" }}>• {skill}</div>
               ))}
             </div>
@@ -1869,6 +1896,8 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
   const histKey = historyExps.map(e => (e.bullets || []).length).join(',');
   const p1MaxBullets = useBulletTrim(p1BodyRef, PAGE_BUDGET, expKey);
   const p2MaxBullets = useBulletTrim(p2BodyRef, P2_BUDGET, histKey);
+  const skillsStripRef = useRef<HTMLDivElement>(null);
+  const maxSkillsF = useSidebarSkillsTrim(skillsStripRef, SKILLS_STRIP_H, d.skills?.length || 0, (d.skills || []).join(","));
 
   return (
     <div>
@@ -1961,9 +1990,9 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
 
         {/* Right: colored skills strip at top */}
         {d.skills?.length > 0 && (
-          <div style={{ position: "absolute", top: 0, left: SIDE, width: A4_W - SIDE, height: SKILLS_STRIP_H, backgroundColor: C.primary, display: "flex", alignItems: "flex-start", padding: "8px 20px", gap: 5, flexWrap: "wrap", overflow: "hidden" }}>
+          <div ref={skillsStripRef} style={{ position: "absolute", top: 0, left: SIDE, width: A4_W - SIDE, height: SKILLS_STRIP_H, backgroundColor: C.primary, display: "flex", alignItems: "flex-start", padding: "8px 20px", gap: 5, flexWrap: "wrap", overflow: "hidden" }}>
             <span style={{ fontFamily: FONT, fontSize: "8.5px", fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "1.2px", marginRight: 4, whiteSpace: "nowrap" }}>Skills</span>
-            {d.skills.map((skill, i) => (
+            {d.skills.slice(0, maxSkillsF).map((skill, i) => (
               <span key={i} data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9px", fontWeight: 600, color: "#fff", padding: "2px 8px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.35)", whiteSpace: "nowrap" }}>{skill}</span>
             ))}
           </div>
