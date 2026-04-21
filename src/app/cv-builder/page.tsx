@@ -1498,10 +1498,10 @@ function CVBuilderPage() {
                 <Button
                   disabled={saving}
                   onClick={handleSaveAndContinue}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  {saving ? "Saving..." : "Save & Continue"}
+                  {saving ? "Saving..." : "Continue"}
                 </Button>
               </div>
             </div>
@@ -2491,12 +2491,12 @@ function CVBuilderPage() {
                   </Button>
                 ) : (
                   <Button
-                    className="flex-1 bg-[#004aad] hover:bg-[#003a8c]"
+                    className="flex-1 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                     onClick={handleSaveAndContinue}
                     disabled={saving}
                   >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                    {saving ? "Saving..." : "Done"}
+                    {saving ? "Saving..." : "Continue"}
                   </Button>
                 )}
               </div>
@@ -2525,9 +2525,9 @@ function CVBuilderPage() {
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button onClick={handleSaveAndContinue} disabled={saving} className="bg-[#004aad] hover:bg-[#003a8c]">
+                    <Button onClick={handleSaveAndContinue} disabled={saving} className="bg-[#ff751f] hover:bg-[#e8661a] text-white border-0">
                       {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                      {saving ? "Saving..." : "Save & Continue"}
+                      {saving ? "Saving..." : "Continue"}
                     </Button>
                   )}
                 </div>
