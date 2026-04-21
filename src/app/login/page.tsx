@@ -66,26 +66,32 @@ export default function LoginPage() {
           router.push("/cv-builder");
         } else {
           const uid = authUser.id;
+
+          // Fetch full records to validate required fields within each section
           const [sumRes, expRes, eduRes, skillRes, langRes, refRes, achRes, boardRes] = await Promise.all([
             supabase.from("cv_summary").select("summary").eq("user_id", uid).maybeSingle(),
-            supabase.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", uid),
-            supabase.from("cv_education").select("id", { count: "exact", head: true }).eq("user_id", uid),
-            supabase.from("cv_skills").select("id", { count: "exact", head: true }).eq("user_id", uid),
-            supabase.from("cv_languages").select("id", { count: "exact", head: true }).eq("user_id", uid),
-            supabase.from("cv_referees").select("id", { count: "exact", head: true }).eq("user_id", uid),
-            supabase.from("cv_key_achievements").select("id", { count: "exact", head: true }).eq("user_id", uid),
-            supabase.from("cv_board_roles").select("id", { count: "exact", head: true }).eq("user_id", uid),
+            supabase.from("cv_experiences").select("title, company, location, start_date, end_date, description").eq("user_id", uid),
+            supabase.from("cv_education").select("degree, institution, year").eq("user_id", uid),
+            supabase.from("cv_skills").select("name").eq("user_id", uid),
+            supabase.from("cv_languages").select("name, proficiency").eq("user_id", uid),
+            supabase.from("cv_referees").select("name, phone, email").eq("user_id", uid),
+            supabase.from("cv_key_achievements").select("achievement").eq("user_id", uid),
+            supabase.from("cv_board_roles").select("title, organization").eq("user_id", uid),
           ]);
+
+          const trim = (v: any) => (v ?? "").toString().trim();
+          const allComplete = (rows: any[] | null, check: (r: any) => boolean) =>
+            (rows ?? []).length > 0 && (rows ?? []).every(check);
 
           const has = {
             summary:      !!(sumRes.data?.summary?.trim()),
-            experience:   (expRes.count  ?? 0) > 0,
-            education:    (eduRes.count  ?? 0) > 0,
-            skills:       (skillRes.count ?? 0) > 0,
-            languages:    (langRes.count  ?? 0) > 0,
-            referees:     (refRes.count   ?? 0) > 0,
-            achievements: (achRes.count   ?? 0) > 0,
-            boardRoles:   (boardRes.count  ?? 0) > 0,
+            experience:   allComplete(expRes.data, r => trim(r.title) && trim(r.company) && trim(r.location) && trim(r.start_date) && trim(r.end_date) && trim(r.description)),
+            education:    allComplete(eduRes.data, r => trim(r.degree) && trim(r.institution) && trim(r.year)),
+            skills:       allComplete(skillRes.data, r => trim(r.name)),
+            languages:    allComplete(langRes.data, r => trim(r.name) && trim(r.proficiency)),
+            referees:     allComplete(refRes.data, r => trim(r.name) && (trim(r.phone) || trim(r.email))),
+            achievements: allComplete(achRes.data, r => trim(r.achievement)),
+            boardRoles:   allComplete(boardRes.data, r => trim(r.title) && trim(r.organization)),
           };
 
           const category = pi.career_category ?? "junior";
