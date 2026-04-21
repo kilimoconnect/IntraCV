@@ -354,7 +354,7 @@ function CVBuilderPage() {
   const firstExpCardRef  = useRef<HTMLDivElement>(null);
   const justAddedExpRef  = useRef(false);
   const sectionCardRef   = useRef<HTMLDivElement>(null);
-  const scrollToSectionRef = useRef(false);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
   const [education, setEducation] = useState<Education[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
@@ -601,16 +601,15 @@ function CVBuilderPage() {
     return () => clearTimeout(timer);
   }, [experiences]);
 
-  // ─── Scroll to section card when goToSection triggers a tab change ───
+  // ─── Scroll to section card when goToSection triggers (even if tab unchanged) ───
   useEffect(() => {
-    if (!scrollToSectionRef.current) return;
-    scrollToSectionRef.current = false;
+    if (scrollTrigger === 0) return;
     const timer = setTimeout(() => {
       sectionCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       sectionCardRef.current?.querySelector<HTMLInputElement>("input, textarea")?.focus();
-    }, 80);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [activeTab]);
+  }, [scrollTrigger]);
 
   // ─── Handle ?tab= / ?section= query params ───
   useEffect(() => {
@@ -1322,8 +1321,8 @@ function CVBuilderPage() {
   // Navigate to a section and add one blank item if the section is currently empty.
   const goToSection = (key: string) => {
     if (!manuallyShown.has(key)) setManuallyShown(prev => new Set([...prev, key]));
-    scrollToSectionRef.current = true;
     setActiveTab(key);
+    setScrollTrigger(t => t + 1);
     switch (key) {
       case "experience":
         if (experiences.length === 0) { justAddedExpRef.current = true; setExperiences([{ id: uid(), title: "", company: "", location: "", startDate: "", endDate: "", description: "" }]); }
