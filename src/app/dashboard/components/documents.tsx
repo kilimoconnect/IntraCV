@@ -17,7 +17,8 @@ import type { LayoutType } from "@/components/cv-engine";
 import CVLayoutJunior from "./cv-layout-junior";
 import CVLayoutMidSenior from "./cv-layout-mid-senior";
 import CVLayoutExecutive from "./cv-layout-executive";
-import type { CareerCategory, CategoryCVData, LayoutVariant, ThemeName } from "./cv-layout-types";
+import type { CareerCategory, CategoryCVData, LayoutVariant, ThemeName, ThemeColors } from "./cv-layout-types";
+import { buildCustomTheme } from "./cv-layout-types";
 
 interface DocumentsProps {
   userId: string;
@@ -35,7 +36,8 @@ interface ParsedCV {
   studioData?: CategoryCVData;
   studioCategory?: CareerCategory;
   studioVariant?: LayoutVariant;
-  studioTheme?: ThemeName;
+  studioTheme?: ThemeName | "custom";
+  studioCustomColor?: string;
 }
 
 // Parse saved CV JSON content — handles old engine, template, and new studio formats
@@ -50,7 +52,8 @@ function parseCvContent(raw: string): ParsedCV | null {
         studioData: parsed.studioData as CategoryCVData,
         studioCategory: parsed.studioCategory as CareerCategory,
         studioVariant: (parsed.studioVariant || "A") as LayoutVariant,
-        studioTheme: (parsed.studioTheme || "corporate") as ThemeName,
+        studioTheme: (parsed.studioTheme || "corporate") as ThemeName | "custom",
+        studioCustomColor: parsed.studioCustomColor as string | undefined,
       };
     }
     // New engine format
@@ -285,9 +288,19 @@ export default function Documents({ userId }: DocumentsProps) {
                     ) : doc.doc_type === "cv" && cv && cv.templateType === "studio" && cv.studioData ? (
                       <div className="border rounded-xl bg-slate-50 p-4 overflow-x-auto">
                         <div id={`cv-preview-${doc.id}`} style={{ width: "794px", margin: "0 auto" }}>
-                          {cv.studioCategory === "junior" && <CVLayoutJunior data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}
-                          {cv.studioCategory === "mid-senior" && <CVLayoutMidSenior data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}
-                          {cv.studioCategory === "executive" && <CVLayoutExecutive data={cv.studioData} theme={cv.studioTheme!} variant={cv.studioVariant!} />}
+                          {(() => {
+                            const resolvedTheme: ThemeName | ThemeColors =
+                              cv.studioTheme === "custom" && cv.studioCustomColor
+                                ? buildCustomTheme(cv.studioCustomColor)
+                                : (cv.studioTheme as ThemeName) || "corporate";
+                            return (
+                              <>
+                                {cv.studioCategory === "junior" && <CVLayoutJunior data={cv.studioData!} theme={resolvedTheme} variant={cv.studioVariant!} />}
+                                {cv.studioCategory === "mid-senior" && <CVLayoutMidSenior data={cv.studioData!} theme={resolvedTheme} variant={cv.studioVariant!} />}
+                                {cv.studioCategory === "executive" && <CVLayoutExecutive data={cv.studioData!} theme={resolvedTheme} variant={cv.studioVariant!} />}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     ) : doc.doc_type === "cv" && cv && isEngineCV ? (
