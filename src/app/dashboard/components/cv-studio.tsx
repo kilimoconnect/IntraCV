@@ -1587,7 +1587,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       setPdfGenerating(false);
       setPdfDownloaded(true);
     }
-  }, [aiData, selectedCategory, selectedVariant, selectedTheme, coverLetter, userId]);
+  }, [aiData, selectedCategory, selectedVariant, selectedTheme, customColor, coverLetter, userId]);
 
   const handleAnalyzeProfile = useCallback(async () => {
     if (!jobDescription.trim() || profileAnalyzing) return;
