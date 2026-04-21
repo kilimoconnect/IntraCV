@@ -20,6 +20,29 @@ export const EXECUTIVE_REQUIRED_FIELDS: ReadonlyArray<keyof CategoryCVData> = [
   "publications", "references", "volunteer", "declaration", "awards", "projects",
 ];
 
+function useSidebarSkillsTrim(
+  sidebarRef: React.RefObject<HTMLDivElement | null>,
+  budget: number,
+  totalSkills: number,
+  resetKey: string
+) {
+  const [maxSkills, setMaxSkills] = useState(totalSkills);
+  const prevKeyRef = useRef(resetKey);
+  if (prevKeyRef.current !== resetKey) {
+    prevKeyRef.current = resetKey;
+    setMaxSkills(totalSkills);
+  }
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el || maxSkills === 0) return;
+    const id = requestAnimationFrame(() => {
+      if (el.scrollHeight > budget + 2) setMaxSkills(s => Math.max(0, s - 1));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [maxSkills, budget, sidebarRef]);
+  return maxSkills;
+}
+
 interface Props { data: CategoryCVData; theme: ThemeName | ThemeColors; variant?: LayoutVariant; }
 
 const SIDE_W = 230;
@@ -86,6 +109,8 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
   const histKey = (d.history?.length ? d.history : (d.experience || [])).map(e => (e.bullets || []).length).join(",");
   const p1MaxBullets = useBulletTrim(p1BodyRef, P1_BODY_BUDGET_CONST, expKey);
   const p2MaxBullets = useBulletTrim(p2BodyRef, A_CONT_BODY_BUDGET_CONST, histKey);
+  const sidebarExecRef = useRef<HTMLDivElement>(null);
+  const maxSkillsExec = useSidebarSkillsTrim(sidebarExecRef, A4_H - HEADER_H - 22 - PRINT_MARGIN.bottom, d.skills?.length || 0, (d.skills || []).join(","));
 
   useEffect(() => {
     const el = aMeasRef.current;
@@ -204,14 +229,14 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
         </div>
 
         {/* ── RIGHT Dark Sidebar ── */}
-        <div style={{ position: "absolute", top: HEADER_H + 22, right: 0, width: SIDE_W, height: A4_H - HEADER_H - 22, backgroundColor: C.headerBg, padding: `${SP}px ${SP}px`, display: "flex", flexDirection: "column", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
+        <div ref={sidebarExecRef} style={{ position: "absolute", top: HEADER_H + 22, right: 0, width: SIDE_W, height: A4_H - HEADER_H - 22, backgroundColor: C.headerBg, padding: `${SP}px ${SP}px`, display: "flex", flexDirection: "column", maxHeight: P1_SIDEBAR_BUDGET, overflow: "hidden" }}>
 
           {/* Core Leadership Competencies */}
           {d.skills?.length > 0 && (
             <div style={{ paddingBottom: 14, borderBottom: `1px solid rgba(255,255,255,0.12)`, marginBottom: 14 }}>
               <RightLabel C={C}>Core Competencies</RightLabel>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 8px" }}>
-                {d.skills.map((skill, i) => (
+                {d.skills.slice(0, maxSkillsExec).map((skill, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
                     <div style={{ width: 3, height: 3, backgroundColor: C.primary, flexShrink: 0 }} />
                     <span data-cv-field={`skill.${i}`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.headerText, opacity: 0.85, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{skill}</span>
