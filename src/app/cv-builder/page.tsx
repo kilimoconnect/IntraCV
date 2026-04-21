@@ -283,6 +283,7 @@ function CVBuilderPage() {
   const [extracting, setExtracting] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [pendingAutoSave, setPendingAutoSave] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [hasExistingData, setHasExistingData] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -577,6 +578,14 @@ function CVBuilderPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
+  // ─── Auto-save extracted data once React has committed the new state ───
+  useEffect(() => {
+    if (!pendingAutoSave) return;
+    setPendingAutoSave(false);
+    saveToDatabase();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAutoSave]);
+
   // ─── Scroll to new experience card after adding ───
   useEffect(() => {
     if (!justAddedExpRef.current) return;
@@ -810,6 +819,7 @@ function CVBuilderPage() {
       setExtractionProgress(100);
       toast.success("CV extracted successfully! Review and edit below.");
       setStep("edit");
+      setPendingAutoSave(true);
     } catch (err: any) {
       console.error("Upload/extraction error:", err);
       toast.error(err.message || "Failed to extract CV");
@@ -2430,7 +2440,7 @@ function CVBuilderPage() {
               </Card>
 
               {/* ── Footer Navigation (mobile only) ── */}
-              <div className="flex md:hidden items-center justify-between mt-4 gap-3">
+              <div className="flex md:hidden items-center justify-between mt-4 gap-2">
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -2438,6 +2448,15 @@ function CVBuilderPage() {
                   disabled={safeIdx === 0}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
+                  onClick={() => saveToDatabase()}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {saving ? "Saving…" : "Save"}
                 </Button>
                 {safeIdx < SECTIONS.length - 1 ? (
                   <Button
@@ -2452,8 +2471,8 @@ function CVBuilderPage() {
                     onClick={handleSaveAndContinue}
                     disabled={saving}
                   >
-                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {saving ? "Saving..." : "Save & Continue"}
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    {saving ? "Saving..." : "Done"}
                   </Button>
                 )}
               </div>
@@ -2467,17 +2486,27 @@ function CVBuilderPage() {
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Previous
                 </Button>
-
-                {safeIdx < SECTIONS.length - 1 ? (
-                  <Button onClick={() => setActiveTab(SECTIONS[safeIdx + 1].key)}>
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button onClick={async () => { const ok = await saveToDatabase(); if (ok) router.push("/dashboard"); }} disabled={saving} className="bg-[#004aad] hover:bg-[#003a8c]">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
+                    onClick={() => saveToDatabase()}
+                    disabled={saving}
+                  >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {saving ? "Saving..." : "Confirm & Save"}
+                    {saving ? "Saving…" : "Save"}
                   </Button>
-                )}
+                  {safeIdx < SECTIONS.length - 1 ? (
+                    <Button onClick={() => setActiveTab(SECTIONS[safeIdx + 1].key)}>
+                      Next <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button onClick={handleSaveAndContinue} disabled={saving} className="bg-[#004aad] hover:bg-[#003a8c]">
+                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      {saving ? "Saving..." : "Save & Continue"}
+                    </Button>
+                  )}
+                </div>
               </div>
               {/* Spacer for mobile bottom bar */}
               <div className="h-20 md:hidden" />
