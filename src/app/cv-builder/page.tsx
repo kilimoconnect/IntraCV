@@ -2545,13 +2545,13 @@ function CVBuilderPage() {
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-lg">
-              <AlertCircle className="h-6 w-6 text-red-500" /> Cannot Save — Incomplete Fields
+              <AlertCircle className="h-6 w-6 text-red-500" /> Cannot Continue — Incomplete Fields
             </AlertDialogTitle>
             <AlertDialogDescription className="sr-only">Incomplete fields</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 pt-2">
             <p className="text-sm text-muted-foreground">
-              The following sections have items with missing required information. Please complete all highlighted fields before saving.
+              The following sections have items with missing required information. Please complete all highlighted fields before continuing.
             </p>
             <div className="flex flex-wrap gap-2">
               {validationErrors?.sections.map((s) => (
