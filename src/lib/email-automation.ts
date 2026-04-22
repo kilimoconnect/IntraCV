@@ -388,6 +388,8 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
     { data: profile },
     { count: expCount },
     { data: summaryRow },
+    { count: eduCount },
+    { count: skillCount },
   ] = await Promise.all([
     admin.auth.admin.getUserById(userId),
     admin.from("cv_personal_info").select("headline, career_category").eq("user_id", userId).maybeSingle(),
@@ -395,14 +397,18 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
     admin.from("profiles").select("interview_questions_paid_quota").eq("id", userId).maybeSingle(),
     admin.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", userId),
     admin.from("cv_summary").select("summary").eq("user_id", userId).maybeSingle(),
+    admin.from("cv_education").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    admin.from("cv_skills").select("id", { count: "exact", head: true }).eq("user_id", userId),
   ]);
 
   if (userErr) throw new Error(`fetchUserContext DB error: ${userErr.message}`);
   if (!user?.email) return null; // user deleted — caller should cancel
 
   const fullName = user.user_metadata?.full_name || "";
-  const hasExp = (expCount ?? 0) > 0;
+  const hasExp     = (expCount   ?? 0) > 0;
   const hasSummary = !!summaryRow?.summary?.trim();
+  const hasEdu     = (eduCount   ?? 0) > 0;
+  const hasSkills  = (skillCount ?? 0) > 0;
 
   return {
     email: user.email,
@@ -411,7 +417,7 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
     careerCategory: (pi?.career_category as CareerCategory) || "junior",
     hasPurchased: (tokens?.length ?? 0) > 0,
     hasInterviewPurchase: (profile?.interview_questions_paid_quota ?? 0) > 0,
-    hasCompleteProfile: hasExp && hasSummary,
+    hasCompleteProfile: hasExp && hasSummary && hasEdu && hasSkills,
     marketingUnsubscribed: !!user.user_metadata?.marketing_unsubscribed,
   };
 }
