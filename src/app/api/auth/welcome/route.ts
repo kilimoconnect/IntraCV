@@ -66,10 +66,6 @@ export async function POST(req: Request) {
     scheduleFlow(userId, "missing_info").catch((e) =>    // cancelled in cron if profile is complete
       console.error("[welcome] schedule missing_info:", e)
     );
-    scheduleFlow(userId, "dormant").catch((e) =>         // 30d + 60d reactivation
-      console.error("[welcome] schedule dormant:", e)
-    );
-
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("Welcome email error:", err);

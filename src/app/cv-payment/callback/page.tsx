@@ -97,7 +97,6 @@ export default async function CvPaymentCallbackPage({
               await cancelFlow(user.id, "missing_info");
               await cancelFlow(user.id, "executive_prestige");
               await cancelFlow(user.id, "upload_started_no_finish");
-              await cancelFlow(user.id, "dormant");
 
               // cv_purchased: cover letter upsell (email 2) + interview nudge (email 3)
               // For professional/full: email 2 (cover letter) is auto-skipped in processQueue

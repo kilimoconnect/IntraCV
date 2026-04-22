@@ -11,8 +11,7 @@
  *   7.  upload_started_no_finish — upload started, not completed
  *   8.  signup_no_purchase       — nurture sequence (segmented by career stage)
  *   9.  executive_prestige       — premium positioning for executive users
- *  10.  dormant                  — 30d + 60d reactivation (never purchased)
- *  11.  repeat_buyer             — 45d + 90d re-engagement for past buyers
+ *  10.  repeat_buyer             — 45d + 90d re-engagement for past buyers
  *
  * Frequency rules:
  *   - Max 1 marketing email per user per 24 hours
@@ -49,7 +48,6 @@ export type FlowId =
   | "upload_started_no_finish"
   | "signup_no_purchase"
   | "executive_prestige"
-  | "dormant"
   | "repeat_buyer";
 
 type CareerCategory = "junior" | "mid-senior" | "executive";
@@ -80,8 +78,7 @@ export const FLOW_PRIORITY: Record<FlowId, number> = {
   upload_started_no_finish: 7,
   signup_no_purchase:       8,
   executive_prestige:       9,
-  dormant:                 10,
-  repeat_buyer:            11,
+  repeat_buyer:            10,
 };
 
 // Flows suppressed when checkout_abandon is active (priority >= SUPPRESS_THRESHOLD)
@@ -129,10 +126,6 @@ const FLOW_SCHEDULES: Record<FlowId, FlowEmail[]> = {
   executive_prestige: [
     { emailNumber: 1, delayMinutes: 60 * 24 },
     { emailNumber: 2, delayMinutes: 60 * 24 * 3 },
-  ],
-  dormant: [
-    { emailNumber: 1, delayMinutes: 60 * 24 * 30 },
-    { emailNumber: 2, delayMinutes: 60 * 24 * 60 },
   ],
   repeat_buyer: [
     { emailNumber: 1, delayMinutes: 60 * 24 * 45 },
@@ -291,7 +284,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
         const PRE_PURCHASE: FlowId[] = [
           "checkout_abandon", "payment_failed", "preview_no_purchase",
           "signup_no_purchase", "missing_info", "upload_started_no_finish",
-          "executive_prestige", "dormant",
+          "executive_prestige",
         ];
         if (PRE_PURCHASE.includes(row.flow) && ctx.hasPurchased) {
           await cancelFlow(userId, row.flow);
@@ -436,7 +429,6 @@ function buildEmail(flow: FlowId, n: number, ctx: UserContext) {
     case "signup_no_purchase":       return buildSignupEmail(n, ctx);
     case "upload_started_no_finish": return buildUploadAbandonEmail(n, ctx);
     case "executive_prestige":       return buildExecutivePrestigeEmail(n, ctx);
-    case "dormant":                  return buildDormantEmail(n, ctx);
     case "repeat_buyer":             return buildRepeatBuyerEmail(n, ctx);
     default:                         return null;
   }
@@ -690,33 +682,6 @@ function buildExecutivePrestigeEmail(n: number, ctx: UserContext) {
       subject: "Executives are judged on positioning before the interview",
       body: `A senior hiring decision starts with how someone positions themselves in writing.\n\nBoards, search firms, and C-suite hiring managers read hundreds of senior profiles. The ones that communicate strategic impact immediately stand out from the ones that describe responsibilities.\n\nYour CV has been upgraded with that standard in mind.`,
       cta: STUDIO_URL, ctaLabel: "Preview My Upgraded CV",
-    },
-  }[n];
-  if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
-}
-
-// ─── Flow: dormant ────────────────────────────────────────────────────────────
-
-function buildDormantEmail(n: number, ctx: UserContext) {
-  const { firstName, careerCategory } = ctx;
-
-  const triggerLine = careerCategory === "executive"
-    ? "A board position. A new advisory role. A senior transition. Any of these start with a strong CV."
-    : careerCategory === "mid-senior"
-    ? "A promotion conversation. A salary negotiation. A move to a stronger company. All of these go better with an updated CV."
-    : "A new application. A better company. A step up. Each one starts with a CV that reflects who you are now.";
-
-  const e = {
-    1: {
-      subject: "Applying soon?",
-      body: `${triggerLine}\n\nIf any of this is on your mind right now, your profile is here and your CV is ready to update.\n\nIt takes minutes, not hours.`,
-      cta: DASHBOARD_URL, ctaLabel: "Update My CV",
-    },
-    2: {
-      subject: "New role this quarter?",
-      body: `A lot can change in two months — new wins, stronger skills, sharper direction.\n\nA CV that reflects who you are today will perform better than the one you last updated.\n\nRefresh yours now. It is faster than starting from scratch.`,
-      cta: DASHBOARD_URL, ctaLabel: "Refresh My CV",
     },
   }[n];
   if (!e) return null;
