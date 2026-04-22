@@ -461,7 +461,7 @@ function buildPaymentFailed(n: number, ctx: UserContext) {
   const e = {
     1: {
       subject: "Your payment did not complete",
-      body: `Something went wrong with your payment — but your CV is still ready.\n\nThis is usually a temporary issue with the payment gateway. Your card has not been charged.\n\nTry again when you are ready — it usually goes through on the second attempt.`,
+      body: `Something went wrong with your payment — but your CV is still ready.\n\nThis is usually a temporary issue with the payment gateway. No payment was taken.\n\nTry again when you are ready — it usually goes through on the second attempt.`,
       cta: STUDIO_URL, ctaLabel: "Try Again",
     },
     2: {
@@ -513,7 +513,7 @@ function buildMissingInfoEmail(n: number, ctx: UserContext) {
   const e = {
     1: {
       subject: "We found a few details that could strengthen your CV",
-      body: `Your profile is set up, but some sections that typically improve CV results are still empty.\n\nWork history and a professional summary are what the AI uses to rewrite your CV more powerfully. The more detail you provide, the stronger the output.\n\nTwo minutes is enough to fill the gaps.`,
+      body: `Your profile is set up, but some sections that typically improve CV results are still empty.\n\nWork history and a professional summary are what the AI uses to rewrite your CV more powerfully. The more detail you provide, the stronger the output.\n\nFill in the gaps and we will take it from there.`,
       cta: CV_BUILDER_URL, ctaLabel: "Strengthen My Profile",
     },
     2: {
@@ -538,9 +538,9 @@ function buildCvPurchasedEmail(n: number, ctx: UserContext) {
   const roleHint = headline || "your target role";
   const e = {
     2: {
-      subject: "Now match your CV with a strong cover letter",
-      body: `Your CV is stronger. The next step is making sure everything that gets sent reads consistently.\n\nA tailored cover letter — written for the same role, in the same tone — builds the case before anyone opens your CV.\n\nGenerate one in minutes. It uses the job description you already provided.`,
-      cta: STUDIO_URL, ctaLabel: "Generate My Cover Letter",
+      subject: "Add a cover letter that matches your CV",
+      body: `Your CV is stronger. The next step is making sure everything you send reads consistently.\n\nA tailored cover letter — written for the same role, same tone — builds the case before anyone opens your CV.\n\nFor $7, you get your CV re-downloaded plus a matching AI-generated cover letter. Return to the studio and select the Professional plan.`,
+      cta: STUDIO_URL, ctaLabel: "Get My Cover Letter",
     },
     3: {
       subject: "Interviews start after the CV — prepare now",
@@ -567,12 +567,12 @@ function buildInterviewUpsellEmail(n: number, ctx: UserContext) {
   const e = {
     2: {
       subject: "Now prepare for the interview too",
-      body: `Your CV got stronger. The next step is walking in prepared.\n\n${depthNote}\n\nWe generated role-specific questions for ${roleHint} — with model answers built from your actual experience.`,
-      cta: INTERVIEW_URL, ctaLabel: "See My Interview Questions",
+      body: `Your CV got stronger. The next step is walking in prepared.\n\n${depthNote}\n\nFor $5, unlock 20 role-specific questions for ${roleHint} — with model answers built from your actual experience.`,
+      cta: INTERVIEW_URL, ctaLabel: "Unlock Interview Questions",
     },
     3: {
       subject: "Your CV got attention — next is interview readiness",
-      body: `If your stronger CV is getting responses, interviews will follow.\n\n20 questions specific to ${roleHint} are waiting for you — tailored, practiced, ready.\n\nThe gap between a good interview and a great one is usually preparation, not ability.`,
+      body: `If your stronger CV is getting responses, interviews will follow.\n\n20 questions specific to ${roleHint} are available for $5 — tailored to your experience, with model answers ready to practise.\n\nThe gap between a good interview and a great one is usually preparation, not ability.`,
       cta: INTERVIEW_URL, ctaLabel: "Prepare for My Interview",
     },
   }[n];
@@ -590,7 +590,7 @@ function buildSignupEmail(n: number, ctx: UserContext) {
     junior: {
       1: {
         subject: "Start with the CV you already have",
-        body: `Even without years of experience, you have value.\n\nProjects, coursework, internships, initiative — these matter. But only if your CV presents them in a way that reads as professional.\n\nWe improved how your profile is presented. The upgraded version is ready to preview.`,
+        body: `Even without years of experience, you have value.\n\nProjects, coursework, internships, initiative — these matter. But only if your CV presents them in a way that reads as professional.\n\nComplete your profile in the CV builder and we will generate a stronger, formatted version ready to send.`,
       },
       2: {
         subject: "Strong graduates get overlooked too — here is why",
@@ -608,7 +608,7 @@ function buildSignupEmail(n: number, ctx: UserContext) {
     "mid-senior": {
       1: {
         subject: "Start with the CV you already have",
-        body: `We reviewed your CV and found clear opportunities to improve how your experience is presented.\n\nAt your stage, recruiters look for ownership, results, and progression. Your upgraded version makes all three more visible.`,
+        body: `At your stage, recruiters look for ownership, results, and progression.\n\nComplete your profile in the CV builder and our AI will rewrite your experience to make all three more visible — in a format that reads at the right level.`,
       },
       2: {
         subject: "Your experience is there — the presentation may not be",
@@ -626,7 +626,7 @@ function buildSignupEmail(n: number, ctx: UserContext) {
     executive: {
       1: {
         subject: "Start with the CV you already have",
-        body: `Senior candidates are not evaluated on experience alone. Positioning matters.\n\nThe way you frame scale, impact, and leadership in writing determines how seriously you are taken before any conversation begins.\n\nWe reviewed your CV with that in mind. Your upgraded version is ready.`,
+        body: `Senior candidates are not evaluated on experience alone. Positioning matters.\n\nThe way you frame scale, impact, and leadership in writing determines how seriously you are taken before any conversation begins.\n\nComplete your profile and we will produce a version that communicates the right level of authority from the first line.`,
       },
       2: {
         subject: "Leadership should sound like leadership on paper",
@@ -645,7 +645,10 @@ function buildSignupEmail(n: number, ctx: UserContext) {
 
   const emails = byStage[careerCategory] ?? byStage["mid-senior"];
   const e = emails[n]; if (!e) return null;
-  return fmt(firstName, e.subject, e.body, STUDIO_URL, "Preview Your CV");
+  // Email 1: user may not have a complete profile yet — send to CV builder
+  const cta = n === 1 ? CV_BUILDER_URL : STUDIO_URL;
+  const ctaLabel = n === 1 ? "Build My CV" : "Preview My CV";
+  return fmt(firstName, e.subject, e.body, cta, ctaLabel);
 }
 
 // ─── Flow: upload_started_no_finish ──────────────────────────────────────────
@@ -655,7 +658,7 @@ function buildUploadAbandonEmail(n: number, ctx: UserContext) {
   const e = {
     1: {
       subject: "Finish your upload in under 2 minutes",
-      body: `You started improving your CV but did not finish.\n\nYou are close. Completing the upload takes less than two minutes and unlocks the full AI review of your CV.\n\nYour progress has been saved — pick up where you left off.`,
+      body: `You started improving your CV but did not finish.\n\nUploading your CV takes less than two minutes and unlocks the full AI review — formatting, wording, and layout all handled for you.\n\nHead back and complete it whenever you are ready.`,
       cta: CV_BUILDER_URL, ctaLabel: "Finish My Upload",
     },
     2: {
