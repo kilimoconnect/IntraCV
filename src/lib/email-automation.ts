@@ -217,6 +217,13 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   const admin = createAdminSupabase();
   let sent = 0, skipped = 0, failed = 0;
 
+  // Reset any rows stuck in "processing" — safe because each cron run is atomic,
+  // so anything still in "processing" at the start of a new run is guaranteed stuck.
+  await admin
+    .from("email_automation_queue")
+    .update({ status: "pending" })
+    .eq("status", "processing");
+
   // Fetch more than we'll send so per-user priority sorting works correctly
   const { data: rows, error } = await admin
     .from("email_automation_queue")
@@ -276,7 +283,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
 
       try {
         const ctx = await fetchUserContext(userId);
-        if (!ctx) { await markStatus(row.id, "failed"); failed++; continue; }
+        if (!ctx) { await markStatus(row.id, "cancelled"); skipped++; continue; } // user deleted
         if (ctx.marketingUnsubscribed) { await markStatus(row.id, "cancelled"); skipped++; continue; }
 
         // ── Per-flow guards ──
@@ -319,9 +326,10 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
         sent++;
         if (!bypassRateLimit) sentThisUser = true;
 
-      } catch (e) {
+      } catch (e: any) {
         console.error(`[email-automation] row ${row.id}:`, e);
-        await markStatus(row.id, "failed");
+        // Reset to pending so the next cron run retries (transient errors should not permanently fail rows)
+        await markStatus(row.id, "pending");
         failed++;
       }
     }
@@ -377,26 +385,27 @@ async function markStatus(id: string, status: string, sentAt?: string): Promise<
 
 // ─── User context ─────────────────────────────────────────────────────────────
 
+/** Returns null if user not found (permanent), throws on transient DB errors so caller can retry. */
 async function fetchUserContext(userId: string): Promise<UserContext | null> {
-  try {
-    const admin = createAdminSupabase();
-    const [
-      { data: { user } },
-      { data: pi },
-      { data: tokens },
-      { data: profile },
-      { count: expCount },
-      { data: summaryRow },
-    ] = await Promise.all([
-      admin.auth.admin.getUserById(userId),
-      admin.from("cv_personal_info").select("headline, career_category").eq("user_id", userId).maybeSingle(),
-      admin.from("cv_download_tokens").select("id").eq("user_id", userId).limit(1),
-      admin.from("profiles").select("interview_questions_paid_quota").eq("id", userId).maybeSingle(),
-      admin.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", userId),
-      admin.from("cv_summary").select("summary").eq("user_id", userId).maybeSingle(),
-    ]);
+  const admin = createAdminSupabase();
+  const [
+    { data: { user }, error: userErr },
+    { data: pi },
+    { data: tokens },
+    { data: profile },
+    { count: expCount },
+    { data: summaryRow },
+  ] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("cv_personal_info").select("headline, career_category").eq("user_id", userId).maybeSingle(),
+    admin.from("cv_download_tokens").select("id").eq("user_id", userId).limit(1),
+    admin.from("profiles").select("interview_questions_paid_quota").eq("id", userId).maybeSingle(),
+    admin.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    admin.from("cv_summary").select("summary").eq("user_id", userId).maybeSingle(),
+  ]);
 
-    if (!user?.email) return null;
+  if (userErr) throw new Error(`fetchUserContext DB error: ${userErr.message}`);
+  if (!user?.email) return null; // user deleted — caller should cancel
     const fullName = user.user_metadata?.full_name || "";
 
     // Complete profile = at least 1 experience entry AND a non-empty summary
