@@ -80,7 +80,6 @@ export default async function InterviewPaymentCallbackPage({
             await cancelFlow(user.id, "missing_info");
             await cancelFlow(user.id, "executive_prestige");
             await cancelFlow(user.id, "upload_started_no_finish");
-            await cancelFlow(user.id, "dormant");
             await cancelFlow(user.id, "interview_upsell");
             await cancelFlow(user.id, "cv_purchased"); // email 3 was interview nudge
           } catch (e) {
