@@ -651,6 +651,15 @@ function CVBuilderPage() {
       return;
     }
 
+    // Schedule upload_started_no_finish — cancelled below if extraction succeeds
+    if (!sessionStorage.getItem("fusecv-upload-tracked")) {
+      sessionStorage.setItem("fusecv-upload-tracked", "1");
+      fetch("/api/email-automation/trigger", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flow: "upload_started_no_finish" }),
+      }).catch(() => {});
+    }
+
     setUploading(true);
     setExtracting(false);
     setExtractionProgress(10);
@@ -847,6 +856,12 @@ function CVBuilderPage() {
       toast.success("CV extracted successfully! Review and edit below.");
       setStep("edit");
       setPendingAutoSave(true);
+
+      // Upload completed successfully — cancel the abandon flow
+      fetch("/api/email-automation/cancel", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flow: "upload_started_no_finish" }),
+      }).catch(() => {});
     } catch (err: any) {
       console.error("Upload/extraction error:", err);
       toast.error(err.message || "Failed to extract CV");
