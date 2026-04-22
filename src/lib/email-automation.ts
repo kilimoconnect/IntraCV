@@ -406,26 +406,21 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
 
   if (userErr) throw new Error(`fetchUserContext DB error: ${userErr.message}`);
   if (!user?.email) return null; // user deleted — caller should cancel
-    const fullName = user.user_metadata?.full_name || "";
 
-    // Complete profile = at least 1 experience entry AND a non-empty summary
-    const hasExp = (expCount ?? 0) > 0;
-    const hasSummary = !!summaryRow?.summary?.trim();
+  const fullName = user.user_metadata?.full_name || "";
+  const hasExp = (expCount ?? 0) > 0;
+  const hasSummary = !!summaryRow?.summary?.trim();
 
-    return {
-      email: user.email,
-      firstName: fullName.trim().split(" ")[0] || "there",
-      headline: pi?.headline || "",
-      careerCategory: (pi?.career_category as CareerCategory) || "junior",
-      hasPurchased: (tokens?.length ?? 0) > 0,
-      hasInterviewPurchase: (profile?.interview_questions_paid_quota ?? 0) > 0,
-      hasCompleteProfile: hasExp && hasSummary,
-      marketingUnsubscribed: !!user.user_metadata?.marketing_unsubscribed,
-    };
-  } catch (e) {
-    console.error("[email-automation] fetchUserContext:", e);
-    return null;
-  }
+  return {
+    email: user.email,
+    firstName: fullName.trim().split(" ")[0] || "there",
+    headline: pi?.headline || "",
+    careerCategory: (pi?.career_category as CareerCategory) || "junior",
+    hasPurchased: (tokens?.length ?? 0) > 0,
+    hasInterviewPurchase: (profile?.interview_questions_paid_quota ?? 0) > 0,
+    hasCompleteProfile: hasExp && hasSummary,
+    marketingUnsubscribed: !!user.user_metadata?.marketing_unsubscribed,
+  };
 }
 
 // ─── Email builder router ─────────────────────────────────────────────────────
