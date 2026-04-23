@@ -331,9 +331,6 @@ function HeroSection() {
 
             {/* Name input — personalises the report card */}
             <motion.div variants={fadeUp} className="mb-6 max-w-sm mx-auto lg:mx-0">
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                See your report — enter your first name
-              </label>
               <div className="relative flex items-center">
                 <User size={14} className="absolute left-3.5 text-slate-300 pointer-events-none" />
                 <input
