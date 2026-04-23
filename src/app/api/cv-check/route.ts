@@ -109,7 +109,8 @@ function buildExtractPrompt(cvText: string): string {
     '  "skills": [{ "name": "skill name" }],\n' +
     '  "certifications": [{ "name": "certification name" }],\n' +
     '  "languages": [{ "name": "language name" }],\n' +
-    '  "keyAchievements": [{ "description": "achievement text" }],\n' +
+    '  "has_key_achievements": <boolean — true if ANY dedicated achievements section exists, regardless of name. This includes sections labelled: "Key Achievements", "Creating Impact", "Career Highlights", "Notable Achievements", "Accomplishments", "Impact", "Key Contributions", "Value Created", "Key Results", "Major Contributions", or any section that lists standalone accomplishments outside of job descriptions>,\n' +
+    '  "keyAchievements": [{ "description": "achievement text — extract ALL items from ANY achievements section regardless of what it is called, including \'Creating Impact\', \'Career Highlights\', etc." }],\n' +
     '  "boardRoles": [{ "role": "board or advisory role description" }],\n' +
     '  "publications": [{ "title": "publication or article title" }],\n' +
     '  "executiveTraining": [{ "name": "executive training or leadership programme name" }],\n' +
@@ -124,8 +125,25 @@ function buildExtractPrompt(cvText: string): string {
     "}\n\n" +
     "IMPORTANT: If is_cv is false, set all array fields to [] and string fields to empty strings. Return ONLY the JSON object.\n\n" +
     "DOCUMENT TEXT:\n---\n" +
-    cvText.slice(0, 9000) +
+    buildDocWindow(cvText) +
     "\n---"
+  );
+}
+
+/**
+ * Build the text window sent to GPT.
+ * For long CVs we include the document HEAD (main content) + TAIL (last section,
+ * where References, Declaration, and sometimes Key Achievements live).
+ * This prevents the 9 000-char slice from silently cutting off the end of the CV.
+ */
+function buildDocWindow(text: string): string {
+  const HEAD = 7_500;
+  const TAIL = 2_000;
+  if (text.length <= HEAD + TAIL) return text;
+  return (
+    text.slice(0, HEAD) +
+    "\n\n[... middle of document omitted for brevity ...]\n\n" +
+    text.slice(-TAIL)
   );
 }
 
@@ -145,6 +163,9 @@ presence of a Key Achievements section, leadership scope, and role-relevant keyw
 Required sections: Summary, Experience (3–6 roles expected), Education, Skills, Key Achievements, Languages, References.
 Recommended: Certifications, Awards & Recognition, Professional Memberships, Tools & Software, Projects.
 Sections NOT expected at this level: Board Roles, Publications, Executive Training.
+IMPORTANT — Alternative section names: Sections labelled "Creating Impact", "Career Highlights", "Notable Achievements",
+"Accomplishments", "Key Contributions", "Value Created", or similar COUNT as a Key Achievements section — do NOT flag
+their absence if such a section exists. A References section may say "Available on request" — that counts as present.
 Most mid-senior CVs score 25–60/100. Be strict and honest. Return ONLY valid JSON.`,
 
   executive: `You are a strict CV analyst specialising in executive and C-suite CVs (12+ years experience).
@@ -153,6 +174,9 @@ publications or thought leadership, executive training, and breadth of senior le
 Required sections: Summary, Experience (5+ roles expected), Education, Skills, Key Achievements,
 Board & Advisory Roles, Languages, References.
 Recommended: Publications/Speaking Engagements, Executive Training, Professional Memberships, Awards.
+IMPORTANT — Alternative section names: Sections labelled "Creating Impact", "Career Highlights", "Notable Achievements",
+"Accomplishments", "Key Contributions", "Value Created", or similar COUNT as a Key Achievements section — do NOT flag
+their absence if such a section exists. A References section may say "Available on request" — that counts as present.
 Most executive CVs score 30–65/100. Be strict and honest. Return ONLY valid JSON.`,
 };
 
@@ -211,7 +235,7 @@ function buildAnalysisPrompt(cvText: string, category: CareerCategory): string {
     "- format.issues: follow the FORBIDDEN/ALLOWED rules above strictly — quality over quantity, empty array is valid\n" +
     "- Return ONLY the JSON object\n\n" +
     "CV TEXT:\n---\n" +
-    cvText.slice(0, 9000) +
+    buildDocWindow(cvText) +
     "\n---"
   );
 }
@@ -271,25 +295,45 @@ export async function POST(req: Request) {
     // getCategoryGaps expects cvData.summary as a string and cvData.referees as an array,
     // but extraction only provides booleans/counts. Synthesise what getCategoryGaps needs.
     //
-    // For referees we use THREE layers so no real referee section is ever missed:
-    //   1. has_referees boolean (most reliable — GPT flags a section even on varied phrasing)
-    //   2. referees array length (named referees extracted by GPT)
-    //   3. Raw text keyword scan (final safety net for any phrasing GPT missed)
-    const hasRefereesInText = /\b(referee|referees|references?)\b/i.test(cvText);
+    // Synthesise boolean signals that getCategoryGaps needs as arrays/strings.
+    // Each field uses multiple detection layers so real content is never missed.
+
+    // ── Referees: 4-layer detection ──────────────────────────────────────────
+    // Layer 4 broadens the raw scan: "on request" / "upon request" at end of CV
+    // often indicates a references section even without the word "referee".
+    const hasRefereesInText =
+      /\b(referee|referees|references?)\b/i.test(cvText) ||
+      /\b(available|furnished|provided)\s+(on|upon)\s+request\b/i.test(cvText) ||
+      /\bon\s+request\b/i.test(cvText.slice(-2000)); // tail of doc only for "on request"
     const refereesPresent =
       structured.has_referees === true ||
       (Array.isArray(structured.referees) && structured.referees.length > 0) ||
       hasRefereesInText;
 
+    // ── Key Achievements: 3-layer detection ──────────────────────────────────
+    // Handles non-standard section names like "Creating Impact", "Career Highlights" etc.
+    const hasAchievementsInText =
+      /\b(creating impact|career highlights?|notable achievements?|accomplishments?|key contributions?|value created|key results|major contributions?)\b/i.test(cvText);
+    const achievementsPresent =
+      structured.has_key_achievements === true ||
+      (Array.isArray(structured.keyAchievements) && structured.keyAchievements.length > 0) ||
+      hasAchievementsInText;
+
     const structuredForGaps = {
       ...structured,
-      // Synthesise summary string: non-empty string means "summary exists", empty means absent
+      // Synthesise summary string: non-empty = present, empty = absent
       summary: structured.has_summary ? "professional summary present" : "",
       // Synthesise referees array so getCategoryGaps sees at least one entry when present
       referees: refereesPresent
         ? (Array.isArray(structured.referees) && structured.referees.length > 0
             ? structured.referees
             : [{ name: "Available on request" }])
+        : [],
+      // Synthesise keyAchievements so getCategoryGaps doesn't fire for non-standard names
+      keyAchievements: achievementsPresent
+        ? (Array.isArray(structured.keyAchievements) && structured.keyAchievements.length > 0
+            ? structured.keyAchievements
+            : [{ description: "achievements present" }])
         : [],
     };
     const categoryGaps = getCategoryGaps(category, structuredForGaps);
