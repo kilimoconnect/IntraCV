@@ -118,7 +118,8 @@ function buildExtractPrompt(cvText: string): string {
     '  "memberships": [{ "name": "professional association or membership name" }],\n' +
     '  "tools": [{ "name": "tool, software, or platform name" }],\n' +
     '  "volunteer": [{ "role": "volunteer role or activity" }],\n' +
-    '  "referees": [{ "name": "<referee\'s full name if explicitly listed in a References or Referees section; if only \'Available upon request\' appears, include one entry with name: \'Available upon request\'>" }],\n' +
+    '  "has_referees": <boolean — true if the CV contains ANY references or referees section, regardless of phrasing. This includes: named referees with contact details, any variation of "available upon/on request", "furnished on request", "provided on request", "references available", "referees available", or any other phrasing indicating a references section exists>,\n' +
+    '  "referees": [{ "name": "<referee full name if explicitly named; omit this array entry for \'available on request\' style — the has_referees boolean handles that>" }],\n' +
     '  "personalInfo": { "linkedin": "<LinkedIn URL if found, empty string if not>" }\n' +
     "}\n\n" +
     "IMPORTANT: If is_cv is false, set all array fields to [] and string fields to empty strings. Return ONLY the JSON object.\n\n" +
@@ -267,13 +268,29 @@ export async function POST(req: Request) {
     // ── Step 2: Detect category using the same logic as the CV builder ────────
     const category = detectCategory(structured);
 
-    // getCategoryGaps expects cvData.summary as a string and cvData.referees as an array.
-    // The extraction step only provides has_summary (boolean) and summary_word_count (number),
-    // so we synthesize the fields getCategoryGaps needs before passing structured data.
+    // getCategoryGaps expects cvData.summary as a string and cvData.referees as an array,
+    // but extraction only provides booleans/counts. Synthesise what getCategoryGaps needs.
+    //
+    // For referees we use THREE layers so no real referee section is ever missed:
+    //   1. has_referees boolean (most reliable — GPT flags a section even on varied phrasing)
+    //   2. referees array length (named referees extracted by GPT)
+    //   3. Raw text keyword scan (final safety net for any phrasing GPT missed)
+    const hasRefereesInText = /\b(referee|referees|references?)\b/i.test(cvText);
+    const refereesPresent =
+      structured.has_referees === true ||
+      (Array.isArray(structured.referees) && structured.referees.length > 0) ||
+      hasRefereesInText;
+
     const structuredForGaps = {
       ...structured,
       // Synthesise summary string: non-empty string means "summary exists", empty means absent
       summary: structured.has_summary ? "professional summary present" : "",
+      // Synthesise referees array so getCategoryGaps sees at least one entry when present
+      referees: refereesPresent
+        ? (Array.isArray(structured.referees) && structured.referees.length > 0
+            ? structured.referees
+            : [{ name: "Available on request" }])
+        : [],
     };
     const categoryGaps = getCategoryGaps(category, structuredForGaps);
 
