@@ -424,12 +424,7 @@ function ResultsView({
       <ScoreCardsSection cards={scoreCards} />
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 4 — Format & Presentation
-      ══════════════════════════════════════════════════════ */}
-      <FormatSection format={result.format} onCTA={() => router.push("/register")} />
-
-      {/* ══════════════════════════════════════════════════════
-          SECTION 5 — What We Found
+          SECTION 4 — What We Found
       ══════════════════════════════════════════════════════ */}
       <WhatWeFoundSection
         findings={findings}
@@ -439,9 +434,14 @@ function ResultsView({
       />
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 6 — Transformation Preview
+          SECTION 5 — Transformation Preview
       ══════════════════════════════════════════════════════ */}
       <TransformationSection from={result.overall_score} to={potential} />
+
+      {/* ══════════════════════════════════════════════════════
+          SECTION 6 — Format & Presentation (last analysis section)
+      ══════════════════════════════════════════════════════ */}
+      <FormatSection format={result.format} onCTA={() => router.push("/register")} />
 
       {/* ══════════════════════════════════════════════════════
           SECTION 7 — CTA
