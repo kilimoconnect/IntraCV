@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
-  CheckCircle2, XCircle, Search, FileText, Sparkles,
+  CheckCircle2, XCircle, FileText, Sparkles, User,
 } from "lucide-react";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
@@ -28,146 +28,35 @@ const stagger = (d = 0.08): Variants => ({
   show:   { transition: { staggerChildren: d } },
 });
 
-// ─── Role Profiles ────────────────────────────────────────────────────────────
-interface RoleProfile {
-  category: string;
-  score: number;
-  issues: string[];     // exactly 3 hyper-specific issues
-}
+// ─── Static issues (always the same — name is the personalisation) ─────────────
+const ISSUES = [
+  "Summary too short to stand out to recruiters",
+  "0 achievements include measurable results",
+  "Only 4 of 11 expected keywords found",
+];
 
-const PROFILES: Record<string, RoleProfile> = {
-  tech: {
-    category: "Software Engineer",
-    score: 27,
-    issues: [
-      "No GitHub or portfolio URL detected",
-      "Tech stack first appears on page 2, not the header",
-      "0 of 6 experience bullets show delivery metrics",
-    ],
-  },
-  marketing: {
-    category: "Marketing Professional",
-    score: 31,
-    issues: [
-      "No campaign ROI, growth %, or revenue figures found",
-      "CRM tools (HubSpot, Salesforce) not mentioned",
-      "Only 2 of 9 expected marketing keywords present",
-    ],
-  },
-  design: {
-    category: "Designer",
-    score: 26,
-    issues: [
-      "No Behance, Dribbble, or portfolio URL detected",
-      "Figma and Adobe CC absent from skills section",
-      "0 client projects include measurable outcomes",
-    ],
-  },
-  finance: {
-    category: "Finance Professional",
-    score: 33,
-    issues: [
-      "No portfolio size, AUM, or P&L responsibility stated",
-      "Certifications (CFA, CPA) not visible in top third",
-      "GAAP and IFRS keywords absent from 4 expected locations",
-    ],
-  },
-  sales: {
-    category: "Sales Professional",
-    score: 30,
-    issues: [
-      "No quota attainment % or revenue figures found",
-      "0 of 5 roles include deal size or pipeline metrics",
-      "CRM experience not mentioned in any position",
-    ],
-  },
-  hr: {
-    category: "HR Professional",
-    score: 30,
-    issues: [
-      "Hiring volume and time-to-fill data not found",
-      "HRIS systems (Workday, BambooHR) not listed",
-      "0 initiatives include measurable business impact",
-    ],
-  },
-  management: {
-    category: "Manager / Director",
-    score: 32,
-    issues: [
-      "Team size not mentioned in any of 3 roles",
-      "Budget responsibility absent from all experience",
-      "No OKR, KPI, or strategic framework referenced",
-    ],
-  },
-  healthcare: {
-    category: "Healthcare Professional",
-    score: 35,
-    issues: [
-      "Registration number and license not prominently displayed",
-      "Patient volume and outcome data absent",
-      "3 of 8 required clinical keywords missing",
-    ],
-  },
-  education: {
-    category: "Teacher / Educator",
-    score: 34,
-    issues: [
-      "No student outcomes or results data found",
-      "Teaching certifications not in top section",
-      "Curriculum framework keywords absent",
-    ],
-  },
-  default: {
-    category: "",
-    score: 29,
-    issues: [
-      "Summary too short to stand out to recruiters",
-      "0 achievements include measurable results",
-      "Only 4 of 11 expected keywords found",
-    ],
-  },
-};
-
-function detectProfile(title: string): RoleProfile {
-  const t = title.toLowerCase();
-  if (/software|engineer|developer|devops|sre|data scien|machine learn|ml |ai |backend|frontend|fullstack|full.stack|cloud|architect|qa|quality|sysadmin|infrastructure/.test(t)) return PROFILES.tech;
-  if (/market|growth|seo|sem|content|social media|brand|digital|campaign|demand gen|product market/.test(t)) return PROFILES.marketing;
-  if (/design|ux|ui|user experience|user interface|creative|graphic|visual|figma|product design|motion/.test(t)) return PROFILES.design;
-  if (/financ|account|audit|cfo|controller|treasurer|invest|banking|actuar|analyst|risk|wealth/.test(t)) return PROFILES.finance;
-  if (/sales|account exec|business dev|bdm|revenue|commercial|enterprise|sdr|bdr|presales/.test(t)) return PROFILES.sales;
-  if (/\bhr\b|human resource|people ops|recruit|talent|compensation|benefit|hrbp|l&d|learning/.test(t)) return PROFILES.hr;
-  if (/manag|director|head of|vp |vice pres|ceo|coo|cto|president|chief|operation|program|project|strategy/.test(t)) return PROFILES.management;
-  if (/nurs|doctor|physician|surgeon|pharmacist|physiother|radiolog|clinical|medical|health|dental|midwif/.test(t)) return PROFILES.healthcare;
-  if (/teach|professor|lecturer|tutor|educator|academic|principal|school|curriculum|instructor/.test(t)) return PROFILES.education;
-  return PROFILES.default;
-}
-
-// ─── Score Card (clean, tool-like) ────────────────────────────────────────────
-function ScoreCard({ jobTitle }: { jobTitle: string }) {
-  const profile    = useMemo(() => jobTitle.trim().length >= 3 ? detectProfile(jobTitle) : PROFILES.default, [jobTitle]);
+// ─── Score Card ───────────────────────────────────────────────────────────────
+function ScoreCard({ firstName }: { firstName: string }) {
+  const name     = firstName.trim();
+  const hasName  = name.length >= 2;
   const [animated, setAnimated] = useState(false);
-  const [profileKey, setProfileKey] = useState(0);
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (!inView) return;
-    setAnimated(false);
-    const t = setTimeout(() => { setAnimated(true); setProfileKey(k => k + 1); }, 80);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile, inView]);
 
   useEffect(() => {
     if (inView) setTimeout(() => setAnimated(true), 300);
   }, [inView]);
 
+  // capitalise first letter
+  const display = useMemo(() =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : "",
+  [name]);
+
   const circumference = 2 * Math.PI * 30;
-  const hasRole = jobTitle.trim().length >= 3;
 
   return (
     <div ref={ref} className="relative w-full max-w-[340px] mx-auto lg:mx-0">
-      {/* Subtle glow */}
+      {/* Glow */}
       <div className="absolute inset-6 rounded-3xl blur-2xl opacity-[0.07] pointer-events-none"
         style={{ background: "#ef4444" }} />
 
@@ -185,18 +74,22 @@ function ScoreCard({ jobTitle }: { jobTitle: string }) {
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-70" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400 opacity-70" />
           </div>
+
+          {/* Title — swaps to user's name */}
           <AnimatePresence mode="wait">
             <motion.span
-              key={profile.category || "default"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              key={hasName ? display : "generic"}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.2 }}
               className="text-[10px] font-black uppercase tracking-widest text-slate-400"
             >
-              {hasRole ? `${profile.category} Analysis` : "CV Analysis"}
+              {hasName ? `${display}'s CV Analysis` : "CV Analysis"}
             </motion.span>
           </AnimatePresence>
-          {/* Live indicator */}
+
+          {/* Live dot */}
           <div className="flex items-center gap-1">
             <motion.div
               animate={{ opacity: [1, 0.3, 1] }}
@@ -211,37 +104,30 @@ function ScoreCard({ jobTitle }: { jobTitle: string }) {
         <div className="px-5 py-5">
           {/* Score row */}
           <div className="flex items-center gap-4 mb-5">
-            {/* Circle */}
             <div className="relative w-[72px] h-[72px] shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
                 <circle cx="34" cy="34" r="30" fill="none" stroke="#f1f5f9" strokeWidth="5" />
                 <motion.circle
-                  key={`ring-${profileKey}`}
                   cx="34" cy="34" r="30" fill="none"
                   stroke="#ef4444" strokeWidth="5"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
                   initial={{ strokeDashoffset: circumference }}
-                  animate={animated ? { strokeDashoffset: circumference * (1 - profile.score / 100) } : {}}
+                  animate={animated ? { strokeDashoffset: circumference * 0.71 } : {}}
                   transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={`score-${profileKey}`}
-                    className="text-[22px] font-black leading-none text-slate-900"
-                    initial={{ opacity: 0, scale: 0.7 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >{profile.score}</motion.span>
-                </AnimatePresence>
+                <motion.span
+                  className="text-[22px] font-black leading-none text-slate-900"
+                  initial={{ opacity: 0 }}
+                  animate={animated ? { opacity: 1 } : {}}
+                  transition={{ delay: 0.4 }}
+                >29</motion.span>
                 <span className="text-[8px] text-slate-400 font-bold mt-0.5">/100</span>
               </div>
             </div>
 
-            {/* Status */}
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
@@ -249,61 +135,61 @@ function ScoreCard({ jobTitle }: { jobTitle: string }) {
               </div>
               <AnimatePresence mode="wait">
                 <motion.p
-                  key={`label-${profileKey}`}
+                  key={hasName ? "named" : "generic"}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   className="text-xs text-slate-400 font-medium leading-snug"
                 >
-                  {hasRole
-                    ? `Issues typical for ${profile.category} CVs`
-                    : "Common CV issues detected"
-                  }
+                  {hasName
+                    ? `${display}, your CV has critical gaps`
+                    : "Common CV issues detected"}
                 </motion.p>
               </AnimatePresence>
             </div>
           </div>
 
           {/* 3 issues */}
-          <div className="space-y-2 mb-5">
+          <div className="mb-5">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
               3 critical issues found
             </p>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`issues-${profileKey}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-2"
-              >
-                {profile.issues.map((issue, i) => (
-                  <motion.div
-                    key={issue}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: animated ? 0.3 + i * 0.12 : 0, duration: 0.3 }}
-                    className="flex items-start gap-2.5 bg-red-50 rounded-lg px-3 py-2"
-                  >
-                    <XCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
-                    <span className="text-[11px] font-semibold text-slate-700 leading-snug">{issue}</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
+            <div className="space-y-2">
+              {ISSUES.map((issue, i) => (
+                <motion.div
+                  key={issue}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={animated ? { opacity: 1, x: 0 } : {}}
+                  transition={{ delay: 0.3 + i * 0.12, duration: 0.3 }}
+                  className="flex items-start gap-2.5 bg-red-50 rounded-lg px-3 py-2"
+                >
+                  <XCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
+                  <span className="text-[11px] font-semibold text-slate-700 leading-snug">{issue}</span>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
-          {/* CTA nudge */}
-          <div className="rounded-xl px-3 py-2.5 text-center"
-            style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.2)` }}>
-            <p className="text-[11px] font-black text-slate-800">
-              {hasRole ? `Showing ${profile.category} preview` : "This is a sample preview"}
-            </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Upload your CV to see your real score
-            </p>
-          </div>
+          {/* Nudge — personalised with name */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={hasName ? display : "generic-nudge"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="rounded-xl px-3 py-2.5 text-center"
+              style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.2)` }}
+            >
+              <p className="text-[11px] font-black text-slate-800">
+                {hasName ? `${display}, your real score is waiting` : "Your real score is waiting"}
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Upload your CV to see your full analysis
+              </p>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
 
@@ -317,9 +203,9 @@ function ScoreCard({ jobTitle }: { jobTitle: string }) {
         <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
       </motion.div>
 
-      {/* Personalised badge */}
+      {/* Name badge */}
       <AnimatePresence>
-        {hasRole && (
+        {hasName && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -328,7 +214,7 @@ function ScoreCard({ jobTitle }: { jobTitle: string }) {
             className="absolute -bottom-3 -left-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
           >
             <Sparkles size={11} style={{ color: BLUE }} />
-            <span className="text-[10px] font-black text-slate-800">Personalised preview</span>
+            <span className="text-[10px] font-black text-slate-800">Report for {display}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -391,18 +277,22 @@ function Navbar() {
 function HeroSection() {
   const router   = useRouter();
   const supabase = createClient();
-  const [jobTitle, setJobTitle]         = useState("");
-  const [debouncedTitle, setDebouncedTitle] = useState("");
+  const [firstName, setFirstName]           = useState("");
+  const [debouncedName, setDebouncedName]   = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedTitle(jobTitle), 280);
+    const t = setTimeout(() => setDebouncedName(firstName), 250);
     return () => clearTimeout(t);
-  }, [jobTitle]);
+  }, [firstName]);
 
   const handleCTA = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     router.push(session ? "/dashboard" : "/register");
   }, [router, supabase]);
+
+  const displayName = firstName.trim()
+    ? firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1)
+    : "";
 
   return (
     <section className="min-h-screen flex items-center pt-14 bg-white">
@@ -439,31 +329,32 @@ function HeroSection() {
               Upload your CV. Get your score in 60 seconds.
             </motion.p>
 
-            {/* Job title input */}
+            {/* Name input — personalises the report card */}
             <motion.div variants={fadeUp} className="mb-6 max-w-sm mx-auto lg:mx-0">
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                Personalise your preview
+                See your report — enter your first name
               </label>
               <div className="relative flex items-center">
-                <Search size={14} className="absolute left-3.5 text-slate-300 pointer-events-none" />
+                <User size={14} className="absolute left-3.5 text-slate-300 pointer-events-none" />
                 <input
                   type="text"
-                  value={jobTitle}
-                  onChange={e => setJobTitle(e.target.value)}
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value.replace(/[^a-zA-Z\s'-]/g, ""))}
                   onKeyDown={e => e.key === "Enter" && handleCTA()}
-                  placeholder="e.g. Software Engineer, Nurse, Teacher…"
+                  placeholder="Your first name…"
+                  maxLength={32}
                   className="w-full pl-9 pr-4 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition-all placeholder:text-slate-300"
                 />
               </div>
               <AnimatePresence>
-                {jobTitle.trim().length >= 3 && (
+                {displayName && (
                   <motion.p
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="text-[11px] text-emerald-600 mt-1.5 font-semibold overflow-hidden"
                   >
-                    ✓ Preview personalised for &ldquo;{jobTitle.trim()}&rdquo;
+                    ✓ Report personalised for {displayName}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -514,7 +405,7 @@ function HeroSection() {
             transition={{ duration: 0.6, ease: ez, delay: 0.15 }}
             className="order-1 lg:order-2 flex justify-center lg:justify-end"
           >
-            <ScoreCard jobTitle={debouncedTitle} />
+            <ScoreCard firstName={debouncedName} />
           </motion.div>
         </div>
       </div>
