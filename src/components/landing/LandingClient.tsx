@@ -5,7 +5,6 @@ import { motion, useInView, AnimatePresence, type Variants } from "framer-motion
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
   CheckCircle2, XCircle, FileText, User, Sparkles,
@@ -258,7 +257,7 @@ function ScoreCard() {
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const router   = useRouter();
-  const supabase = createClient();
+
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 8);
@@ -266,10 +265,9 @@ function Navbar() {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
+  const handleCTA = useCallback(() => {
+    router.push("/cv-check");
+  }, [router]);
 
   return (
     <motion.nav
@@ -308,12 +306,11 @@ function Navbar() {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function HeroSection() {
   const router   = useRouter();
-  const supabase = createClient();
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
+
+  const handleCTA = useCallback(() => {
+    router.push("/cv-check");
+  }, [router]);
 
   return (
     <section className="min-h-screen flex items-center pt-14 bg-white">
@@ -459,12 +456,11 @@ function HowItWorks() {
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const router   = useRouter();
-  const supabase = createClient();
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
+
+  const handleCTA = useCallback(() => {
+    router.push("/cv-check");
+  }, [router]);
 
   const steps = [
     { n: "1", icon: <Upload size={22} />,     title: "Upload CV",      body: "PDF or Word. Takes 5 seconds." },
@@ -602,12 +598,11 @@ function FinalCTA() {
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const router   = useRouter();
-  const supabase = createClient();
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
+
+  const handleCTA = useCallback(() => {
+    router.push("/cv-check");
+  }, [router]);
 
   return (
     <section ref={ref} className="py-24 relative overflow-hidden" style={{ background: DARK }}>
@@ -673,7 +668,7 @@ function FinalCTA() {
 function StickyMobileCTA() {
   const [show, setShow] = useState(false);
   const router   = useRouter();
-  const supabase = createClient();
+
 
   useEffect(() => {
     const h = () => setShow(window.scrollY > 420);
@@ -681,10 +676,9 @@ function StickyMobileCTA() {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
+  const handleCTA = useCallback(() => {
+    router.push("/cv-check");
+  }, [router]);
 
   return (
     <AnimatePresence>
