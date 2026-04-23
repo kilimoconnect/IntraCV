@@ -9,7 +9,7 @@ import {
   Upload, FileText, CheckCircle2, XCircle,
   ArrowRight, ArrowDown, Lock, Zap, Shield,
   RefreshCw, Sparkles, TrendingUp, AlertCircle,
-  User, Briefcase, Star,
+  User, Briefcase, Star, Palette, Layout, CheckCheck,
 } from "lucide-react";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -27,6 +27,20 @@ const staggerSm = (d = 0.08): Variants => ({
   show:   { transition: { staggerChildren: d } },
 });
 
+// ─── FuseCV theme showcase ────────────────────────────────────────────────────
+const FUSECV_THEMES = [
+  { name: "Corporate",  color: "#1e3a5f" },
+  { name: "Executive",  color: "#15503b" },
+  { name: "Modern",     color: "#0d7377" },
+  { name: "Midnight",   color: "#1e293b" },
+  { name: "Creative",   color: "#6d28d9" },
+  { name: "Azure",      color: "#1d4ed8" },
+  { name: "Burgundy",   color: "#7f1d1d" },
+  { name: "Copper",     color: "#92400e" },
+  { name: "Forest",     color: "#166534" },
+  { name: "Indigo",     color: "#4338ca" },
+];
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type CareerCategory = "junior" | "mid-senior" | "executive";
 
@@ -34,6 +48,15 @@ interface BeforeAfter {
   before: string;
   after:  string;
   score_label: string;
+}
+interface CVFormat {
+  layout_type:         string;
+  ats_safe:            boolean;
+  section_clarity:     string;
+  template_impression: string;
+  format_score:        number;
+  issues:              string[];
+  strengths:           string[];
 }
 interface AnalysisResult {
   name:           string;
@@ -56,6 +79,7 @@ interface AnalysisResult {
   keyword_score:  number;
   readability_score: number;
   overall_score:  number;
+  format:         CVFormat;
   issues:    { severity: "critical" | "warning"; text: string }[];
   strengths: string[];
   top_recommendation: string;
@@ -68,7 +92,6 @@ function firstName(fullName: string) {
   const n = (fullName || "").trim().split(/\s+/)[0];
   return n && n !== "Candidate" ? n : "";
 }
-
 function emotionalLabel(score: number): string {
   if (score >= 70) return "Strong CV. A Few Tweaks Needed.";
   if (score >= 55) return "Solid Background. Better Positioning Needed.";
@@ -95,6 +118,25 @@ function cardScoreColor(s: number) {
   if (s >= 65) return { text: "#16a34a", bg: "#f0fdf4", ring: "#22c55e" };
   if (s >= 45) return { text: "#d97706", bg: "#fffbeb", ring: "#f59e0b" };
   return { text: "#dc2626", bg: "#fef2f2", ring: "#ef4444" };
+}
+function formatLabel(t: string) {
+  const map: Record<string, string> = {
+    "single-column": "Single Column",
+    "two-column":    "Two Column",
+    "table-based":   "Table-Based",
+    sidebar:         "Sidebar Layout",
+    unknown:         "Unknown Layout",
+  };
+  return map[t] ?? t;
+}
+function templateLabel(t: string) {
+  const map: Record<string, string> = {
+    basic:        "Basic / Plain Text",
+    generic:      "Generic Template",
+    structured:   "Structured",
+    professional: "Professional",
+  };
+  return map[t] ?? t;
 }
 
 const CATEGORY_STYLE: Record<CareerCategory, { bg: string; border: string; text: string; icon: React.ReactNode }> = {
@@ -205,7 +247,7 @@ const SCAN_STEPS = [
   "Reading your CV…",
   "Detecting career level…",
   "Extracting structure and content…",
-  "Checking ATS compatibility…",
+  "Checking format and layout…",
   "Scoring for your career level…",
   "Building your personalised report…",
 ];
@@ -268,17 +310,15 @@ function ScanningView({ filename }: { filename: string }) {
 function ResultsView({
   result, filename, onReset,
 }: { result: AnalysisResult; filename: string; onReset: () => void }) {
-  const router   = useRouter();
-  const name     = firstName(result.name);
-  const label    = emotionalLabel(result.overall_score);
-  const sub      = emotionalSub(result.overall_score, name);
+  const router    = useRouter();
+  const name      = firstName(result.name);
+  const label     = emotionalLabel(result.overall_score);
+  const sub       = emotionalSub(result.overall_score, name);
   const potential = potentialScore(result.overall_score);
   const displayScore = useCountUp(result.overall_score, 1400, 300);
 
-  // Circumference for large ring
   const R = 72; const circ = 2 * Math.PI * R;
   const rc = ringColor(result.overall_score);
-
   const catStyle = CATEGORY_STYLE[result.category] ?? CATEGORY_STYLE["mid-senior"];
 
   const findings = [
@@ -289,10 +329,10 @@ function ResultsView({
   ];
 
   const scoreCards = [
-    { label: "ATS Match",    score: result.ats_score,         sub: result.ats_score < 50          ? "May miss filters"              : "Passes most filters" },
-    { label: "Impact",       score: result.impact_score,      sub: result.impact_score < 30        ? "Achievements not visible"       : "Some impact shown" },
-    { label: "Keywords",     score: result.keyword_score,     sub: `${result.keywords_total - result.keywords_found} important terms missing` },
-    { label: "Readability",  score: result.readability_score, sub: result.readability_score >= 60  ? "Easy to scan"                  : "Needs clearer structure" },
+    { label: "ATS Match",   score: result.ats_score,         sub: result.ats_score < 50          ? "May miss filters"          : "Passes most filters" },
+    { label: "Impact",      score: result.impact_score,      sub: result.impact_score < 30        ? "Achievements not visible"   : "Some impact shown" },
+    { label: "Keywords",    score: result.keyword_score,     sub: `${result.keywords_total - result.keywords_found} key terms missing` },
+    { label: "Readability", score: result.readability_score, sub: result.readability_score >= 60  ? "Easy to scan"              : "Needs clearer structure" },
   ];
 
   return (
@@ -314,7 +354,6 @@ function ResultsView({
       <motion.section variants={staggerSm(0.09)} initial="hidden" animate="show"
         className="text-center mb-10">
 
-        {/* Greeting */}
         {name && (
           <motion.p variants={fadeUp} className="text-sm font-semibold text-slate-400 mb-2">
             Hi {name} — here is your CV report
@@ -323,10 +362,8 @@ function ResultsView({
 
         {/* Category badge */}
         <motion.div variants={fadeUp} className="flex justify-center mb-4">
-          <span
-            className="inline-flex items-center gap-1.5 text-[11px] font-black px-3 py-1.5 rounded-full border"
-            style={{ background: catStyle.bg, borderColor: catStyle.border, color: catStyle.text }}
-          >
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-black px-3 py-1.5 rounded-full border"
+            style={{ background: catStyle.bg, borderColor: catStyle.border, color: catStyle.text }}>
             {catStyle.icon}
             {result.category_label}
           </span>
@@ -356,7 +393,6 @@ function ResultsView({
           </div>
         </motion.div>
 
-        {/* Emotional headline */}
         <motion.h1 variants={fadeUp}
           className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 leading-tight px-4"
           style={{ letterSpacing: "-0.025em" }}>
@@ -366,14 +402,11 @@ function ResultsView({
           {sub}
         </motion.p>
 
-        {/* Top recommendation pill */}
         {result.top_recommendation && (
           <motion.div variants={fadeUp} className="mt-5 px-4">
             <div className="inline-block rounded-2xl px-4 py-3 text-left max-w-sm w-full"
               style={{ background: "rgba(255,117,31,0.06)", border: "1px solid rgba(255,117,31,0.15)" }}>
-              <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: ORANGE }}>
-                Top Fix
-              </p>
+              <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: ORANGE }}>Top Fix</p>
               <p className="text-xs text-slate-700 leading-snug">{result.top_recommendation}</p>
             </div>
           </motion.div>
@@ -381,11 +414,9 @@ function ResultsView({
       </motion.section>
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 2 — Fastest Way to Improve (Before / After)
+          SECTION 2 — Before / After
       ══════════════════════════════════════════════════════ */}
-      {result.before_after && (
-        <BeforeAfterSection ba={result.before_after} />
-      )}
+      {result.before_after && <BeforeAfterSection ba={result.before_after} />}
 
       {/* ══════════════════════════════════════════════════════
           SECTION 3 — Score Breakdown Cards
@@ -393,7 +424,12 @@ function ResultsView({
       <ScoreCardsSection cards={scoreCards} />
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 4 — What We Found
+          SECTION 4 — Format & Presentation
+      ══════════════════════════════════════════════════════ */}
+      <FormatSection format={result.format} onCTA={() => router.push("/register")} />
+
+      {/* ══════════════════════════════════════════════════════
+          SECTION 5 — What We Found
       ══════════════════════════════════════════════════════ */}
       <WhatWeFoundSection
         findings={findings}
@@ -403,17 +439,17 @@ function ResultsView({
       />
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 5 — Transformation Preview
+          SECTION 6 — Transformation Preview
       ══════════════════════════════════════════════════════ */}
       <TransformationSection from={result.overall_score} to={potential} />
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 6 — CTA
+          SECTION 7 — CTA
       ══════════════════════════════════════════════════════ */}
       <CTASection score={result.overall_score} potential={potential} onCTA={() => router.push("/register")} />
 
       {/* ══════════════════════════════════════════════════════
-          SECTION 7 — Social proof + reset
+          SECTION 8 — Social proof + reset
       ══════════════════════════════════════════════════════ */}
       <motion.div variants={fadeUp} initial="hidden" animate="show"
         className="text-center mt-8 space-y-3">
@@ -426,16 +462,11 @@ function ResultsView({
         </p>
       </motion.div>
 
-      {/* ══════════════════════════════════════════════════════
-          STICKY MOBILE CTA
-      ══════════════════════════════════════════════════════ */}
+      {/* STICKY MOBILE CTA */}
       <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 px-4 py-3">
-        <motion.button
-          onClick={() => router.push("/register")}
-          whileTap={{ scale: 0.97 }}
+        <motion.button onClick={() => router.push("/register")} whileTap={{ scale: 0.97 }}
           className="w-full flex items-center justify-center gap-2 text-white font-black py-3.5 rounded-xl text-sm"
-          style={{ background: ORANGE }}
-        >
+          style={{ background: ORANGE }}>
           <TrendingUp size={16} />
           Raise My Score to {potential}+
           <ArrowRight size={15} />
@@ -453,43 +484,32 @@ function BeforeAfterSection({ ba }: { ba: BeforeAfter }) {
   return (
     <motion.section ref={ref} variants={staggerSm(0.1)} initial="hidden"
       animate={inView ? "show" : "hidden"} className="mb-8 px-1">
-      <motion.p variants={fadeUp}
-        className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
+      <motion.p variants={fadeUp} className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-center">
         Fastest Way to Improve
       </motion.p>
-      <motion.h2 variants={fadeUp}
-        className="text-xl font-black text-slate-900 mb-5 text-center"
+      <motion.h2 variants={fadeUp} className="text-xl font-black text-slate-900 mb-5 text-center"
         style={{ letterSpacing: "-0.02em" }}>
         Add measurable results to your bullets
       </motion.h2>
 
-      <motion.div variants={fadeUp}
-        className="rounded-2xl overflow-hidden border border-slate-100"
+      <motion.div variants={fadeUp} className="rounded-2xl overflow-hidden border border-slate-100"
         style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
-
-        {/* Before */}
         <div className="px-5 py-4 bg-slate-50 border-b border-slate-100">
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-2">Before</span>
           <p className="text-sm text-slate-600 leading-relaxed">{ba.before}</p>
         </div>
-
-        {/* Arrow */}
         <div className="flex justify-center py-2 bg-white border-b border-slate-100">
           <div className="w-6 h-6 rounded-full flex items-center justify-center"
             style={{ background: "rgba(255,117,31,0.1)" }}>
             <ArrowDown size={12} style={{ color: ORANGE }} />
           </div>
         </div>
-
-        {/* After */}
         <div className="px-5 py-4 bg-white">
-          <span className="text-[9px] font-black uppercase tracking-widest block mb-2"
-            style={{ color: ORANGE }}>After</span>
+          <span className="text-[9px] font-black uppercase tracking-widest block mb-2" style={{ color: ORANGE }}>After</span>
           <p className="text-sm font-semibold text-slate-800 leading-relaxed">{ba.after}</p>
         </div>
       </motion.div>
 
-      {/* Score chip */}
       <motion.div variants={fadeUp} className="flex justify-center mt-4">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-black px-3.5 py-1.5 rounded-full"
           style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>
@@ -509,11 +529,9 @@ function ScoreCardsSection({ cards }: { cards: { label: string; score: number; s
   return (
     <motion.section ref={ref} variants={staggerSm(0.08)} initial="hidden"
       animate={inView ? "show" : "hidden"} className="mb-8 px-1">
-      <motion.p variants={fadeUp}
-        className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
+      <motion.p variants={fadeUp} className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
         Score Breakdown
       </motion.p>
-
       <div className="grid grid-cols-2 gap-3">
         {cards.map(({ label, score, sub }) => {
           const c = cardScoreColor(score);
@@ -522,7 +540,6 @@ function ScoreCardsSection({ cards }: { cards: { label: string; score: number; s
               className="rounded-2xl bg-white border border-slate-100 p-4 text-center"
               style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{label}</p>
-              {/* Mini ring */}
               <div className="relative w-14 h-14 mx-auto mb-2">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
                   <circle cx="28" cy="28" r="22" fill="none" stroke={`${c.ring}22`} strokeWidth="5" />
@@ -548,6 +565,160 @@ function ScoreCardsSection({ cards }: { cards: { label: string; score: number; s
   );
 }
 
+// ── Format & Presentation ─────────────────────────────────────────────────────
+function FormatSection({ format, onCTA }: { format: CVFormat; onCTA: () => void }) {
+  const ref    = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const fc     = cardScoreColor(format.format_score);
+
+  const atsBadge = format.ats_safe
+    ? { label: "ATS Safe", bg: "rgba(34,197,94,0.1)",  text: "#16a34a" }
+    : { label: "ATS Risk",  bg: "rgba(239,68,68,0.1)",  text: "#dc2626" };
+
+  const templateBadgeColor: Record<string, { bg: string; text: string }> = {
+    basic:        { bg: "rgba(239,68,68,0.1)",    text: "#dc2626" },
+    generic:      { bg: "rgba(245,158,11,0.1)",   text: "#d97706" },
+    structured:   { bg: "rgba(99,102,241,0.1)",   text: "#4338ca" },
+    professional: { bg: "rgba(34,197,94,0.1)",    text: "#16a34a" },
+  };
+  const tbColors = templateBadgeColor[format.template_impression] ?? templateBadgeColor.generic;
+
+  return (
+    <motion.section ref={ref} variants={staggerSm(0.08)} initial="hidden"
+      animate={inView ? "show" : "hidden"} className="mb-8 px-1">
+
+      <motion.p variants={fadeUp} className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
+        Format &amp; Presentation
+      </motion.p>
+
+      {/* Main card */}
+      <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-slate-100 overflow-hidden"
+        style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
+
+        {/* Header row: score + badges */}
+        <div className="flex items-center gap-4 px-5 py-4 border-b border-slate-50">
+          {/* Format score mini ring */}
+          <div className="relative w-14 h-14 shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="22" fill="none" stroke={`${fc.ring}22`} strokeWidth="5" />
+              <motion.circle
+                cx="28" cy="28" r="22" fill="none"
+                stroke={fc.ring} strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 22}
+                initial={{ strokeDashoffset: 2 * Math.PI * 22 }}
+                animate={inView ? { strokeDashoffset: 2 * Math.PI * 22 * (1 - format.format_score / 100) } : {}}
+                transition={{ duration: 1, ease: [0.4,0,0.2,1], delay: 0.3 }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-lg font-black leading-none" style={{ color: fc.text }}>{format.format_score}</span>
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-black text-slate-700 mb-1.5">Presentation Score</p>
+            <div className="flex flex-wrap gap-1.5">
+              {/* Layout type */}
+              <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 flex items-center gap-1">
+                <Layout size={8} />
+                {formatLabel(format.layout_type)}
+              </span>
+              {/* ATS badge */}
+              <span className="text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"
+                style={{ background: atsBadge.bg, color: atsBadge.text }}>
+                {format.ats_safe ? <CheckCheck size={8} /> : <AlertCircle size={8} />}
+                {atsBadge.label}
+              </span>
+              {/* Template quality */}
+              <span className="text-[9px] font-black px-2 py-0.5 rounded-full"
+                style={{ background: tbColors.bg, color: tbColors.text }}>
+                {templateLabel(format.template_impression)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Format issues */}
+        {format.issues.length > 0 && (
+          <div className="border-b border-slate-50">
+            {format.issues.map((issue, i) => (
+              <div key={i} className={`flex items-start gap-3 px-5 py-3 ${i < format.issues.length - 1 ? "border-b border-slate-50" : ""}`}>
+                <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-amber-100">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                </div>
+                <span className="text-[12px] text-slate-600 leading-snug">{issue}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Format strengths */}
+        {format.strengths.length > 0 && (
+          <div className="border-b border-slate-50">
+            {format.strengths.map((s, i) => (
+              <div key={i} className="flex items-start gap-3 px-5 py-3">
+                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                <span className="text-[12px] text-slate-600 leading-snug">{s}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* FuseCV themes teaser */}
+        <div className="px-5 py-4 bg-slate-50">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Palette size={11} style={{ color: ORANGE }} />
+            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: ORANGE }}>
+              FuseCV Professional Themes
+            </p>
+          </div>
+          <p className="text-[11px] text-slate-500 mb-3 leading-snug">
+            Your CV gets a career-matched layout from{" "}
+            <strong className="text-slate-700">20 professional themes</strong> and{" "}
+            <strong className="text-slate-700">15 layout variants</strong> — designed specifically for {" "}
+            Junior, Mid-Senior, and Executive profiles.
+          </p>
+
+          {/* Theme swatches */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {FUSECV_THEMES.map(({ name, color }) => (
+              <span key={name} className="inline-flex items-center gap-1.5 text-[9px] font-black px-2 py-1 rounded-full text-white"
+                style={{ background: color }}>
+                {name}
+              </span>
+            ))}
+            <span className="inline-flex items-center text-[9px] font-semibold px-2 py-1 rounded-full bg-slate-200 text-slate-500">
+              +10 more
+            </span>
+          </div>
+
+          {/* Upsell perks */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[
+              ["Career-matched layout", "Tailored for your level"],
+              ["Professional typography", "Serif & sans-serif options"],
+              ["ATS-optimised structure", "Clean single-column builds"],
+            ].map(([title, desc]) => (
+              <div key={title} className="text-center">
+                <p className="text-[9px] font-black text-slate-600 mb-0.5">{title}</p>
+                <p className="text-[8px] text-slate-400 leading-tight">{desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={onCTA}
+            className="w-full flex items-center justify-center gap-2 text-white font-black py-2.5 rounded-xl text-xs"
+            style={{ background: ORANGE }}>
+            <Sparkles size={13} />
+            Apply a Professional Theme
+            <ArrowRight size={12} />
+          </button>
+        </div>
+      </motion.div>
+    </motion.section>
+  );
+}
+
 // ── What We Found ────────────────────────────────────────────────────────────
 function WhatWeFoundSection({
   findings, issues, strengths, categoryLabel,
@@ -560,15 +731,13 @@ function WhatWeFoundSection({
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
 
-  // Separate critical vs warning for display
   const criticalIssues = issues.filter(i => i.severity === "critical");
   const warningIssues  = issues.filter(i => i.severity === "warning");
 
   return (
     <motion.section ref={ref} variants={staggerSm(0.07)} initial="hidden"
       animate={inView ? "show" : "hidden"} className="mb-8 px-1">
-      <motion.p variants={fadeUp}
-        className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
+      <motion.p variants={fadeUp} className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
         What We Found
       </motion.p>
 
@@ -580,14 +749,12 @@ function WhatWeFoundSection({
         Report tailored for <strong className="text-slate-700 ml-0.5">{categoryLabel}</strong>
       </motion.div>
 
-      {/* Extracted data */}
+      {/* Data table */}
       <motion.div variants={fadeUp}
         className="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-4"
         style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
         {findings.map(({ label, value, bad, note }, i) => (
-          <div key={label} className={`flex items-center gap-3 px-5 py-3.5 ${
-            i < findings.length - 1 ? "border-b border-slate-50" : ""
-          }`}>
+          <div key={label} className={`flex items-center gap-3 px-5 py-3.5 ${i < findings.length - 1 ? "border-b border-slate-50" : ""}`}>
             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${bad ? "bg-red-400" : "bg-emerald-400"}`} />
             <span className="text-[12px] text-slate-600 flex-1">{label}</span>
             <span className={`text-[12px] font-black ${bad ? "text-red-600" : "text-emerald-600"}`}>{value}</span>
@@ -610,9 +777,7 @@ function WhatWeFoundSection({
             </span>
           </div>
           {criticalIssues.map(({ text }, i) => (
-            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${
-              i < criticalIssues.length - 1 ? "border-b border-slate-50" : ""
-            }`}>
+            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${i < criticalIssues.length - 1 ? "border-b border-slate-50" : ""}`}>
               <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-red-100">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
               </div>
@@ -637,9 +802,7 @@ function WhatWeFoundSection({
             </span>
           </div>
           {warningIssues.map(({ text }, i) => (
-            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${
-              i < warningIssues.length - 1 ? "border-b border-slate-50" : ""
-            }`}>
+            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${i < warningIssues.length - 1 ? "border-b border-slate-50" : ""}`}>
               <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-amber-100">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
               </div>
@@ -662,9 +825,7 @@ function WhatWeFoundSection({
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Strengths</span>
           </div>
           {strengths.map((s, i) => (
-            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${
-              i < strengths.length - 1 ? "border-b border-slate-50" : ""
-            }`}>
+            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${i < strengths.length - 1 ? "border-b border-slate-50" : ""}`}>
               <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
               <span className="text-[12px] text-slate-700 leading-snug">{s}</span>
             </div>
@@ -686,26 +847,21 @@ function TransformationSection({ from, to }: { from: number; to: number }) {
       className="mb-8 px-1 bg-white rounded-2xl border border-slate-100 p-6"
       style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
 
-      <motion.p variants={fadeUp}
-        className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 text-center">
+      <motion.p variants={fadeUp} className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 text-center">
         See Your Possible Upgrade
       </motion.p>
-      <motion.h2 variants={fadeUp}
-        className="text-xl font-black text-slate-900 mb-6 text-center"
+      <motion.h2 variants={fadeUp} className="text-xl font-black text-slate-900 mb-6 text-center"
         style={{ letterSpacing: "-0.02em" }}>
         {from} → {to}+
       </motion.h2>
 
-      {/* Progress track */}
       <motion.div variants={fadeUp} className="mb-5">
         <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
-          {/* Current score fill */}
           <motion.div className="absolute left-0 top-0 h-full rounded-full"
             style={{ background: ringColor(from) }}
             initial={{ width: 0 }}
             animate={inView ? { width: `${from}%` } : {}}
             transition={{ duration: 1, ease: [0.4,0,0.2,1], delay: 0.2 }} />
-          {/* Potential fill */}
           <motion.div className="absolute top-0 h-full rounded-full opacity-30"
             style={{ background: "#22c55e", left: `${from}%` }}
             initial={{ width: 0 }}
@@ -737,7 +893,6 @@ function CTASection({ score, potential, onCTA }: { score: number; potential: num
       className="rounded-3xl overflow-hidden mb-6 px-1">
 
       <div className="relative rounded-3xl p-7 text-center" style={{ background: DARK }}>
-        {/* Subtle glow orbs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
           <div className="absolute w-48 h-48 rounded-full blur-3xl opacity-20"
             style={{ background: BLUE, top: "-20%", left: "10%" }} />
@@ -759,23 +914,21 @@ function CTASection({ score, potential, onCTA }: { score: number; potential: num
 
         <motion.p variants={fadeUp} className="text-sm leading-relaxed mb-7 max-w-xs mx-auto"
           style={{ color: "rgba(255,255,255,0.45)" }}>
-          Our AI rewrites your CV, optimises it for ATS, and prepares a recruiter-ready version in minutes.
+          Our AI rewrites your CV, applies a professional theme matched to your career level,
+          and delivers a recruiter-ready version in minutes.
         </motion.p>
 
         <motion.button
-          variants={fadeUp}
-          onClick={onCTA}
+          variants={fadeUp} onClick={onCTA}
           whileHover={{ scale: 1.04, boxShadow: `0 16px 40px rgba(255,117,31,0.5)` }}
           whileTap={{ scale: 0.97 }}
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 text-white font-black px-8 py-4 rounded-2xl text-base mb-5"
-          style={{ background: ORANGE }}
-        >
+          style={{ background: ORANGE }}>
           <TrendingUp size={18} />
           Raise My Score to {potential}+
           <ArrowRight size={17} />
         </motion.button>
 
-        {/* Trust row */}
         <motion.div variants={fadeUp}
           className="flex items-center justify-center gap-5 text-[11px] font-semibold flex-wrap"
           style={{ color: "rgba(255,255,255,0.28)" }}>
@@ -831,7 +984,7 @@ export default function CVCheckClient() {
 
     const [res] = await Promise.all([
       fetch("/api/cv-check", { method: "POST", body: fd }),
-      new Promise(r => setTimeout(r, 8000)), // min scan duration
+      new Promise(r => setTimeout(r, 8000)),
     ]);
 
     try {
@@ -850,7 +1003,6 @@ export default function CVCheckClient() {
 
   return (
     <div className="min-h-screen" style={{ background: "#fafafa" }}>
-      {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
           <Link href="/">
