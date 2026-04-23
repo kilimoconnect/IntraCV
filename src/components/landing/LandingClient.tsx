@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
-  CheckCircle2, XCircle, FileText, User,
+  CheckCircle2, XCircle, FileText, User, Sparkles,
   TrendingUp, AlertCircle,
 } from "lucide-react";
 
