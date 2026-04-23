@@ -345,6 +345,33 @@ export async function POST(req: Request) {
     );
 
     // ── Step 5: Merge category gaps into issues (no duplicates) ──────────────
+    // Uses semantic topic clusters so that a GPT issue and a category gap
+    // about the same subject are never shown together, even if the wording differs.
+    // e.g. "The CV does not include a References section" suppresses "No referees added"
+
+    const TOPIC_CLUSTERS: string[][] = [
+      ["referee", "reference"],
+      ["summary", "profile", "introduction", "objective"],
+      ["achievement", "accomplishment", "key achieve"],
+      ["linkedin"],
+      ["education", "degree", "qualification"],
+      ["skills", "skill"],
+      ["language"],
+      ["certification", "certificate"],
+      ["award", "recognition"],
+      ["membership", "association"],
+    ];
+
+    function sharesTopicWith(a: string, b: string): boolean {
+      const la = a.toLowerCase();
+      const lb = b.toLowerCase();
+      return TOPIC_CLUSTERS.some(
+        (cluster) =>
+          cluster.some((kw) => la.includes(kw)) &&
+          cluster.some((kw) => lb.includes(kw))
+      );
+    }
+
     const issues: { severity: "critical" | "warning"; text: string }[] =
       Array.isArray(analysis.issues) ? [...analysis.issues] : [];
 
@@ -352,11 +379,12 @@ export async function POST(req: Request) {
     for (const gap of categoryGaps) {
       const isRecommended = gap.startsWith("[Recommended]");
       const gapText       = gap.replace(/^\[Recommended\]\s*/, "");
-      const fingerprint   = gapText.toLowerCase().slice(0, 30);
-      const alreadySeen   = existingTexts.some((t) => t.includes(fingerprint));
+      const alreadySeen   = existingTexts.some(
+        (t) => t.includes(gapText.toLowerCase().slice(0, 30)) || sharesTopicWith(t, gapText)
+      );
       if (!alreadySeen) {
         issues.push({ severity: isRecommended ? "warning" : "critical", text: gapText });
-        existingTexts.push(fingerprint);
+        existingTexts.push(gapText.toLowerCase());
       }
     }
 
