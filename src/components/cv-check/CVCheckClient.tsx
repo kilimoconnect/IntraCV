@@ -10,6 +10,7 @@ import {
   ArrowRight, ArrowDown, Lock, Zap, Shield,
   RefreshCw, Sparkles, TrendingUp, AlertCircle,
   User, Briefcase, Star, Palette, Layout, CheckCheck,
+  FileX, FileSearch,
 } from "lucide-react";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -942,6 +943,73 @@ function CTASection({ score, potential, onCTA }: { score: number; potential: num
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NOT A CV ERROR
+// ─────────────────────────────────────────────────────────────────────────────
+function NotACVError({ docLabel, onReset }: { docLabel: string; onReset: () => void }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center text-center max-w-sm mx-auto">
+
+      {/* Icon */}
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+        style={{ background: "rgba(245,158,11,0.08)" }}>
+        <FileSearch size={28} className="text-amber-500" />
+      </div>
+
+      {/* Headline */}
+      <h2 className="text-xl font-black text-slate-900 mb-2" style={{ letterSpacing: "-0.02em" }}>
+        That doesn&apos;t look like a CV
+      </h2>
+
+      {/* Detected type */}
+      <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full mb-4"
+        style={{ background: "rgba(245,158,11,0.08)", color: "#d97706" }}>
+        <FileX size={12} />
+        Detected: {docLabel}
+      </div>
+
+      {/* Explanation */}
+      <p className="text-sm text-slate-500 leading-relaxed mb-6">
+        We can only analyse <strong className="text-slate-700">CV or resume documents</strong>.
+        Please upload the document that lists your work experience, education, and skills.
+      </p>
+
+      {/* What to upload */}
+      <div className="w-full bg-slate-50 rounded-2xl border border-slate-100 p-5 mb-6 text-left">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+          What to upload
+        </p>
+        <div className="space-y-2.5">
+          {[
+            ["Your CV or resume", "The document listing your work history, skills, and education"],
+            ["PDF or Word format", ".pdf · .doc · .docx — max 5 MB"],
+            ["Any career level", "Student, graduate, junior, senior, or executive"],
+          ].map(([title, desc]) => (
+            <div key={title} className="flex items-start gap-2.5">
+              <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-slate-700">{title}</p>
+                <p className="text-[11px] text-slate-400 leading-snug">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button onClick={onReset}
+        className="inline-flex items-center gap-2 font-black text-white px-7 py-3.5 rounded-xl text-sm w-full justify-center"
+        style={{ background: ORANGE }}>
+        <Upload size={16} /> Upload My CV
+      </button>
+
+      <p className="text-xs text-slate-400 mt-3">
+        No account needed · Results in ~60 seconds
+      </p>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ERROR
 // ─────────────────────────────────────────────────────────────────────────────
 function ErrorView({ message, onReset }: { message: string; onReset: () => void }) {
@@ -966,10 +1034,11 @@ function ErrorView({ message, onReset }: { message: string; onReset: () => void 
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export default function CVCheckClient() {
-  const [step,   setStep]   = useState<Step>("upload");
-  const [file,   setFile]   = useState<File | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [error,  setError]  = useState<string | null>(null);
+  const [step,     setStep]     = useState<Step>("upload");
+  const [file,     setFile]     = useState<File | null>(null);
+  const [result,   setResult]   = useState<AnalysisResult | null>(null);
+  const [error,    setError]    = useState<string | null>(null);
+  const [notACVDoc, setNotACVDoc] = useState<{ label: string } | null>(null);
 
   const handleFile = useCallback(async (f: File) => {
     const ok = ["application/pdf","application/msword",
@@ -979,7 +1048,7 @@ export default function CVCheckClient() {
     }
     if (f.size > 5_242_880) { setError("File too large. Max 5 MB."); return; }
 
-    setFile(f); setError(null); setStep("scanning");
+    setFile(f); setError(null); setNotACVDoc(null); setStep("scanning");
     const fd = new FormData(); fd.append("file", f);
 
     const [res] = await Promise.all([
@@ -989,6 +1058,14 @@ export default function CVCheckClient() {
 
     try {
       const data = await (res as Response).json();
+
+      // Non-CV document — show dedicated screen, not generic error
+      if (data.error === "not_a_cv") {
+        setNotACVDoc({ label: data.document_label ?? "unrecognised document" });
+        setStep("upload");
+        return;
+      }
+
       if (!(res as Response).ok) throw new Error(data.error ?? "Analysis failed");
       setResult(data); setStep("results");
     } catch (e: unknown) {
@@ -998,7 +1075,7 @@ export default function CVCheckClient() {
   }, []);
 
   const reset = useCallback(() => {
-    setStep("upload"); setFile(null); setResult(null); setError(null);
+    setStep("upload"); setFile(null); setResult(null); setError(null); setNotACVDoc(null);
   }, []);
 
   return (
@@ -1024,7 +1101,11 @@ export default function CVCheckClient() {
       <main className="pt-14 min-h-screen">
         <div className="flex items-center justify-center px-4 sm:px-8 py-12 min-h-[calc(100vh-56px)]">
           <AnimatePresence mode="wait">
-            {error ? (
+            {notACVDoc ? (
+              <motion.div key="notcv" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
+                <NotACVError docLabel={notACVDoc.label} onReset={reset} />
+              </motion.div>
+            ) : error ? (
               <motion.div key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
                 <ErrorView message={error} onReset={reset} />
               </motion.div>
