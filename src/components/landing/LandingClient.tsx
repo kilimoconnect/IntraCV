@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { motion, useInView, type Variants } from "framer-motion";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { motion, useInView, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
   AlertTriangle, CheckCircle2, XCircle,
-  ChevronRight, FileText, Sparkles,
+  ChevronRight, FileText, Sparkles, Search,
 } from "lucide-react";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
@@ -28,6 +28,467 @@ const stagger = (d = 0.08): Variants => ({
   hidden: {},
   show:   { transition: { staggerChildren: d } },
 });
+
+// ─── Role Profiles ────────────────────────────────────────────────────────────
+type IssueType = "error" | "warn" | "ok";
+interface Issue { type: IssueType; label: string }
+interface BarData { label: string; score: number }
+interface RoleProfile {
+  category: string;
+  filename: string;
+  score: number;
+  label: string;       // e.g. "Needs Work"
+  labelColor: string;
+  ringColor: string;
+  bars: BarData[];
+  issues: Issue[];
+  nudge: string;
+}
+
+const PROFILES: Record<string, RoleProfile> = {
+  tech: {
+    category: "Software / Engineering",
+    filename: "software_engineer_cv.pdf",
+    score: 27,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 40 },
+      { label: "Impact",      score: 22 },
+      { label: "Readability", score: 65 },
+      { label: "Keywords",    score: 31 },
+    ],
+    issues: [
+      { type: "error", label: "No GitHub / portfolio link found"       },
+      { type: "error", label: "Tech stack buried on page 2"            },
+      { type: "error", label: "Zero quantified delivery metrics"       },
+      { type: "warn",  label: "System design experience unclear"       },
+      { type: "warn",  label: "Missing cloud / DevOps keywords"        },
+      { type: "ok",    label: "Education & certifications listed"      },
+    ],
+    nudge: "Common issues found in Software Engineer CVs. Upload yours to see exactly what's missing.",
+  },
+  marketing: {
+    category: "Marketing / Growth",
+    filename: "marketing_manager_cv.pdf",
+    score: 31,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 35 },
+      { label: "Impact",      score: 28 },
+      { label: "Readability", score: 58 },
+      { label: "Keywords",    score: 41 },
+    ],
+    issues: [
+      { type: "error", label: "No campaign ROI or growth metrics"      },
+      { type: "error", label: "Missing CRM tools (HubSpot, Salesforce)"},
+      { type: "error", label: "Personal brand summary too generic"     },
+      { type: "warn",  label: "No channel strategy highlighted"        },
+      { type: "warn",  label: "SEO / paid media keywords absent"       },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Common issues found in Marketing CVs. Upload yours to see exactly what's missing.",
+  },
+  design: {
+    category: "Design / Creative",
+    filename: "ux_designer_cv.pdf",
+    score: 26,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 33 },
+      { label: "Impact",      score: 20 },
+      { label: "Readability", score: 62 },
+      { label: "Keywords",    score: 29 },
+    ],
+    issues: [
+      { type: "error", label: "Portfolio / Behance link missing"       },
+      { type: "error", label: "Tool stack not listed (Figma, Adobe)"   },
+      { type: "error", label: "No client or project outcomes stated"   },
+      { type: "warn",  label: "Design process not described"           },
+      { type: "warn",  label: "Accessibility / UX research absent"     },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Common issues found in Design CVs. Upload yours to see exactly what's missing.",
+  },
+  finance: {
+    category: "Finance / Accounting",
+    filename: "finance_analyst_cv.pdf",
+    score: 33,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 42 },
+      { label: "Impact",      score: 29 },
+      { label: "Readability", score: 60 },
+      { label: "Keywords",    score: 38 },
+    ],
+    issues: [
+      { type: "error", label: "No P&L or portfolio size mentioned"     },
+      { type: "error", label: "Missing certifications (CFA, CPA, ACA)" },
+      { type: "error", label: "Achievement bullets too task-focused"   },
+      { type: "warn",  label: "GAAP / IFRS terminology absent"         },
+      { type: "warn",  label: "Soft skills overshadow hard numbers"    },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Common issues found in Finance CVs. Upload yours to see exactly what's missing.",
+  },
+  sales: {
+    category: "Sales / Business Dev",
+    filename: "sales_executive_cv.pdf",
+    score: 30,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 38 },
+      { label: "Impact",      score: 25 },
+      { label: "Readability", score: 64 },
+      { label: "Keywords",    score: 36 },
+    ],
+    issues: [
+      { type: "error", label: "Quota attainment % never mentioned"     },
+      { type: "error", label: "No deal size or revenue figures"        },
+      { type: "error", label: "CRM proficiency not listed"             },
+      { type: "warn",  label: "Territory / sector experience vague"    },
+      { type: "warn",  label: "Missing pipeline management keywords"   },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Common issues found in Sales CVs. Upload yours to see exactly what's missing.",
+  },
+  hr: {
+    category: "HR / People Ops",
+    filename: "hr_manager_cv.pdf",
+    score: 30,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 37 },
+      { label: "Impact",      score: 24 },
+      { label: "Readability", score: 63 },
+      { label: "Keywords",    score: 33 },
+    ],
+    issues: [
+      { type: "error", label: "No hiring volume or time-to-fill data"  },
+      { type: "error", label: "HRIS systems not listed"                },
+      { type: "error", label: "DEI or culture initiatives absent"      },
+      { type: "warn",  label: "Employment law knowledge not shown"     },
+      { type: "warn",  label: "L&D impact metrics missing"             },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Common issues found in HR CVs. Upload yours to see exactly what's missing.",
+  },
+  management: {
+    category: "Management / Operations",
+    filename: "operations_manager_cv.pdf",
+    score: 32,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 43 },
+      { label: "Impact",      score: 27 },
+      { label: "Readability", score: 61 },
+      { label: "Keywords",    score: 40 },
+    ],
+    issues: [
+      { type: "error", label: "Team size never mentioned"              },
+      { type: "error", label: "Budget responsibility absent"           },
+      { type: "error", label: "Strategic initiatives not highlighted"  },
+      { type: "warn",  label: "KPI / OKR framework not referenced"    },
+      { type: "warn",  label: "Cross-functional leadership unclear"    },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Common issues found in Management CVs. Upload yours to see exactly what's missing.",
+  },
+  healthcare: {
+    category: "Healthcare / Medical",
+    filename: "healthcare_professional_cv.pdf",
+    score: 35,
+    label: "Needs Work",
+    labelColor: "#f59e0b",
+    ringColor: "#f59e0b",
+    bars: [
+      { label: "ATS Score",   score: 45 },
+      { label: "Impact",      score: 31 },
+      { label: "Readability", score: 63 },
+      { label: "Keywords",    score: 42 },
+    ],
+    issues: [
+      { type: "error", label: "Certifications not prominently placed"  },
+      { type: "error", label: "No patient outcome or volume data"      },
+      { type: "warn",  label: "Specialisation keywords too sparse"     },
+      { type: "warn",  label: "Publication / research history absent"  },
+      { type: "warn",  label: "Continuing education not listed"        },
+      { type: "ok",    label: "Qualifications correctly formatted"     },
+    ],
+    nudge: "Common issues found in Healthcare CVs. Upload yours to see exactly what's missing.",
+  },
+  education: {
+    category: "Education / Teaching",
+    filename: "teacher_cv.pdf",
+    score: 34,
+    label: "Needs Work",
+    labelColor: "#f59e0b",
+    ringColor: "#f59e0b",
+    bars: [
+      { label: "ATS Score",   score: 44 },
+      { label: "Impact",      score: 30 },
+      { label: "Readability", score: 67 },
+      { label: "Keywords",    score: 39 },
+    ],
+    issues: [
+      { type: "error", label: "No student outcome or results data"     },
+      { type: "error", label: "Curriculum development not described"   },
+      { type: "warn",  label: "Teaching certifications not prominent"  },
+      { type: "warn",  label: "Publication record absent"              },
+      { type: "warn",  label: "Tech / EdTech tools not mentioned"      },
+      { type: "ok",    label: "Qualifications correctly listed"        },
+    ],
+    nudge: "Common issues found in Teaching CVs. Upload yours to see exactly what's missing.",
+  },
+  default: {
+    category: "",
+    filename: "your_cv.pdf",
+    score: 29,
+    label: "Needs Work",
+    labelColor: "#ef4444",
+    ringColor: "#ef4444",
+    bars: [
+      { label: "ATS Score",   score: 38 },
+      { label: "Impact",      score: 22 },
+      { label: "Readability", score: 61 },
+      { label: "Keywords",    score: 44 },
+    ],
+    issues: [
+      { type: "error", label: "Weak summary statement"                 },
+      { type: "error", label: "No quantified results"                  },
+      { type: "warn",  label: "Poor ATS keyword match"                 },
+      { type: "error", label: "Generic skills section"                 },
+      { type: "warn",  label: "Formatting inconsistencies"             },
+      { type: "ok",    label: "Education correctly listed"             },
+    ],
+    nudge: "Upload your CV to see your real personalised score.",
+  },
+};
+
+function detectProfile(title: string): RoleProfile {
+  const t = title.toLowerCase();
+  if (/software|engineer|developer|devops|sre|data scien|machine learn|ml |ai |backend|frontend|fullstack|full.stack|cloud|architect|qa|quality|sysadmin|infrastructure/.test(t)) return PROFILES.tech;
+  if (/market|growth|seo|sem|content|social media|brand|digital|campaign|demand gen|product market/.test(t)) return PROFILES.marketing;
+  if (/design|ux|ui|user experience|user interface|creative|graphic|visual|figma|product design|motion/.test(t)) return PROFILES.design;
+  if (/financ|account|audit|cfo|controller|treasurer|invest|banking|actuar|analyst|risk|wealth/.test(t)) return PROFILES.finance;
+  if (/sales|account exec|business dev|bdm|revenue|commercial|enterprise|sdr|bdr|presales/.test(t)) return PROFILES.sales;
+  if (/\bhr\b|human resource|people ops|recruit|talent|compensation|benefit|hrbp|l&d|learning/.test(t)) return PROFILES.hr;
+  if (/manag|director|head of|vp |vice pres|ceo|coo|cto|president|chief|operation|program|project|strategy/.test(t)) return PROFILES.management;
+  if (/nurs|doctor|physician|surgeon|pharmacist|physiother|radiolog|clinical|medical|health|dental|midwif/.test(t)) return PROFILES.healthcare;
+  if (/teach|professor|lecturer|tutor|educator|academic|principal|school|curriculum|instructor/.test(t)) return PROFILES.education;
+  return PROFILES.default;
+}
+
+// ─── Score Mockup ─────────────────────────────────────────────────────────────
+function ScoreMockup({ jobTitle }: { jobTitle: string }) {
+  const profile  = useMemo(() => jobTitle.trim().length >= 3 ? detectProfile(jobTitle) : PROFILES.default, [jobTitle]);
+  const [animated, setAnimated] = useState(false);
+  const [profileKey, setProfileKey] = useState(0);
+  const ref    = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+
+  // Re-animate whenever profile changes
+  useEffect(() => {
+    if (!inView) return;
+    setAnimated(false);
+    const t = setTimeout(() => {
+      setAnimated(true);
+      setProfileKey(k => k + 1);
+    }, 80);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, inView]);
+
+  useEffect(() => {
+    if (inView) setTimeout(() => setAnimated(true), 300);
+  }, [inView]);
+
+  const circumference = 2 * Math.PI * 27;
+  const barColor = (score: number) => score >= 60 ? "#22c55e" : score >= 45 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div ref={ref} className="relative w-full max-w-[360px] mx-auto lg:mx-0">
+      {/* Glow */}
+      <div className="absolute inset-4 rounded-3xl blur-2xl opacity-10 pointer-events-none"
+        style={{ background: profile.ringColor }} />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, ease: ez }}
+        className="relative bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden"
+      >
+        {/* Header */}
+        <div className="px-5 pt-5 pb-4 border-b border-slate-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="min-w-0 pr-3">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={profile.category || "default-cat"}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                    {profile.category ? `${profile.category} Analysis` : "CV Analysis"}
+                  </p>
+                  <p className="text-xs text-slate-500 font-medium truncate">{profile.filename}</p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Circular score */}
+            <div className="text-center shrink-0">
+              <div className="relative w-16 h-16">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="27" fill="none" stroke="#f1f5f9" strokeWidth="6" />
+                  <motion.circle
+                    key={`ring-${profileKey}`}
+                    cx="32" cy="32" r="27" fill="none"
+                    stroke={profile.ringColor} strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    initial={{ strokeDashoffset: circumference }}
+                    animate={animated ? { strokeDashoffset: circumference * (1 - profile.score / 100) } : {}}
+                    transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={`score-${profileKey}`}
+                      className="text-xl font-black leading-none text-slate-900"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.3 }}
+                    >{profile.score}</motion.span>
+                  </AnimatePresence>
+                  <span className="text-[9px] text-slate-400 font-bold">/100</span>
+                </div>
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: profile.labelColor }}>
+                {profile.label}
+              </span>
+            </div>
+          </div>
+
+          {/* Bars */}
+          <div className="space-y-2">
+            {profile.bars.map(({ label, score }, i) => {
+              const color = barColor(score);
+              return (
+                <div key={label} className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-500 w-20 shrink-0">{label}</span>
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      key={`bar-${profileKey}-${i}`}
+                      className="h-full rounded-full"
+                      style={{ background: color }}
+                      initial={{ width: 0 }}
+                      animate={animated ? { width: `${score}%` } : {}}
+                      transition={{ duration: 0.8, delay: 0.2 + i * 0.08, ease: [0.4, 0, 0.2, 1] }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold w-6 text-right" style={{ color }}>{score}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Issues */}
+        <div className="px-5 py-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Issues Found</p>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`issues-${profileKey}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-2"
+            >
+              {profile.issues.map(({ type, label }) => {
+                const cfg = type === "error"
+                  ? { icon: <XCircle size={13} />, color: "#ef4444", bg: "#fef2f2" }
+                  : type === "warn"
+                    ? { icon: <AlertTriangle size={13} />, color: "#f59e0b", bg: "#fffbeb" }
+                    : { icon: <CheckCircle2 size={13} />, color: "#22c55e", bg: "#f0fdf4" };
+                return (
+                  <div key={label} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: cfg.bg }}>
+                    <span style={{ color: cfg.color }}>{cfg.icon}</span>
+                    <span className="text-[11px] font-semibold text-slate-700">{label}</span>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Nudge */}
+        <div className="px-5 pb-5">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`nudge-${profileKey}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-xl p-3 text-center"
+              style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.15)` }}
+            >
+              <p className="text-[11px] font-black text-slate-700 mb-0.5">
+                {jobTitle.trim().length >= 3 ? `Personalised for ${jobTitle.trim()}` : "Your results are ready"}
+              </p>
+              <p className="text-[10px] text-slate-500">{profile.nudge}</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      {/* Floating badge */}
+      <motion.div
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -top-3 -right-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
+      >
+        <Zap size={12} style={{ color: ORANGE }} />
+        <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
+      </motion.div>
+
+      {/* Personalised badge */}
+      <AnimatePresence>
+        {jobTitle.trim().length >= 3 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3, ease: ez }}
+            className="absolute -bottom-3 -left-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
+          >
+            <Sparkles size={11} style={{ color: BLUE }} />
+            <span className="text-[10px] font-black text-slate-800">Personalised preview</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 function Navbar() {
@@ -79,145 +540,27 @@ function Navbar() {
   );
 }
 
-// ─── Score Mockup ─────────────────────────────────────────────────────────────
-function ScoreMockup() {
-  const [animated, setAnimated] = useState(false);
-  const ref    = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (inView) setTimeout(() => setAnimated(true), 300);
-  }, [inView]);
-
-  const issues = [
-    { icon: <XCircle size={13} />,       label: "Weak summary statement",      color: "#ef4444", bg: "#fef2f2" },
-    { icon: <XCircle size={13} />,       label: "No quantified results",        color: "#ef4444", bg: "#fef2f2" },
-    { icon: <AlertTriangle size={13} />, label: "Poor ATS keyword match",       color: "#f59e0b", bg: "#fffbeb" },
-    { icon: <XCircle size={13} />,       label: "Generic skills section",       color: "#ef4444", bg: "#fef2f2" },
-    { icon: <AlertTriangle size={13} />, label: "Formatting inconsistencies",   color: "#f59e0b", bg: "#fffbeb" },
-    { icon: <CheckCircle2 size={13} />,  label: "Education correctly listed",   color: "#22c55e", bg: "#f0fdf4" },
-  ];
-
-  const bars = [
-    { label: "ATS Score",   score: 38, color: "#ef4444" },
-    { label: "Impact",      score: 22, color: "#ef4444" },
-    { label: "Readability", score: 61, color: "#f59e0b" },
-    { label: "Keywords",    score: 44, color: "#f59e0b" },
-  ];
-
-  return (
-    <div ref={ref} className="relative w-full max-w-[360px] mx-auto lg:mx-0">
-      {/* Glow */}
-      <div className="absolute inset-4 rounded-3xl blur-2xl opacity-10 pointer-events-none"
-        style={{ background: "#ef4444" }} />
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6, ease: ez }}
-        className="relative bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden"
-      >
-        {/* Header */}
-        <div className="px-5 pt-5 pb-4 border-b border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">CV Analysis</p>
-              <p className="text-xs text-slate-500 font-medium">marketing_cv_2024.pdf</p>
-            </div>
-            {/* Circular score */}
-            <div className="text-center">
-              <div className="relative w-16 h-16">
-                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                  <circle cx="32" cy="32" r="27" fill="none" stroke="#fee2e2" strokeWidth="6" />
-                  <motion.circle
-                    cx="32" cy="32" r="27" fill="none"
-                    stroke="#ef4444" strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 27}`}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 27 }}
-                    animate={animated ? { strokeDashoffset: 2 * Math.PI * 27 * (1 - 0.29) } : {}}
-                    transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <motion.span
-                    className="text-xl font-black leading-none text-slate-900"
-                    initial={{ opacity: 0 }}
-                    animate={animated ? { opacity: 1 } : {}}
-                    transition={{ delay: 0.4 }}
-                  >29</motion.span>
-                  <span className="text-[9px] text-slate-400 font-bold">/100</span>
-                </div>
-              </div>
-              <span className="text-[9px] font-black text-red-500 uppercase tracking-wide">Needs Work</span>
-            </div>
-          </div>
-
-          {/* Bars */}
-          <div className="space-y-2">
-            {bars.map(({ label, score, color }, i) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-500 w-20 shrink-0">{label}</span>
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: color }}
-                    initial={{ width: 0 }}
-                    animate={animated ? { width: `${score}%` } : {}}
-                    transition={{ duration: 0.8, delay: 0.3 + i * 0.1, ease: [0.4, 0, 0.2, 1] }}
-                  />
-                </div>
-                <span className="text-[10px] font-bold w-6 text-right" style={{ color }}>{score}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Issues */}
-        <div className="px-5 py-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Issues Found</p>
-          <div className="space-y-2">
-            {issues.map(({ icon, label, color, bg }) => (
-              <div key={label} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: bg }}>
-                <span style={{ color }}>{icon}</span>
-                <span className="text-[11px] font-semibold text-slate-700">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Nudge */}
-        <div className="px-5 pb-5">
-          <div className="rounded-xl p-3 text-center"
-            style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.15)` }}>
-            <p className="text-[11px] font-black text-slate-700 mb-0.5">Your results are ready</p>
-            <p className="text-[10px] text-slate-500">Upload your CV to see your real score</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Floating badge */}
-      <motion.div
-        animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-3 -right-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
-      >
-        <Zap size={12} style={{ color: ORANGE }} />
-        <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
-      </motion.div>
-    </div>
-  );
-}
-
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function HeroSection() {
   const router   = useRouter();
   const supabase = createClient();
+  const [jobTitle, setJobTitle] = useState("");
+  const [debouncedTitle, setDebouncedTitle] = useState("");
+
+  // Debounce job title updates to the mockup (300ms)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedTitle(jobTitle), 300);
+    return () => clearTimeout(t);
+  }, [jobTitle]);
 
   const handleCTA = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     router.push(session ? "/dashboard" : "/register");
   }, [router, supabase]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleCTA();
+  }, [handleCTA]);
 
   return (
     <section className="min-h-screen flex items-center pt-14 bg-white">
@@ -249,11 +592,38 @@ function HeroSection() {
 
             <motion.p
               variants={fadeUp}
-              className="text-lg sm:text-xl text-slate-500 leading-relaxed mb-8 max-w-md mx-auto lg:mx-0"
+              className="text-lg sm:text-xl text-slate-500 leading-relaxed mb-7 max-w-md mx-auto lg:mx-0"
             >
               Check your CV free in 60 seconds.
               Get instant ATS + recruiter feedback.
             </motion.p>
+
+            {/* Job title input — personalises the mockup */}
+            <motion.div variants={fadeUp} className="mb-5 max-w-sm mx-auto lg:mx-0">
+              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+                Enter your job title for a personalised preview
+              </label>
+              <div className="relative flex items-center">
+                <Search size={15} className="absolute left-3.5 text-slate-300 pointer-events-none" />
+                <input
+                  type="text"
+                  value={jobTitle}
+                  onChange={e => setJobTitle(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="e.g. Software Engineer, Nurse, Teacher…"
+                  className="w-full pl-9 pr-4 py-3 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition-all placeholder:text-slate-300"
+                />
+              </div>
+              {jobTitle.trim().length >= 3 && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[11px] text-slate-400 mt-1.5 font-medium"
+                >
+                  ✓ Preview updated for <span className="font-bold text-slate-600">{jobTitle.trim()}</span>
+                </motion.p>
+              )}
+            </motion.div>
 
             <motion.div variants={fadeUp} className="mb-6">
               <motion.button
@@ -293,7 +663,7 @@ function HeroSection() {
             transition={{ duration: 0.65, ease: ez, delay: 0.2 }}
             className="order-1 lg:order-2 flex justify-center lg:justify-end"
           >
-            <ScoreMockup />
+            <ScoreMockup jobTitle={debouncedTitle} />
           </motion.div>
         </div>
       </div>
