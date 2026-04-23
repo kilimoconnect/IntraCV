@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
 import { geminiClient } from "@/lib/gemini";
+import { detectCategory, type CareerCategory } from "@/lib/detect-category";
+import { getCategoryGaps } from "@/lib/category-gaps";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse");
@@ -41,7 +43,7 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
 
   if (name.endsWith(".docx") || name.endsWith(".doc")) {
     const mammoth = await import("mammoth");
-    const result  = await mammoth.extractRawText({ buffer });
+    const result = await mammoth.extractRawText({ buffer });
     return result.value;
   }
 
@@ -63,53 +65,121 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
   return parsed.text || "";
 }
 
-// ─── Analysis prompt ──────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are a strict, professional CV analyst. Your job is to give an honest, data-driven analysis.
-Most CVs score between 20–55/100. Do NOT inflate scores. Be specific — reference actual numbers from the CV.
-Return ONLY valid JSON, no explanation outside the JSON.`;
+// ─── Step 1: Structured extraction prompt ────────────────────────────────────
+const EXTRACT_SYSTEM = `You are a CV parser. Extract structured data from the CV text and return ONLY valid JSON with no extra text or markdown.`;
 
-function buildPrompt(cvText: string): string {
-  return `Analyse the CV below and return a single JSON object with EXACTLY these fields:
+function buildExtractPrompt(cvText: string): string {
+  return `Parse this CV and return a JSON object with EXACTLY these fields:
 
 {
-  "name": "Full name extracted from CV, or 'Candidate' if not found",
-  "current_role": "Most recent job title found",
-  "word_count": <integer — count all words in the CV>,
-  "page_estimate": <1 or 2 — estimate based on content volume>,
-  "summary_word_count": <integer — words in the professional summary/profile section; 0 if absent>,
-  "has_summary": <boolean>,
-  "total_bullets": <integer — count every bullet point listed under experience roles>,
-  "bullets_with_metrics": <integer — bullets that contain a number, %, $, £, €, KSh, TZS, or explicit quantity>,
-  "total_skills": <integer — skills listed in the skills section>,
-  "generic_skills_count": <integer — skills like: teamwork, communication, hardworking, adaptable, passionate, dedicated, motivated, organised — count these>,
-  "keywords_found": <integer — count industry/role-specific technical keywords actually present (tools, software, methodologies, certifications)>,
+  "name": "Full name or 'Candidate'",
+  "current_role": "Most recent job title",
+  "has_summary": <boolean — true if a professional summary / profile section exists>,
+  "summary_word_count": <integer — word count of the summary/profile section, 0 if absent>,
+  "word_count": <integer — total words in the entire CV>,
+  "experiences": [
+    {
+      "title": "Job title",
+      "company": "Company name",
+      "startDate": "e.g. Jan 2020 or 2020",
+      "endDate": "e.g. Present or Dec 2023 or 2023",
+      "description": "All bullet points and description text for this role combined"
+    }
+  ],
+  "education": [{ "degree": "Degree or qualification name", "institution": "School or university name" }],
+  "skills": [{ "name": "skill name" }],
+  "certifications": [{ "name": "certification name" }],
+  "languages": [{ "name": "language name" }],
+  "keyAchievements": [{ "description": "achievement text" }],
+  "boardRoles": [{ "role": "board or advisory role description" }],
+  "publications": [{ "title": "publication or article title" }],
+  "executiveTraining": [{ "name": "executive training or leadership programme name" }],
+  "awards": [{ "title": "award or recognition name" }],
+  "projects": [{ "name": "project name" }],
+  "memberships": [{ "name": "professional association or membership name" }],
+  "tools": [{ "name": "tool, software, or platform name" }],
+  "volunteer": [{ "role": "volunteer role or activity" }],
+  "personalInfo": { "linkedin": "<LinkedIn URL if found, empty string if not>" }
+}
+
+Return ONLY the JSON object.
+
+CV TEXT:
+---
+${cvText.slice(0, 9000)}
+---`;
+}
+
+// ─── Step 2: Category-specific analysis ──────────────────────────────────────
+const CATEGORY_SYSTEM: Record<CareerCategory, string> = {
+  junior: `You are a strict CV analyst specialising in junior and early-career CVs (0–4 years experience).
+For junior candidates, key evaluation areas are: education quality, relevant skills and certifications,
+project work, internship quality, and clear readable formatting.
+Required sections: Professional Summary, Experience (internships count), Education, Skills, Languages, References.
+Recommended: Certifications, Projects, Volunteer Experience.
+Sections NOT expected at this level (do not penalise): Key Achievements, Board Roles, Publications, Executive Training.
+Most junior CVs score 20–50/100. Be strict and honest. Return ONLY valid JSON.`,
+
+  "mid-senior": `You are a strict CV analyst specialising in mid-level and senior professional CVs (4–12 years experience).
+For mid-senior candidates, the most critical factors are: quantified achievements, career progression depth,
+presence of a Key Achievements section, leadership scope, and role-relevant keyword density.
+Required sections: Summary, Experience (3–6 roles expected), Education, Skills, Key Achievements, Languages, References.
+Recommended: Certifications, Awards & Recognition, Professional Memberships, Tools & Software, Projects.
+Sections NOT expected at this level: Board Roles, Publications, Executive Training.
+Most mid-senior CVs score 25–60/100. Be strict and honest. Return ONLY valid JSON.`,
+
+  executive: `You are a strict CV analyst specialising in executive and C-suite CVs (12+ years experience).
+For executive candidates, the most critical factors are: P&L or strategic scope, board or advisory memberships,
+publications or thought leadership, executive training, and breadth of senior leadership roles.
+Required sections: Summary, Experience (5+ roles expected), Education, Skills, Key Achievements,
+Board & Advisory Roles, Languages, References.
+Recommended: Publications/Speaking Engagements, Executive Training, Professional Memberships, Awards.
+Most executive CVs score 30–65/100. Be strict and honest. Return ONLY valid JSON.`,
+};
+
+const CATEGORY_LABELS: Record<CareerCategory, string> = {
+  junior:       "Junior / Early Career",
+  "mid-senior": "Mid-Senior Professional",
+  executive:    "Executive / C-Suite",
+};
+
+function buildAnalysisPrompt(cvText: string, category: CareerCategory): string {
+  const label = CATEGORY_LABELS[category];
+  return `This CV belongs to a ${label}.
+
+Analyse the CV and return a JSON object with EXACTLY these fields:
+
+{
+  "total_bullets": <integer — count all bullet points under experience roles>,
+  "bullets_with_metrics": <integer — bullets containing a number, %, $, £, €, KSh, TZS, or explicit quantity>,
+  "total_skills": <integer — total skills listed in the skills section>,
+  "generic_skills_count": <integer — vague skills like: teamwork, communication, hardworking, adaptable, passionate, dedicated, motivated, organised>,
+  "keywords_found": <integer — industry/role-specific technical keywords actually present (tools, software, methodologies, certifications)>,
   "keywords_total": 11,
-  "ats_score": <0–100 — keyword density, clean formatting (no tables/columns), standard section names, ATS compatibility>,
-  "impact_score": <0–100 — proportion of bullets showing quantifiable impact; 0 if bullets_with_metrics is 0>,
-  "keyword_score": <0–100 — how well role-relevant keywords are covered>,
+  "ats_score": <0–100 — keyword density, standard section headings, clean single-column formatting>,
+  "impact_score": <0–100 — proportion of bullets showing quantifiable achievement; 0 if bullets_with_metrics is 0>,
+  "keyword_score": <0–100 — coverage of keywords expected at ${label} level>,
   "readability_score": <0–100 — sentence clarity, appropriate length, professional tone, no typos>,
-  "overall_score": <0–100 — must equal Math.round(ats_score*0.30 + impact_score*0.35 + keyword_score*0.20 + readability_score*0.15)>,
+  "overall_score": <0–100 — MUST equal Math.round(ats_score*0.30 + impact_score*0.35 + keyword_score*0.20 + readability_score*0.15)>,
   "issues": [
     {
       "severity": "critical" or "warning",
-      "text": "<Specific issue — MUST reference actual numbers from the CV, e.g. '12 experience bullets found — 0 include measurable results'>"
+      "text": "<Specific issue for a ${label} — MUST reference actual numbers or content from the CV>"
     }
   ],
-  "strengths": ["<1–2 genuine positives found in this specific CV>"],
-  "top_recommendation": "<The single most impactful fix in one sentence>",
+  "strengths": ["<1–2 genuine positives specific to this CV>"],
+  "top_recommendation": "<The single most impactful fix for a ${label}, in one sentence>",
   "before_after": {
     "before": "<Copy a real weak bullet from their experience section — if none exist, write a representative one for their role>",
-    "after": "<The same bullet rewritten with a specific quantified result — make it realistic for their industry and role>",
+    "after": "<Same bullet rewritten with a specific quantified result — realistic for their industry and career level>",
     "score_label": "<e.g. '+18 Impact Score'>"
   }
 }
 
 Rules:
-- issues array: 3–5 items, mix of critical and warning, each referencing actual CV data
-- strengths: 1–2 items only — find something genuinely good even in weak CVs
-- overall_score must follow the formula exactly
-- before_after.before must be an actual bullet from the CV if bullets exist, otherwise a representative example
-- before_after.after must be a realistic improved version with a specific number/percentage/currency amount
+- issues: 3–5 items, each referencing actual CV data, relevant to ${label} expectations
+- strengths: 1–2 items only — find something genuinely positive
+- overall_score MUST follow the weighted formula exactly
 - Return ONLY the JSON object
 
 CV TEXT:
@@ -138,29 +208,100 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Could not extract readable text from your CV" }, { status: 422 });
     }
 
-    const openai  = openaiClient();
-    const chat    = await openai.chat.completions.create({
+    const openai = openaiClient();
+
+    // ── Step 1: Extract structured data ──────────────────────────────────────
+    const extractChat = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: EXTRACT_SYSTEM },
+        { role: "user",   content: buildExtractPrompt(cvText) },
+      ],
+    });
+
+    const structured = JSON.parse(extractChat.choices[0]?.message?.content ?? "{}");
+
+    // ── Step 2: Detect category using the same logic as the CV builder ────────
+    const category     = detectCategory(structured);
+    const categoryGaps = getCategoryGaps(category, structured);
+
+    // ── Step 3: Category-specific deep analysis ───────────────────────────────
+    const analysisChat = await openai.chat.completions.create({
       model: "gpt-4o",
       temperature: 0.1,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user",   content: buildPrompt(cvText) },
+        { role: "system", content: CATEGORY_SYSTEM[category] },
+        { role: "user",   content: buildAnalysisPrompt(cvText, category) },
       ],
     });
 
-    const raw    = chat.choices[0]?.message?.content ?? "{}";
-    const result = JSON.parse(raw);
+    const analysis = JSON.parse(analysisChat.choices[0]?.message?.content ?? "{}");
 
-    // Sanitise: ensure overall_score is honest and within range
-    result.overall_score = Math.min(100, Math.max(1, result.overall_score ?? 29));
-    result.ats_score     = Math.min(100, Math.max(1, result.ats_score     ?? 38));
-    result.impact_score  = Math.min(100, Math.max(0, result.impact_score  ?? 22));
-    result.keyword_score = Math.min(100, Math.max(1, result.keyword_score ?? 44));
-    result.readability_score = Math.min(100, Math.max(1, result.readability_score ?? 61));
+    // ── Step 4: Sanitise scores ───────────────────────────────────────────────
+    const ats_score         = Math.min(100, Math.max(1, analysis.ats_score         ?? 38));
+    const impact_score      = Math.min(100, Math.max(0, analysis.impact_score      ?? 22));
+    const keyword_score     = Math.min(100, Math.max(1, analysis.keyword_score     ?? 44));
+    const readability_score = Math.min(100, Math.max(1, analysis.readability_score ?? 61));
+    const overall_score     = Math.min(100, Math.max(1,
+      analysis.overall_score ??
+      Math.round(ats_score * 0.30 + impact_score * 0.35 + keyword_score * 0.20 + readability_score * 0.15)
+    ));
 
-    if (!Array.isArray(result.issues))    result.issues    = [];
-    if (!Array.isArray(result.strengths)) result.strengths = [];
+    // ── Step 5: Merge category gaps into issues (no duplicates) ──────────────
+    const issues: { severity: "critical" | "warning"; text: string }[] =
+      Array.isArray(analysis.issues) ? [...analysis.issues] : [];
+
+    const existingTexts = issues.map((i) => i.text.toLowerCase());
+    for (const gap of categoryGaps) {
+      const isRecommended = gap.startsWith("[Recommended]");
+      const gapText       = gap.replace(/^\[Recommended\]\s*/, "");
+      const fingerprint   = gapText.toLowerCase().slice(0, 30);
+      const alreadySeen   = existingTexts.some((t) => t.includes(fingerprint));
+      if (!alreadySeen) {
+        issues.push({ severity: isRecommended ? "warning" : "critical", text: gapText });
+        existingTexts.push(fingerprint);
+      }
+    }
+
+    // ── Build final result ────────────────────────────────────────────────────
+    const result = {
+      // Identity
+      name:           structured.name         || "Candidate",
+      current_role:   structured.current_role || "",
+      category,
+      category_label: CATEGORY_LABELS[category],
+      category_gaps:  categoryGaps,
+
+      // Metrics (from extraction step)
+      word_count:          structured.word_count          || 0,
+      page_estimate:       (structured.word_count || 0) > 600 ? 2 : 1,
+      summary_word_count:  structured.summary_word_count  || 0,
+      has_summary:         structured.has_summary         || false,
+
+      // Counts (from analysis step)
+      total_bullets:        analysis.total_bullets        || 0,
+      bullets_with_metrics: analysis.bullets_with_metrics || 0,
+      total_skills:         analysis.total_skills         || 0,
+      generic_skills_count: analysis.generic_skills_count || 0,
+      keywords_found:       analysis.keywords_found       || 0,
+      keywords_total:       11,
+
+      // Scores
+      ats_score,
+      impact_score,
+      keyword_score,
+      readability_score,
+      overall_score,
+
+      // Narrative
+      issues,
+      strengths:          Array.isArray(analysis.strengths) ? analysis.strengths : [],
+      top_recommendation: analysis.top_recommendation || "",
+      before_after:       analysis.before_after       || null,
+    };
 
     return NextResponse.json(result);
   } catch (err) {

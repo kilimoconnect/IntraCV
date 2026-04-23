@@ -9,6 +9,7 @@ import {
   Upload, FileText, CheckCircle2, XCircle,
   ArrowRight, ArrowDown, Lock, Zap, Shield,
   RefreshCw, Sparkles, TrendingUp, AlertCircle,
+  User, Briefcase, Star,
 } from "lucide-react";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -27,30 +28,35 @@ const staggerSm = (d = 0.08): Variants => ({
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+type CareerCategory = "junior" | "mid-senior" | "executive";
+
 interface BeforeAfter {
   before: string;
-  after: string;
+  after:  string;
   score_label: string;
 }
 interface AnalysisResult {
-  name: string;
-  current_role: string;
-  word_count: number;
-  page_estimate: number;
+  name:           string;
+  current_role:   string;
+  category:       CareerCategory;
+  category_label: string;
+  category_gaps:  string[];
+  word_count:     number;
+  page_estimate:  number;
   summary_word_count: number;
-  has_summary: boolean;
-  total_bullets: number;
+  has_summary:    boolean;
+  total_bullets:  number;
   bullets_with_metrics: number;
-  total_skills: number;
+  total_skills:   number;
   generic_skills_count: number;
   keywords_found: number;
   keywords_total: number;
-  ats_score: number;
-  impact_score: number;
-  keyword_score: number;
+  ats_score:      number;
+  impact_score:   number;
+  keyword_score:  number;
   readability_score: number;
-  overall_score: number;
-  issues: { severity: "critical" | "warning"; text: string }[];
+  overall_score:  number;
+  issues:    { severity: "critical" | "warning"; text: string }[];
   strengths: string[];
   top_recommendation: string;
   before_after?: BeforeAfter;
@@ -91,6 +97,12 @@ function cardScoreColor(s: number) {
   return { text: "#dc2626", bg: "#fef2f2", ring: "#ef4444" };
 }
 
+const CATEGORY_STYLE: Record<CareerCategory, { bg: string; border: string; text: string; icon: React.ReactNode }> = {
+  junior:       { bg: "rgba(0,74,173,0.07)",    border: "rgba(0,74,173,0.18)",    text: "#004aad", icon: <User      size={11} /> },
+  "mid-senior": { bg: "rgba(124,58,237,0.07)",  border: "rgba(124,58,237,0.18)",  text: "#7c3aed", icon: <Briefcase size={11} /> },
+  executive:    { bg: "rgba(217,119,6,0.07)",   border: "rgba(217,119,6,0.18)",   text: "#b45309", icon: <Star      size={11} /> },
+};
+
 // ─── Count-up hook ────────────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 1600, delay = 400) {
   const [val, setVal] = useState(0);
@@ -99,7 +111,7 @@ function useCountUp(target: number, duration = 1600, delay = 400) {
     const start  = performance.now() + delay;
     const tick   = (now: number) => {
       if (now < start) { raf = requestAnimationFrame(tick); return; }
-      const t = Math.min((now - start) / duration, 1);
+      const t    = Math.min((now - start) / duration, 1);
       const ease = 1 - Math.pow(1 - t, 3);
       setVal(Math.round(target * ease));
       if (t < 1) raf = requestAnimationFrame(tick);
@@ -138,7 +150,7 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
         Free CV Performance Check
       </motion.h1>
       <motion.p variants={fadeUp} className="text-base text-slate-500 mb-10 max-w-sm leading-relaxed">
-        Upload your CV and get a detailed analysis in ~60 seconds.<br />
+        Upload your CV and get a detailed, personalised analysis in ~60 seconds.<br />
         No account. No payment. No catch.
       </motion.p>
 
@@ -191,16 +203,17 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
 // ─────────────────────────────────────────────────────────────────────────────
 const SCAN_STEPS = [
   "Reading your CV…",
+  "Detecting career level…",
   "Extracting structure and content…",
   "Checking ATS compatibility…",
-  "Scoring impact and keywords…",
-  "Building your report…",
+  "Scoring for your career level…",
+  "Building your personalised report…",
 ];
 
 function ScanningView({ filename }: { filename: string }) {
   const [step, setStep] = useState(0);
   useEffect(() => {
-    const timers = SCAN_STEPS.map((_, i) => setTimeout(() => setStep(i), i * 1500));
+    const timers = SCAN_STEPS.map((_, i) => setTimeout(() => setStep(i), i * 1300));
     return () => timers.forEach(clearTimeout);
   }, []);
 
@@ -235,7 +248,7 @@ function ScanningView({ filename }: { filename: string }) {
                 </motion.div>
                ) : <div className="w-2 h-2 rounded-full bg-slate-300" />}
             </div>
-            <span className={`${i <= step ? "text-slate-800 font-semibold" : "text-slate-400"}`}>{label}</span>
+            <span className={`${i <= step ? "text-slate-800 font-semibold" : "text-slate-400"} text-left`}>{label}</span>
           </motion.div>
         ))}
       </div>
@@ -266,18 +279,20 @@ function ResultsView({
   const R = 72; const circ = 2 * Math.PI * R;
   const rc = ringColor(result.overall_score);
 
+  const catStyle = CATEGORY_STYLE[result.category] ?? CATEGORY_STYLE["mid-senior"];
+
   const findings = [
-    { label: "Summary",          value: result.has_summary ? `${result.summary_word_count} words` : "Not found", bad: !result.has_summary || result.summary_word_count < 80, note: result.has_summary && result.summary_word_count >= 80 ? "Good length" : result.has_summary ? "Too short" : "Missing" },
-    { label: "Bullets with data",value: `${result.bullets_with_metrics} of ${result.total_bullets}`, bad: result.bullets_with_metrics < Math.ceil(result.total_bullets * 0.3), note: result.bullets_with_metrics === 0 ? "None found" : "Found" },
-    { label: "Keyword match",    value: `${result.keywords_found} of ${result.keywords_total}`, bad: result.keywords_found < 6, note: `${result.keywords_total - result.keywords_found} missing` },
-    { label: "Generic skills",   value: `${result.generic_skills_count} of ${result.total_skills}`, bad: result.generic_skills_count > 3, note: result.generic_skills_count > 3 ? "Too vague" : "OK" },
+    { label: "Summary",           value: result.has_summary ? `${result.summary_word_count} words` : "Not found", bad: !result.has_summary || result.summary_word_count < 80, note: result.has_summary && result.summary_word_count >= 80 ? "Good length" : result.has_summary ? "Too short" : "Missing" },
+    { label: "Bullets with data", value: `${result.bullets_with_metrics} of ${result.total_bullets}`, bad: result.bullets_with_metrics < Math.ceil(result.total_bullets * 0.3), note: result.bullets_with_metrics === 0 ? "None found" : "Found" },
+    { label: "Keyword match",     value: `${result.keywords_found} of ${result.keywords_total}`, bad: result.keywords_found < 6, note: `${result.keywords_total - result.keywords_found} missing` },
+    { label: "Generic skills",    value: `${result.generic_skills_count} of ${result.total_skills}`, bad: result.generic_skills_count > 3, note: result.generic_skills_count > 3 ? "Too vague" : "OK" },
   ];
 
   const scoreCards = [
-    { label: "ATS Match",   score: result.ats_score,     sub: result.ats_score < 50 ? "May miss filters" : "Passes most filters" },
-    { label: "Impact",      score: result.impact_score,  sub: result.impact_score < 30 ? "Achievements not visible" : "Some impact shown" },
-    { label: "Keywords",    score: result.keyword_score, sub: `${result.keywords_total - result.keywords_found} important terms missing` },
-    { label: "Readability", score: result.readability_score, sub: result.readability_score >= 60 ? "Easy to scan" : "Needs clearer structure" },
+    { label: "ATS Match",    score: result.ats_score,         sub: result.ats_score < 50          ? "May miss filters"              : "Passes most filters" },
+    { label: "Impact",       score: result.impact_score,      sub: result.impact_score < 30        ? "Achievements not visible"       : "Some impact shown" },
+    { label: "Keywords",     score: result.keyword_score,     sub: `${result.keywords_total - result.keywords_found} important terms missing` },
+    { label: "Readability",  score: result.readability_score, sub: result.readability_score >= 60  ? "Easy to scan"                  : "Needs clearer structure" },
   ];
 
   return (
@@ -299,17 +314,27 @@ function ResultsView({
       <motion.section variants={staggerSm(0.09)} initial="hidden" animate="show"
         className="text-center mb-10">
 
-        {/* Label */}
+        {/* Greeting */}
         {name && (
-          <motion.p variants={fadeUp} className="text-sm font-semibold text-slate-400 mb-1">
+          <motion.p variants={fadeUp} className="text-sm font-semibold text-slate-400 mb-2">
             Hi {name} — here is your CV report
           </motion.p>
         )}
 
+        {/* Category badge */}
+        <motion.div variants={fadeUp} className="flex justify-center mb-4">
+          <span
+            className="inline-flex items-center gap-1.5 text-[11px] font-black px-3 py-1.5 rounded-full border"
+            style={{ background: catStyle.bg, borderColor: catStyle.border, color: catStyle.text }}
+          >
+            {catStyle.icon}
+            {result.category_label}
+          </span>
+        </motion.div>
+
         {/* Score ring */}
         <motion.div variants={fadeUp} className="flex justify-center mb-6 mt-2">
           <div className="relative" style={{ width: 168, height: 168 }}>
-            {/* Background ring */}
             <svg className="absolute inset-0 -rotate-90" width={168} height={168} viewBox="0 0 168 168">
               <circle cx="84" cy="84" r={R} fill="none" stroke="#f1f5f9" strokeWidth="8" />
               <motion.circle
@@ -340,6 +365,19 @@ function ResultsView({
         <motion.p variants={fadeUp} className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto px-4">
           {sub}
         </motion.p>
+
+        {/* Top recommendation pill */}
+        {result.top_recommendation && (
+          <motion.div variants={fadeUp} className="mt-5 px-4">
+            <div className="inline-block rounded-2xl px-4 py-3 text-left max-w-sm w-full"
+              style={{ background: "rgba(255,117,31,0.06)", border: "1px solid rgba(255,117,31,0.15)" }}>
+              <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: ORANGE }}>
+                Top Fix
+              </p>
+              <p className="text-xs text-slate-700 leading-snug">{result.top_recommendation}</p>
+            </div>
+          </motion.div>
+        )}
       </motion.section>
 
       {/* ══════════════════════════════════════════════════════
@@ -361,6 +399,7 @@ function ResultsView({
         findings={findings}
         issues={result.issues}
         strengths={result.strengths}
+        categoryLabel={result.category_label}
       />
 
       {/* ══════════════════════════════════════════════════════
@@ -511,14 +550,19 @@ function ScoreCardsSection({ cards }: { cards: { label: string; score: number; s
 
 // ── What We Found ────────────────────────────────────────────────────────────
 function WhatWeFoundSection({
-  findings, issues, strengths,
+  findings, issues, strengths, categoryLabel,
 }: {
-  findings: { label: string; value: string; bad: boolean; note: string }[];
-  issues: { severity: "critical" | "warning"; text: string }[];
-  strengths: string[];
+  findings:      { label: string; value: string; bad: boolean; note: string }[];
+  issues:        { severity: "critical" | "warning"; text: string }[];
+  strengths:     string[];
+  categoryLabel: string;
 }) {
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
+
+  // Separate critical vs warning for display
+  const criticalIssues = issues.filter(i => i.severity === "critical");
+  const warningIssues  = issues.filter(i => i.severity === "warning");
 
   return (
     <motion.section ref={ref} variants={staggerSm(0.07)} initial="hidden"
@@ -527,6 +571,14 @@ function WhatWeFoundSection({
         className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
         What We Found
       </motion.p>
+
+      {/* Category context strip */}
+      <motion.div variants={fadeUp}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4 text-xs font-semibold text-slate-500"
+        style={{ background: "rgba(15,23,42,0.03)", border: "1px solid rgba(15,23,42,0.06)" }}>
+        <Sparkles size={11} className="text-slate-400 shrink-0" />
+        Report tailored for <strong className="text-slate-700 ml-0.5">{categoryLabel}</strong>
+      </motion.div>
 
       {/* Extracted data */}
       <motion.div variants={fadeUp}
@@ -547,31 +599,54 @@ function WhatWeFoundSection({
       </motion.div>
 
       {/* Critical issues */}
-      {issues.length > 0 && (
+      {criticalIssues.length > 0 && (
         <motion.div variants={fadeUp}
           className="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-4"
           style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
           <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-50">
-            <AlertCircle size={12} className="text-red-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Issues</span>
+            <XCircle size={12} className="text-red-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Critical Issues ({criticalIssues.length})
+            </span>
           </div>
-          {issues.map(({ severity, text }, i) => (
+          {criticalIssues.map(({ text }, i) => (
             <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${
-              i < issues.length - 1 ? "border-b border-slate-50" : ""
+              i < criticalIssues.length - 1 ? "border-b border-slate-50" : ""
             }`}>
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                severity === "critical" ? "bg-red-100" : "bg-amber-100"
-              }`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${
-                  severity === "critical" ? "bg-red-500" : "bg-amber-500"
-                }`} />
+              <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-red-100">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
               </div>
               <span className="text-[12px] text-slate-700 leading-snug flex-1">{text}</span>
-              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${
-                severity === "critical"
-                  ? "bg-red-100 text-red-600"
-                  : "bg-amber-100 text-amber-600"
-              }`}>{severity}</span>
+              <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded shrink-0 mt-0.5 bg-red-100 text-red-600">
+                critical
+              </span>
+            </div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Warnings */}
+      {warningIssues.length > 0 && (
+        <motion.div variants={fadeUp}
+          className="bg-white rounded-2xl border border-slate-100 overflow-hidden mb-4"
+          style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.05)" }}>
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-50">
+            <AlertCircle size={12} className="text-amber-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Recommendations ({warningIssues.length})
+            </span>
+          </div>
+          {warningIssues.map(({ text }, i) => (
+            <div key={i} className={`flex items-start gap-3 px-5 py-3.5 ${
+              i < warningIssues.length - 1 ? "border-b border-slate-50" : ""
+            }`}>
+              <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-amber-100">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              </div>
+              <span className="text-[12px] text-slate-700 leading-snug flex-1">{text}</span>
+              <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded shrink-0 mt-0.5 bg-amber-100 text-amber-600">
+                warning
+              </span>
             </div>
           ))}
         </motion.div>
@@ -661,7 +736,7 @@ function CTASection({ score, potential, onCTA }: { score: number; potential: num
       animate={inView ? "show" : "hidden"}
       className="rounded-3xl overflow-hidden mb-6 px-1">
 
-      <div className="rounded-3xl p-7 text-center" style={{ background: DARK }}>
+      <div className="relative rounded-3xl p-7 text-center" style={{ background: DARK }}>
         {/* Subtle glow orbs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
           <div className="absolute w-48 h-48 rounded-full blur-3xl opacity-20"
