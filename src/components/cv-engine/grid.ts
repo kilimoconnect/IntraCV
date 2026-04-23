@@ -10,6 +10,7 @@ import {
   PAGE_W, PAGE_H, GRID_COLS, DENSITY_METRICS,
   FULL_SECTION_ORDER, MAIN_SECTION_ORDER, SIDEBAR_SECTION_ORDER,
 } from "./types";
+import { normalizeDate } from "@/lib/normalize-date";
 
 // ─── Layout Constants ───
 const HEADER_H = 110;
@@ -399,7 +400,7 @@ export function compressExperience(
 
   // Create "Earlier Career" entry
   const earlierDesc = collapsed.map(e =>
-    `${e.title} – ${e.company}${e.startDate ? ` (${e.startDate}–${e.endDate || "Present"})` : ""}`
+    `${e.title} – ${e.company}${e.startDate ? ` (${normalizeDate(e.startDate)}–${normalizeDate(e.endDate) || "Present"})` : ""}`
   ).join("\n");
 
   const earlierEntry = {

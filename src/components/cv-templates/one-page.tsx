@@ -1,5 +1,6 @@
 import React from "react";
 import { CVTemplateData } from "./types";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface Props {
   data: CVTemplateData;
@@ -75,7 +76,7 @@ export default function OnePageTemplate({ data }: Props) {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                     <strong style={{ fontSize: "11px" }}>{exp.title}</strong>
                     <span style={{ fontSize: "9px", color: "#666", whiteSpace: "nowrap" }}>
-                      {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                      {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                     </span>
                   </div>
                   {exp.company && <p style={{ margin: "1px 0 0", color: "#2563eb", fontSize: "10px", fontWeight: 500 }}>{exp.company}</p>}

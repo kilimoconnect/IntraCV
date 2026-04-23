@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { generateTxRef } from "@/lib/flutterwave";
 import { detectCategory } from "@/lib/detect-category";
 import { getCategoryGaps } from "@/lib/category-gaps";
+import { normalizeDate } from "@/lib/normalize-date";
 import CVReadinessBanner from "./cv-readiness-banner";
 
 // ─── CV Pricing Plans ───
@@ -85,9 +86,9 @@ function asNumber(value: unknown, fallback: number) {
 }
 
 function formatDateRange(start?: string, end?: string) {
-  const left = (start || "").trim();
-  const right = (end || "").trim();
-  if (left && right) return `${left} - ${right}`;
+  const left = normalizeDate((start || "").trim());
+  const right = normalizeDate((end || "").trim());
+  if (left && right) return `${left} – ${right}`;
   return left || right;
 }
 

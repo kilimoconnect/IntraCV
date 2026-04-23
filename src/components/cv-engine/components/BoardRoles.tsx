@@ -4,6 +4,7 @@ import type { RenderSettings } from "@/lib/cv-density-controller";
 import { FONT_STACKS } from "../types";
 import SectionHeading from "./SectionHeading";
 import { sf } from "./font-scale";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface Props {
   data: CVTemplateData;
@@ -33,7 +34,7 @@ export default function BoardRoles({ data, style, widthPx, heightPx, isSidebar, 
       <SectionHeading title={sectionTitle || "Board / Leadership Roles"} style={style} isSidebar={isSidebar} renderSettings={rs} />
       {items.map((role, i) => {
         const accent = isSidebar ? style.colors.sidebarText : style.colors.accent;
-        const dateStr = [role.startDate, role.endDate].filter(Boolean).join(" – ");
+        const dateStr = [role.startDate, role.endDate].filter(Boolean).map(normalizeDate).join(" – ");
         return (
           <div key={i} style={{ marginBottom: "8px", paddingLeft: "10px", borderLeft: `2px solid ${accent}30` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px" }}>

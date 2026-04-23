@@ -4,6 +4,7 @@ import type { RenderSettings } from "@/lib/cv-density-controller";
 import { FONT_STACKS } from "../types";
 import SectionHeading from "./SectionHeading";
 import { sf, sn } from "./font-scale";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface Props {
   data: CVTemplateData;
@@ -53,7 +54,7 @@ export default function Experience({ data, style, widthPx, heightPx, sectionTitl
           );
         }
 
-        const dateStr = [exp.startDate, exp.endDate].filter(Boolean).join(" – ");
+        const dateStr = [exp.startDate, exp.endDate].filter(Boolean).map(normalizeDate).join(" – ");
 
         return (
           <div key={i} style={{

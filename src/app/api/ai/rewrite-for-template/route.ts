@@ -5,6 +5,7 @@ import { SLOT_RULES as BASE_TWO_PAGE_SLOT_RULES } from "@/app/dashboard/componen
 import { SLOT_RULES as THREE_PAGE_SLOT_RULES } from "@/app/dashboard/components/cv-template - 3pages1";
 import { CATEGORY_RULES, type CategorySlotRules } from "@/app/dashboard/components/cv-category-rules";
 import type { CareerCategory } from "@/app/dashboard/components/cv-layout-types";
+import { normalizeDate } from "@/lib/normalize-date";
 
 // ═══════════════════════════════════════════════════════════════
 // ADAPTIVE SLOT RULES — computed from actual profile content
@@ -451,9 +452,9 @@ function normalizeStringArray(items: any): string[] {
 }
 
 function formatDateRange(start?: string, end?: string): string {
-  const left = typeof start === "string" ? start.trim() : "";
-  const right = typeof end === "string" ? end.trim() : "";
-  if (left && right) return `${left} - ${right}`;
+  const left = normalizeDate(typeof start === "string" ? start.trim() : "");
+  const right = normalizeDate(typeof end === "string" ? end.trim() : "");
+  if (left && right) return `${left} – ${right}`;
   return left || right;
 }
 

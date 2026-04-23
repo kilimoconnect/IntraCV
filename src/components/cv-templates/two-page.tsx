@@ -1,5 +1,6 @@
 import React from "react";
 import { CVTemplateData } from "./types";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface Props {
   data: CVTemplateData;
@@ -92,7 +93,7 @@ export default function TwoPageTemplate({ data }: Props) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: "12px" }}>{exp.title}</strong>
                   <span style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap" }}>
-                    {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                    {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                   </span>
                 </div>
                 {exp.company && <p style={{ margin: "1px 0 0", color: "#0f172a", fontSize: "11px", fontWeight: 600 }}>{exp.company}</p>}
@@ -118,7 +119,7 @@ export default function TwoPageTemplate({ data }: Props) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: "12px" }}>{exp.title}</strong>
                   <span style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap" }}>
-                    {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                    {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                   </span>
                 </div>
                 {exp.company && <p style={{ margin: "1px 0 0", color: "#0f172a", fontSize: "11px", fontWeight: 600 }}>{exp.company}</p>}

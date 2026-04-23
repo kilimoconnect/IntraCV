@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import CVReadinessBanner from "./cv-readiness-banner";
 import { getCategoryGaps } from "@/lib/category-gaps";
 import { detectCategory } from "@/lib/detect-category";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface MyProfileProps {
   personalInfo: any;
@@ -346,7 +347,7 @@ export default function MyProfile({
                 </div>
                 {(exp.startDate || exp.endDate) && (
                   <Badge variant="outline" className="text-xs shrink-0">
-                    {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                    {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                   </Badge>
                 )}
               </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { CVTemplateData } from "./types";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface Props {
   data: CVTemplateData;
@@ -95,7 +96,7 @@ export default function ExecutiveTemplate({ data }: Props) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: "12.5px", color: accent }}>{exp.title}</strong>
                   <span style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap", fontStyle: "italic" }}>
-                    {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                    {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                   </span>
                 </div>
                 {exp.company && <p style={{ margin: "2px 0 0", fontSize: "11px", fontWeight: 600 }}>{exp.company}</p>}
@@ -121,7 +122,7 @@ export default function ExecutiveTemplate({ data }: Props) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: "12.5px", color: accent }}>{exp.title}</strong>
                   <span style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap", fontStyle: "italic" }}>
-                    {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                    {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                   </span>
                 </div>
                 {exp.company && <p style={{ margin: "2px 0 0", fontSize: "11px", fontWeight: 600 }}>{exp.company}</p>}
@@ -205,7 +206,7 @@ export default function ExecutiveTemplate({ data }: Props) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <strong style={{ fontSize: "12px", color: accent }}>{exp.title}</strong>
                   <span style={{ fontSize: "10px", color: "#64748b", whiteSpace: "nowrap", fontStyle: "italic" }}>
-                    {exp.startDate}{exp.startDate && exp.endDate ? " – " : ""}{exp.endDate}
+                    {normalizeDate(exp.startDate)}{exp.startDate && exp.endDate ? " – " : ""}{normalizeDate(exp.endDate)}
                   </span>
                 </div>
                 {exp.company && <p style={{ margin: "2px 0 0", fontSize: "11px", fontWeight: 600 }}>{exp.company}</p>}

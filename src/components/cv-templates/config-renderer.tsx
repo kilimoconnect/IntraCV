@@ -1,6 +1,7 @@
 import React from "react";
 import { CVTemplateData } from "./types";
 import { TemplateConfig, FONT_STACKS, DENSITY } from "./template-config";
+import { normalizeDate } from "@/lib/normalize-date";
 
 interface Props {
   data: CVTemplateData;
@@ -353,7 +354,7 @@ function ExperienceBlock({ data, config }: { data: CVTemplateData; config: Templ
             <div style={{ flex: 1, paddingBottom: "2px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <strong style={{ fontSize: d.fontSize }}>{e.title}</strong>
-                <span style={{ fontSize: "8.5px", color: config.colors.mutedText, whiteSpace: "nowrap" }}>{e.startDate}{e.startDate && e.endDate ? " – " : ""}{e.endDate}</span>
+                <span style={{ fontSize: "8.5px", color: config.colors.mutedText, whiteSpace: "nowrap" }}>{normalizeDate(e.startDate)}{e.startDate && e.endDate ? " – " : ""}{normalizeDate(e.endDate)}</span>
               </div>
               <p style={{ margin: "1px 0 0", color: config.colors.accent, fontSize: "9.5px", fontWeight: 500 }}>{e.company}{e.location ? ` | ${e.location}` : ""}</p>
               {e.description && <div style={{ margin: "3px 0 0", fontSize: "9.5px", color: config.colors.mutedText, lineHeight: "1.4" }}>{e.description.split("\n").map((line, li) => <div key={li} style={{ marginBottom: "1px" }}>{line}</div>)}</div>}
@@ -373,7 +374,7 @@ function ExperienceBlock({ data, config }: { data: CVTemplateData; config: Templ
           <div key={i} style={{ marginBottom: d.item, border: `1px solid ${config.colors.border}`, borderRadius: config.borderRadius || "4px", padding: "8px 10px", background: config.colors.accentLight + "33" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <strong style={{ fontSize: d.fontSize }}>{e.title}</strong>
-              <span style={{ fontSize: "8px", color: config.colors.mutedText, whiteSpace: "nowrap", background: config.colors.accentLight, padding: "1px 6px", borderRadius: "8px" }}>{e.startDate}{e.startDate && e.endDate ? " – " : ""}{e.endDate}</span>
+              <span style={{ fontSize: "8px", color: config.colors.mutedText, whiteSpace: "nowrap", background: config.colors.accentLight, padding: "1px 6px", borderRadius: "8px" }}>{normalizeDate(e.startDate)}{e.startDate && e.endDate ? " – " : ""}{normalizeDate(e.endDate)}</span>
             </div>
             <p style={{ margin: "1px 0 0", color: config.colors.accent, fontSize: "9.5px", fontWeight: 500 }}>{e.company}{e.location ? ` | ${e.location}` : ""}</p>
             {e.description && <div style={{ margin: "3px 0 0", fontSize: "9.5px", color: config.colors.mutedText, lineHeight: "1.4" }}>{e.description.split("\n").map((line, li) => <div key={li} style={{ marginBottom: "1px" }}>{line}</div>)}</div>}
@@ -392,7 +393,7 @@ function ExperienceBlock({ data, config }: { data: CVTemplateData; config: Templ
           <div key={i} style={{ marginBottom: "5px", paddingBottom: "5px", borderBottom: i < data.experiences.length - 1 ? `1px solid ${config.colors.border}` : "none" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={{ fontSize: d.fontSize }}><strong>{e.title}</strong> <span style={{ color: config.colors.accent, fontSize: "9px" }}>@ {e.company}</span></span>
-              <span style={{ fontSize: "8.5px", color: config.colors.mutedText, whiteSpace: "nowrap" }}>{e.startDate}{e.startDate && e.endDate ? " – " : ""}{e.endDate}</span>
+              <span style={{ fontSize: "8.5px", color: config.colors.mutedText, whiteSpace: "nowrap" }}>{normalizeDate(e.startDate)}{e.startDate && e.endDate ? " – " : ""}{normalizeDate(e.endDate)}</span>
             </div>
             {e.description && <div style={{ margin: "2px 0 0", fontSize: "9px", color: config.colors.mutedText, lineHeight: "1.35" }}>{e.description.split("\n").slice(0, 2).map((line, li) => <div key={li}>{line}</div>)}</div>}
           </div>
@@ -410,7 +411,7 @@ function ExperienceBlock({ data, config }: { data: CVTemplateData; config: Templ
         <div key={i} style={{ marginBottom: d.item }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <strong style={{ fontSize: d.fontSize }}>{e.title}</strong>
-            <span style={{ fontSize: "8px", color: "#fff", whiteSpace: "nowrap", background: config.colors.accent, padding: "1px 7px", borderRadius: "8px", fontWeight: 500 }}>{e.startDate}{e.startDate && e.endDate ? " – " : ""}{e.endDate}</span>
+            <span style={{ fontSize: "8px", color: "#fff", whiteSpace: "nowrap", background: config.colors.accent, padding: "1px 7px", borderRadius: "8px", fontWeight: 500 }}>{normalizeDate(e.startDate)}{e.startDate && e.endDate ? " – " : ""}{normalizeDate(e.endDate)}</span>
           </div>
           <p style={{ margin: "2px 0 0", color: config.colors.accent, fontSize: "9.5px", fontWeight: 600 }}>
             {e.company}{e.location ? <span style={{ fontWeight: 400, color: config.colors.mutedText }}>{` · ${e.location}`}</span> : ""}
