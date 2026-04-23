@@ -192,20 +192,22 @@ function buildAnalysisPrompt(cvText: string, category: CareerCategory): string {
     '    "score_label": "<e.g. \'+18 Impact Score\'>"\n' +
     '  },\n' +
     '  "format": {\n' +
-    '    "layout_type": "<Infer from text patterns — \'single-column\' if clean linear flow with no side-by-side content, \'two-column\' if content appears side-by-side or uses pipes/dividers, \'table-based\' if table-like characters present, \'sidebar\' if clear sidebar column pattern, \'unknown\' if unclear>",\n' +
-    '    "ats_safe": <boolean — true only if single-column with no tables or complex columns inferred>,\n' +
-    '    "section_clarity": "<\'clear\' if all headings use standard professional names (Experience, Education, Skills etc.), \'inconsistent\' if mixed, \'confusing\' if non-standard or absent>",\n' +
-    '    "template_impression": "<\'basic\' = plain text or default Word/Google Docs, \'generic\' = simple commonly-used free template, \'structured\' = consistently formatted but visually plain, \'professional\' = strong visual structure indicators>",\n' +
-    '    "format_score": <0–100 — assess visual presentation quality from text signals: deduct for table/column layout (-20), non-standard section headers (-10), generic/plain appearance (-15), inconsistent date or bullet formatting (-10), no apparent visual hierarchy (-10); add for clean linear structure (+15), consistent professional formatting (+15), clear section organisation (+10)>,\n' +
-    '    "issues": ["<2–3 specific format or presentation problems observable from the text structure, e.g. \'Skills listed as plain comma text with no visual grouping or categories\', \'Inconsistent date format across roles — mix of MM/YYYY and month names\', \'Section headings lack consistent capitalisation\'>"],\n' +
-    '    "strengths": ["<0–1 genuine format positives — can be an empty array>"]\n' +
+    '    "layout_type": "<Infer from text flow — \'single-column\' if content runs top-to-bottom as one clear stream; \'two-column\' if you see parallel blocks or heavy pipe/divider use; \'table-based\' if grid-like character patterns dominate; \'sidebar\' if a persistent sidebar column is evident; \'unknown\' if unclear>",\n' +
+    '    "ats_safe": <boolean — true if single-column with no tables or multi-column patterns detected>,\n' +
+    '    "section_clarity": "<\'clear\' if standard section headings are consistently used (e.g. Experience, Education, Skills, Summary); \'inconsistent\' if headings vary in style or are partially present; \'confusing\' if absent or non-standard throughout>",\n' +
+    '    "template_impression": "<CRITICAL: You are reading EXTRACTED TEXT — colours, badges, icons, and visual styling are completely invisible. Assess ONLY structural consistency. Use \'professional\' if sections are clearly labelled, content is consistently structured, dates follow a pattern, and experience entries are well-organised. Use \'structured\' if reasonably organised but some inconsistency. Use \'generic\' only if the structure feels truly cookie-cutter. Use \'basic\' ONLY if there is genuinely minimal structure — e.g. no clear section headings, run-on paragraphs, no formatting whatsoever. A professionally produced single-column CV MUST NOT be rated \'basic\' just because extracted text looks plain>",\n' +
+    '    "format_score": <0–100 — CRITICAL scoring rules: Start at 60 for any single-column CV. ADD: consistent date format throughout all roles (+10), standard professional section headings (+10), consistent bullet structure in experience (+10), logical section order (+5), contact info present (+5). DEDUCT: multi-column or table layout detected (-20), genuinely missing or non-standard section labels (-10), clearly inconsistent date patterns where you can see different formats in the text (e.g. \'01/2020\' next to \'January 2022\') (-10), no bullet formatting in experience (-10). DO NOT deduct for: how skills look in plain text, visual colours, badge styling, font choices — these CANNOT be assessed from extracted text>,\n' +
+    '    "issues": [\n' +
+    '      "<List 1–3 GENUINE structural issues visible in the raw text only. FORBIDDEN issues — never include these regardless of what you see: (1) skill formatting/comma text — always an extraction artefact, never a real issue; (2) visual design, colours, or badge styling — invisible in text; (3) font or spacing observations. ALLOWED issues: (A) multi-column or table layout detected in text structure; (B) clearly inconsistent date formats where you can see concrete examples of different patterns in THIS specific text — quote both formats you see; (C) critical section completely absent (e.g. no experience section at all); (D) bullet points entirely absent from experience entries. If no genuine structural issue exists, return an empty array [].>"\n' +
+    '    ],\n' +
+    '    "strengths": ["<1–2 genuine format positives based only on what is observable in the text structure>"]\n' +
     '  }\n' +
     "}\n\n" +
     "Rules:\n" +
     "- issues: 3–5 items, each referencing actual CV data, relevant to " + label + " level expectations\n" +
     "- strengths: 1–2 items only — find something genuinely good\n" +
     "- overall_score MUST follow the weighted formula exactly\n" +
-    "- format.issues: 2–3 items focused purely on presentation/layout/structure, not content\n" +
+    "- format.issues: follow the FORBIDDEN/ALLOWED rules above strictly — quality over quantity, empty array is valid\n" +
     "- Return ONLY the JSON object\n\n" +
     "CV TEXT:\n---\n" +
     cvText.slice(0, 9000) +
@@ -299,7 +301,31 @@ export async function POST(req: Request) {
     ));
 
     const fmt = analysis.format ?? {};
-    const format_score = Math.min(100, Math.max(1, fmt.format_score ?? 35));
+    const format_score = Math.min(100, Math.max(1, fmt.format_score ?? 60));
+
+    // ── Filter format issues that are always text-extraction artefacts ────────
+    // These are false positives that appear regardless of actual visual quality.
+    const FORMAT_ISSUE_BLOCKLIST = [
+      /skill.*comma/i,
+      /comma.*skill/i,
+      /plain.*comma/i,
+      /comma.*text/i,
+      /no.*visual.*group/i,
+      /visual.*group/i,
+      /badge/i,
+      /colour/i,
+      /color/i,
+      /font/i,
+      /spacing/i,
+      /icon/i,
+      /capitalisation.*heading/i,
+      /heading.*capitalisation/i,
+      /capitaliz/i,
+    ];
+    const rawFmtIssues: string[] = Array.isArray(fmt.issues) ? fmt.issues : [];
+    const filteredFmtIssues = rawFmtIssues.filter(
+      (issue: string) => !FORMAT_ISSUE_BLOCKLIST.some((re) => re.test(issue))
+    );
 
     // ── Step 5: Merge category gaps into issues (no duplicates) ──────────────
     const issues: { severity: "critical" | "warning"; text: string }[] =
@@ -351,10 +377,10 @@ export async function POST(req: Request) {
       format: {
         layout_type:        fmt.layout_type        || "unknown",
         ats_safe:           fmt.ats_safe           ?? false,
-        section_clarity:    fmt.section_clarity    || "inconsistent",
-        template_impression: fmt.template_impression || "generic",
+        section_clarity:    fmt.section_clarity    || "clear",
+        template_impression: fmt.template_impression || "structured",
         format_score,
-        issues:   Array.isArray(fmt.issues)    ? fmt.issues    : [],
+        issues:   filteredFmtIssues,
         strengths: Array.isArray(fmt.strengths) ? fmt.strengths : [],
       },
 
