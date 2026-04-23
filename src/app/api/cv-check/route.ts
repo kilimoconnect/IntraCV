@@ -66,17 +66,36 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
 }
 
 // ─── Step 1: Structured extraction prompt ────────────────────────────────────
-const EXTRACT_SYSTEM = `You are a CV parser. Extract structured data from the CV text and return ONLY valid JSON with no extra text or markdown.`;
+const EXTRACT_SYSTEM = `You are a document classifier and CV parser. Your first job is to determine whether the uploaded document is a CV or resume. If it is not a CV or resume, return is_cv: false and stop. Only extract CV fields if is_cv is true. Return ONLY valid JSON with no extra text or markdown.`;
+
+// Human-readable labels for document types shown to the user
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  cv:               "CV / Resume",
+  resume:           "CV / Resume",
+  cover_letter:     "cover letter",
+  reference_letter: "reference letter",
+  contract:         "contract",
+  invoice:          "invoice",
+  report:           "report",
+  article:          "article or essay",
+  presentation:     "presentation",
+  transcript:       "academic transcript",
+  certificate:      "certificate",
+  other:            "unrecognised document",
+};
 
 function buildExtractPrompt(cvText: string): string {
   return (
-    "Parse this CV and return a JSON object with EXACTLY these fields:\n\n" +
+    "First, determine whether this document is a CV or resume.\n\n" +
+    "Return a JSON object with EXACTLY these fields:\n\n" +
     "{\n" +
-    '  "name": "Full name or \'Candidate\'",\n' +
-    '  "current_role": "Most recent job title",\n' +
-    '  "has_summary": <boolean — true if a professional summary / profile section exists>,\n' +
-    '  "summary_word_count": <integer — word count of the summary/profile section, 0 if absent>,\n' +
-    '  "word_count": <integer — total words in the entire CV>,\n' +
+    '  "is_cv": <boolean — true ONLY if this document is clearly a CV, resume, or curriculum vitae; false for ANYTHING else including cover letters, reference letters, contracts, invoices, reports, articles, or academic transcripts>,\n' +
+    '  "document_type": "<classify the document: \'cv\', \'resume\', \'cover_letter\', \'reference_letter\', \'contract\', \'invoice\', \'report\', \'article\', \'presentation\', \'transcript\', \'certificate\', or \'other\'>",\n' +
+    '  "name": "Full name or \'Candidate\' — only if is_cv is true, otherwise empty string",\n' +
+    '  "current_role": "Most recent job title — only if is_cv is true, otherwise empty string",\n' +
+    '  "has_summary": <boolean — true if a professional summary / profile section exists; false if is_cv is false>,\n' +
+    '  "summary_word_count": <integer — word count of the summary/profile section, 0 if absent or not a CV>,\n' +
+    '  "word_count": <integer — total words in the document>,\n' +
     '  "experiences": [\n' +
     '    {\n' +
     '      "title": "Job title",\n' +
@@ -101,8 +120,8 @@ function buildExtractPrompt(cvText: string): string {
     '  "volunteer": [{ "role": "volunteer role or activity" }],\n' +
     '  "personalInfo": { "linkedin": "<LinkedIn URL if found, empty string if not>" }\n' +
     "}\n\n" +
-    "Return ONLY the JSON object.\n\n" +
-    "CV TEXT:\n---\n" +
+    "IMPORTANT: If is_cv is false, set all array fields to [] and string fields to empty strings. Return ONLY the JSON object.\n\n" +
+    "DOCUMENT TEXT:\n---\n" +
     cvText.slice(0, 9000) +
     "\n---"
   );
@@ -227,6 +246,20 @@ export async function POST(req: Request) {
     });
 
     const structured = JSON.parse(extractChat.choices[0]?.message?.content ?? "{}");
+
+    // ── Validate: reject non-CV documents before running expensive analysis ────
+    if (structured.is_cv === false) {
+      const docType      = structured.document_type || "other";
+      const docTypeLabel = DOCUMENT_TYPE_LABELS[docType] ?? "unrecognised document";
+      return NextResponse.json(
+        {
+          error:          "not_a_cv",
+          document_type:  docType,
+          document_label: docTypeLabel,
+        },
+        { status: 422 }
+      );
+    }
 
     // ── Step 2: Detect category using the same logic as the CV builder ────────
     const category     = detectCategory(structured);
