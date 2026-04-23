@@ -118,6 +118,7 @@ function buildExtractPrompt(cvText: string): string {
     '  "memberships": [{ "name": "professional association or membership name" }],\n' +
     '  "tools": [{ "name": "tool, software, or platform name" }],\n' +
     '  "volunteer": [{ "role": "volunteer role or activity" }],\n' +
+    '  "referees": [{ "name": "<referee\'s full name if explicitly listed in a References or Referees section; if only \'Available upon request\' appears, include one entry with name: \'Available upon request\'>" }],\n' +
     '  "personalInfo": { "linkedin": "<LinkedIn URL if found, empty string if not>" }\n' +
     "}\n\n" +
     "IMPORTANT: If is_cv is false, set all array fields to [] and string fields to empty strings. Return ONLY the JSON object.\n\n" +
@@ -262,8 +263,17 @@ export async function POST(req: Request) {
     }
 
     // ── Step 2: Detect category using the same logic as the CV builder ────────
-    const category     = detectCategory(structured);
-    const categoryGaps = getCategoryGaps(category, structured);
+    const category = detectCategory(structured);
+
+    // getCategoryGaps expects cvData.summary as a string and cvData.referees as an array.
+    // The extraction step only provides has_summary (boolean) and summary_word_count (number),
+    // so we synthesize the fields getCategoryGaps needs before passing structured data.
+    const structuredForGaps = {
+      ...structured,
+      // Synthesise summary string: non-empty string means "summary exists", empty means absent
+      summary: structured.has_summary ? "professional summary present" : "",
+    };
+    const categoryGaps = getCategoryGaps(category, structuredForGaps);
 
     // ── Step 3: Category-specific deep analysis ───────────────────────────────
     const analysisChat = await openai.chat.completions.create({
