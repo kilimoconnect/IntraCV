@@ -40,7 +40,7 @@ const BARS = [
 // Extracted "real" data rows — specific numbers that feel like a genuine scan
 const FINDINGS = [
   { field: "Summary length",    value: "47 words",  note: "min. 80 needed",    bad: true  },
-  { field: "Bullets w/ metrics","0 of 14",          note: "no results found",  bad: true  },
+  { field: "Bullets w/ metrics", value: "0 of 14",   note: "no results found",  bad: true  },
   { field: "Keyword matches",   value: "4 of 11",   note: "7 missing",         bad: true  },
   { field: "Generic skills",    value: "6 of 9",    note: "too vague",         bad: false },
 ];
