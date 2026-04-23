@@ -31,19 +31,27 @@ const stagger = (d = 0.08): Variants => ({
 
 // ─── Score Card ───────────────────────────────────────────────────────────────
 const BARS = [
-  { label: "ATS Match",  score: 38, color: "#ef4444" },
-  { label: "Impact",     score: 22, color: "#ef4444" },
-  { label: "Keywords",   score: 44, color: "#f59e0b" },
+  { label: "ATS Match",   score: 38, color: "#ef4444" },
+  { label: "Impact",      score: 22, color: "#ef4444" },
+  { label: "Keywords",    score: 44, color: "#f59e0b" },
+  { label: "Readability", score: 61, color: "#f59e0b" },
+];
+
+// Extracted "real" data rows — specific numbers that feel like a genuine scan
+const FINDINGS = [
+  { field: "Summary length",    value: "47 words",  note: "min. 80 needed",    bad: true  },
+  { field: "Bullets w/ metrics","0 of 14",          note: "no results found",  bad: true  },
+  { field: "Keyword matches",   value: "4 of 11",   note: "7 missing",         bad: true  },
+  { field: "Generic skills",    value: "6 of 9",    note: "too vague",         bad: false },
 ];
 
 const ISSUES: { severity: "critical" | "warning"; text: string }[] = [
-  { severity: "critical", text: "Summary too generic — won't pass ATS screening"  },
-  { severity: "critical", text: "0 of 5 bullet points include measurable results"  },
-  { severity: "warning",  text: "7 high-value keywords missing for your target role" },
+  { severity: "critical", text: "14 experience bullets — zero include measurable results" },
+  { severity: "critical", text: "Summary is 47 words, below the 80-word ATS threshold"   },
+  { severity: "warning",  text: "7 of 11 target role keywords are missing entirely"       },
 ];
 
 function ScoreCard() {
-
   const [animated, setAnimated] = useState(false);
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
@@ -55,9 +63,9 @@ function ScoreCard() {
   const circumference = 2 * Math.PI * 28;
 
   return (
-    <div ref={ref} className="relative w-full max-w-[360px] mx-auto lg:mx-0">
-      {/* Ambient glow */}
-      <div className="absolute inset-8 rounded-3xl blur-3xl opacity-[0.08] pointer-events-none"
+    <div ref={ref} className="relative w-full max-w-[390px] mx-auto lg:mx-0">
+      {/* Glow */}
+      <div className="absolute inset-8 rounded-3xl blur-3xl opacity-[0.07] pointer-events-none"
         style={{ background: "#ef4444" }} />
 
       <motion.div
@@ -65,8 +73,9 @@ function ScoreCard() {
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.65, ease: ez }}
         className="relative bg-white rounded-2xl overflow-hidden border border-slate-100"
-        style={{ boxShadow: "0 8px 48px rgba(0,0,0,0.11), 0 1px 0 rgba(0,0,0,0.05)" }}
+        style={{ boxShadow: "0 8px 48px rgba(0,0,0,0.10), 0 1px 0 rgba(0,0,0,0.05)" }}
       >
+
         {/* ── Window chrome ── */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
           <div className="flex items-center gap-1.5">
@@ -75,7 +84,7 @@ function ScoreCard() {
             <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
           <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
-            FuseCV · Analysis Report
+            FuseCV · CV Analysis Report
           </span>
           <div className="flex items-center gap-1">
             <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.4, repeat: Infinity }}
@@ -84,60 +93,62 @@ function ScoreCard() {
           </div>
         </div>
 
-        {/* ── Identity row ── */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
-            style={{ background: "#94a3b8" }}>
-            <User size={16} />
+        {/* ── File header ── */}
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+          {/* PDF icon */}
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "#fee2e2" }}>
+            <FileText size={16} className="text-red-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-black text-slate-900 truncate">Your CV Report</p>
-            <p className="text-[10px] text-slate-400 font-medium">Analysed just now · 1 page</p>
+            <p className="text-[11px] font-black text-slate-800 truncate">your_cv_2024.pdf</p>
+            <p className="text-[9px] text-slate-400 font-medium mt-0.5">1 page · 487 words · scanned just now</p>
           </div>
-          <span className="shrink-0 text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-wide">
-            Weak
-          </span>
+          <div className="text-right shrink-0">
+            <span className="text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-wide">
+              Weak CV
+            </span>
+          </div>
         </div>
 
-        {/* ── Score + breakdown ── */}
+        {/* ── Score + bars ── */}
         <div className="flex gap-4 px-5 py-4 border-b border-slate-100">
           {/* Circle */}
-          <div className="relative w-[68px] h-[68px] shrink-0">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 64 64">
-              <circle cx="32" cy="32" r="28" fill="none" stroke="#fee2e2" strokeWidth="5" />
-              <motion.circle
-                cx="32" cy="32" r="28" fill="none"
-                stroke="#ef4444" strokeWidth="5" strokeLinecap="round"
-                strokeDasharray={circumference}
-                initial={{ strokeDashoffset: circumference }}
-                animate={animated ? { strokeDashoffset: circumference * 0.71 } : {}}
-                transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <motion.span
-                className="text-xl font-black leading-none text-slate-900"
-                initial={{ opacity: 0 }} animate={animated ? { opacity: 1 } : {}}
-                transition={{ delay: 0.45 }}
-              >29</motion.span>
-              <span className="text-[8px] text-slate-400 font-bold">/100</span>
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <div className="relative w-[66px] h-[66px]">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#fee2e2" strokeWidth="5" />
+                <motion.circle
+                  cx="32" cy="32" r="28" fill="none"
+                  stroke="#ef4444" strokeWidth="5" strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  initial={{ strokeDashoffset: circumference }}
+                  animate={animated ? { strokeDashoffset: circumference * 0.71 } : {}}
+                  transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <motion.span className="text-xl font-black leading-none text-slate-900"
+                  initial={{ opacity: 0 }} animate={animated ? { opacity: 1 } : {}}
+                  transition={{ delay: 0.45 }}>29</motion.span>
+                <span className="text-[8px] text-slate-400 font-bold">/100</span>
+              </div>
             </div>
+            <span className="text-[8px] font-black text-red-500 uppercase tracking-wide">Needs Work</span>
           </div>
 
           {/* Bars */}
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
-              Score Breakdown
-            </p>
-            <div className="space-y-1.5">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Score Breakdown</p>
+            <div className="space-y-[7px]">
               {BARS.map(({ label, score, color }, i) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span className="text-[9px] text-slate-400 w-16 shrink-0">{label}</span>
+                  <span className="text-[9px] text-slate-400 w-[68px] shrink-0">{label}</span>
                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <motion.div className="h-full rounded-full" style={{ background: color }}
                       initial={{ width: 0 }}
                       animate={animated ? { width: `${score}%` } : {}}
-                      transition={{ duration: 0.8, delay: 0.4 + i * 0.1, ease: [0.4, 0, 0.2, 1] }}
+                      transition={{ duration: 0.8, delay: 0.35 + i * 0.1, ease: [0.4, 0, 0.2, 1] }}
                     />
                   </div>
                   <span className="text-[9px] font-bold w-5 text-right shrink-0" style={{ color }}>{score}</span>
@@ -147,34 +158,53 @@ function ScoreCard() {
           </div>
         </div>
 
-        {/* ── Issues ── */}
-        <div className="px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertCircle size={12} className="text-red-500" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-              Issues Found
-            </p>
+        {/* ── Extracted data ── */}
+        <div className="px-5 py-3.5 border-b border-slate-100">
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
+            What We Found in Your CV
+          </p>
+          <div className="space-y-1.5">
+            {FINDINGS.map(({ field, value, note, bad }, i) => (
+              <motion.div
+                key={field}
+                initial={{ opacity: 0, x: -5 }}
+                animate={animated ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.45 + i * 0.08, duration: 0.25 }}
+                className="flex items-center gap-2 py-1 border-b border-slate-50 last:border-0"
+              >
+                <span className="text-[10px] text-slate-500 flex-1">{field}</span>
+                <span className={`text-[10px] font-black ${bad ? "text-red-600" : "text-amber-600"}`}>
+                  {value}
+                </span>
+                <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${
+                  bad ? "bg-red-50 text-red-400" : "bg-amber-50 text-amber-500"
+                }`}>{note}</span>
+              </motion.div>
+            ))}
           </div>
-          <div className="space-y-2">
+        </div>
+
+        {/* ── Issues ── */}
+        <div className="px-5 py-3.5 border-b border-slate-100">
+          <div className="flex items-center gap-1.5 mb-2.5">
+            <AlertCircle size={11} className="text-red-500" />
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Critical Issues</p>
+          </div>
+          <div className="space-y-1.5">
             {ISSUES.map(({ severity, text }, i) => (
               <motion.div
                 key={text}
-                initial={{ opacity: 0, x: -6 }}
+                initial={{ opacity: 0, x: -5 }}
                 animate={animated ? { opacity: 1, x: 0 } : {}}
-                transition={{ delay: 0.5 + i * 0.11, duration: 0.28 }}
-                className="flex items-start gap-2.5 rounded-lg px-2.5 py-2"
+                transition={{ delay: 0.65 + i * 0.1, duration: 0.25 }}
+                className="flex items-start gap-2 rounded-lg px-2.5 py-1.5"
                 style={{ background: severity === "critical" ? "#fef2f2" : "#fffbeb" }}
               >
-                <XCircle size={12}
-                  className={severity === "critical" ? "text-red-500 mt-0.5 shrink-0" : "text-amber-500 mt-0.5 shrink-0"} />
-                <span className="text-[11px] font-semibold text-slate-700 leading-snug flex-1">{text}</span>
-                <span className={`text-[8px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 ${
-                  severity === "critical"
-                    ? "bg-red-200 text-red-700"
-                    : "bg-amber-200 text-amber-700"
-                }`}>
-                  {severity}
-                </span>
+                <XCircle size={11} className={`mt-0.5 shrink-0 ${severity === "critical" ? "text-red-500" : "text-amber-500"}`} />
+                <span className="text-[10px] font-semibold text-slate-700 leading-snug flex-1">{text}</span>
+                <span className={`text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${
+                  severity === "critical" ? "bg-red-200 text-red-700" : "bg-amber-200 text-amber-700"
+                }`}>{severity}</span>
               </motion.div>
             ))}
           </div>
@@ -184,29 +214,31 @@ function ScoreCard() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={animated ? { opacity: 1 } : {}}
-          transition={{ delay: 0.9 }}
+          transition={{ delay: 0.95 }}
           className="flex items-center gap-3 px-5 py-3 border-b border-slate-100"
-          style={{ background: "linear-gradient(90deg, rgba(0,74,173,0.04) 0%, rgba(0,74,173,0.01) 100%)" }}
+          style={{ background: "linear-gradient(90deg,rgba(0,74,173,0.05) 0%,rgba(0,74,173,0.01) 100%)" }}
         >
-          <TrendingUp size={14} style={{ color: BLUE }} className="shrink-0" />
+          <TrendingUp size={13} style={{ color: BLUE }} className="shrink-0" />
           <div className="flex-1">
-            <p className="text-[11px] font-black text-slate-800">
-              Fix these issues → score jumps to <span style={{ color: BLUE }}>78/100</span>
+            <p className="text-[10px] font-black text-slate-800">
+              Fix these → score jumps to{" "}
+              <span style={{ color: BLUE }} className="text-[11px]">78/100</span>
             </p>
-            <p className="text-[9px] text-slate-400 mt-0.5">Based on similar CVs we&apos;ve improved</p>
+            <p className="text-[9px] text-slate-400 mt-0.5">Based on 1,200+ CVs we&apos;ve improved</p>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 bg-white rounded-lg px-2 py-1 border border-slate-100">
             <span className="text-[10px] font-black text-red-500 line-through">29</span>
-            <ArrowRight size={10} style={{ color: BLUE }} />
+            <ArrowRight size={9} style={{ color: BLUE }} />
             <span className="text-[10px] font-black" style={{ color: BLUE }}>78</span>
           </div>
         </motion.div>
 
         {/* ── CTA nudge ── */}
-        <div className="px-5 py-4 text-center" style={{ background: `rgba(255,117,31,0.04)` }}>
-          <p className="text-[12px] font-black text-slate-800 mb-0.5">Your real report is waiting</p>
-          <p className="text-[10px] text-slate-400">Upload your CV to see your actual score</p>
+        <div className="px-5 py-3.5 text-center" style={{ background: "rgba(255,117,31,0.04)" }}>
+          <p className="text-[11px] font-black text-slate-800 mb-0.5">This is a sample report</p>
+          <p className="text-[10px] text-slate-400">Upload your CV to see your actual numbers</p>
         </div>
+
       </motion.div>
 
       {/* Floating badge */}
@@ -218,7 +250,6 @@ function ScoreCard() {
         <Zap size={12} style={{ color: ORANGE }} />
         <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
       </motion.div>
-
     </div>
   );
 }
