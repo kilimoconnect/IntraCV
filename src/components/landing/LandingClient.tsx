@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, useInView, AnimatePresence, type Variants } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
-  CheckCircle2, XCircle, FileText, Sparkles, User,
+  CheckCircle2, XCircle, FileText, User,
   TrendingUp, AlertCircle,
 } from "lucide-react";
 
@@ -42,12 +42,7 @@ const ISSUES: { severity: "critical" | "warning"; text: string }[] = [
   { severity: "warning",  text: "7 high-value keywords missing for your target role" },
 ];
 
-function ScoreCard({ firstName }: { firstName: string }) {
-  const name     = firstName.trim();
-  const hasName  = name.length >= 2;
-  const display  = useMemo(() =>
-    name ? name.charAt(0).toUpperCase() + name.slice(1) : "",
-  [name]);
+function ScoreCard() {
 
   const [animated, setAnimated] = useState(false);
   const ref    = useRef<HTMLDivElement>(null);
@@ -91,32 +86,12 @@ function ScoreCard({ firstName }: { firstName: string }) {
 
         {/* ── Identity row ── */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={hasName ? display : "anon"}
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
-              style={{ background: hasName ? BLUE : "#94a3b8" }}
-            >
-              {hasName ? display.charAt(0) : <User size={16} />}
-            </motion.div>
-          </AnimatePresence>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
+            style={{ background: "#94a3b8" }}>
+            <User size={16} />
+          </div>
           <div className="min-w-0 flex-1">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={hasName ? display : "anon-name"}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-sm font-black text-slate-900 truncate"
-              >
-                {hasName ? `${display}'s CV Report` : "Your CV Report"}
-              </motion.p>
-            </AnimatePresence>
+            <p className="text-sm font-black text-slate-900 truncate">Your CV Report</p>
             <p className="text-[10px] text-slate-400 font-medium">Analysed just now · 1 page</p>
           </div>
           <span className="shrink-0 text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-wide">
@@ -228,24 +203,10 @@ function ScoreCard({ firstName }: { firstName: string }) {
         </motion.div>
 
         {/* ── CTA nudge ── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={hasName ? display : "generic-nudge"}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="px-5 py-4 text-center"
-            style={{ background: `rgba(255,117,31,0.04)` }}
-          >
-            <p className="text-[12px] font-black text-slate-800 mb-0.5">
-              {hasName ? `${display}, your real report is waiting` : "Your real report is waiting"}
-            </p>
-            <p className="text-[10px] text-slate-400">
-              Upload your CV to see your actual score
-            </p>
-          </motion.div>
-        </AnimatePresence>
+        <div className="px-5 py-4 text-center" style={{ background: `rgba(255,117,31,0.04)` }}>
+          <p className="text-[12px] font-black text-slate-800 mb-0.5">Your real report is waiting</p>
+          <p className="text-[10px] text-slate-400">Upload your CV to see your actual score</p>
+        </div>
       </motion.div>
 
       {/* Floating badge */}
@@ -258,21 +219,6 @@ function ScoreCard({ firstName }: { firstName: string }) {
         <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
       </motion.div>
 
-      {/* Name personalisation badge */}
-      <AnimatePresence>
-        {hasName && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.25, ease: ez }}
-            className="absolute -bottom-3 -left-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
-          >
-            <Sparkles size={11} style={{ color: BLUE }} />
-            <span className="text-[10px] font-black text-slate-800">Personalised for {display}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -332,22 +278,11 @@ function Navbar() {
 function HeroSection() {
   const router   = useRouter();
   const supabase = createClient();
-  const [firstName, setFirstName]           = useState("");
-  const [debouncedName, setDebouncedName]   = useState("");
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedName(firstName), 250);
-    return () => clearTimeout(t);
-  }, [firstName]);
 
   const handleCTA = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     router.push(session ? "/dashboard" : "/register");
   }, [router, supabase]);
-
-  const displayName = firstName.trim()
-    ? firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1)
-    : "";
 
   return (
     <section className="min-h-screen flex items-center pt-14 bg-white">
@@ -383,34 +318,6 @@ function HeroSection() {
             >
               Upload your CV. Get your score in 60 seconds.
             </motion.p>
-
-            {/* Name input — personalises the report card */}
-            <motion.div variants={fadeUp} className="mb-6 max-w-sm mx-auto lg:mx-0">
-              <div className="relative flex items-center">
-                <User size={14} className="absolute left-3.5 text-slate-300 pointer-events-none" />
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={e => setFirstName(e.target.value.replace(/[^a-zA-Z\s'-]/g, ""))}
-                  onKeyDown={e => e.key === "Enter" && handleCTA()}
-                  placeholder="Your first name…"
-                  maxLength={32}
-                  className="w-full pl-9 pr-4 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition-all placeholder:text-slate-300"
-                />
-              </div>
-              <AnimatePresence>
-                {displayName && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="text-[11px] text-emerald-600 mt-1.5 font-semibold overflow-hidden"
-                  >
-                    ✓ Report personalised for {displayName}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
 
             {/* Primary CTA */}
             <motion.div variants={fadeUp} className="mb-3">
@@ -457,7 +364,7 @@ function HeroSection() {
             transition={{ duration: 0.6, ease: ez, delay: 0.15 }}
             className="order-1 lg:order-2 flex justify-center lg:justify-end"
           >
-            <ScoreCard firstName={debouncedName} />
+            <ScoreCard />
           </motion.div>
         </div>
       </div>
