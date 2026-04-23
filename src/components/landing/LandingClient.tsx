@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
   CheckCircle2, XCircle, FileText, Sparkles, User,
+  TrendingUp, AlertCircle,
 } from "lucide-react";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
@@ -28,169 +29,223 @@ const stagger = (d = 0.08): Variants => ({
   show:   { transition: { staggerChildren: d } },
 });
 
-// ─── Static issues (always the same — name is the personalisation) ─────────────
-const ISSUES = [
-  "Summary too short to stand out to recruiters",
-  "0 achievements include measurable results",
-  "Only 4 of 11 expected keywords found",
+// ─── Score Card ───────────────────────────────────────────────────────────────
+const BARS = [
+  { label: "ATS Match",  score: 38, color: "#ef4444" },
+  { label: "Impact",     score: 22, color: "#ef4444" },
+  { label: "Keywords",   score: 44, color: "#f59e0b" },
 ];
 
-// ─── Score Card ───────────────────────────────────────────────────────────────
+const ISSUES: { severity: "critical" | "warning"; text: string }[] = [
+  { severity: "critical", text: "Summary too generic — won't pass ATS screening"  },
+  { severity: "critical", text: "0 of 5 bullet points include measurable results"  },
+  { severity: "warning",  text: "7 high-value keywords missing for your target role" },
+];
+
 function ScoreCard({ firstName }: { firstName: string }) {
   const name     = firstName.trim();
   const hasName  = name.length >= 2;
+  const display  = useMemo(() =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : "",
+  [name]);
+
   const [animated, setAnimated] = useState(false);
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
-    if (inView) setTimeout(() => setAnimated(true), 300);
+    if (inView) setTimeout(() => setAnimated(true), 350);
   }, [inView]);
 
-  // capitalise first letter
-  const display = useMemo(() =>
-    name ? name.charAt(0).toUpperCase() + name.slice(1) : "",
-  [name]);
-
-  const circumference = 2 * Math.PI * 30;
+  const circumference = 2 * Math.PI * 28;
 
   return (
-    <div ref={ref} className="relative w-full max-w-[340px] mx-auto lg:mx-0">
-      {/* Glow */}
-      <div className="absolute inset-6 rounded-3xl blur-2xl opacity-[0.07] pointer-events-none"
+    <div ref={ref} className="relative w-full max-w-[360px] mx-auto lg:mx-0">
+      {/* Ambient glow */}
+      <div className="absolute inset-8 rounded-3xl blur-3xl opacity-[0.08] pointer-events-none"
         style={{ background: "#ef4444" }} />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6, ease: ez }}
-        className="relative bg-white rounded-2xl overflow-hidden"
-        style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.10), 0 1px 0 rgba(0,0,0,0.04)" }}
+        transition={{ duration: 0.65, ease: ez }}
+        className="relative bg-white rounded-2xl overflow-hidden border border-slate-100"
+        style={{ boxShadow: "0 8px 48px rgba(0,0,0,0.11), 0 1px 0 rgba(0,0,0,0.05)" }}
       >
-        {/* Tool header bar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+        {/* ── Window chrome ── */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-400 opacity-70" />
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-70" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-400 opacity-70" />
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400/70" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/70" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
           </div>
-
-          {/* Title — swaps to user's name */}
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={hasName ? display : "generic"}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.2 }}
-              className="text-[10px] font-black uppercase tracking-widest text-slate-400"
-            >
-              {hasName ? `${display}'s CV Analysis` : "CV Analysis"}
-            </motion.span>
-          </AnimatePresence>
-
-          {/* Live dot */}
+          <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+            FuseCV · Analysis Report
+          </span>
           <div className="flex items-center gap-1">
-            <motion.div
-              animate={{ opacity: [1, 0.3, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-1.5 h-1.5 rounded-full bg-green-400"
-            />
+            <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.4, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span className="text-[9px] font-bold text-slate-400">LIVE</span>
           </div>
         </div>
 
-        {/* Score + issues */}
-        <div className="px-5 py-5">
-          {/* Score row */}
-          <div className="flex items-center gap-4 mb-5">
-            <div className="relative w-[72px] h-[72px] shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
-                <circle cx="34" cy="34" r="30" fill="none" stroke="#f1f5f9" strokeWidth="5" />
-                <motion.circle
-                  cx="34" cy="34" r="30" fill="none"
-                  stroke="#ef4444" strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  initial={{ strokeDashoffset: circumference }}
-                  animate={animated ? { strokeDashoffset: circumference * 0.71 } : {}}
-                  transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <motion.span
-                  className="text-[22px] font-black leading-none text-slate-900"
-                  initial={{ opacity: 0 }}
-                  animate={animated ? { opacity: 1 } : {}}
-                  transition={{ delay: 0.4 }}
-                >29</motion.span>
-                <span className="text-[8px] text-slate-400 font-bold mt-0.5">/100</span>
-              </div>
-            </div>
+        {/* ── Identity row ── */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-100">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={hasName ? display : "anon"}
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
+              style={{ background: hasName ? BLUE : "#94a3b8" }}
+            >
+              {hasName ? display.charAt(0) : <User size={16} />}
+            </motion.div>
+          </AnimatePresence>
+          <div className="min-w-0 flex-1">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={hasName ? display : "anon-name"}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="text-sm font-black text-slate-900 truncate"
+              >
+                {hasName ? `${display}'s CV Report` : "Your CV Report"}
+              </motion.p>
+            </AnimatePresence>
+            <p className="text-[10px] text-slate-400 font-medium">Analysed just now · 1 page</p>
+          </div>
+          <span className="shrink-0 text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-wide">
+            Weak
+          </span>
+        </div>
 
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-sm font-black text-red-500">Needs Attention</span>
-              </div>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={hasName ? "named" : "generic"}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-xs text-slate-400 font-medium leading-snug"
-                >
-                  {hasName
-                    ? `${display}, your CV has critical gaps`
-                    : "Common CV issues detected"}
-                </motion.p>
-              </AnimatePresence>
+        {/* ── Score + breakdown ── */}
+        <div className="flex gap-4 px-5 py-4 border-b border-slate-100">
+          {/* Circle */}
+          <div className="relative w-[68px] h-[68px] shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="#fee2e2" strokeWidth="5" />
+              <motion.circle
+                cx="32" cy="32" r="28" fill="none"
+                stroke="#ef4444" strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }}
+                animate={animated ? { strokeDashoffset: circumference * 0.71 } : {}}
+                transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <motion.span
+                className="text-xl font-black leading-none text-slate-900"
+                initial={{ opacity: 0 }} animate={animated ? { opacity: 1 } : {}}
+                transition={{ delay: 0.45 }}
+              >29</motion.span>
+              <span className="text-[8px] text-slate-400 font-bold">/100</span>
             </div>
           </div>
 
-          {/* 3 issues */}
-          <div className="mb-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
-              3 critical issues found
+          {/* Bars */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
+              Score Breakdown
             </p>
-            <div className="space-y-2">
-              {ISSUES.map((issue, i) => (
-                <motion.div
-                  key={issue}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={animated ? { opacity: 1, x: 0 } : {}}
-                  transition={{ delay: 0.3 + i * 0.12, duration: 0.3 }}
-                  className="flex items-start gap-2.5 bg-red-50 rounded-lg px-3 py-2"
-                >
-                  <XCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
-                  <span className="text-[11px] font-semibold text-slate-700 leading-snug">{issue}</span>
-                </motion.div>
+            <div className="space-y-1.5">
+              {BARS.map(({ label, score, color }, i) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span className="text-[9px] text-slate-400 w-16 shrink-0">{label}</span>
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div className="h-full rounded-full" style={{ background: color }}
+                      initial={{ width: 0 }}
+                      animate={animated ? { width: `${score}%` } : {}}
+                      transition={{ duration: 0.8, delay: 0.4 + i * 0.1, ease: [0.4, 0, 0.2, 1] }}
+                    />
+                  </div>
+                  <span className="text-[9px] font-bold w-5 text-right shrink-0" style={{ color }}>{score}</span>
+                </div>
               ))}
             </div>
           </div>
-
-          {/* Nudge — personalised with name */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={hasName ? display : "generic-nudge"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="rounded-xl px-3 py-2.5 text-center"
-              style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.2)` }}
-            >
-              <p className="text-[11px] font-black text-slate-800">
-                {hasName ? `${display}, your real score is waiting` : "Your real score is waiting"}
-              </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Upload your CV to see your full analysis
-              </p>
-            </motion.div>
-          </AnimatePresence>
         </div>
+
+        {/* ── Issues ── */}
+        <div className="px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle size={12} className="text-red-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Issues Found
+            </p>
+          </div>
+          <div className="space-y-2">
+            {ISSUES.map(({ severity, text }, i) => (
+              <motion.div
+                key={text}
+                initial={{ opacity: 0, x: -6 }}
+                animate={animated ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.5 + i * 0.11, duration: 0.28 }}
+                className="flex items-start gap-2.5 rounded-lg px-2.5 py-2"
+                style={{ background: severity === "critical" ? "#fef2f2" : "#fffbeb" }}
+              >
+                <XCircle size={12}
+                  className={severity === "critical" ? "text-red-500 mt-0.5 shrink-0" : "text-amber-500 mt-0.5 shrink-0"} />
+                <span className="text-[11px] font-semibold text-slate-700 leading-snug flex-1">{text}</span>
+                <span className={`text-[8px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 ${
+                  severity === "critical"
+                    ? "bg-red-200 text-red-700"
+                    : "bg-amber-200 text-amber-700"
+                }`}>
+                  {severity}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Potential score teaser ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={animated ? { opacity: 1 } : {}}
+          transition={{ delay: 0.9 }}
+          className="flex items-center gap-3 px-5 py-3 border-b border-slate-100"
+          style={{ background: "linear-gradient(90deg, rgba(0,74,173,0.04) 0%, rgba(0,74,173,0.01) 100%)" }}
+        >
+          <TrendingUp size={14} style={{ color: BLUE }} className="shrink-0" />
+          <div className="flex-1">
+            <p className="text-[11px] font-black text-slate-800">
+              Fix these issues → score jumps to <span style={{ color: BLUE }}>78/100</span>
+            </p>
+            <p className="text-[9px] text-slate-400 mt-0.5">Based on similar CVs we&apos;ve improved</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[10px] font-black text-red-500 line-through">29</span>
+            <ArrowRight size={10} style={{ color: BLUE }} />
+            <span className="text-[10px] font-black" style={{ color: BLUE }}>78</span>
+          </div>
+        </motion.div>
+
+        {/* ── CTA nudge ── */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={hasName ? display : "generic-nudge"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="px-5 py-4 text-center"
+            style={{ background: `rgba(255,117,31,0.04)` }}
+          >
+            <p className="text-[12px] font-black text-slate-800 mb-0.5">
+              {hasName ? `${display}, your real report is waiting` : "Your real report is waiting"}
+            </p>
+            <p className="text-[10px] text-slate-400">
+              Upload your CV to see your actual score
+            </p>
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
 
       {/* Floating badge */}
@@ -203,18 +258,18 @@ function ScoreCard({ firstName }: { firstName: string }) {
         <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
       </motion.div>
 
-      {/* Name badge */}
+      {/* Name personalisation badge */}
       <AnimatePresence>
         {hasName && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            initial={{ opacity: 0, scale: 0.8, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3, ease: ez }}
+            transition={{ duration: 0.25, ease: ez }}
             className="absolute -bottom-3 -left-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
           >
             <Sparkles size={11} style={{ color: BLUE }} />
-            <span className="text-[10px] font-black text-slate-800">Report for {display}</span>
+            <span className="text-[10px] font-black text-slate-800">Personalised for {display}</span>
           </motion.div>
         )}
       </AnimatePresence>
