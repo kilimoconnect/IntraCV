@@ -96,13 +96,20 @@ function buildPrompt(cvText: string): string {
     }
   ],
   "strengths": ["<1–2 genuine positives found in this specific CV>"],
-  "top_recommendation": "<The single most impactful fix in one sentence>"
+  "top_recommendation": "<The single most impactful fix in one sentence>",
+  "before_after": {
+    "before": "<Copy a real weak bullet from their experience section — if none exist, write a representative one for their role>",
+    "after": "<The same bullet rewritten with a specific quantified result — make it realistic for their industry and role>",
+    "score_label": "<e.g. '+18 Impact Score'>"
+  }
 }
 
 Rules:
 - issues array: 3–5 items, mix of critical and warning, each referencing actual CV data
 - strengths: 1–2 items only — find something genuinely good even in weak CVs
 - overall_score must follow the formula exactly
+- before_after.before must be an actual bullet from the CV if bullets exist, otherwise a representative example
+- before_after.after must be a realistic improved version with a specific number/percentage/currency amount
 - Return ONLY the JSON object
 
 CV TEXT:
