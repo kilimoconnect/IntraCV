@@ -8,8 +8,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, Upload, Lock, Zap, Eye,
-  AlertTriangle, CheckCircle2, XCircle,
-  ChevronRight, FileText, Sparkles, Search,
+  CheckCircle2, XCircle, FileText, Sparkles, User,
 } from "lucide-react";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
@@ -29,433 +28,166 @@ const stagger = (d = 0.08): Variants => ({
   show:   { transition: { staggerChildren: d } },
 });
 
-// ─── Role Profiles ────────────────────────────────────────────────────────────
-type IssueType = "error" | "warn" | "ok";
-interface Issue { type: IssueType; label: string }
-interface BarData { label: string; score: number }
-interface RoleProfile {
-  category: string;
-  filename: string;
-  score: number;
-  label: string;       // e.g. "Needs Work"
-  labelColor: string;
-  ringColor: string;
-  bars: BarData[];
-  issues: Issue[];
-  nudge: string;
-}
+// ─── Static issues (always the same — name is the personalisation) ─────────────
+const ISSUES = [
+  "Summary too short to stand out to recruiters",
+  "0 achievements include measurable results",
+  "Only 4 of 11 expected keywords found",
+];
 
-const PROFILES: Record<string, RoleProfile> = {
-  tech: {
-    category: "Software / Engineering",
-    filename: "software_engineer_cv.pdf",
-    score: 27,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 40 },
-      { label: "Impact",      score: 22 },
-      { label: "Readability", score: 65 },
-      { label: "Keywords",    score: 31 },
-    ],
-    issues: [
-      { type: "error", label: "No GitHub / portfolio link found"       },
-      { type: "error", label: "Tech stack buried on page 2"            },
-      { type: "error", label: "Zero quantified delivery metrics"       },
-      { type: "warn",  label: "System design experience unclear"       },
-      { type: "warn",  label: "Missing cloud / DevOps keywords"        },
-      { type: "ok",    label: "Education & certifications listed"      },
-    ],
-    nudge: "Common issues found in Software Engineer CVs. Upload yours to see exactly what's missing.",
-  },
-  marketing: {
-    category: "Marketing / Growth",
-    filename: "marketing_manager_cv.pdf",
-    score: 31,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 35 },
-      { label: "Impact",      score: 28 },
-      { label: "Readability", score: 58 },
-      { label: "Keywords",    score: 41 },
-    ],
-    issues: [
-      { type: "error", label: "No campaign ROI or growth metrics"      },
-      { type: "error", label: "Missing CRM tools (HubSpot, Salesforce)"},
-      { type: "error", label: "Personal brand summary too generic"     },
-      { type: "warn",  label: "No channel strategy highlighted"        },
-      { type: "warn",  label: "SEO / paid media keywords absent"       },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Common issues found in Marketing CVs. Upload yours to see exactly what's missing.",
-  },
-  design: {
-    category: "Design / Creative",
-    filename: "ux_designer_cv.pdf",
-    score: 26,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 33 },
-      { label: "Impact",      score: 20 },
-      { label: "Readability", score: 62 },
-      { label: "Keywords",    score: 29 },
-    ],
-    issues: [
-      { type: "error", label: "Portfolio / Behance link missing"       },
-      { type: "error", label: "Tool stack not listed (Figma, Adobe)"   },
-      { type: "error", label: "No client or project outcomes stated"   },
-      { type: "warn",  label: "Design process not described"           },
-      { type: "warn",  label: "Accessibility / UX research absent"     },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Common issues found in Design CVs. Upload yours to see exactly what's missing.",
-  },
-  finance: {
-    category: "Finance / Accounting",
-    filename: "finance_analyst_cv.pdf",
-    score: 33,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 42 },
-      { label: "Impact",      score: 29 },
-      { label: "Readability", score: 60 },
-      { label: "Keywords",    score: 38 },
-    ],
-    issues: [
-      { type: "error", label: "No P&L or portfolio size mentioned"     },
-      { type: "error", label: "Missing certifications (CFA, CPA, ACA)" },
-      { type: "error", label: "Achievement bullets too task-focused"   },
-      { type: "warn",  label: "GAAP / IFRS terminology absent"         },
-      { type: "warn",  label: "Soft skills overshadow hard numbers"    },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Common issues found in Finance CVs. Upload yours to see exactly what's missing.",
-  },
-  sales: {
-    category: "Sales / Business Dev",
-    filename: "sales_executive_cv.pdf",
-    score: 30,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 38 },
-      { label: "Impact",      score: 25 },
-      { label: "Readability", score: 64 },
-      { label: "Keywords",    score: 36 },
-    ],
-    issues: [
-      { type: "error", label: "Quota attainment % never mentioned"     },
-      { type: "error", label: "No deal size or revenue figures"        },
-      { type: "error", label: "CRM proficiency not listed"             },
-      { type: "warn",  label: "Territory / sector experience vague"    },
-      { type: "warn",  label: "Missing pipeline management keywords"   },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Common issues found in Sales CVs. Upload yours to see exactly what's missing.",
-  },
-  hr: {
-    category: "HR / People Ops",
-    filename: "hr_manager_cv.pdf",
-    score: 30,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 37 },
-      { label: "Impact",      score: 24 },
-      { label: "Readability", score: 63 },
-      { label: "Keywords",    score: 33 },
-    ],
-    issues: [
-      { type: "error", label: "No hiring volume or time-to-fill data"  },
-      { type: "error", label: "HRIS systems not listed"                },
-      { type: "error", label: "DEI or culture initiatives absent"      },
-      { type: "warn",  label: "Employment law knowledge not shown"     },
-      { type: "warn",  label: "L&D impact metrics missing"             },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Common issues found in HR CVs. Upload yours to see exactly what's missing.",
-  },
-  management: {
-    category: "Management / Operations",
-    filename: "operations_manager_cv.pdf",
-    score: 32,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 43 },
-      { label: "Impact",      score: 27 },
-      { label: "Readability", score: 61 },
-      { label: "Keywords",    score: 40 },
-    ],
-    issues: [
-      { type: "error", label: "Team size never mentioned"              },
-      { type: "error", label: "Budget responsibility absent"           },
-      { type: "error", label: "Strategic initiatives not highlighted"  },
-      { type: "warn",  label: "KPI / OKR framework not referenced"    },
-      { type: "warn",  label: "Cross-functional leadership unclear"    },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Common issues found in Management CVs. Upload yours to see exactly what's missing.",
-  },
-  healthcare: {
-    category: "Healthcare / Medical",
-    filename: "healthcare_professional_cv.pdf",
-    score: 35,
-    label: "Needs Work",
-    labelColor: "#f59e0b",
-    ringColor: "#f59e0b",
-    bars: [
-      { label: "ATS Score",   score: 45 },
-      { label: "Impact",      score: 31 },
-      { label: "Readability", score: 63 },
-      { label: "Keywords",    score: 42 },
-    ],
-    issues: [
-      { type: "error", label: "Certifications not prominently placed"  },
-      { type: "error", label: "No patient outcome or volume data"      },
-      { type: "warn",  label: "Specialisation keywords too sparse"     },
-      { type: "warn",  label: "Publication / research history absent"  },
-      { type: "warn",  label: "Continuing education not listed"        },
-      { type: "ok",    label: "Qualifications correctly formatted"     },
-    ],
-    nudge: "Common issues found in Healthcare CVs. Upload yours to see exactly what's missing.",
-  },
-  education: {
-    category: "Education / Teaching",
-    filename: "teacher_cv.pdf",
-    score: 34,
-    label: "Needs Work",
-    labelColor: "#f59e0b",
-    ringColor: "#f59e0b",
-    bars: [
-      { label: "ATS Score",   score: 44 },
-      { label: "Impact",      score: 30 },
-      { label: "Readability", score: 67 },
-      { label: "Keywords",    score: 39 },
-    ],
-    issues: [
-      { type: "error", label: "No student outcome or results data"     },
-      { type: "error", label: "Curriculum development not described"   },
-      { type: "warn",  label: "Teaching certifications not prominent"  },
-      { type: "warn",  label: "Publication record absent"              },
-      { type: "warn",  label: "Tech / EdTech tools not mentioned"      },
-      { type: "ok",    label: "Qualifications correctly listed"        },
-    ],
-    nudge: "Common issues found in Teaching CVs. Upload yours to see exactly what's missing.",
-  },
-  default: {
-    category: "",
-    filename: "your_cv.pdf",
-    score: 29,
-    label: "Needs Work",
-    labelColor: "#ef4444",
-    ringColor: "#ef4444",
-    bars: [
-      { label: "ATS Score",   score: 38 },
-      { label: "Impact",      score: 22 },
-      { label: "Readability", score: 61 },
-      { label: "Keywords",    score: 44 },
-    ],
-    issues: [
-      { type: "error", label: "Weak summary statement"                 },
-      { type: "error", label: "No quantified results"                  },
-      { type: "warn",  label: "Poor ATS keyword match"                 },
-      { type: "error", label: "Generic skills section"                 },
-      { type: "warn",  label: "Formatting inconsistencies"             },
-      { type: "ok",    label: "Education correctly listed"             },
-    ],
-    nudge: "Upload your CV to see your real personalised score.",
-  },
-};
-
-function detectProfile(title: string): RoleProfile {
-  const t = title.toLowerCase();
-  if (/software|engineer|developer|devops|sre|data scien|machine learn|ml |ai |backend|frontend|fullstack|full.stack|cloud|architect|qa|quality|sysadmin|infrastructure/.test(t)) return PROFILES.tech;
-  if (/market|growth|seo|sem|content|social media|brand|digital|campaign|demand gen|product market/.test(t)) return PROFILES.marketing;
-  if (/design|ux|ui|user experience|user interface|creative|graphic|visual|figma|product design|motion/.test(t)) return PROFILES.design;
-  if (/financ|account|audit|cfo|controller|treasurer|invest|banking|actuar|analyst|risk|wealth/.test(t)) return PROFILES.finance;
-  if (/sales|account exec|business dev|bdm|revenue|commercial|enterprise|sdr|bdr|presales/.test(t)) return PROFILES.sales;
-  if (/\bhr\b|human resource|people ops|recruit|talent|compensation|benefit|hrbp|l&d|learning/.test(t)) return PROFILES.hr;
-  if (/manag|director|head of|vp |vice pres|ceo|coo|cto|president|chief|operation|program|project|strategy/.test(t)) return PROFILES.management;
-  if (/nurs|doctor|physician|surgeon|pharmacist|physiother|radiolog|clinical|medical|health|dental|midwif/.test(t)) return PROFILES.healthcare;
-  if (/teach|professor|lecturer|tutor|educator|academic|principal|school|curriculum|instructor/.test(t)) return PROFILES.education;
-  return PROFILES.default;
-}
-
-// ─── Score Mockup ─────────────────────────────────────────────────────────────
-function ScoreMockup({ jobTitle }: { jobTitle: string }) {
-  const profile  = useMemo(() => jobTitle.trim().length >= 3 ? detectProfile(jobTitle) : PROFILES.default, [jobTitle]);
+// ─── Score Card ───────────────────────────────────────────────────────────────
+function ScoreCard({ firstName }: { firstName: string }) {
+  const name     = firstName.trim();
+  const hasName  = name.length >= 2;
   const [animated, setAnimated] = useState(false);
-  const [profileKey, setProfileKey] = useState(0);
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
-
-  // Re-animate whenever profile changes
-  useEffect(() => {
-    if (!inView) return;
-    setAnimated(false);
-    const t = setTimeout(() => {
-      setAnimated(true);
-      setProfileKey(k => k + 1);
-    }, 80);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile, inView]);
 
   useEffect(() => {
     if (inView) setTimeout(() => setAnimated(true), 300);
   }, [inView]);
 
-  const circumference = 2 * Math.PI * 27;
-  const barColor = (score: number) => score >= 60 ? "#22c55e" : score >= 45 ? "#f59e0b" : "#ef4444";
+  // capitalise first letter
+  const display = useMemo(() =>
+    name ? name.charAt(0).toUpperCase() + name.slice(1) : "",
+  [name]);
+
+  const circumference = 2 * Math.PI * 30;
 
   return (
-    <div ref={ref} className="relative w-full max-w-[360px] mx-auto lg:mx-0">
+    <div ref={ref} className="relative w-full max-w-[340px] mx-auto lg:mx-0">
       {/* Glow */}
-      <div className="absolute inset-4 rounded-3xl blur-2xl opacity-10 pointer-events-none"
-        style={{ background: profile.ringColor }} />
+      <div className="absolute inset-6 rounded-3xl blur-2xl opacity-[0.07] pointer-events-none"
+        style={{ background: "#ef4444" }} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6, ease: ez }}
-        className="relative bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden"
+        className="relative bg-white rounded-2xl overflow-hidden"
+        style={{ boxShadow: "0 4px 40px rgba(0,0,0,0.10), 0 1px 0 rgba(0,0,0,0.04)" }}
       >
-        {/* Header */}
-        <div className="px-5 pt-5 pb-4 border-b border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="min-w-0 pr-3">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={profile.category || "default-cat"}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
-                    {profile.category ? `${profile.category} Analysis` : "CV Analysis"}
-                  </p>
-                  <p className="text-xs text-slate-500 font-medium truncate">{profile.filename}</p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Circular score */}
-            <div className="text-center shrink-0">
-              <div className="relative w-16 h-16">
-                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                  <circle cx="32" cy="32" r="27" fill="none" stroke="#f1f5f9" strokeWidth="6" />
-                  <motion.circle
-                    key={`ring-${profileKey}`}
-                    cx="32" cy="32" r="27" fill="none"
-                    stroke={profile.ringColor} strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={circumference}
-                    initial={{ strokeDashoffset: circumference }}
-                    animate={animated ? { strokeDashoffset: circumference * (1 - profile.score / 100) } : {}}
-                    transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={`score-${profileKey}`}
-                      className="text-xl font-black leading-none text-slate-900"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.3 }}
-                    >{profile.score}</motion.span>
-                  </AnimatePresence>
-                  <span className="text-[9px] text-slate-400 font-bold">/100</span>
-                </div>
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: profile.labelColor }}>
-                {profile.label}
-              </span>
-            </div>
+        {/* Tool header bar */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400 opacity-70" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-70" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-400 opacity-70" />
           </div>
 
-          {/* Bars */}
-          <div className="space-y-2">
-            {profile.bars.map(({ label, score }, i) => {
-              const color = barColor(score);
-              return (
-                <div key={label} className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-500 w-20 shrink-0">{label}</span>
-                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <motion.div
-                      key={`bar-${profileKey}-${i}`}
-                      className="h-full rounded-full"
-                      style={{ background: color }}
-                      initial={{ width: 0 }}
-                      animate={animated ? { width: `${score}%` } : {}}
-                      transition={{ duration: 0.8, delay: 0.2 + i * 0.08, ease: [0.4, 0, 0.2, 1] }}
-                    />
-                  </div>
-                  <span className="text-[10px] font-bold w-6 text-right" style={{ color }}>{score}</span>
-                </div>
-              );
-            })}
+          {/* Title — swaps to user's name */}
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={hasName ? display : "generic"}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.2 }}
+              className="text-[10px] font-black uppercase tracking-widest text-slate-400"
+            >
+              {hasName ? `${display}'s CV Analysis` : "CV Analysis"}
+            </motion.span>
+          </AnimatePresence>
+
+          {/* Live dot */}
+          <div className="flex items-center gap-1">
+            <motion.div
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-green-400"
+            />
+            <span className="text-[9px] font-bold text-slate-400">LIVE</span>
           </div>
         </div>
 
-        {/* Issues */}
-        <div className="px-5 py-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Issues Found</p>
+        {/* Score + issues */}
+        <div className="px-5 py-5">
+          {/* Score row */}
+          <div className="flex items-center gap-4 mb-5">
+            <div className="relative w-[72px] h-[72px] shrink-0">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
+                <circle cx="34" cy="34" r="30" fill="none" stroke="#f1f5f9" strokeWidth="5" />
+                <motion.circle
+                  cx="34" cy="34" r="30" fill="none"
+                  stroke="#ef4444" strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  initial={{ strokeDashoffset: circumference }}
+                  animate={animated ? { strokeDashoffset: circumference * 0.71 } : {}}
+                  transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <motion.span
+                  className="text-[22px] font-black leading-none text-slate-900"
+                  initial={{ opacity: 0 }}
+                  animate={animated ? { opacity: 1 } : {}}
+                  transition={{ delay: 0.4 }}
+                >29</motion.span>
+                <span className="text-[8px] text-slate-400 font-bold mt-0.5">/100</span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                <span className="text-sm font-black text-red-500">Needs Attention</span>
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={hasName ? "named" : "generic"}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xs text-slate-400 font-medium leading-snug"
+                >
+                  {hasName
+                    ? `${display}, your CV has critical gaps`
+                    : "Common CV issues detected"}
+                </motion.p>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* 3 issues */}
+          <div className="mb-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
+              3 critical issues found
+            </p>
+            <div className="space-y-2">
+              {ISSUES.map((issue, i) => (
+                <motion.div
+                  key={issue}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={animated ? { opacity: 1, x: 0 } : {}}
+                  transition={{ delay: 0.3 + i * 0.12, duration: 0.3 }}
+                  className="flex items-start gap-2.5 bg-red-50 rounded-lg px-3 py-2"
+                >
+                  <XCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
+                  <span className="text-[11px] font-semibold text-slate-700 leading-snug">{issue}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Nudge — personalised with name */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={`issues-${profileKey}`}
+              key={hasName ? display : "generic-nudge"}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="space-y-2"
+              className="rounded-xl px-3 py-2.5 text-center"
+              style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.2)` }}
             >
-              {profile.issues.map(({ type, label }) => {
-                const cfg = type === "error"
-                  ? { icon: <XCircle size={13} />, color: "#ef4444", bg: "#fef2f2" }
-                  : type === "warn"
-                    ? { icon: <AlertTriangle size={13} />, color: "#f59e0b", bg: "#fffbeb" }
-                    : { icon: <CheckCircle2 size={13} />, color: "#22c55e", bg: "#f0fdf4" };
-                return (
-                  <div key={label} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: cfg.bg }}>
-                    <span style={{ color: cfg.color }}>{cfg.icon}</span>
-                    <span className="text-[11px] font-semibold text-slate-700">{label}</span>
-                  </div>
-                );
-              })}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Nudge */}
-        <div className="px-5 pb-5">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`nudge-${profileKey}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-xl p-3 text-center"
-              style={{ background: `rgba(255,117,31,0.06)`, border: `1px solid rgba(255,117,31,0.15)` }}
-            >
-              <p className="text-[11px] font-black text-slate-700 mb-0.5">
-                {jobTitle.trim().length >= 3 ? `Personalised for ${jobTitle.trim()}` : "Your results are ready"}
+              <p className="text-[11px] font-black text-slate-800">
+                {hasName ? `${display}, your real score is waiting` : "Your real score is waiting"}
               </p>
-              <p className="text-[10px] text-slate-500">{profile.nudge}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Upload your CV to see your full analysis
+              </p>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -471,9 +203,9 @@ function ScoreMockup({ jobTitle }: { jobTitle: string }) {
         <span className="text-[10px] font-black text-slate-800">Results in 60s</span>
       </motion.div>
 
-      {/* Personalised badge */}
+      {/* Name badge */}
       <AnimatePresence>
-        {jobTitle.trim().length >= 3 && (
+        {hasName && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -482,7 +214,7 @@ function ScoreMockup({ jobTitle }: { jobTitle: string }) {
             className="absolute -bottom-3 -left-3 bg-white rounded-xl shadow-lg px-3 py-2 border border-slate-100 flex items-center gap-1.5"
           >
             <Sparkles size={11} style={{ color: BLUE }} />
-            <span className="text-[10px] font-black text-slate-800">Personalised preview</span>
+            <span className="text-[10px] font-black text-slate-800">Report for {display}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -518,21 +250,22 @@ function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-5 sm:px-8 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center shrink-0">
-          <Image src="/fusecv-logo.png" alt="FuseCV" width={96} height={30} className="object-contain" priority />
+          <Image src="/fusecv-logo.png" alt="FuseCV" width={90} height={28} className="object-contain" priority />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Link href="/login"
-            className="hidden sm:block text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors px-3 py-1.5">
+            className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors">
             Sign in
           </Link>
           <motion.button
             onClick={handleCTA}
             whileHover={{ scale: 1.03, boxShadow: `0 6px 24px rgba(255,117,31,0.32)` }}
             whileTap={{ scale: 0.97 }}
-            className="text-white text-sm font-bold px-4 py-2 rounded-lg"
+            className="text-white text-sm font-black px-4 py-2 rounded-lg flex items-center gap-1.5"
             style={{ background: ORANGE }}
           >
-            Check My CV Free
+            <Upload size={14} />
+            Upload My CV
           </motion.button>
         </div>
       </div>
@@ -544,40 +277,39 @@ function Navbar() {
 function HeroSection() {
   const router   = useRouter();
   const supabase = createClient();
-  const [jobTitle, setJobTitle] = useState("");
-  const [debouncedTitle, setDebouncedTitle] = useState("");
+  const [firstName, setFirstName]           = useState("");
+  const [debouncedName, setDebouncedName]   = useState("");
 
-  // Debounce job title updates to the mockup (300ms)
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedTitle(jobTitle), 300);
+    const t = setTimeout(() => setDebouncedName(firstName), 250);
     return () => clearTimeout(t);
-  }, [jobTitle]);
+  }, [firstName]);
 
   const handleCTA = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     router.push(session ? "/dashboard" : "/register");
   }, [router, supabase]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleCTA();
-  }, [handleCTA]);
+  const displayName = firstName.trim()
+    ? firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1)
+    : "";
 
   return (
     <section className="min-h-screen flex items-center pt-14 bg-white">
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16 lg:py-24 w-full">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-14 lg:py-20 w-full">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-          {/* Left */}
+          {/* Left copy */}
           <motion.div
-            variants={stagger(0.1)}
+            variants={stagger(0.09)}
             initial="hidden"
             animate="show"
             className="text-center lg:text-left order-2 lg:order-1"
           >
             <motion.h1
               variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-[3.4rem] font-black leading-[1.08] text-slate-900 mb-5"
-              style={{ letterSpacing: "-0.02em" }}
+              className="text-[2.6rem] sm:text-5xl lg:text-[3.25rem] font-black leading-[1.06] text-slate-900 mb-5"
+              style={{ letterSpacing: "-0.025em" }}
             >
               Your CV Might Be<br />
               Why You&apos;re{" "}
@@ -594,59 +326,69 @@ function HeroSection() {
               variants={fadeUp}
               className="text-lg sm:text-xl text-slate-500 leading-relaxed mb-7 max-w-md mx-auto lg:mx-0"
             >
-              Check your CV free in 60 seconds.
-              Get instant ATS + recruiter feedback.
+              Upload your CV. Get your score in 60 seconds.
             </motion.p>
 
-            {/* Job title input — personalises the mockup */}
-            <motion.div variants={fadeUp} className="mb-5 max-w-sm mx-auto lg:mx-0">
-              <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
-                Enter your job title for a personalised preview
+            {/* Name input — personalises the report card */}
+            <motion.div variants={fadeUp} className="mb-6 max-w-sm mx-auto lg:mx-0">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                See your report — enter your first name
               </label>
               <div className="relative flex items-center">
-                <Search size={15} className="absolute left-3.5 text-slate-300 pointer-events-none" />
+                <User size={14} className="absolute left-3.5 text-slate-300 pointer-events-none" />
                 <input
                   type="text"
-                  value={jobTitle}
-                  onChange={e => setJobTitle(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="e.g. Software Engineer, Nurse, Teacher…"
-                  className="w-full pl-9 pr-4 py-3 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition-all placeholder:text-slate-300"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value.replace(/[^a-zA-Z\s'-]/g, ""))}
+                  onKeyDown={e => e.key === "Enter" && handleCTA()}
+                  placeholder="Your first name…"
+                  maxLength={32}
+                  className="w-full pl-9 pr-4 py-2.5 text-sm font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-400 focus:bg-white transition-all placeholder:text-slate-300"
                 />
               </div>
-              {jobTitle.trim().length >= 3 && (
-                <motion.p
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-[11px] text-slate-400 mt-1.5 font-medium"
-                >
-                  ✓ Preview updated for <span className="font-bold text-slate-600">{jobTitle.trim()}</span>
-                </motion.p>
-              )}
+              <AnimatePresence>
+                {displayName && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-[11px] text-emerald-600 mt-1.5 font-semibold overflow-hidden"
+                  >
+                    ✓ Report personalised for {displayName}
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </motion.div>
 
-            <motion.div variants={fadeUp} className="mb-6">
+            {/* Primary CTA */}
+            <motion.div variants={fadeUp} className="mb-3">
               <motion.button
                 onClick={handleCTA}
-                whileHover={{ scale: 1.04, boxShadow: `0 14px 36px rgba(255,117,31,0.38)` }}
+                whileHover={{ scale: 1.04, boxShadow: `0 16px 40px rgba(255,117,31,0.38)` }}
                 whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2.5 text-white font-black px-8 py-4 rounded-2xl text-base shadow-sm"
+                className="group inline-flex items-center gap-2.5 text-white font-black px-8 py-4 rounded-2xl text-base shadow-sm"
                 style={{ background: ORANGE }}
               >
                 <Upload size={18} />
                 Upload My CV
-                <ArrowRight size={17} />
+                <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
               </motion.button>
             </motion.div>
 
+            {/* Loss aversion */}
+            <motion.p variants={fadeUp} className="text-xs text-slate-400 mb-5 font-medium max-w-xs mx-auto lg:mx-0">
+              Every application with a weak CV may cost you an opportunity.
+            </motion.p>
+
+            {/* Trust strip */}
             <motion.div
               variants={fadeUp}
               className="flex items-center gap-5 justify-center lg:justify-start"
             >
               {[
-                { icon: <Lock size={13} />,  label: "Secure upload"   },
-                { icon: <Eye size={13} />,   label: "No payment"      },
-                { icon: <Zap size={13} />,   label: "Instant results" },
+                { icon: <Lock size={12} />,  label: "Secure upload"   },
+                { icon: <Eye size={12} />,   label: "Free check"      },
+                { icon: <Zap size={12} />,   label: "Instant results" },
               ].map(({ icon, label }) => (
                 <span key={label} className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                   <span className="text-slate-300">{icon}</span>
@@ -656,14 +398,14 @@ function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right */}
+          {/* Right — score card */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
+            initial={{ opacity: 0, x: 28 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.65, ease: ez, delay: 0.2 }}
+            transition={{ duration: 0.6, ease: ez, delay: 0.15 }}
             className="order-1 lg:order-2 flex justify-center lg:justify-end"
           >
-            <ScoreMockup jobTitle={debouncedTitle} />
+            <ScoreCard firstName={debouncedName} />
           </motion.div>
         </div>
       </div>
@@ -676,26 +418,46 @@ function SocialProof() {
   const ref    = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
 
+  const stats = [
+    { value: "10,000+", label: "CVs analysed"    },
+    { value: "30+",     label: "Countries"        },
+    { value: "60s",     label: "To get results"   },
+    { value: "Free",    label: "No card required" },
+  ];
+
   return (
-    <section ref={ref} className="border-t border-b border-slate-100 bg-slate-50 py-8">
+    <section ref={ref} className="py-10 border-t border-slate-100 bg-slate-50">
       <div className="max-w-5xl mx-auto px-5 sm:px-8">
         <motion.div
-          variants={stagger(0.08)}
+          variants={stagger(0.07)}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="flex flex-wrap justify-center gap-8 sm:gap-14"
+          className="flex flex-wrap justify-center gap-8 sm:gap-14 mb-8"
         >
-          {[
-            { value: "10,000+", label: "CVs analysed"    },
-            { value: "30+",     label: "Countries"        },
-            { value: "60s",     label: "To get results"   },
-            { value: "Free",    label: "No card required" },
-          ].map(({ value, label }) => (
+          {stats.map(({ value, label }) => (
             <motion.div key={label} variants={fadeUp} className="text-center">
               <div className="text-2xl font-black text-slate-900">{value}</div>
               <div className="text-xs text-slate-400 font-medium mt-0.5">{label}</div>
             </motion.div>
           ))}
+        </motion.div>
+
+        {/* Human quote */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate={inView ? "show" : "hidden"}
+          className="max-w-xl mx-auto rounded-2xl bg-white border border-slate-100 px-6 py-5 text-center shadow-sm"
+        >
+          <p className="text-sm font-semibold text-slate-700 leading-relaxed mb-3">
+            &ldquo;I had been applying for months with no replies. FuseCV showed me exactly what was wrong — I got 3 interview calls the week after fixing my CV.&rdquo;
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[11px] font-black">
+              J
+            </div>
+            <span className="text-xs font-bold text-slate-500">James K. — Software Engineer, London</span>
+          </div>
         </motion.div>
       </div>
     </section>
@@ -715,42 +477,24 @@ function HowItWorks() {
   }, [router, supabase]);
 
   const steps = [
-    {
-      number: "01",
-      icon: <Upload size={20} />,
-      title: "Upload your CV",
-      body: "PDF or any format. Secure, private, takes 5 seconds.",
-    },
-    {
-      number: "02",
-      icon: <Sparkles size={20} />,
-      title: "AI scans everything",
-      body: "ATS compatibility, impact language, keywords, formatting — all checked instantly.",
-    },
-    {
-      number: "03",
-      icon: <FileText size={20} />,
-      title: "Get your score + fixes",
-      body: "See exactly what is holding you back and get an AI-rewritten version ready to download.",
-    },
+    { n: "1", icon: <Upload size={22} />,     title: "Upload CV",      body: "PDF or Word. Takes 5 seconds." },
+    { n: "2", icon: <Sparkles size={22} />,   title: "Get Your Score", body: "ATS, keywords, impact — checked instantly." },
+    { n: "3", icon: <FileText size={22} />,   title: "Fix & Apply",    body: "See what to fix. Download the improved version." },
   ];
 
   return (
     <section ref={ref} className="py-20 lg:py-24 bg-white">
-      <div className="max-w-5xl mx-auto px-5 sm:px-8">
+      <div className="max-w-4xl mx-auto px-5 sm:px-8">
         <motion.div
           variants={stagger(0.08)}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="text-center mb-14"
+          className="text-center mb-12"
         >
-          <motion.p variants={fadeUp} className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
-            Simple. Fast. Free.
-          </motion.p>
           <motion.h2 variants={fadeUp}
             className="text-3xl sm:text-4xl font-black text-slate-900"
             style={{ letterSpacing: "-0.02em" }}>
-            How it works
+            Three steps. 60 seconds.
           </motion.h2>
         </motion.div>
 
@@ -758,20 +502,20 @@ function HowItWorks() {
           variants={stagger(0.1)}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="grid sm:grid-cols-3 gap-5 mb-12"
+          className="grid sm:grid-cols-3 gap-4 mb-12"
         >
-          {steps.map(({ number, icon, title, body }) => (
+          {steps.map(({ n, icon, title, body }) => (
             <motion.div
-              key={number}
+              key={n}
               variants={fadeUp}
-              className="rounded-2xl p-6 border border-slate-100 bg-slate-50 relative overflow-hidden"
+              className="rounded-2xl p-6 border border-slate-100 bg-slate-50 relative overflow-hidden text-center"
             >
-              <div className="absolute top-4 right-4 text-5xl font-black text-slate-100 leading-none select-none">{number}</div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+              <div className="absolute top-3 right-4 text-6xl font-black text-slate-100 leading-none select-none">{n}</div>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 mx-auto"
                 style={{ background: `rgba(255,117,31,0.1)`, color: ORANGE }}>
                 {icon}
               </div>
-              <h3 className="font-black text-slate-900 mb-2 text-[15px]">{title}</h3>
+              <h3 className="font-black text-slate-900 mb-1.5 text-base">{title}</h3>
               <p className="text-sm text-slate-500 leading-relaxed">{body}</p>
             </motion.div>
           ))}
@@ -786,11 +530,11 @@ function HowItWorks() {
             style={{ background: ORANGE }}
           >
             <Upload size={16} />
-            Check My CV Free
-            <ChevronRight size={15} />
+            Upload My CV
+            <ArrowRight size={15} />
           </motion.button>
           <p className="text-xs text-slate-400 mt-3 font-medium">
-            No payment required. Preview results before you pay for anything.
+            Free CV check. Upgrade only if useful.
           </p>
         </motion.div>
       </div>
@@ -804,60 +548,60 @@ function WhatYouGet() {
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
   const items = [
-    "ATS compatibility score",
-    "Impact language analysis",
-    "Keyword gap report",
-    "Formatting audit",
-    "AI-rewritten version ready to download",
-    "Cover letter (Professional plan)",
-    "Interview question prep (Full plan)",
+    { label: "ATS compatibility score",               free: true  },
+    { label: "Impact language analysis",              free: true  },
+    { label: "Keyword gap report",                    free: true  },
+    { label: "Formatting audit",                      free: true  },
+    { label: "AI-rewritten CV ready to download",     free: false },
+    { label: "Cover letter",                          free: false },
+    { label: "Interview question prep",               free: false },
   ];
 
   return (
     <section ref={ref} className="py-20 lg:py-24 bg-slate-50 border-t border-slate-100">
-      <div className="max-w-4xl mx-auto px-5 sm:px-8">
+      <div className="max-w-3xl mx-auto px-5 sm:px-8">
         <motion.div
           variants={stagger(0.08)}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="text-center mb-12"
+          className="text-center mb-10"
         >
-          <motion.p variants={fadeUp} className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
-            Free Check + Optional Upgrade
-          </motion.p>
           <motion.h2 variants={fadeUp}
-            className="text-3xl sm:text-4xl font-black text-slate-900"
+            className="text-3xl sm:text-4xl font-black text-slate-900 mb-2"
             style={{ letterSpacing: "-0.02em" }}>
             What you get
           </motion.h2>
+          <motion.p variants={fadeUp} className="text-sm text-slate-400 font-medium">
+            Free check included. Download the improved version only if you want it.
+          </motion.p>
         </motion.div>
 
         <motion.div
-          variants={stagger(0.07)}
+          variants={stagger(0.06)}
           initial="hidden"
           animate={inView ? "show" : "hidden"}
-          className="grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto"
+          className="space-y-2 max-w-md mx-auto"
         >
-          {items.map((label) => (
+          {items.map(({ label, free }) => (
             <motion.div
               key={label}
               variants={fadeUp}
-              className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm"
+              className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-slate-100 shadow-sm"
             >
-              <CheckCircle2 size={16} style={{ color: ORANGE }} className="shrink-0" />
-              <span className="text-sm font-semibold text-slate-700">{label}</span>
+              <div className="flex items-center gap-3">
+                <CheckCircle2 size={15} style={{ color: free ? ORANGE : BLUE }} className="shrink-0" />
+                <span className="text-sm font-semibold text-slate-700">{label}</span>
+              </div>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                free
+                  ? "bg-emerald-50 text-emerald-600"
+                  : "bg-slate-100 text-slate-400"
+              }`}>
+                {free ? "FREE" : "UPGRADE"}
+              </span>
             </motion.div>
           ))}
         </motion.div>
-
-        <motion.p
-          variants={fadeUp}
-          initial="hidden"
-          animate={inView ? "show" : "hidden"}
-          className="text-center text-xs text-slate-400 mt-6 font-medium"
-        >
-          CV check is always free. Download the improved version from $5.
-        </motion.p>
       </div>
     </section>
   );
@@ -878,38 +622,38 @@ function FinalCTA() {
   return (
     <section ref={ref} className="py-24 relative overflow-hidden" style={{ background: DARK }}>
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute w-96 h-96 rounded-full blur-3xl opacity-15"
-          style={{ background: BLUE, top: "-30%", left: "5%" }} />
-        <div className="absolute w-72 h-72 rounded-full blur-3xl opacity-10"
-          style={{ background: ORANGE, bottom: "-20%", right: "5%" }} />
+        <div className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-10"
+          style={{ background: BLUE, top: "-20%", left: "-5%" }} />
+        <div className="absolute w-80 h-80 rounded-full blur-3xl opacity-10"
+          style={{ background: ORANGE, bottom: "-15%", right: "0" }} />
       </div>
 
       <motion.div
         variants={stagger(0.1)}
         initial="hidden"
         animate={inView ? "show" : "hidden"}
-        className="relative max-w-2xl mx-auto px-5 sm:px-8 text-center"
+        className="relative max-w-xl mx-auto px-5 sm:px-8 text-center"
       >
         <motion.h2
           variants={fadeUp}
-          className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4 leading-[1.1]"
-          style={{ letterSpacing: "-0.02em" }}
+          className="text-3xl sm:text-4xl lg:text-[2.8rem] font-black text-white mb-4 leading-[1.1]"
+          style={{ letterSpacing: "-0.025em" }}
         >
           Stop guessing.<br />
-          <span style={{ color: ORANGE }}>Find out in 60 seconds.</span>
+          <span style={{ color: ORANGE }}>Upload yours now.</span>
         </motion.h2>
 
-        <motion.p variants={fadeUp} className="text-lg mb-8 leading-relaxed"
-          style={{ color: "rgba(255,255,255,0.5)" }}>
-          Upload your CV. Get your score. Fix what&apos;s broken.
+        <motion.p variants={fadeUp} className="text-base mb-8"
+          style={{ color: "rgba(255,255,255,0.45)" }}>
+          See what recruiters see in the first 6 seconds.
         </motion.p>
 
-        <motion.div variants={fadeUp}>
+        <motion.div variants={fadeUp} className="mb-4">
           <motion.button
             onClick={handleCTA}
-            whileHover={{ scale: 1.05, boxShadow: `0 16px 40px rgba(255,117,31,0.45)` }}
+            whileHover={{ scale: 1.05, boxShadow: `0 18px 44px rgba(255,117,31,0.48)` }}
             whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-2.5 text-white font-black px-8 py-4 rounded-2xl text-base"
+            className="inline-flex items-center gap-2.5 text-white font-black px-9 py-4 rounded-2xl text-base"
             style={{ background: ORANGE }}
           >
             <Upload size={18} />
@@ -918,9 +662,14 @@ function FinalCTA() {
           </motion.button>
         </motion.div>
 
-        <motion.div variants={fadeUp}
-          className="flex items-center justify-center gap-6 mt-6 text-xs font-semibold"
+        <motion.p variants={fadeUp} className="text-xs font-semibold mb-8"
           style={{ color: "rgba(255,255,255,0.3)" }}>
+          Free CV check. Upgrade only if useful.
+        </motion.p>
+
+        <motion.div variants={fadeUp}
+          className="flex items-center justify-center gap-6 text-xs font-semibold"
+          style={{ color: "rgba(255,255,255,0.25)" }}>
           <span className="flex items-center gap-1.5"><Lock size={11} /> Secure</span>
           <span className="flex items-center gap-1.5"><Eye size={11} /> Free</span>
           <span className="flex items-center gap-1.5"><Zap size={11} /> Instant</span>
@@ -930,27 +679,67 @@ function FinalCTA() {
   );
 }
 
+// ─── Sticky mobile CTA ────────────────────────────────────────────────────────
+function StickyMobileCTA() {
+  const [show, setShow] = useState(false);
+  const router   = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const h = () => setShow(window.scrollY > 420);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  const handleCTA = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    router.push(session ? "/dashboard" : "/register");
+  }, [router, supabase]);
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 80, opacity: 0 }}
+          transition={{ duration: 0.28, ease: ez }}
+          className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/95 backdrop-blur-sm border-t border-slate-100 px-5 py-3 shadow-2xl"
+        >
+          <button
+            onClick={handleCTA}
+            className="w-full flex items-center justify-center gap-2 text-white font-black py-3.5 rounded-xl text-sm"
+            style={{ background: ORANGE }}
+          >
+            <Upload size={16} />
+            Upload My CV — Free
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
   const SITE_URL = "https://fusecv.com";
   return (
     <footer style={{ background: DARK }} className="border-t border-white/5">
-      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
           <Link href="/" className="flex items-center">
-            <Image src="/fusecv-logo.png" alt="FuseCV" width={80} height={24}
-              className="object-contain brightness-0 invert opacity-60" />
+            <Image src="/fusecv-logo.png" alt="FuseCV" width={72} height={22}
+              className="object-contain brightness-0 invert opacity-50" />
           </Link>
           <div className="flex flex-wrap justify-center gap-5 text-xs font-medium"
-            style={{ color: "rgba(255,255,255,0.35)" }}>
-            <Link href="/"           className="hover:text-white transition-colors">Home</Link>
-            <Link href="/executive"  className="hover:text-white transition-colors">Executive CV</Link>
-            <Link href="/login"      className="hover:text-white transition-colors">Sign In</Link>
-            <Link href="/register"   className="hover:text-white transition-colors">Sign Up Free</Link>
+            style={{ color: "rgba(255,255,255,0.3)" }}>
+            <Link href="/"          className="hover:text-white transition-colors">Home</Link>
+            <Link href="/executive" className="hover:text-white transition-colors">Executive CV</Link>
+            <Link href="/login"     className="hover:text-white transition-colors">Sign In</Link>
             <Link href={`${SITE_URL}/privacy`} className="hover:text-white transition-colors">Privacy</Link>
             <Link href={`${SITE_URL}/terms`}   className="hover:text-white transition-colors">Terms</Link>
           </div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
+          <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>
             © {new Date().getFullYear()} FuseCV
           </p>
         </div>
@@ -970,6 +759,7 @@ export default function LandingClient() {
       <WhatYouGet />
       <FinalCTA />
       <Footer />
+      <StickyMobileCTA />
     </main>
   );
 }
