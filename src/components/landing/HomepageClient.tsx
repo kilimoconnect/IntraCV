@@ -14,6 +14,7 @@ import {
   ChevronDown, Zap, Shield, Target, Globe, BarChart2,
   Mic, FolderOpen, Download, User, Check, TrendingUp,
   BookOpen, ChevronRight, Settings as SettingsIcon, Wand2,
+  Palette, AlertCircle,
 } from "lucide-react";
 
 // ─── Brand ────────────────────────────────────────────────────────────────────
@@ -90,6 +91,11 @@ function Navbar() {
               <Link key={label} href={href} className="px-3 py-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-colors">{label}</Link>
             )
           ))}
+          <Link href="/cv-check"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition-colors"
+            style={{ color: ORANGE }}>
+            <Zap size={12} /> Free CV Check
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -756,6 +762,203 @@ function FeaturesSection() {
   );
 }
 
+// ─── Free CV Checker Teaser ───────────────────────────────────────────────────
+function CVCheckerSection() {
+  const MOCK_BARS = [
+    { label: "ATS Match",   score: 38, color: "#ef4444" },
+    { label: "Impact",      score: 22, color: "#ef4444" },
+    { label: "Keywords",    score: 44, color: "#f59e0b" },
+    { label: "Readability", score: 61, color: "#f59e0b" },
+  ];
+  const MOCK_ISSUES = [
+    { severity: "critical", text: "0 of 14 bullets contain measurable results" },
+    { severity: "critical", text: "Key Achievements section missing — required at this level" },
+    { severity: "warning",  text: "Skills listed as plain text — no visual grouping or categories" },
+  ];
+
+  return (
+    <section className="py-20 px-4 sm:px-6 relative overflow-hidden" style={{ background: "#fafafa" }}>
+      {/* Background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-48 -right-48 w-[480px] h-[480px] rounded-full opacity-[0.045]"
+          style={{ background: ORANGE }} />
+        <div className="absolute inset-0 opacity-[0.013]"
+          style={{ backgroundImage: "radial-gradient(circle, #ff751f 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+      </div>
+
+      <div className="max-w-6xl mx-auto relative">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+          {/* ── Left: copy ── */}
+          <motion.div variants={slideRight} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}>
+            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-5 px-3 py-1.5 rounded-full border"
+              style={{ background: `${ORANGE}10`, borderColor: `${ORANGE}28`, color: ORANGE }}>
+              <Zap size={11} /> Free · No Account Required
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-5 leading-tight">
+              Find Out What&apos;s Stopping<br />Recruiters From Calling You.
+            </h2>
+
+            <p className="text-lg text-slate-500 leading-relaxed mb-7">
+              Upload your CV and get a detailed, category-specific report in 60 seconds — scoring your content, format, ATS compatibility, and keyword coverage. No login needed.
+            </p>
+
+            <div className="space-y-3 mb-8">
+              {[
+                ["Career level detection",   "Junior / Mid-Senior / Executive — scored accordingly"],
+                ["Content scoring",          "Impact, ATS, keywords, and readability analysed"],
+                ["Format & presentation",    "Layout type, template quality, ATS safety check"],
+                ["Before / after example",   "Real bullet from your CV rewritten with measurable results"],
+              ].map(([title, desc]) => (
+                <div key={title} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: `${ORANGE}15` }}>
+                    <Check size={11} style={{ color: ORANGE }} />
+                  </div>
+                  <span className="text-sm text-slate-600">
+                    <strong className="text-slate-800">{title}</strong> — {desc}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Link href="/cv-check">
+                <motion.div
+                  whileHover={{ scale: 1.04, boxShadow: `0 12px 36px rgba(255,117,31,0.35)` }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2 text-white font-bold text-base px-7 py-3.5 rounded-xl cursor-pointer"
+                  style={{ background: ORANGE, boxShadow: "0 6px 20px rgba(255,117,31,0.22)" }}>
+                  <Upload size={17} /> Check My CV Free
+                  <ArrowRight size={15} />
+                </motion.div>
+              </Link>
+              <span className="text-sm text-slate-400 flex items-center gap-1.5">
+                <Shield size={13} className="text-slate-300" />
+                No account · No payment · Private
+              </span>
+            </div>
+          </motion.div>
+
+          {/* ── Right: mini report mockup ── */}
+          <motion.div variants={slideLeft} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }}
+            className="relative">
+            {/* Glow */}
+            <div className="absolute inset-0 rounded-2xl blur-3xl scale-90 opacity-[0.08]"
+              style={{ background: ORANGE }} />
+
+            <div className="relative bg-white rounded-2xl border border-slate-200 overflow-hidden"
+              style={{ boxShadow: "0 24px 64px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06)" }}>
+
+              {/* Browser bar */}
+              <div className="h-7 flex items-center gap-2 px-3" style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                <div className="flex gap-1.5">
+                  {["#f87171","#fbbf24","#4ade80"].map(c => <div key={c} className="w-2 h-2 rounded-full" style={{ background: c }} />)}
+                </div>
+                <div className="flex-1 mx-2 h-4 rounded-full bg-white flex items-center px-2 border border-slate-200">
+                  <span className="text-[8px] text-slate-400">fusecv.com/cv-check</span>
+                </div>
+              </div>
+
+              {/* Score hero */}
+              <div className="px-5 pt-4 pb-4 flex items-center gap-4 border-b border-slate-50">
+                {/* Ring */}
+                <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+                  <svg className="absolute inset-0 -rotate-90" width={72} height={72} viewBox="0 0 72 72">
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="#f1f5f9" strokeWidth="6" />
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="#ef4444" strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 28}`}
+                      strokeDashoffset={`${2 * Math.PI * 28 * (1 - 34 / 100)}`} />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xl font-black text-slate-900 leading-none">34</span>
+                    <span className="text-[9px] font-semibold text-slate-400">/100</span>
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1 rounded-full border mb-1.5"
+                    style={{ background: "rgba(124,58,237,0.07)", borderColor: "rgba(124,58,237,0.18)", color: "#7c3aed" }}>
+                    <ChevronRight size={9} /> Mid-Senior Professional
+                  </span>
+                  <p className="text-sm font-black text-slate-800 leading-snug">Strong Experience. Weak Presentation.</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Your experience is real — but not showing up for recruiters.</p>
+                </div>
+              </div>
+
+              {/* Score bars */}
+              <div className="px-5 py-4 space-y-2.5 border-b border-slate-50">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Score Breakdown</p>
+                {MOCK_BARS.map(({ label, score, color }) => (
+                  <div key={label}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[11px] font-semibold text-slate-600">{label}</span>
+                      <span className="text-[11px] font-black" style={{ color }}>{score}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#f1f5f9" }}>
+                      <div className="h-full rounded-full" style={{ width: `${score}%`, background: color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Issues */}
+              <div className="px-5 py-4 space-y-2 border-b border-slate-50">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Issues Found</p>
+                {MOCK_ISSUES.map(({ severity, text }, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded shrink-0 mt-0.5 ${
+                      severity === "critical" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                    }`}>{severity}</span>
+                    <span className="text-[11px] text-slate-600 leading-snug">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Format row */}
+              <div className="px-5 py-3 flex items-center justify-between border-b border-slate-50" style={{ background: "#fafafa" }}>
+                <div className="flex items-center gap-1.5">
+                  <Palette size={11} className="text-slate-400" />
+                  <span className="text-[11px] font-semibold text-slate-500">Format Score</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black text-amber-600">42/100</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 font-bold">Generic Template</span>
+                </div>
+              </div>
+
+              {/* Upgrade strip */}
+              <div className="px-5 py-3 flex items-center gap-2"
+                style={{ background: `${ORANGE}08`, borderTop: `1px solid ${ORANGE}18` }}>
+                <TrendingUp size={12} style={{ color: ORANGE }} />
+                <p className="text-[11px] font-semibold" style={{ color: "#b45309" }}>
+                  FuseCV can raise this to <strong style={{ color: ORANGE }}>78+</strong> with an AI rewrite + professional theme
+                </p>
+              </div>
+            </div>
+
+            {/* Floating badge */}
+            <motion.div
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-4 -right-4 flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-xl border border-slate-100 z-10">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${TEAL}18` }}>
+                <AlertCircle size={13} style={{ color: TEAL }} />
+              </div>
+              <div>
+                <div className="text-[9px] font-bold text-slate-800">3 critical issues</div>
+                <div className="text-[8px] text-slate-400">found in your CV</div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── How It Works ─────────────────────────────────────────────────────────────
 function HowItWorksSection() {
   const router   = useRouter();
@@ -1124,6 +1327,7 @@ function Footer() {
     Product: [
       { l: "Features",       h: "#features"     },
       { l: "How It Works",   h: "#how-it-works"  },
+      { l: "Free CV Check",  h: "/cv-check"      },
       { l: "CV Guides",      h: "/guides"        },
     ],
     Account: [
@@ -1178,6 +1382,7 @@ export default function HomepageClient() {
       <HeroSection />
       <StatsStrip />
       <FeaturesSection />
+      <CVCheckerSection />
       <HowItWorksSection />
       <CVStudioHighlight />
       <InterviewPrepHighlight />
