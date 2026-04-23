@@ -325,7 +325,7 @@ function HeroSection() {
             variants={stagger(0.09)}
             initial="hidden"
             animate="show"
-            className="text-center lg:text-left order-2 lg:order-1"
+            className="text-center lg:text-left"
           >
             <motion.h1
               variants={fadeUp}
@@ -393,7 +393,7 @@ function HeroSection() {
             initial={{ opacity: 0, x: 28 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: ez, delay: 0.15 }}
-            className="order-1 lg:order-2 flex justify-center lg:justify-end"
+            className="flex justify-center lg:justify-end"
           >
             <ScoreCard />
           </motion.div>
