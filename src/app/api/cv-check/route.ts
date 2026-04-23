@@ -69,45 +69,43 @@ async function extractText(buffer: Buffer, filename: string): Promise<string> {
 const EXTRACT_SYSTEM = `You are a CV parser. Extract structured data from the CV text and return ONLY valid JSON with no extra text or markdown.`;
 
 function buildExtractPrompt(cvText: string): string {
-  return `Parse this CV and return a JSON object with EXACTLY these fields:
-
-{
-  "name": "Full name or 'Candidate'",
-  "current_role": "Most recent job title",
-  "has_summary": <boolean — true if a professional summary / profile section exists>,
-  "summary_word_count": <integer — word count of the summary/profile section, 0 if absent>,
-  "word_count": <integer — total words in the entire CV>,
-  "experiences": [
-    {
-      "title": "Job title",
-      "company": "Company name",
-      "startDate": "e.g. Jan 2020 or 2020",
-      "endDate": "e.g. Present or Dec 2023 or 2023",
-      "description": "All bullet points and description text for this role combined"
-    }
-  ],
-  "education": [{ "degree": "Degree or qualification name", "institution": "School or university name" }],
-  "skills": [{ "name": "skill name" }],
-  "certifications": [{ "name": "certification name" }],
-  "languages": [{ "name": "language name" }],
-  "keyAchievements": [{ "description": "achievement text" }],
-  "boardRoles": [{ "role": "board or advisory role description" }],
-  "publications": [{ "title": "publication or article title" }],
-  "executiveTraining": [{ "name": "executive training or leadership programme name" }],
-  "awards": [{ "title": "award or recognition name" }],
-  "projects": [{ "name": "project name" }],
-  "memberships": [{ "name": "professional association or membership name" }],
-  "tools": [{ "name": "tool, software, or platform name" }],
-  "volunteer": [{ "role": "volunteer role or activity" }],
-  "personalInfo": { "linkedin": "<LinkedIn URL if found, empty string if not>" }
-}
-
-Return ONLY the JSON object.
-
-CV TEXT:
----
-${cvText.slice(0, 9000)}
----`;
+  return (
+    "Parse this CV and return a JSON object with EXACTLY these fields:\n\n" +
+    "{\n" +
+    '  "name": "Full name or \'Candidate\'",\n' +
+    '  "current_role": "Most recent job title",\n' +
+    '  "has_summary": <boolean — true if a professional summary / profile section exists>,\n' +
+    '  "summary_word_count": <integer — word count of the summary/profile section, 0 if absent>,\n' +
+    '  "word_count": <integer — total words in the entire CV>,\n' +
+    '  "experiences": [\n' +
+    '    {\n' +
+    '      "title": "Job title",\n' +
+    '      "company": "Company name",\n' +
+    '      "startDate": "e.g. Jan 2020 or 2020",\n' +
+    '      "endDate": "e.g. Present or Dec 2023 or 2023",\n' +
+    '      "description": "All bullet points and description text for this role combined"\n' +
+    '    }\n' +
+    '  ],\n' +
+    '  "education": [{ "degree": "Degree or qualification name", "institution": "School or university name" }],\n' +
+    '  "skills": [{ "name": "skill name" }],\n' +
+    '  "certifications": [{ "name": "certification name" }],\n' +
+    '  "languages": [{ "name": "language name" }],\n' +
+    '  "keyAchievements": [{ "description": "achievement text" }],\n' +
+    '  "boardRoles": [{ "role": "board or advisory role description" }],\n' +
+    '  "publications": [{ "title": "publication or article title" }],\n' +
+    '  "executiveTraining": [{ "name": "executive training or leadership programme name" }],\n' +
+    '  "awards": [{ "title": "award or recognition name" }],\n' +
+    '  "projects": [{ "name": "project name" }],\n' +
+    '  "memberships": [{ "name": "professional association or membership name" }],\n' +
+    '  "tools": [{ "name": "tool, software, or platform name" }],\n' +
+    '  "volunteer": [{ "role": "volunteer role or activity" }],\n' +
+    '  "personalInfo": { "linkedin": "<LinkedIn URL if found, empty string if not>" }\n' +
+    "}\n\n" +
+    "Return ONLY the JSON object.\n\n" +
+    "CV TEXT:\n---\n" +
+    cvText.slice(0, 9000) +
+    "\n---"
+  );
 }
 
 // ─── Step 2: Category-specific analysis ──────────────────────────────────────
@@ -145,47 +143,54 @@ const CATEGORY_LABELS: Record<CareerCategory, string> = {
 
 function buildAnalysisPrompt(cvText: string, category: CareerCategory): string {
   const label = CATEGORY_LABELS[category];
-  return `This CV belongs to a ${label}.
-
-Analyse the CV and return a JSON object with EXACTLY these fields:
-
-{
-  "total_bullets": <integer — count all bullet points under experience roles>,
-  "bullets_with_metrics": <integer — bullets containing a number, %, $, £, €, KSh, TZS, or explicit quantity>,
-  "total_skills": <integer — total skills listed in the skills section>,
-  "generic_skills_count": <integer — vague skills like: teamwork, communication, hardworking, adaptable, passionate, dedicated, motivated, organised>,
-  "keywords_found": <integer — industry/role-specific technical keywords actually present (tools, software, methodologies, certifications)>,
-  "keywords_total": 11,
-  "ats_score": <0–100 — keyword density, standard section headings, clean single-column formatting>,
-  "impact_score": <0–100 — proportion of bullets showing quantifiable achievement; 0 if bullets_with_metrics is 0>,
-  "keyword_score": <0–100 — coverage of keywords expected at ${label} level>,
-  "readability_score": <0–100 — sentence clarity, appropriate length, professional tone, no typos>,
-  "overall_score": <0–100 — MUST equal Math.round(ats_score*0.30 + impact_score*0.35 + keyword_score*0.20 + readability_score*0.15)>,
-  "issues": [
-    {
-      "severity": "critical" or "warning",
-      "text": "<Specific issue for a ${label} — MUST reference actual numbers or content from the CV>"
-    }
-  ],
-  "strengths": ["<1–2 genuine positives specific to this CV>"],
-  "top_recommendation": "<The single most impactful fix for a ${label}, in one sentence>",
-  "before_after": {
-    "before": "<Copy a real weak bullet from their experience section — if none exist, write a representative one for their role>",
-    "after": "<Same bullet rewritten with a specific quantified result — realistic for their industry and career level>",
-    "score_label": "<e.g. '+18 Impact Score'>"
-  }
-}
-
-Rules:
-- issues: 3–5 items, each referencing actual CV data, relevant to ${label} expectations
-- strengths: 1–2 items only — find something genuinely positive
-- overall_score MUST follow the weighted formula exactly
-- Return ONLY the JSON object
-
-CV TEXT:
----
-${cvText.slice(0, 9000)}
----`;
+  return (
+    "This CV belongs to a " + label + ".\n\n" +
+    "Analyse the CV and return a JSON object with EXACTLY these fields:\n\n" +
+    "{\n" +
+    '  "total_bullets": <integer — count all bullet points under experience roles>,\n' +
+    '  "bullets_with_metrics": <integer — bullets containing a number, %, $, £, €, KSh, TZS, or explicit quantity>,\n' +
+    '  "total_skills": <integer — total skills listed in the skills section>,\n' +
+    '  "generic_skills_count": <integer — vague skills like: teamwork, communication, hardworking, adaptable, passionate, dedicated, motivated, organised>,\n' +
+    '  "keywords_found": <integer — industry/role-specific technical keywords actually present (tools, software, methodologies, certifications)>,\n' +
+    '  "keywords_total": 11,\n' +
+    '  "ats_score": <0–100 — keyword density, standard section headings, clean single-column formatting>,\n' +
+    '  "impact_score": <0–100 — proportion of bullets showing quantifiable achievement; 0 if bullets_with_metrics is 0>,\n' +
+    '  "keyword_score": <0–100 — coverage of keywords expected at ' + label + ' level>,\n' +
+    '  "readability_score": <0–100 — sentence clarity, appropriate length, professional tone, no typos>,\n' +
+    '  "overall_score": <0–100 — MUST equal Math.round(ats_score*0.30 + impact_score*0.35 + keyword_score*0.20 + readability_score*0.15)>,\n' +
+    '  "issues": [\n' +
+    '    {\n' +
+    '      "severity": "critical" or "warning",\n' +
+    '      "text": "<Specific issue for a ' + label + ' — MUST reference actual numbers or content from the CV>"\n' +
+    '    }\n' +
+    '  ],\n' +
+    '  "strengths": ["<1–2 genuine positives specific to this CV>"],\n' +
+    '  "top_recommendation": "<The single most impactful fix for a ' + label + ', in one sentence>",\n' +
+    '  "before_after": {\n' +
+    '    "before": "<Copy a real weak bullet from their experience section — if none exist, write a representative one for their role>",\n' +
+    '    "after": "<Same bullet rewritten with a specific quantified result — realistic for their industry and career level>",\n' +
+    '    "score_label": "<e.g. \'+18 Impact Score\'>"\n' +
+    '  },\n' +
+    '  "format": {\n' +
+    '    "layout_type": "<Infer from text patterns — \'single-column\' if clean linear flow with no side-by-side content, \'two-column\' if content appears side-by-side or uses pipes/dividers, \'table-based\' if table-like characters present, \'sidebar\' if clear sidebar column pattern, \'unknown\' if unclear>",\n' +
+    '    "ats_safe": <boolean — true only if single-column with no tables or complex columns inferred>,\n' +
+    '    "section_clarity": "<\'clear\' if all headings use standard professional names (Experience, Education, Skills etc.), \'inconsistent\' if mixed, \'confusing\' if non-standard or absent>",\n' +
+    '    "template_impression": "<\'basic\' = plain text or default Word/Google Docs, \'generic\' = simple commonly-used free template, \'structured\' = consistently formatted but visually plain, \'professional\' = strong visual structure indicators>",\n' +
+    '    "format_score": <0–100 — assess visual presentation quality from text signals: deduct for table/column layout (-20), non-standard section headers (-10), generic/plain appearance (-15), inconsistent date or bullet formatting (-10), no apparent visual hierarchy (-10); add for clean linear structure (+15), consistent professional formatting (+15), clear section organisation (+10)>,\n' +
+    '    "issues": ["<2–3 specific format or presentation problems observable from the text structure, e.g. \'Skills listed as plain comma text with no visual grouping or categories\', \'Inconsistent date format across roles — mix of MM/YYYY and month names\', \'Section headings lack consistent capitalisation\'>"],\n' +
+    '    "strengths": ["<0–1 genuine format positives — can be an empty array>"]\n' +
+    '  }\n' +
+    "}\n\n" +
+    "Rules:\n" +
+    "- issues: 3–5 items, each referencing actual CV data, relevant to " + label + " level expectations\n" +
+    "- strengths: 1–2 items only — find something genuinely good\n" +
+    "- overall_score MUST follow the weighted formula exactly\n" +
+    "- format.issues: 2–3 items focused purely on presentation/layout/structure, not content\n" +
+    "- Return ONLY the JSON object\n\n" +
+    "CV TEXT:\n---\n" +
+    cvText.slice(0, 9000) +
+    "\n---"
+  );
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -250,6 +255,9 @@ export async function POST(req: Request) {
       Math.round(ats_score * 0.30 + impact_score * 0.35 + keyword_score * 0.20 + readability_score * 0.15)
     ));
 
+    const fmt = analysis.format ?? {};
+    const format_score = Math.min(100, Math.max(1, fmt.format_score ?? 35));
+
     // ── Step 5: Merge category gaps into issues (no duplicates) ──────────────
     const issues: { severity: "critical" | "warning"; text: string }[] =
       Array.isArray(analysis.issues) ? [...analysis.issues] : [];
@@ -289,12 +297,23 @@ export async function POST(req: Request) {
       keywords_found:       analysis.keywords_found       || 0,
       keywords_total:       11,
 
-      // Scores
+      // Content scores
       ats_score,
       impact_score,
       keyword_score,
       readability_score,
       overall_score,
+
+      // Format & presentation
+      format: {
+        layout_type:        fmt.layout_type        || "unknown",
+        ats_safe:           fmt.ats_safe           ?? false,
+        section_clarity:    fmt.section_clarity    || "inconsistent",
+        template_impression: fmt.template_impression || "generic",
+        format_score,
+        issues:   Array.isArray(fmt.issues)    ? fmt.issues    : [],
+        strengths: Array.isArray(fmt.strengths) ? fmt.strengths : [],
+      },
 
       // Narrative
       issues,
