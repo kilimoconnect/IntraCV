@@ -1505,7 +1505,9 @@ function CVBuilderPage() {
     skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) incompleteItems.push({ section: "Skills", key: "skills", count: 0, itemId: `cv-item-${s.id}` }); });
     certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) incompleteItems.push({ section: "Certifications", key: "certifications", count: 0, itemId: `cv-item-${c.id}` }); });
     languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) incompleteItems.push({ section: "Languages", key: "languages", count: 0, itemId: `cv-item-${l.id}` }); });
-    referees.forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0, itemId: `cv-item-${r.id}` }); });
+    // Only validate referee entries that the user has started filling in —
+    // skip completely empty auto-created entries (referees is recommended, not required)
+    referees.filter(r => r.name?.trim() || r.phone?.trim() || r.email?.trim()).forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0, itemId: `cv-item-${r.id}` }); });
     keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) incompleteItems.push({ section: "Achievements", key: "achievements", count: 0, itemId: `cv-item-${a.id}` }); });
     memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) incompleteItems.push({ section: "Memberships", key: "memberships", count: 0, itemId: `cv-item-${m.id}` }); });
     projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) incompleteItems.push({ section: "Projects", key: "projects", count: 0, itemId: `cv-item-${p.id}` }); });
