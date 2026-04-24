@@ -79,53 +79,11 @@ export default function LoginPage() {
           .eq("user_id", authUser.id)
           .maybeSingle();
 
-        if (!pi?.full_name || !pi?.email) {
-          router.push("/cv-builder");
-        } else {
-          const uid = authUser.id;
-
-          // Fetch full records to validate required fields within each section
-          const [sumRes, expRes, eduRes, skillRes, langRes, refRes, achRes, boardRes] = await Promise.all([
-            supabase.from("cv_summary").select("summary").eq("user_id", uid).maybeSingle(),
-            supabase.from("cv_experiences").select("title, company, location, start_date, end_date, description").eq("user_id", uid),
-            supabase.from("cv_education").select("degree, institution, year").eq("user_id", uid),
-            supabase.from("cv_skills").select("name").eq("user_id", uid),
-            supabase.from("cv_languages").select("name, proficiency").eq("user_id", uid),
-            supabase.from("cv_referees").select("name, phone, email").eq("user_id", uid),
-            supabase.from("cv_key_achievements").select("achievement").eq("user_id", uid),
-            supabase.from("cv_board_roles").select("title, organization").eq("user_id", uid),
-          ]);
-
-          const trim = (v: any) => (v ?? "").toString().trim();
-          const allComplete = (rows: any[] | null, check: (r: any) => boolean) =>
-            (rows ?? []).length > 0 && (rows ?? []).every(check);
-
-          const has = {
-            summary:      !!(sumRes.data?.summary?.trim()),
-            experience:   allComplete(expRes.data, r => trim(r.title) && trim(r.company) && trim(r.location) && trim(r.start_date) && trim(r.end_date) && trim(r.description)),
-            education:    allComplete(eduRes.data, r => trim(r.degree) && trim(r.institution) && trim(r.year)),
-            skills:       allComplete(skillRes.data, r => trim(r.name)),
-            languages:    allComplete(langRes.data, r => trim(r.name) && trim(r.proficiency)),
-            referees:     allComplete(refRes.data, r => trim(r.name) && (trim(r.phone) || trim(r.email))),
-            achievements: allComplete(achRes.data, r => trim(r.achievement)),
-            boardRoles:   allComplete(boardRes.data, r => trim(r.title) && trim(r.organization)),
-          };
-
-          const category = pi.career_category ?? "junior";
-          // Only gate on the two sections that confirm the user has actually
-          // built their CV. Education / skills / languages are validated during
-          // cv-builder save — we don't re-validate them here so existing
-          // accounts without every section aren't permanently looped back.
-          const universalOk = has.summary && has.experience;
-          const categoryOk =
-            category === "executive"
-              ? universalOk && has.achievements && has.boardRoles
-              : category === "mid-senior"
-              ? universalOk && has.achievements
-              : universalOk;
-
-          router.push(categoryOk ? "/dashboard" : "/cv-builder");
-        }
+        // If personal info is saved the user has been through the builder — go to dashboard.
+        // Field-level validation belongs in the cv-builder, not here. Repeating it on
+        // every login caused an infinite loop for any account with a partially-empty
+        // field (e.g. current job with null end_date, or pre-referees-change profiles).
+        router.push(pi?.full_name && pi?.email ? "/dashboard" : "/cv-builder");
       } else {
         router.push("/cv-builder");
       }
