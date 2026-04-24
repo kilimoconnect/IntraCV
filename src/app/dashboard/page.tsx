@@ -79,29 +79,11 @@ function DashboardPage() {
     // No data at all → send to builder
     if (!hasData) { router.push("/cv-builder"); return; }
 
-    // Check field-level completeness for required sections
-    const t = (v: any) => (v ?? "").toString().trim();
-    const allComplete = (arr: any[], check: (r: any) => boolean) =>
-      arr.length > 0 && arr.every(check);
-
-    const category = careerCategory ?? "junior";
-    const summaryOk    = !!t(summary);
-    const experienceOk = allComplete(experiences, r => t(r.title) && t(r.company) && t(r.location) && t(r.startDate) && t(r.endDate) && t(r.description));
-    const educationOk  = allComplete(education,   r => t(r.degree) && t(r.institution) && t(r.year));
-    const skillsOk     = allComplete(skills,      r => t(r.name));
-    const languagesOk  = allComplete(languages,   r => t(r.name) && t(r.proficiency));
-    const refereesOk   = allComplete(referees,    r => t(r.name) && (t(r.phone) || t(r.email)));
-    const achOk        = allComplete(keyAchievements, r => t(r.achievement));
-    const boardOk      = allComplete(boardRoles,  r => t(r.title) && t(r.organization));
-
-    const universalOk  = summaryOk && experienceOk && educationOk && skillsOk && languagesOk && refereesOk;
-    const categoryOk   =
-      category === "executive"  ? universalOk && achOk && boardOk :
-      category === "mid-senior" ? universalOk && achOk :
-      universalOk;
-
-    if (!categoryOk) router.push("/cv-builder");
-  }, [loading, hasData, user, returningFromPayment, careerCategory, summary, experiences, education, skills, languages, referees, keyAchievements, boardRoles, router]);
+    // Only redirect to the builder if the user has never completed personal info.
+    // Deep field-level validation (endDate, referees, etc.) belongs in the builder,
+    // not here — it caused infinite redirect loops for current jobs and optional sections.
+    if (!personalInfo?.fullName || !personalInfo?.email) router.push("/cv-builder");
+  }, [loading, hasData, user, returningFromPayment, personalInfo, router]);
 
   const loadData = useCallback(async () => {
     if (!user) return;
