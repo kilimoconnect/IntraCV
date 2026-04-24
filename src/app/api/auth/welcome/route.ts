@@ -58,14 +58,18 @@ export async function POST(req: Request) {
     });
 
     // ── Schedule automation flows ──
-    // All fire-and-forget (don't block the welcome email response).
-    // Each flow has its own guards in processQueue (purchase check, profile completeness, etc.).
-    scheduleFlow(userId, "signup_no_purchase").catch((e) =>
-      console.error("[welcome] schedule signup_no_purchase:", e)
-    );
-    scheduleFlow(userId, "missing_info").catch((e) =>    // cancelled in cron if profile is complete
-      console.error("[welcome] schedule missing_info:", e)
-    );
+    // Must be awaited before returning — Vercel terminates the serverless function
+    // as soon as the response is sent, killing any unawaited async work mid-flight
+    // and causing "TypeError: fetch failed" from the Supabase client.
+    await Promise.allSettled([
+      scheduleFlow(userId, "signup_no_purchase").catch((e) =>
+        console.error("[welcome] schedule signup_no_purchase:", e)
+      ),
+      scheduleFlow(userId, "missing_info").catch((e) =>
+        console.error("[welcome] schedule missing_info:", e)
+      ),
+    ]);
+
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("Welcome email error:", err);
