@@ -207,6 +207,12 @@ export async function cancelAllFlows(userId: string): Promise<void> {
 // ─── Process queue ────────────────────────────────────────────────────────────
 
 export async function processQueue(): Promise<{ sent: number; skipped: number; failed: number }> {
+  // Fail fast if Brevo is not configured — before claiming any rows as "processing"
+  if (!BREVO_API_KEY) {
+    console.error("[email-automation] BREVO_API_KEY is not set — aborting queue run");
+    return { sent: 0, skipped: 0, failed: 0 };
+  }
+
   const admin = createAdminSupabase();
   let sent = 0, skipped = 0, failed = 0;
 
@@ -778,20 +784,32 @@ function fmt(
 
 async function sendBrevoEmail(opts: { to: string; toName: string; subject: string; html: string; text: string }) {
   if (!BREVO_API_KEY) throw new Error("BREVO_API_KEY not set");
-  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sender: { name: FROM_NAME, email: FROM_EMAIL },
-      to: [{ email: opts.to, name: opts.toName }],
-      subject: opts.subject,
-      headers: { "X-Entity-Ref-ID": `auto-${opts.to}` },
-      htmlContent: opts.html,
-      textContent: opts.text,
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Brevo: ${JSON.stringify(err)}`);
+
+  // Hard timeout: if Brevo doesn't respond in 15 s, abort.
+  // Without this, a hung fetch will exhaust the Vercel function timeout (60 s)
+  // and leave the queue row stuck in "processing" with no catch block to clean up.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: opts.to, name: opts.toName }],
+        subject: opts.subject,
+        headers: { "X-Entity-Ref-ID": `auto-${opts.to}` },
+        htmlContent: opts.html,
+        textContent: opts.text,
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Brevo: ${JSON.stringify(err)}`);
+    }
+  } finally {
+    clearTimeout(timer);
   }
 }
