@@ -1345,7 +1345,7 @@ function CVBuilderPage() {
   skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) sectionsWithIssues.add("skills"); });
   certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) sectionsWithIssues.add("certifications"); });
   languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) sectionsWithIssues.add("languages"); });
-  referees.forEach((r) => { if (getItemMissing("referees", r).length > 0) sectionsWithIssues.add("referees"); });
+  referees.filter(r => r.name?.trim() || r.phone?.trim() || r.email?.trim()).forEach((r) => { if (getItemMissing("referees", r).length > 0) sectionsWithIssues.add("referees"); });
   keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) sectionsWithIssues.add("achievements"); });
   memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) sectionsWithIssues.add("memberships"); });
   projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) sectionsWithIssues.add("projects"); });
@@ -1462,13 +1462,10 @@ function CVBuilderPage() {
         setScrollTrigger(t => t + 1);
         return;
       }
-    } else if (sectionItemMap[currentKey]) {
+    } else if (sectionItemMap[currentKey] && currentKey !== "referees") {
+      // Referees is recommended — skip per-field validation so it never blocks saving.
       const { items, key } = sectionItemMap[currentKey];
-      // For referees (recommended, not required) skip completely empty auto-created entries
-      const itemsToCheck = key === "referees"
-        ? items.filter((r: any) => r.name?.trim() || r.phone?.trim() || r.email?.trim())
-        : items;
-      const firstIncomplete = itemsToCheck.find((item: any) => getItemMissing(key, item).length > 0);
+      const firstIncomplete = items.find((item: any) => getItemMissing(key, item).length > 0);
       if (firstIncomplete) {
         const missing = getItemMissing(key, firstIncomplete);
         toast.warning(`Missing required fields: ${missing.join(", ")}`);
@@ -1509,9 +1506,7 @@ function CVBuilderPage() {
     skills.forEach((s) => { if (getItemMissing("skills", s).length > 0) incompleteItems.push({ section: "Skills", key: "skills", count: 0, itemId: `cv-item-${s.id}` }); });
     certifications.forEach((c) => { if (getItemMissing("certifications", c).length > 0) incompleteItems.push({ section: "Certifications", key: "certifications", count: 0, itemId: `cv-item-${c.id}` }); });
     languages.forEach((l) => { if (getItemMissing("languages", l).length > 0) incompleteItems.push({ section: "Languages", key: "languages", count: 0, itemId: `cv-item-${l.id}` }); });
-    // Only validate referee entries that the user has started filling in —
-    // skip completely empty auto-created entries (referees is recommended, not required)
-    referees.filter(r => r.name?.trim() || r.phone?.trim() || r.email?.trim()).forEach((r) => { if (getItemMissing("referees", r).length > 0) incompleteItems.push({ section: "Referees", key: "referees", count: 0, itemId: `cv-item-${r.id}` }); });
+    // Referees is a recommended section — never block "Continue" due to incomplete referee fields.
     keyAchievements.forEach((a) => { if (getItemMissing("achievements", a).length > 0) incompleteItems.push({ section: "Achievements", key: "achievements", count: 0, itemId: `cv-item-${a.id}` }); });
     memberships.forEach((m) => { if (getItemMissing("memberships", m).length > 0) incompleteItems.push({ section: "Memberships", key: "memberships", count: 0, itemId: `cv-item-${m.id}` }); });
     projects.forEach((p) => { if (getItemMissing("projects", p).length > 0) incompleteItems.push({ section: "Projects", key: "projects", count: 0, itemId: `cv-item-${p.id}` }); });
