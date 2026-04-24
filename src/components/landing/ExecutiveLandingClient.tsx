@@ -856,126 +856,6 @@ function PositioningHighlight() {
 }
 
 // ─── Pricing ──────────────────────────────────────────────────────────────────
-function PricingSection() {
-  const ref    = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-  const router   = useRouter();
-  const supabase = createClient();
-
-  const handleCTA = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    router.push(session ? "/dashboard" : "/register");
-  }, [router, supabase]);
-
-  const plans = [
-    {
-      name: "Starter",
-      price: "$5",
-      desc: "Executive CV download. Watermark-free, professional PDF.",
-      features: ["AI-rewritten executive CV", "6 premium layout options", "6 colour themes", "Watermark-free PDF"],
-      cta: "Get My CV",
-      highlight: false,
-    },
-    {
-      name: "Professional",
-      price: "$7",
-      desc: "CV + matching executive cover letter for board and C-suite applications.",
-      features: ["Everything in Starter", "AI executive cover letter", "Tailored to job description", "Same tone and authority"],
-      cta: "Get CV + Cover Letter",
-      highlight: true,
-    },
-    {
-      name: "Full",
-      price: "$10",
-      desc: "Complete toolkit: CV, cover letter, and 20 interview questions.",
-      features: ["Everything in Professional", "20 role-specific questions", "Model answers from your data", "Board & C-suite scenarios"],
-      cta: "Get Full Package",
-      highlight: false,
-    },
-  ];
-
-  return (
-    <section className="py-20 lg:py-24 bg-white" ref={ref}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <motion.div
-          variants={stagger(0.08)}
-          initial="hidden"
-          animate={inView ? "show" : "hidden"}
-          className="text-center mb-12"
-        >
-          <motion.p variants={fadeUp} className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: ORANGE }}>
-            Simple Pricing
-          </motion.p>
-          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-black text-slate-900 mb-4">
-            Pay once. Download instantly.
-          </motion.h2>
-          <motion.p variants={fadeUp} className="text-lg text-slate-500">
-            Preview your CV free. Pay only when you are ready to download.
-          </motion.p>
-        </motion.div>
-
-        <motion.div
-          variants={stagger(0.1)}
-          initial="hidden"
-          animate={inView ? "show" : "hidden"}
-          className="grid sm:grid-cols-3 gap-5"
-        >
-          {plans.map(({ name, price, desc, features, cta, highlight }) => (
-            <motion.div
-              key={name}
-              variants={fadeUp}
-              whileHover={{ y: -4, boxShadow: highlight ? `0 24px 56px rgba(0,74,173,0.18)` : "0 16px 40px rgba(0,0,0,0.08)" }}
-              className="rounded-2xl p-6 border transition-shadow relative"
-              style={{
-                background: highlight ? BLUE : "white",
-                borderColor: highlight ? BLUE : "#e2e8f0",
-              }}
-            >
-              {highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-white"
-                    style={{ background: ORANGE }}>Most Popular</span>
-                </div>
-              )}
-              <div className={`text-sm font-black uppercase tracking-widest mb-1 ${highlight ? "text-blue-200" : "text-slate-400"}`}>{name}</div>
-              <div className={`text-4xl font-black mb-1 ${highlight ? "text-white" : "text-slate-900"}`}>{price}</div>
-              <p className={`text-sm mb-5 ${highlight ? "text-blue-200" : "text-slate-500"}`}>{desc}</p>
-              <ul className="space-y-2 mb-6">
-                {features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check size={14} className={`shrink-0 mt-0.5 ${highlight ? "text-blue-200" : "text-green-500"}`} />
-                    <span className={highlight ? "text-blue-100" : "text-slate-600"}>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <motion.button
-                onClick={handleCTA}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="w-full py-2.5 rounded-xl text-sm font-bold transition-colors"
-                style={highlight
-                  ? { background: ORANGE, color: "white" }
-                  : { background: "#f1f5f9", color: BLUE }}
-              >
-                {cta} <ChevronRight size={14} className="inline" />
-              </motion.button>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.p
-          variants={fadeUp}
-          initial="hidden"
-          animate={inView ? "show" : "hidden"}
-          className="text-center text-sm text-slate-400 mt-6"
-        >
-          Preview your full executive CV for free before paying. No subscription. No commitment.
-        </motion.p>
-      </div>
-    </section>
-  );
-}
-
 // ─── Final CTA ────────────────────────────────────────────────────────────────
 function FinalCTA() {
   const ref    = useRef<HTMLDivElement>(null);
@@ -1128,7 +1008,6 @@ export default function ExecutiveLandingClient() {
       <HowItWorksSection />
       <WhoItsFor />
       <PositioningHighlight />
-      <PricingSection />
       <FinalCTA />
       <Footer />
     </main>
