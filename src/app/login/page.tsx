@@ -112,7 +112,8 @@ export default function LoginPage() {
           };
 
           const category = pi.career_category ?? "junior";
-          const universalOk = has.summary && has.experience && has.education && has.skills && has.languages && has.referees;
+          // referees is recommended, not required — do not gate dashboard access on it
+          const universalOk = has.summary && has.experience && has.education && has.skills && has.languages;
           const categoryOk =
             category === "executive"
               ? universalOk && has.achievements && has.boardRoles

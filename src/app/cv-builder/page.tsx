@@ -187,9 +187,9 @@ function categorizeProfile(
         { key: "education", label: "Education" },
         { key: "skills", label: "Skills" },
         { key: "languages", label: "Languages" },
-        { key: "referees", label: "References" },
       ],
       recommended: [
+        { key: "referees", label: "References" },
         { key: "certifications", label: "Professional Certifications" },
         { key: "projects", label: "Projects" },
         { key: "volunteer", label: "Volunteer Experience" },
@@ -204,9 +204,9 @@ function categorizeProfile(
         { key: "skills", label: "Skills" },
         { key: "achievements", label: "Key Achievements" },
         { key: "languages", label: "Languages" },
-        { key: "referees", label: "References" },
       ],
       recommended: [
+        { key: "referees", label: "References" },
         { key: "certifications", label: "Professional Certifications" },
         { key: "awards", label: "Awards & Recognition" },
         { key: "memberships", label: "Professional Memberships" },
@@ -224,9 +224,9 @@ function categorizeProfile(
         { key: "achievements", label: "Key Achievements" },
         { key: "languages", label: "Languages" },
         { key: "boardRoles", label: "Board & Advisory Roles" },
-        { key: "referees", label: "References" },
       ],
       recommended: [
+        { key: "referees", label: "References" },
         { key: "certifications", label: "Professional Certifications" },
         { key: "execTraining", label: "Executive Training" },
         { key: "publications", label: "Publications & Speaking" },
