@@ -1464,7 +1464,11 @@ function CVBuilderPage() {
       }
     } else if (sectionItemMap[currentKey]) {
       const { items, key } = sectionItemMap[currentKey];
-      const firstIncomplete = items.find(item => getItemMissing(key, item).length > 0);
+      // For referees (recommended, not required) skip completely empty auto-created entries
+      const itemsToCheck = key === "referees"
+        ? items.filter((r: any) => r.name?.trim() || r.phone?.trim() || r.email?.trim())
+        : items;
+      const firstIncomplete = itemsToCheck.find((item: any) => getItemMissing(key, item).length > 0);
       if (firstIncomplete) {
         const missing = getItemMissing(key, firstIncomplete);
         toast.warning(`Missing required fields: ${missing.join(", ")}`);

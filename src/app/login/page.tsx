@@ -112,8 +112,11 @@ export default function LoginPage() {
           };
 
           const category = pi.career_category ?? "junior";
-          // referees is recommended, not required — do not gate dashboard access on it
-          const universalOk = has.summary && has.experience && has.education && has.skills && has.languages;
+          // Only gate on the two sections that confirm the user has actually
+          // built their CV. Education / skills / languages are validated during
+          // cv-builder save — we don't re-validate them here so existing
+          // accounts without every section aren't permanently looped back.
+          const universalOk = has.summary && has.experience;
           const categoryOk =
             category === "executive"
               ? universalOk && has.achievements && has.boardRoles
