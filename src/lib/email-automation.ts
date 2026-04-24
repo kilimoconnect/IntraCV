@@ -311,7 +311,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
           await markStatus(row.id, "cancelled"); skipped++; continue;
         }
 
-        const emailOpts = buildEmail(row.flow, row.email_number, ctx);
+        const emailOpts = buildEmail(row.flow, row.email_number, ctx, ctx.email);
         if (!emailOpts) { await markStatus(row.id, "cancelled"); skipped++; continue; }
 
         await sendBrevoEmail({ to: ctx.email, toName: ctx.firstName, ...emailOpts });
@@ -424,25 +424,25 @@ async function fetchUserContext(userId: string): Promise<UserContext | null> {
 
 // ─── Email builder router ─────────────────────────────────────────────────────
 
-function buildEmail(flow: FlowId, n: number, ctx: UserContext) {
+function buildEmail(flow: FlowId, n: number, ctx: UserContext, recipientEmail = "") {
   switch (flow) {
-    case "checkout_abandon":         return buildCheckoutAbandon(n, ctx);
-    case "payment_failed":           return buildPaymentFailed(n, ctx);
-    case "preview_no_purchase":      return buildPreviewEmail(n, ctx);
-    case "missing_info":             return buildMissingInfoEmail(n, ctx);
-    case "cv_purchased":             return buildCvPurchasedEmail(n, ctx);
-    case "interview_upsell":         return buildInterviewUpsellEmail(n, ctx);
-    case "signup_no_purchase":       return buildSignupEmail(n, ctx);
-    case "upload_started_no_finish": return buildUploadAbandonEmail(n, ctx);
-    case "executive_prestige":       return buildExecutivePrestigeEmail(n, ctx);
-    case "repeat_buyer":             return buildRepeatBuyerEmail(n, ctx);
+    case "checkout_abandon":         return buildCheckoutAbandon(n, ctx, recipientEmail);
+    case "payment_failed":           return buildPaymentFailed(n, ctx, recipientEmail);
+    case "preview_no_purchase":      return buildPreviewEmail(n, ctx, recipientEmail);
+    case "missing_info":             return buildMissingInfoEmail(n, ctx, recipientEmail);
+    case "cv_purchased":             return buildCvPurchasedEmail(n, ctx, recipientEmail);
+    case "interview_upsell":         return buildInterviewUpsellEmail(n, ctx, recipientEmail);
+    case "signup_no_purchase":       return buildSignupEmail(n, ctx, recipientEmail);
+    case "upload_started_no_finish": return buildUploadAbandonEmail(n, ctx, recipientEmail);
+    case "executive_prestige":       return buildExecutivePrestigeEmail(n, ctx, recipientEmail);
+    case "repeat_buyer":             return buildRepeatBuyerEmail(n, ctx, recipientEmail);
     default:                         return null;
   }
 }
 
 // ─── Flow: checkout_abandon ───────────────────────────────────────────────────
 
-function buildCheckoutAbandon(n: number, ctx: UserContext) {
+function buildCheckoutAbandon(n: number, ctx: UserContext, email = "") {
   const { firstName } = ctx;
   const e = {
     1: {
@@ -457,12 +457,12 @@ function buildCheckoutAbandon(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: payment_failed ─────────────────────────────────────────────────────
 
-function buildPaymentFailed(n: number, ctx: UserContext) {
+function buildPaymentFailed(n: number, ctx: UserContext, email = "") {
   const { firstName } = ctx;
   const e = {
     1: {
@@ -477,12 +477,12 @@ function buildPaymentFailed(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: preview_no_purchase ────────────────────────────────────────────────
 
-function buildPreviewEmail(n: number, ctx: UserContext) {
+function buildPreviewEmail(n: number, ctx: UserContext, email = "") {
   const { firstName, careerCategory } = ctx;
 
   const identityLine = careerCategory === "executive"
@@ -509,12 +509,12 @@ function buildPreviewEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: missing_info ───────────────────────────────────────────────────────
 
-function buildMissingInfoEmail(n: number, ctx: UserContext) {
+function buildMissingInfoEmail(n: number, ctx: UserContext, email = "") {
   const { firstName } = ctx;
   const e = {
     1: {
@@ -534,12 +534,12 @@ function buildMissingInfoEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: cv_purchased ───────────────────────────────────────────────────────
 
-function buildCvPurchasedEmail(n: number, ctx: UserContext) {
+function buildCvPurchasedEmail(n: number, ctx: UserContext, email = "") {
   const { firstName, headline } = ctx;
   const roleHint = headline || "your target role";
   const e = {
@@ -555,12 +555,12 @@ function buildCvPurchasedEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: interview_upsell ───────────────────────────────────────────────────
 
-function buildInterviewUpsellEmail(n: number, ctx: UserContext) {
+function buildInterviewUpsellEmail(n: number, ctx: UserContext, email = "") {
   const { firstName, headline, careerCategory } = ctx;
   const roleHint = headline || "your target role";
 
@@ -583,12 +583,12 @@ function buildInterviewUpsellEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: signup_no_purchase (segmented by career stage) ─────────────────────
 
-function buildSignupEmail(n: number, ctx: UserContext) {
+function buildSignupEmail(n: number, ctx: UserContext, email = "") {
   const { firstName, careerCategory } = ctx;
 
   type ED = { subject: string; body: string };
@@ -654,12 +654,12 @@ function buildSignupEmail(n: number, ctx: UserContext) {
   // Email 1: user may not have a complete profile yet — send to CV builder
   const cta = n === 1 ? CV_BUILDER_URL : STUDIO_URL;
   const ctaLabel = n === 1 ? "Build My CV" : "Preview My CV";
-  return fmt(firstName, e.subject, e.body, cta, ctaLabel);
+  return fmt(firstName, e.subject, e.body, cta, ctaLabel, email);
 }
 
 // ─── Flow: upload_started_no_finish ──────────────────────────────────────────
 
-function buildUploadAbandonEmail(n: number, ctx: UserContext) {
+function buildUploadAbandonEmail(n: number, ctx: UserContext, email = "") {
   const { firstName } = ctx;
   const e = {
     1: {
@@ -674,12 +674,12 @@ function buildUploadAbandonEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: executive_prestige ─────────────────────────────────────────────────
 
-function buildExecutivePrestigeEmail(n: number, ctx: UserContext) {
+function buildExecutivePrestigeEmail(n: number, ctx: UserContext, email = "") {
   const { firstName } = ctx;
   const e = {
     1: {
@@ -694,12 +694,12 @@ function buildExecutivePrestigeEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── Flow: repeat_buyer ───────────────────────────────────────────────────────
 
-function buildRepeatBuyerEmail(n: number, ctx: UserContext) {
+function buildRepeatBuyerEmail(n: number, ctx: UserContext, email = "") {
   const { firstName, careerCategory } = ctx;
 
   const contextLine = careerCategory === "executive"
@@ -721,15 +721,16 @@ function buildRepeatBuyerEmail(n: number, ctx: UserContext) {
     },
   }[n];
   if (!e) return null;
-  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel);
+  return fmt(firstName, e.subject, e.body, e.cta, e.ctaLabel, email);
 }
 
 // ─── HTML formatter ───────────────────────────────────────────────────────────
 
 function fmt(
-  firstName: string, subject: string, body: string, ctaHref: string, ctaLabel: string
+  firstName: string, subject: string, body: string, ctaHref: string, ctaLabel: string,
+  recipientEmail = ""
 ): { subject: string; html: string; text: string } {
-  const unsubBase = `${SITE_URL}/unsubscribe?email=`;
+  const unsubUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(recipientEmail)}`;
   const bodyHtml = body.split("\n\n").map(para => {
     if (para.startsWith("- ")) {
       const items = para.split("\n").map(i => i.replace(/^- /, "")).filter(Boolean);
@@ -763,13 +764,13 @@ function fmt(
   <p style="color:#94a3b8;font-size:11px;margin:0;line-height:1.6">
     <a href="${SITE_URL}" style="color:#94a3b8;text-decoration:underline">fusecv.com</a>
     &nbsp;&bull;&nbsp;
-    <a href="${unsubBase}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a>
+    <a href="${unsubUrl}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a>
   </p>
 </td></tr>
 </table></td></tr></table>
 </body></html>`;
 
-  const text = `Hi ${firstName},\n\n${body}\n\n${ctaLabel}: ${ctaHref}\n\n— FuseCV\n${SITE_URL}\n\nUnsubscribe: ${unsubBase}`;
+  const text = `Hi ${firstName},\n\n${body}\n\n${ctaLabel}: ${ctaHref}\n\n— FuseCV\n${SITE_URL}\n\nUnsubscribe: ${unsubUrl}`;
   return { subject, html, text };
 }
 
