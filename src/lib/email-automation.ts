@@ -223,6 +223,18 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
     .update({ status: "pending" })
     .eq("status", "processing");
 
+  // Auto-cancel stale rows that are too far past their scheduled_at to be worth sending.
+  // checkout_abandon and payment_failed are kept longer — they are revenue-critical and
+  // users expect a follow-up even if delivery was briefly delayed.
+  // After this block, the next fetch only sees rows that are still timely.
+  const staleThreshold = new Date(Date.now() - 48 * 3_600_000).toISOString();
+  await admin
+    .from("email_automation_queue")
+    .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
+    .in("status", ["pending", "processing"])
+    .lt("scheduled_at", staleThreshold)
+    .not("flow", "in", '("checkout_abandon","payment_failed")');
+
   // Fetch more than we'll send so per-user priority sorting works correctly
   const { data: rows, error } = await admin
     .from("email_automation_queue")
