@@ -381,15 +381,18 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
       // ── Only send one per user per cron run ──
       if (sentThisUser && !bypassRateLimit) { skipped++; continue; }
 
-      // Atomic claim — still needed to prevent duplicate sends across concurrent cron runs
-      const { count } = await admin
+      // Atomic claim — still needed to prevent duplicate sends across concurrent cron runs.
+      // Use .select("id") so Supabase returns the rows actually updated.
+      // If another process already claimed this row, the .eq("status","pending") filter
+      // matches nothing and data comes back empty — we skip cleanly.
+      const { data: claimed } = await admin
         .from("email_automation_queue")
         .update({ status: "processing" })
         .eq("id", row.id)
         .eq("status", "pending")
-        .select("id", { count: "exact", head: true });
+        .select("id");
 
-      if (!count) { skipped++; continue; } // race — another process got it
+      if (!claimed?.length) { skipped++; continue; } // race — another process got it
 
       try {
         const ctx = buildContext(userId);
