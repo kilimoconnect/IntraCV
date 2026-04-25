@@ -895,10 +895,11 @@ function CVBuilderPage() {
         table: string,
         rows: object[],
       ) => {
-        await supabase.from(table).delete().eq("user_id", user.id);
+        const { error: delError } = await supabase.from(table).delete().eq("user_id", user.id);
+        if (delError) console.warn(`[saveList] delete failed for ${table}:`, delError.message);
         if (rows.length > 0) {
           const { error } = await supabase.from(table).insert(rows);
-          if (error) throw error;
+          if (error) throw new Error(`${table}: ${error.message}`);
         }
       };
 
@@ -909,14 +910,13 @@ function CVBuilderPage() {
         (async () => {
           const base = {
             user_id: user.id,
-            full_name: personalInfo.fullName,
-            email: personalInfo.email,
-            phone: personalInfo.phone,
-            location: personalInfo.location,
-            headline: personalInfo.headline,
-            tagline: personalInfo.tagline,
-            linkedin: personalInfo.linkedin,
-            website: personalInfo.website,
+            full_name: personalInfo.fullName?.trim() || null,
+            email: personalInfo.email?.trim() || null,
+            phone: personalInfo.phone?.trim() || null,
+            location: personalInfo.location?.trim() || null,
+            headline: personalInfo.headline?.trim() || null,
+            linkedin: personalInfo.linkedin?.trim() || null,
+            website: personalInfo.website?.trim() || null,
             updated_at: now,
           };
           const { error } = await supabase.from("cv_personal_info").upsert(
@@ -940,83 +940,108 @@ function CVBuilderPage() {
         }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw error; }),
 
         // Experiences
-        saveList("cv_experiences", experiences.filter((e) => e.title).map((e, i) => ({
-          user_id: user.id, title: e.title, company: e.company, location: e.location,
-          start_date: e.startDate, end_date: e.endDate, description: e.description, sort_order: i,
+        saveList("cv_experiences", experiences.filter((e) => e.title?.trim()).map((e, i) => ({
+          user_id: user.id,
+          title: e.title.trim(),
+          company: e.company?.trim() || null,
+          location: e.location?.trim() || null,
+          start_date: e.startDate?.trim() || null,
+          // Empty endDate = current job — store as null, not empty string
+          end_date: e.endDate?.trim() || null,
+          description: e.description?.trim() || null,
+          sort_order: i,
         }))),
 
         // Education
-        saveList("cv_education", education.filter((e) => e.degree).map((e, i) => ({
-          user_id: user.id, degree: e.degree, institution: e.institution,
-          year: e.year, description: e.description, sort_order: i,
+        saveList("cv_education", education.filter((e) => e.degree?.trim()).map((e, i) => ({
+          user_id: user.id,
+          degree: e.degree.trim(),
+          institution: e.institution?.trim() || null,
+          year: e.year?.trim() || null,
+          description: e.description?.trim() || null,
+          sort_order: i,
         }))),
 
         // Skills
-        saveList("cv_skills", skills.filter((s) => s.name).map((s, i) => ({
-          user_id: user.id, name: s.name, category: s.category, sort_order: i,
+        saveList("cv_skills", skills.filter((s) => s.name?.trim()).map((s, i) => ({
+          user_id: user.id, name: s.name.trim(), category: s.category?.trim() || null, sort_order: i,
         }))),
 
         // Certifications
-        saveList("cv_certifications", certifications.filter((c) => c.name).map((c, i) => ({
-          user_id: user.id, name: c.name, issuer: c.issuer, year: c.year, sort_order: i,
+        saveList("cv_certifications", certifications.filter((c) => c.name?.trim()).map((c, i) => ({
+          user_id: user.id, name: c.name.trim(), issuer: c.issuer?.trim() || null, year: c.year?.trim() || null, sort_order: i,
         }))),
 
         // Languages
-        saveList("cv_languages", languages.filter((l) => l.name).map((l, i) => ({
-          user_id: user.id, name: l.name, proficiency: l.proficiency, sort_order: i,
+        saveList("cv_languages", languages.filter((l) => l.name?.trim()).map((l, i) => ({
+          user_id: user.id, name: l.name.trim(), proficiency: l.proficiency?.trim() || null, sort_order: i,
         }))),
 
-        // Referees
-        saveList("cv_referees", referees.filter((r) => r.name).map((r, i) => ({
-          user_id: user.id, name: r.name, title: r.title, company: r.company,
-          phone: r.phone, email: r.email, sort_order: i,
+        // Referees — only save entries with at least a name
+        saveList("cv_referees", referees.filter((r) => r.name?.trim()).map((r, i) => ({
+          user_id: user.id,
+          name: r.name.trim(),
+          title: r.title?.trim() || null,
+          company: r.company?.trim() || null,
+          phone: r.phone?.trim() || null,
+          email: r.email?.trim() || null,
+          sort_order: i,
         }))),
 
-        // Declaration (upsert)
+        // Declaration (upsert — skip if completely empty)
         supabase.from("cv_declarations").upsert({
-          user_id: user.id, declaration: declaration.declaration,
-          place: declaration.place, date: declaration.date, updated_at: now,
-        }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw error; }),
+          user_id: user.id,
+          declaration: declaration.declaration?.trim() || null,
+          place: declaration.place?.trim() || null,
+          date: declaration.date?.trim() || null,
+          updated_at: now,
+        }, { onConflict: "user_id" }).then(({ error }) => { if (error) throw new Error(`cv_declarations: ${error.message}`); }),
 
         // Key achievements
-        saveList("cv_key_achievements", keyAchievements.filter((a) => a.achievement).map((a, i) => ({
-          user_id: user.id, achievement: a.achievement, sort_order: i,
+        saveList("cv_key_achievements", keyAchievements.filter((a) => a.achievement?.trim()).map((a, i) => ({
+          user_id: user.id, achievement: a.achievement.trim(), sort_order: i,
         }))),
 
         // Awards
-        saveList("cv_awards", awards.filter((a) => a.title).map((a, i) => ({
-          user_id: user.id, title: a.title, description: a.description, sort_order: i,
+        saveList("cv_awards", awards.filter((a) => a.title?.trim()).map((a, i) => ({
+          user_id: user.id, title: a.title.trim(), description: a.description?.trim() || null, sort_order: i,
         }))),
 
         // Memberships
-        saveList("cv_memberships", memberships.filter((m) => m.name).map((m, i) => ({
-          user_id: user.id, name: m.name, sort_order: i,
+        saveList("cv_memberships", memberships.filter((m) => m.name?.trim()).map((m, i) => ({
+          user_id: user.id, name: m.name.trim(), sort_order: i,
         }))),
 
         // Projects
-        saveList("cv_projects", projects.filter((p) => p.name).map((p, i) => ({
-          user_id: user.id, name: p.name, description: p.description, tech: p.tech, sort_order: i,
+        saveList("cv_projects", projects.filter((p) => p.name?.trim()).map((p, i) => ({
+          user_id: user.id, name: p.name.trim(), description: p.description?.trim() || null, tech: p.tech?.trim() || null, sort_order: i,
         }))),
 
         // Board roles
-        saveList("cv_board_roles", boardRoles.filter((b) => b.title).map((b, i) => ({
-          user_id: user.id, title: b.title, organization: b.organization,
-          start_date: b.startDate, end_date: b.endDate, description: b.description, sort_order: i,
+        saveList("cv_board_roles", boardRoles.filter((b) => b.title?.trim()).map((b, i) => ({
+          user_id: user.id,
+          title: b.title.trim(),
+          organization: b.organization?.trim() || null,
+          start_date: b.startDate?.trim() || null,
+          end_date: b.endDate?.trim() || null,
+          description: b.description?.trim() || null,
+          sort_order: i,
         }))),
 
         // Executive training
-        saveList("cv_executive_training", execTraining.filter((t) => t.name).map((t, i) => ({
-          user_id: user.id, name: t.name, institution: t.institution, year: t.year, sort_order: i,
+        saveList("cv_executive_training", execTraining.filter((t) => t.name?.trim()).map((t, i) => ({
+          user_id: user.id, name: t.name.trim(), institution: t.institution?.trim() || null, year: t.year?.trim() || null, sort_order: i,
         }))),
 
         // Publications
-        saveList("cv_publications", publications.filter((p) => p.title).map((p, i) => ({
-          user_id: user.id, title: p.title, publisher: p.publisher, year: p.year, type: p.type, sort_order: i,
+        saveList("cv_publications", publications.filter((p) => p.title?.trim()).map((p, i) => ({
+          user_id: user.id, title: p.title.trim(), publisher: p.publisher?.trim() || null, year: p.year?.trim() || null, type: p.type?.trim() || null, sort_order: i,
         }))),
 
         // Tools (try with company column; fall back if migration not yet applied)
         (async () => {
-          await supabase.from("cv_tools").delete().eq("user_id", user.id);
+          const { error: delError } = await supabase.from("cv_tools").delete().eq("user_id", user.id);
+          if (delError) console.warn("[saveList] delete failed for cv_tools:", delError.message);
           const validTools = tools.filter((t) => t.name?.trim());
           if (validTools.length === 0) return;
           const { error } = await supabase.from("cv_tools").insert(
@@ -1027,14 +1052,14 @@ function CVBuilderPage() {
               const { error: err2 } = await supabase.from("cv_tools").insert(
                 validTools.map((t, i) => ({ user_id: user.id, name: t.name.trim(), sort_order: i }))
               );
-              if (err2) throw err2;
-            } else throw error;
+              if (err2) throw new Error(`cv_tools: ${err2.message}`);
+            } else throw new Error(`cv_tools: ${error.message}`);
           }
         })(),
 
         // Volunteer
-        saveList("cv_volunteer", volunteer.filter(Boolean).map((v, i) => ({
-          user_id: user.id, description: v, sort_order: i,
+        saveList("cv_volunteer", volunteer.filter((v) => v?.trim()).map((v, i) => ({
+          user_id: user.id, description: v.trim(), sort_order: i,
         }))),
 
         // Sync user_settings (non-blocking best-effort)
@@ -1045,13 +1070,22 @@ function CVBuilderPage() {
         }, { onConflict: "user_id" }),
       ]);
 
-      const failed = results
-        .map((r, i) => r.status === "rejected" ? i : null)
-        .filter((i) => i !== null);
+      // Label each promise by index so error messages identify the failing section
+      const SECTION_NAMES = [
+        "Personal Info", "Summary", "Experience", "Education", "Skills",
+        "Certifications", "Languages", "References", "Declaration",
+        "Achievements", "Awards", "Memberships", "Projects", "Board Roles",
+        "Exec Training", "Publications", "Tools", "Volunteer", "Settings",
+      ];
 
-      if (failed.length > 0) {
-        console.error("Some sections failed to save, indices:", failed, results.filter((_, i) => failed.includes(i)));
-        toast.warning(`CV saved (${failed.length} section(s) had errors)`);
+      const failedResults = results
+        .map((r, i) => r.status === "rejected" ? { name: SECTION_NAMES[i] ?? `Section ${i}`, reason: (r as PromiseRejectedResult).reason } : null)
+        .filter(Boolean) as { name: string; reason: any }[];
+
+      if (failedResults.length > 0) {
+        const names = failedResults.map(f => f.name).join(", ");
+        failedResults.forEach(f => console.error(`[save] ${f.name} failed:`, f.reason?.message ?? f.reason));
+        toast.warning(`Saved with errors in: ${names}. Check your data and try again.`);
       } else {
         const prev = lastSavedCategoryRef.current ?? detectedCareerCategory;
         const categoryLabels: Record<string, string> = { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" };
@@ -1069,7 +1103,7 @@ function CVBuilderPage() {
       }
       lastSavedCategoryRef.current = detectedCareerCategory;
       setHasExistingData(true);
-      return true;
+      return failedResults.length === 0;
     } catch (err: any) {
       console.error("Save error:", err);
       toast.error("Failed to save: " + (err.message || err));
