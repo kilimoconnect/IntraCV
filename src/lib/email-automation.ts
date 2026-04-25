@@ -790,7 +790,7 @@ function fmt(
       <a href="${ctaHref}" style="display:inline-block;padding:13px 28px;color:#ffffff;font-weight:700;font-size:14px;text-decoration:none;border-radius:10px">${ctaLabel} &rarr;</a>
     </td></tr>
   </table>
-  <p style="color:#1e293b;font-size:15px;line-height:1.75;margin:28px 0 0">The FuseCV Team<br><span style="color:#94a3b8;font-size:13px">fusecv.com</span></p>
+  <p style="color:#1e293b;font-size:15px;line-height:1.75;margin:28px 0 0">The FuseCV Team</p>
 </td></tr>
 <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;padding:16px 32px;text-align:center">
   <p style="color:#94a3b8;font-size:11px;margin:0;line-height:1.6">
