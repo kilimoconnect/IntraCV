@@ -235,6 +235,108 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   if (error) { console.error("[email-automation] fetch error:", error.message); return { sent: 0, skipped: 0, failed: 0 }; }
   if (!rows?.length) return { sent: 0, skipped: 0, failed: 0 };
 
+  // ── Batch pre-fetch all data for every user in the queue at once ──
+  // This replaces 4 per-user HEAD queries + 8 per-user context queries with
+  // ~12 parallel batch queries regardless of queue depth.
+  const userIds = [...new Set((rows as QueueRow[]).map(r => r.user_id))];
+  const now = Date.now();
+  const since24h  = new Date(now - 24  * 3_600_000).toISOString();
+  const since7d   = new Date(now - 168 * 3_600_000).toISOString();
+  const since72h  = new Date(now - 72  * 3_600_000).toISOString();
+
+  // Fire DB batch queries and per-user auth lookups in parallel
+  const [
+    { data: sentHistory },
+    { data: checkoutRows },
+    { data: allPI },
+    { data: allTokens },
+    { data: allProfiles },
+    { data: allExpRows },
+    { data: allSummaries },
+    { data: allEduRows },
+    { data: allSkillRows },
+    authResults,
+  ] = await Promise.all([
+    // Rate-limit: all sent emails in last 7 days for these users
+    admin.from("email_automation_queue")
+      .select("user_id, sent_at")
+      .in("user_id", userIds)
+      .eq("status", "sent")
+      .gte("sent_at", since7d),
+
+    // Checkout-abandon suppression: pending or sent within 72h
+    admin.from("email_automation_queue")
+      .select("user_id, status, sent_at")
+      .in("user_id", userIds)
+      .eq("flow", "checkout_abandon")
+      .or(`status.eq.pending,and(status.eq.sent,sent_at.gte.${since72h})`),
+
+    // User context: personal info
+    admin.from("cv_personal_info").select("user_id, headline, career_category").in("user_id", userIds),
+    // User context: purchase check (download tokens)
+    admin.from("cv_download_tokens").select("user_id").in("user_id", userIds),
+    // User context: interview purchase
+    admin.from("profiles").select("id, interview_questions_paid_quota").in("id", userIds),
+    // User context: has experience
+    admin.from("cv_experiences").select("user_id").in("user_id", userIds).limit(userIds.length * 5),
+    // User context: has summary
+    admin.from("cv_summary").select("user_id, summary").in("user_id", userIds),
+    // User context: has education
+    admin.from("cv_education").select("user_id").in("user_id", userIds).limit(userIds.length * 5),
+    // User context: has skills
+    admin.from("cv_skills").select("user_id").in("user_id", userIds).limit(userIds.length * 5),
+    // Auth: all user lookups in parallel as a single sub-batch
+    Promise.all(userIds.map(uid => admin.auth.admin.getUserById(uid))),
+  ]);
+
+  // ── Build lookup maps ──
+  const sentLast24hMap  = new Map<string, number>();
+  const sentLast7dMap   = new Map<string, number>();
+  for (const r of sentHistory ?? []) {
+    const uid = r.user_id;
+    sentLast7dMap.set(uid, (sentLast7dMap.get(uid) ?? 0) + 1);
+    if (r.sent_at >= since24h) sentLast24hMap.set(uid, (sentLast24hMap.get(uid) ?? 0) + 1);
+  }
+
+  const checkoutActiveSet = new Set<string>(
+    (checkoutRows ?? []).map((r: any) => r.user_id)
+  );
+
+  const piMap      = new Map((allPI      ?? []).map((r: any) => [r.user_id, r]));
+  const tokenSet   = new Set((allTokens  ?? []).map((r: any) => r.user_id));
+  const profileMap = new Map((allProfiles ?? []).map((r: any) => [r.id, r]));
+  const expSet     = new Set((allExpRows  ?? []).map((r: any) => r.user_id));
+  const summaryMap = new Map((allSummaries ?? []).map((r: any) => [r.user_id, r]));
+  const eduSet     = new Set((allEduRows  ?? []).map((r: any) => r.user_id));
+  const skillSet   = new Set((allSkillRows ?? []).map((r: any) => r.user_id));
+
+  // Auth results come back in the same order as userIds
+  const authMap = new Map<string, any>();
+  userIds.forEach((uid, i) => {
+    const result = (authResults as any[])[i];
+    if (result?.data?.user) authMap.set(uid, result.data.user);
+  });
+
+  // ── Build a UserContext from maps (no extra DB calls) ──
+  const buildContext = (userId: string): UserContext | null => {
+    const authUser = authMap.get(userId);
+    if (!authUser?.email) return null; // user deleted
+    const pi        = piMap.get(userId);
+    const summary   = summaryMap.get(userId);
+    const profile   = profileMap.get(userId);
+    const fullName  = authUser.user_metadata?.full_name || "";
+    return {
+      email:                  authUser.email,
+      firstName:              fullName.trim().split(" ")[0] || "there",
+      headline:               pi?.headline || "",
+      careerCategory:         (pi?.career_category as CareerCategory) || "junior",
+      hasPurchased:           tokenSet.has(userId),
+      hasInterviewPurchase:   (profile?.interview_questions_paid_quota ?? 0) > 0,
+      hasCompleteProfile:     expSet.has(userId) && !!summary?.summary?.trim() && eduSet.has(userId) && skillSet.has(userId),
+      marketingUnsubscribed:  !!authUser.user_metadata?.marketing_unsubscribed,
+    };
+  };
+
   // Group by user, sort each group by priority
   const byUser: Record<string, QueueRow[]> = {};
   for (const row of rows as QueueRow[]) {
@@ -245,12 +347,9 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   }
 
   for (const [userId, userRows] of Object.entries(byUser)) {
-    // Fetch all rate-limit data in parallel (once per user)
-    const [sentLast24h, sentLast7d, checkoutActive] = await Promise.all([
-      getSentInWindow(userId, 24),
-      getSentInWindow(userId, 168),     // 7 days
-      isCheckoutAbandonActive(userId),
-    ]);
+    const sentLast24h   = sentLast24hMap.get(userId)  ?? 0;
+    const sentLast7d    = sentLast7dMap.get(userId)   ?? 0;
+    const checkoutActive = checkoutActiveSet.has(userId);
     const isRateLimited = sentLast24h >= 1 || sentLast7d >= 2;
 
     let sentThisUser = false;
@@ -270,7 +369,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
       // ── Only send one per user per cron run ──
       if (sentThisUser && !bypassRateLimit) { skipped++; continue; }
 
-      // Atomic claim
+      // Atomic claim — still needed to prevent duplicate sends across concurrent cron runs
       const { count } = await admin
         .from("email_automation_queue")
         .update({ status: "processing" })
@@ -281,12 +380,11 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
       if (!count) { skipped++; continue; } // race — another process got it
 
       try {
-        const ctx = await fetchUserContext(userId);
-        if (!ctx) { await markStatus(row.id, "cancelled"); skipped++; continue; } // user deleted
-        if (ctx.marketingUnsubscribed) { await markStatus(row.id, "cancelled"); skipped++; continue; }
+        const ctx = buildContext(userId);
+        if (!ctx) { await markStatus(admin, row.id, "cancelled"); skipped++; continue; }
+        if (ctx.marketingUnsubscribed) { await markStatus(admin, row.id, "cancelled"); skipped++; continue; }
 
         // ── Per-flow guards ──
-
         const PRE_PURCHASE: FlowId[] = [
           "checkout_abandon", "payment_failed", "preview_no_purchase",
           "signup_no_purchase", "missing_info", "upload_started_no_finish",
@@ -294,41 +392,37 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
         ];
         if (PRE_PURCHASE.includes(row.flow) && ctx.hasPurchased) {
           await cancelFlow(userId, row.flow);
-          await markStatus(row.id, "cancelled"); skipped++; continue;
+          await markStatus(admin, row.id, "cancelled"); skipped++; continue;
         }
 
-        // missing_info: cancel when profile is actually complete (experience + summary)
         if (row.flow === "missing_info" && ctx.hasCompleteProfile) {
           await cancelFlow(userId, "missing_info");
-          await markStatus(row.id, "cancelled"); skipped++; continue;
+          await markStatus(admin, row.id, "cancelled"); skipped++; continue;
         }
 
-        // cv_purchased email 2 (cover letter): skip for buyers who already have it
         if (row.flow === "cv_purchased" && row.email_number === 2) {
           const plan = row.metadata?.plan as CvPlan | undefined;
           if (plan === "professional" || plan === "full") {
-            await markStatus(row.id, "cancelled"); skipped++; continue;
+            await markStatus(admin, row.id, "cancelled"); skipped++; continue;
           }
         }
 
-        // interview_upsell: skip if user already bought interview questions
         if (row.flow === "interview_upsell" && ctx.hasInterviewPurchase) {
           await cancelFlow(userId, "interview_upsell");
-          await markStatus(row.id, "cancelled"); skipped++; continue;
+          await markStatus(admin, row.id, "cancelled"); skipped++; continue;
         }
 
         const emailOpts = buildEmail(row.flow, row.email_number, ctx, ctx.email);
-        if (!emailOpts) { await markStatus(row.id, "cancelled"); skipped++; continue; }
+        if (!emailOpts) { await markStatus(admin, row.id, "cancelled"); skipped++; continue; }
 
         await sendBrevoEmail({ to: ctx.email, toName: ctx.firstName, ...emailOpts });
-        await markStatus(row.id, "sent", new Date().toISOString());
+        await markStatus(admin, row.id, "sent", new Date().toISOString());
         sent++;
         if (!bypassRateLimit) sentThisUser = true;
 
       } catch (e: any) {
         console.error(`[email-automation] row ${row.id}:`, e);
-        // Reset to pending so the next cron run retries (transient errors should not permanently fail rows)
-        await markStatus(row.id, "pending");
+        await markStatus(admin, row.id, "pending");
         failed++;
       }
     }
@@ -337,95 +431,12 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   return { sent, skipped, failed };
 }
 
-// ─── Rate-limit helpers ───────────────────────────────────────────────────────
+// ─── Status helper ────────────────────────────────────────────────────────────
 
-async function getSentInWindow(userId: string, hours: number): Promise<number> {
-  const admin = createAdminSupabase();
-  const since = new Date(Date.now() - hours * 3_600_000).toISOString();
-  const { count } = await admin
-    .from("email_automation_queue")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("status", "sent")
-    .gte("sent_at", since);
-  return count ?? 0;
-}
-
-async function isCheckoutAbandonActive(userId: string): Promise<boolean> {
-  const admin = createAdminSupabase();
-  const since72h = new Date(Date.now() - 72 * 3_600_000).toISOString();
-
-  const { count: pending } = await admin
-    .from("email_automation_queue")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("flow", "checkout_abandon")
-    .eq("status", "pending");
-
-  if ((pending ?? 0) > 0) return true;
-
-  const { count: recentlySent } = await admin
-    .from("email_automation_queue")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("flow", "checkout_abandon")
-    .eq("status", "sent")
-    .gte("sent_at", since72h);
-
-  return (recentlySent ?? 0) > 0;
-}
-
-async function markStatus(id: string, status: string, sentAt?: string): Promise<void> {
-  const admin = createAdminSupabase();
+async function markStatus(admin: ReturnType<typeof createAdminSupabase>, id: string, status: string, sentAt?: string): Promise<void> {
   const update: Record<string, string> = { status };
   if (sentAt) update.sent_at = sentAt;
   await admin.from("email_automation_queue").update(update).eq("id", id);
-}
-
-// ─── User context ─────────────────────────────────────────────────────────────
-
-/** Returns null if user not found (permanent), throws on transient DB errors so caller can retry. */
-async function fetchUserContext(userId: string): Promise<UserContext | null> {
-  const admin = createAdminSupabase();
-  const [
-    { data: { user }, error: userErr },
-    { data: pi },
-    { data: tokens },
-    { data: profile },
-    { count: expCount },
-    { data: summaryRow },
-    { count: eduCount },
-    { count: skillCount },
-  ] = await Promise.all([
-    admin.auth.admin.getUserById(userId),
-    admin.from("cv_personal_info").select("headline, career_category").eq("user_id", userId).maybeSingle(),
-    admin.from("cv_download_tokens").select("id").eq("user_id", userId).limit(1),
-    admin.from("profiles").select("interview_questions_paid_quota").eq("id", userId).maybeSingle(),
-    admin.from("cv_experiences").select("id", { count: "exact", head: true }).eq("user_id", userId),
-    admin.from("cv_summary").select("summary").eq("user_id", userId).maybeSingle(),
-    admin.from("cv_education").select("id", { count: "exact", head: true }).eq("user_id", userId),
-    admin.from("cv_skills").select("id", { count: "exact", head: true }).eq("user_id", userId),
-  ]);
-
-  if (userErr) throw new Error(`fetchUserContext DB error: ${userErr.message}`);
-  if (!user?.email) return null; // user deleted — caller should cancel
-
-  const fullName = user.user_metadata?.full_name || "";
-  const hasExp     = (expCount   ?? 0) > 0;
-  const hasSummary = !!summaryRow?.summary?.trim();
-  const hasEdu     = (eduCount   ?? 0) > 0;
-  const hasSkills  = (skillCount ?? 0) > 0;
-
-  return {
-    email: user.email,
-    firstName: fullName.trim().split(" ")[0] || "there",
-    headline: pi?.headline || "",
-    careerCategory: (pi?.career_category as CareerCategory) || "junior",
-    hasPurchased: (tokens?.length ?? 0) > 0,
-    hasInterviewPurchase: (profile?.interview_questions_paid_quota ?? 0) > 0,
-    hasCompleteProfile: hasExp && hasSummary && hasEdu && hasSkills,
-    marketingUnsubscribed: !!user.user_metadata?.marketing_unsubscribed,
-  };
 }
 
 // ─── Email builder router ─────────────────────────────────────────────────────
