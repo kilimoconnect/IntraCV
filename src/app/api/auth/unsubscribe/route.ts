@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { cancelAllFlows } from "@/lib/email-automation";
 
 // POST /api/auth/unsubscribe  — mark user as unsubscribed from marketing emails
 export async function POST(req: Request) {
@@ -19,10 +20,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
-    // Store preference in user_metadata
-    await admin.auth.admin.updateUserById(user.id, {
-      user_metadata: { ...user.user_metadata, marketing_unsubscribed: true },
-    });
+    // Store preference in user_metadata and immediately cancel all pending queue rows
+    // so the cron never sends another email to this user (don't wait for next cron run)
+    await Promise.all([
+      admin.auth.admin.updateUserById(user.id, {
+        user_metadata: { ...user.user_metadata, marketing_unsubscribed: true },
+      }),
+      cancelAllFlows(user.id),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

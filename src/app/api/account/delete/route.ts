@@ -38,6 +38,9 @@ const USER_TABLES = [
   // Settings & profile
   "user_settings",
   "profiles",
+  // Email automation — must be deleted so the cron never attempts
+  // to send emails for a deleted user account
+  "email_automation_queue",
 ];
 
 export async function DELETE() {
