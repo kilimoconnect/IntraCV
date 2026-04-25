@@ -36,13 +36,15 @@ export default function AuthConfirmPage() {
           setMessage(error.message);
           return;
         }
-        // Fire welcome email (best-effort, don't block redirect)
+        // Fire welcome email — keepalive ensures the request completes even if the
+        // browser navigates away before the response arrives (1.5s timeout is tight).
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           fetch("/api/auth/welcome", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: user.id }),
+            keepalive: true,
           }).catch(() => {});
         }
         setStatus("success");
@@ -60,13 +62,15 @@ export default function AuthConfirmPage() {
           setMessage(error.message);
           return;
         }
-        // Fire welcome email (best-effort, don't block redirect)
+        // Fire welcome email — keepalive ensures the request completes even if the
+        // browser navigates away before the response arrives (1.5s timeout is tight).
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           fetch("/api/auth/welcome", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: user.id }),
+            keepalive: true,
           }).catch(() => {});
         }
         setStatus("success");
