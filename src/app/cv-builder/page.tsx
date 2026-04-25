@@ -878,6 +878,9 @@ function CVBuilderPage() {
       toast.error("You must be logged in to save");
       return false;
     }
+    // Prevent concurrent saves — without this guard, auto-save after CV upload can race
+    // with a manual save: both delete the rows, both insert, resulting in duplicates.
+    if (saving) return false;
     setSaving(true);
     try {
       const now = new Date().toISOString();
@@ -890,13 +893,16 @@ function CVBuilderPage() {
         languages,
       });
 
-      // Helper: delete all rows for a section then insert fresh ones
+      // Helper: delete all rows for a section then insert fresh ones.
+      // IMPORTANT: delete MUST succeed before insert runs — if it fails and we insert
+      // anyway we get duplicate rows on every save. Throw so Promise.allSettled records
+      // the failure and the error toast names the section.
       const saveList = async (
         table: string,
         rows: object[],
       ) => {
         const { error: delError } = await supabase.from(table).delete().eq("user_id", user.id);
-        if (delError) console.warn(`[saveList] delete failed for ${table}:`, delError.message);
+        if (delError) throw new Error(`${table} delete: ${delError.message}`);
         if (rows.length > 0) {
           const { error } = await supabase.from(table).insert(rows);
           if (error) throw new Error(`${table}: ${error.message}`);
