@@ -431,8 +431,8 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={cls("name", c.name)} placeholder="Certification name *"
-                value={c.name} onChange={(e) => setItemField("certifications", i, "name", e.target.value)} />
+              <AutoTextarea minRows={1} className={cls("name", c.name)} placeholder="Certification name *"
+                value={c.name || ""} onChange={(e) => setItemField("certifications", i, "name", e.target.value)} />
               <div className="grid grid-cols-3 gap-2">
                 <input className={`${inputCls} col-span-2`} placeholder="Issuing organisation"
                   value={c.issuer} onChange={(e) => setItemField("certifications", i, "issuer", e.target.value)} />
@@ -495,8 +495,8 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={cls("title", a.title)} placeholder="Award title *"
-                value={a.title} onChange={(e) => setItemField("awards", i, "title", e.target.value)} />
+              <AutoTextarea minRows={1} className={cls("title", a.title)} placeholder="Award title *"
+                value={a.title || ""} onChange={(e) => setItemField("awards", i, "title", e.target.value)} />
               <AutoTextarea minRows={1} className={cls("description", a.description)} placeholder="Description (issuer, year, context…)"
                 value={a.description || ""} onChange={(e) => setItemField("awards", i, "description", e.target.value)} />
             </div>
@@ -516,12 +516,12 @@ function InlineSectionEditor({
         <div className="space-y-2.5">
           <label className={labelCls}>Professional Memberships</label>
           {items.map((m, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input className={`${inputCls} flex-1`} placeholder={`Organisation ${i + 1}`}
+            <div key={i} className="flex items-start gap-2">
+              <AutoTextarea minRows={1} className={`${inputCls} flex-1`} placeholder={`Organisation ${i + 1}`}
                 value={m} onChange={(e) => setItemText("memberships", i, e.target.value)} />
               {items.length > 1 && (
                 <button type="button" onClick={() => removeItem("memberships", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors mt-2">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -558,8 +558,8 @@ function InlineSectionEditor({
               <AutoTextarea minRows={3} className={cls("description", p.description)}
                 placeholder="Describe scope, actions taken, and measurable outcomes… *"
                 value={p.description} onChange={(e) => setItemField("projects", i, "description", e.target.value)} />
-              <input className={inputCls} placeholder="Technologies (e.g. React, Salesforce, Python) — optional"
-                value={p.tech} onChange={(e) => setItemField("projects", i, "tech", e.target.value)} />
+              <AutoTextarea minRows={1} className={inputCls} placeholder="Technologies (e.g. React, Salesforce, Python) — optional"
+                value={p.tech || ""} onChange={(e) => setItemField("projects", i, "tech", e.target.value)} />
             </div>
           ))}
           <button type="button" onClick={() => addItem("projects", { name: "", description: "", tech: "" })}
@@ -587,11 +587,11 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
+              <AutoTextarea minRows={1} className={cls("title", b.title)} placeholder="Title (e.g. Non-Exec Director) *"
+                value={b.title || ""} onChange={(e) => setItemField("boardRoles", i, "title", e.target.value)} />
+              <AutoTextarea minRows={1} className={cls("organization", b.organization)} placeholder="Organisation *"
+                value={b.organization || ""} onChange={(e) => setItemField("boardRoles", i, "organization", e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
-                <input className={cls("title", b.title)} placeholder="Title (e.g. Non-Exec Director) *"
-                  value={b.title} onChange={(e) => setItemField("boardRoles", i, "title", e.target.value)} />
-                <input className={cls("organization", b.organization)} placeholder="Organisation *"
-                  value={b.organization} onChange={(e) => setItemField("boardRoles", i, "organization", e.target.value)} />
                 <input className={inputCls} placeholder="Start year"
                   value={b.startDate} onChange={(e) => setItemField("boardRoles", i, "startDate", e.target.value)} />
                 <input className={inputCls} placeholder="End / Ongoing"
@@ -629,8 +629,8 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={cls("name", t.name)} placeholder="Programme name *"
-                value={t.name} onChange={(e) => setItemField("executiveTraining", i, "name", e.target.value)} />
+              <AutoTextarea minRows={1} className={cls("name", t.name)} placeholder="Programme name *"
+                value={t.name || ""} onChange={(e) => setItemField("executiveTraining", i, "name", e.target.value)} />
               <div className="grid grid-cols-3 gap-2">
                 <input className={`${inputCls} col-span-2`} placeholder="Institution"
                   value={t.institution} onChange={(e) => setItemField("executiveTraining", i, "institution", e.target.value)} />
@@ -666,8 +666,8 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={cls("title", p.title)} placeholder="Title *"
-                value={p.title} onChange={(e) => setItemField("publications", i, "title", e.target.value)} />
+              <AutoTextarea minRows={1} className={cls("title", p.title)} placeholder="Title *"
+                value={p.title || ""} onChange={(e) => setItemField("publications", i, "title", e.target.value)} />
               <div className="grid grid-cols-3 gap-2">
                 <input className={`${inputCls} col-span-2`} placeholder="Publisher / Conference"
                   value={p.publisher} onChange={(e) => setItemField("publications", i, "publisher", e.target.value)} />
@@ -699,20 +699,18 @@ function InlineSectionEditor({
       return (
         <div className="space-y-2.5">
           <label className={labelCls}>Tools &amp; Software</label>
-          <div className="grid grid-cols-2 gap-2">
-            {items.map((t, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <input className={`${inputCls} flex-1`} placeholder={`Tool ${i + 1}`}
-                  value={t} onChange={(e) => setItemText("tools", i, e.target.value)} />
-                {items.length > 1 && (
-                  <button type="button" onClick={() => removeItem("tools", i)}
-                    className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          {items.map((t, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <AutoTextarea minRows={1} className={`${inputCls} flex-1`} placeholder={`Tool ${i + 1} (e.g. SAP S/4HANA)`}
+                value={t} onChange={(e) => setItemText("tools", i, e.target.value)} />
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem("tools", i)}
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors mt-2">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
           <button type="button" onClick={() => addItem("tools", "")}
             className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add tool
