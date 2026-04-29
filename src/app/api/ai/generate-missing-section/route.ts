@@ -163,19 +163,38 @@ Suggest 2-3 plausible volunteer activities that complement this professional's c
 
 Return ONLY JSON: { "volunteer": ["entry1", "entry2", ...] }`;
 
-    case "boardRoles":
-      return `You are an expert CV writer. Study the full candidate profile below, then generate board and advisory role entries.
+    case "boardRoles": {
+      const expSummary = (cvData.experiences || [])
+        .slice(0, 4)
+        .map((e: any, i: number) =>
+          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "Company"} (${e.startDate || "?"}–${e.endDate || "present"}): ${(e.description || "").substring(0, 150)}`
+        )
+        .join("\n");
+
+      return `You are an expert CV writer. Study the full candidate profile below, then generate realistic board and advisory roles STRICTLY derived from the candidate's actual work history.
 
 ${context}
 
-Generate 2-3 board or advisory roles appropriate for this executive, grounded in their actual career sector:
-- title: Specific governance title (e.g. "Non-Executive Director", "Advisory Board Member")
-- organization: Plausible, industry-relevant organisation name
-- startDate: Estimated year (based on career timeline)
+=== CANDIDATE'S ACTUAL WORK EXPERIENCE (derive board roles from these) ===
+${expSummary || "  No experience listed"}
+============================================================
+
+STRICT RULES:
+1. Every board role MUST come from their real experience above — identify the sector/industry, expertise area, and seniority from the roles listed
+2. Match the organisation's industry to their actual employers (e.g. finance career → "Audit Committee, financial services firm"; tech career → "Advisory Board, SaaS company")
+3. The governance title should be a natural extension of their actual seniority (e.g. a CFO → "Audit Committee Chair"; a VP/Director → "Non-Executive Director"; a COO → "Advisory Board, Operations")
+4. startDate must be AFTER they first reached a senior title in the experience above
+5. Do NOT invent sectors, industries, or expertise not present in the candidate's actual history
+
+Generate 2-3 board or advisory roles:
+- title: Governance title that fits their seniority (e.g. "Non-Executive Director", "Advisory Board Member", "Audit Committee Chair")
+- organization: Real-sounding organisation in the SAME sector as their experience
+- startDate: Year (derived from career timeline)
 - endDate: "Ongoing" or estimated end year
-- description: 1-2 sentences on their specific governance contribution
+- description: 1-2 sentences naming their specific governance contribution based on their documented expertise
 
 Return ONLY JSON: { "boardRoles": [{ "title": "", "organization": "", "startDate": "", "endDate": "", "description": "" }] }`;
+    }
 
     case "publications":
       return `You are an expert CV writer. Study the full candidate profile below, then suggest relevant publications.

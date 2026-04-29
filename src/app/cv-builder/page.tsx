@@ -188,6 +188,7 @@ function categorizeProfile(
         { key: "experience", label: "Experience" },
         { key: "education", label: "Education" },
         { key: "skills", label: "Skills" },
+        { key: "tools", label: "Tools & Software" },
         { key: "languages", label: "Languages" },
       ],
       recommended: [
@@ -205,6 +206,7 @@ function categorizeProfile(
         { key: "education", label: "Education" },
         { key: "skills", label: "Skills" },
         { key: "achievements", label: "Key Achievements" },
+        { key: "tools", label: "Tools & Software" },
         { key: "languages", label: "Languages" },
       ],
       recommended: [
@@ -212,7 +214,6 @@ function categorizeProfile(
         { key: "certifications", label: "Professional Certifications" },
         { key: "awards", label: "Awards & Recognition" },
         { key: "memberships", label: "Professional Memberships" },
-        { key: "tools", label: "Tools & Software" },
         { key: "projects", label: "Projects" },
       ],
     },
@@ -224,6 +225,7 @@ function categorizeProfile(
         { key: "education", label: "Education" },
         { key: "skills", label: "Skills" },
         { key: "achievements", label: "Key Achievements" },
+        { key: "tools", label: "Tools & Software" },
         { key: "languages", label: "Languages" },
         { key: "boardRoles", label: "Board & Advisory Roles" },
       ],
@@ -638,6 +640,7 @@ function CVBuilderPage() {
             const { sectionData } = await res.json();
             if (sectionData?.declaration) {
               applyAiSectionData("declaration", "declaration", sectionData);
+              setPendingApplySave(true); // persist auto-generated declaration to DB — don't rely on dialog opening
             }
           }
         } catch (e) {
@@ -1521,7 +1524,7 @@ function CVBuilderPage() {
       case "summary": return summary.trim().length > 10;
       case "experience": return experiences.length > 0;
       case "education": return education.length > 0;
-      case "skills": return skills.length > 0;
+      case "skills": return skills.filter(s => s.name?.trim()).length >= 3;
       case "certifications": return certifications.length > 0;
       case "achievements": return keyAchievements.some(a => a.achievement && a.achievement.trim().length > 0);
       case "awards": return awards.some(a => a.title && a.title.trim().length > 0);
@@ -1530,7 +1533,7 @@ function CVBuilderPage() {
       case "boardRoles": return boardRoles.length > 0;
       case "execTraining": return execTraining.length > 0;
       case "publications": return publications.length > 0;
-      case "tools": return tools.length > 0;
+      case "tools": return tools.filter(t => t?.name?.trim()).length >= 3;
       case "volunteer": return volunteer.length > 0;
       case "languages": return languages.length > 0;
       case "referees": return referees.length > 0;
