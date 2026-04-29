@@ -189,7 +189,7 @@ function AutoTextarea({
     <textarea
       ref={ref}
       rows={minRows}
-      className={`${className} resize-none overflow-hidden`}
+      className={`${className} resize-none overflow-y-auto`}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
@@ -457,14 +457,14 @@ function InlineSectionEditor({
         <div className="space-y-2.5">
           <label className={labelCls}>Achievements</label>
           {items.map((a, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#004aad] shrink-0" />
-              <input className={`${inputCls} flex-1`}
+            <div key={i} className="flex items-start gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#004aad] shrink-0 mt-3" />
+              <AutoTextarea minRows={1} className={`${inputCls} flex-1`}
                 placeholder={`Achievement ${i + 1} — include a metric (e.g. 30%, $1M)`}
                 value={a} onChange={(e) => setItemText("keyAchievements", i, e.target.value)} />
               {items.length > 1 && (
                 <button type="button" onClick={() => removeItem("keyAchievements", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors mt-2">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -497,8 +497,8 @@ function InlineSectionEditor({
               </div>
               <input className={cls("title", a.title)} placeholder="Award title *"
                 value={a.title} onChange={(e) => setItemField("awards", i, "title", e.target.value)} />
-              <input className={inputCls} placeholder="Description (issuer, year, context…)"
-                value={a.description} onChange={(e) => setItemField("awards", i, "description", e.target.value)} />
+              <AutoTextarea minRows={1} className={inputCls} placeholder="Description (issuer, year, context…)"
+                value={a.description || ""} onChange={(e) => setItemField("awards", i, "description", e.target.value)} />
             </div>
           ))}
           <button type="button" onClick={() => addItem("awards", { title: "", description: "" })}
@@ -728,13 +728,13 @@ function InlineSectionEditor({
         <div className="space-y-2.5">
           <label className={labelCls}>Volunteer Experience</label>
           {items.map((v, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
-              <input className={`${inputCls} flex-1`} placeholder={`Volunteer role ${i + 1}`}
+            <div key={i} className="flex items-start gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0 mt-3" />
+              <AutoTextarea minRows={1} className={`${inputCls} flex-1`} placeholder={`Volunteer role ${i + 1}`}
                 value={v} onChange={(e) => setItemText("volunteer", i, e.target.value)} />
               {items.length > 1 && (
                 <button type="button" onClick={() => removeItem("volunteer", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors mt-2">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
