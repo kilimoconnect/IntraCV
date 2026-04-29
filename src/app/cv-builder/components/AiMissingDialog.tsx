@@ -136,18 +136,56 @@ const inputCls =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 " +
   "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004aad]/30 " +
   "focus:border-[#004aad]/50 transition-colors";
+const inputErrorCls =
+  "w-full rounded-lg border-2 border-orange-400 bg-orange-50/60 px-3 py-2 text-sm text-slate-800 " +
+  "placeholder:text-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-400/30 " +
+  "focus:border-orange-500 transition-colors";
 const labelCls = "block text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1";
+const labelErrorCls = "block text-[11px] font-semibold text-orange-500 uppercase tracking-wide mb-1";
+
+// ─── Required field keys per section — used to highlight empty fields in fix mode ─
+const INCOMPLETE_REQUIRED: Record<string, string[]> = {
+  personal:          ["fullName", "email", "phone"],
+  experience:        ["title", "company", "location", "startDate", "endDate", "description"],
+  education:         ["degree", "institution", "year"],
+  skills:            ["name"],
+  certifications:    ["name"],
+  languages:         ["name", "proficiency"],
+  referees:          ["name"],
+  projects:          ["name", "description"],
+  boardRoles:        ["title", "organization"],
+  executiveTraining: ["name"],
+  publications:      ["title"],
+  keyAchievements:   [],   // plain strings — whole value is checked
+  awards:            ["title"],
+  memberships:       [],   // plain strings
+  tools:             [],
+  volunteer:         [],
+  declaration:       ["declaration", "place"],
+};
 
 // ─── Inline Section Editor ────────────────────────────────────────────────────
 function InlineSectionEditor({
   apiKey,
   data,
   onChange,
+  highlightEmpty = false,
 }: {
   apiKey: string;
   data: any;
   onChange: (d: any) => void;
+  highlightEmpty?: boolean;
 }) {
+  // Returns error style when the field is required and empty in fix mode
+  const req = INCOMPLETE_REQUIRED[apiKey] || [];
+  const cls = (field: string, value: string | undefined) =>
+    highlightEmpty && req.includes(field) && !value?.trim() ? inputErrorCls : inputCls;
+  const lbl = (field: string, value: string | undefined, text: string) => (
+    <label className={highlightEmpty && req.includes(field) && !value?.trim() ? labelErrorCls : labelCls}>
+      {text}{highlightEmpty && req.includes(field) && !value?.trim() ? " ⚠" : ""}
+    </label>
+  );
+
   // List helpers
   const setItemField = (listKey: string, idx: number, field: string, val: string) => {
     const arr = [...(data[listKey] || [])];
@@ -178,17 +216,17 @@ function InlineSectionEditor({
         <div className="space-y-3">
           <label className={labelCls}>Personal Information</label>
           <div>
-            <label className={labelCls}>Full Name *</label>
-            <input className={inputCls} placeholder="Full name" value={p.fullName || ""} onChange={(e) => set("fullName", e.target.value)} />
+            {lbl("fullName", p.fullName, "Full Name *")}
+            <input className={cls("fullName", p.fullName)} placeholder="Full name" value={p.fullName || ""} onChange={(e) => set("fullName", e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className={labelCls}>Email *</label>
-              <input className={inputCls} type="email" placeholder="email@example.com" value={p.email || ""} onChange={(e) => set("email", e.target.value)} />
+              {lbl("email", p.email, "Email *")}
+              <input className={cls("email", p.email)} type="email" placeholder="email@example.com" value={p.email || ""} onChange={(e) => set("email", e.target.value)} />
             </div>
             <div>
-              <label className={labelCls}>Phone</label>
-              <input className={inputCls} placeholder="+1 234 567 8900" value={p.phone || ""} onChange={(e) => set("phone", e.target.value)} />
+              {lbl("phone", p.phone, "Phone *")}
+              <input className={cls("phone", p.phone)} placeholder="+1 234 567 8900" value={p.phone || ""} onChange={(e) => set("phone", e.target.value)} />
             </div>
             <div>
               <label className={labelCls}>Location</label>
@@ -247,19 +285,19 @@ function InlineSectionEditor({
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input className={inputCls} placeholder="Job title *"
+                <input className={cls("title", e.title)} placeholder="Job title *"
                   value={e.title} onChange={(ev) => setItemField("experience", i, "title", ev.target.value)} />
-                <input className={inputCls} placeholder="Company *"
+                <input className={cls("company", e.company)} placeholder="Company *"
                   value={e.company} onChange={(ev) => setItemField("experience", i, "company", ev.target.value)} />
-                <input className={inputCls} placeholder="Location (city, country)"
+                <input className={cls("location", e.location)} placeholder="Location (city, country) *"
                   value={e.location} onChange={(ev) => setItemField("experience", i, "location", ev.target.value)} />
-                <input className={inputCls} placeholder="Start date (e.g. Jan 2020)"
+                <input className={cls("startDate", e.startDate)} placeholder="Start date (e.g. Jan 2020) *"
                   value={e.startDate} onChange={(ev) => setItemField("experience", i, "startDate", ev.target.value)} />
-                <input className={`${inputCls} col-span-2 sm:col-span-1`} placeholder="End date (or Present)"
+                <input className={`${cls("endDate", e.endDate)} col-span-2 sm:col-span-1`} placeholder="End date (or Present) *"
                   value={e.endDate} onChange={(ev) => setItemField("experience", i, "endDate", ev.target.value)} />
               </div>
-              <textarea rows={3} className={`${inputCls} resize-none`}
-                placeholder="Key responsibilities and achievements…"
+              <textarea rows={3} className={`${cls("description", e.description)} resize-none`}
+                placeholder="Key responsibilities and achievements… *"
                 value={e.description} onChange={(ev) => setItemField("experience", i, "description", ev.target.value)} />
             </div>
           ))}
@@ -290,12 +328,12 @@ function InlineSectionEditor({
                 )}
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <input className={`${inputCls} col-span-2`} placeholder="Degree / Qualification *"
+                <input className={`${cls("degree", e.degree)} col-span-2`} placeholder="Degree / Qualification *"
                   value={e.degree} onChange={(ev) => setItemField("education", i, "degree", ev.target.value)} />
-                <input className={inputCls} placeholder="Year"
+                <input className={cls("year", e.year)} placeholder="Year *"
                   value={e.year} onChange={(ev) => setItemField("education", i, "year", ev.target.value)} />
               </div>
-              <input className={inputCls} placeholder="Institution / University *"
+              <input className={cls("institution", e.institution)} placeholder="Institution / University *"
                 value={e.institution} onChange={(ev) => setItemField("education", i, "institution", ev.target.value)} />
               <input className={inputCls} placeholder="Field of study or additional notes (optional)"
                 value={e.description} onChange={(ev) => setItemField("education", i, "description", ev.target.value)} />
@@ -319,7 +357,7 @@ function InlineSectionEditor({
           <label className={labelCls}>Skills</label>
           {items.map((s: any, i: number) => (
             <div key={i} className="grid grid-cols-[1fr_140px_auto] items-center gap-2">
-              <input className={inputCls} placeholder="Skill name"
+              <input className={cls("name", s.name)} placeholder="Skill name *"
                 value={s.name} onChange={(e) => setItemField("skills", i, "name", e.target.value)} />
               <select className={inputCls}
                 value={s.category} onChange={(e) => setItemField("skills", i, "category", e.target.value)}>
@@ -360,7 +398,7 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={inputCls} placeholder="Certification name *"
+              <input className={cls("name", c.name)} placeholder="Certification name *"
                 value={c.name} onChange={(e) => setItemField("certifications", i, "name", e.target.value)} />
               <div className="grid grid-cols-3 gap-2">
                 <input className={`${inputCls} col-span-2`} placeholder="Issuing organisation"
@@ -424,7 +462,7 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={inputCls} placeholder="Award title *"
+              <input className={cls("title", a.title)} placeholder="Award title *"
                 value={a.title} onChange={(e) => setItemField("awards", i, "title", e.target.value)} />
               <input className={inputCls} placeholder="Description (issuer, year, context…)"
                 value={a.description} onChange={(e) => setItemField("awards", i, "description", e.target.value)} />
@@ -482,10 +520,10 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={inputCls} placeholder="Project name"
+              <input className={cls("name", p.name)} placeholder="Project name *"
                 value={p.name} onChange={(e) => setItemField("projects", i, "name", e.target.value)} />
-              <textarea rows={3} className={`${inputCls} resize-none`}
-                placeholder="Describe scope, actions taken, and measurable outcomes…"
+              <textarea rows={3} className={`${cls("description", p.description)} resize-none`}
+                placeholder="Describe scope, actions taken, and measurable outcomes… *"
                 value={p.description} onChange={(e) => setItemField("projects", i, "description", e.target.value)} />
               <input className={inputCls} placeholder="Technologies (e.g. React, Salesforce, Python) — optional"
                 value={p.tech} onChange={(e) => setItemField("projects", i, "tech", e.target.value)} />
@@ -517,9 +555,9 @@ function InlineSectionEditor({
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input className={inputCls} placeholder="Title (e.g. Non-Exec Director)"
+                <input className={cls("title", b.title)} placeholder="Title (e.g. Non-Exec Director) *"
                   value={b.title} onChange={(e) => setItemField("boardRoles", i, "title", e.target.value)} />
-                <input className={inputCls} placeholder="Organisation"
+                <input className={cls("organization", b.organization)} placeholder="Organisation *"
                   value={b.organization} onChange={(e) => setItemField("boardRoles", i, "organization", e.target.value)} />
                 <input className={inputCls} placeholder="Start year"
                   value={b.startDate} onChange={(e) => setItemField("boardRoles", i, "startDate", e.target.value)} />
@@ -558,7 +596,7 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={inputCls} placeholder="Programme name"
+              <input className={cls("name", t.name)} placeholder="Programme name *"
                 value={t.name} onChange={(e) => setItemField("executiveTraining", i, "name", e.target.value)} />
               <div className="grid grid-cols-3 gap-2">
                 <input className={`${inputCls} col-span-2`} placeholder="Institution"
@@ -595,7 +633,7 @@ function InlineSectionEditor({
                   </button>
                 )}
               </div>
-              <input className={inputCls} placeholder="Title"
+              <input className={cls("title", p.title)} placeholder="Title *"
                 value={p.title} onChange={(e) => setItemField("publications", i, "title", e.target.value)} />
               <div className="grid grid-cols-3 gap-2">
                 <input className={`${inputCls} col-span-2`} placeholder="Publisher / Conference"
@@ -687,9 +725,9 @@ function InlineSectionEditor({
           <label className={labelCls}>Languages</label>
           {items.map((l, i) => (
             <div key={i} className="grid grid-cols-[1fr_160px_auto] items-center gap-2">
-              <input className={inputCls} placeholder="Language (e.g. English)"
+              <input className={cls("name", l.name)} placeholder="Language (e.g. English) *"
                 value={l.name} onChange={(e) => setItemField("languages", i, "name", e.target.value)} />
-              <select className={inputCls}
+              <select className={cls("proficiency", l.proficiency)}
                 value={l.proficiency} onChange={(e) => setItemField("languages", i, "proficiency", e.target.value)}>
                 <option value="">Proficiency…</option>
                 {LEVELS.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
@@ -729,7 +767,7 @@ function InlineSectionEditor({
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input className={inputCls} placeholder="Full name *"
+                <input className={cls("name", r.name)} placeholder="Full name *"
                   value={r.name} onChange={(e) => setItemField("referees", i, "name", e.target.value)} />
                 <input className={inputCls} placeholder="Job title"
                   value={r.title} onChange={(e) => setItemField("referees", i, "title", e.target.value)} />
@@ -1086,15 +1124,19 @@ export function AiMissingDialog({
                 </span>
               )}
               {editing.source === "incomplete" && (
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">
-                  <Wrench className="h-2.5 w-2.5" />
-                  Existing data — complete the missing fields
-                </span>
+                <div className="flex items-start gap-2 rounded-xl border border-orange-200 bg-orange-50/60 px-3 py-2.5">
+                  <Wrench className="h-3.5 w-3.5 text-orange-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[11px] font-semibold text-orange-700">Fields highlighted in orange are required and currently empty</p>
+                    <p className="text-[10px] text-orange-500 mt-0.5">Fill them in and click Apply to save</p>
+                  </div>
+                </div>
               )}
               <InlineSectionEditor
                 apiKey={editing.apiSectionKey}
                 data={editing.data}
                 onChange={(newData) => setEditing({ ...editing, data: newData })}
+                highlightEmpty={editing.source === "incomplete"}
               />
             </div>
           )}
