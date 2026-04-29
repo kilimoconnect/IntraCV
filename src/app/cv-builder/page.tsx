@@ -58,6 +58,7 @@ import {
   XCircle,
   Clock,
   Info,
+  Lightbulb,
 } from "lucide-react";
 
 // ─── Types ───
@@ -2043,50 +2044,42 @@ function CVBuilderPage() {
               </div>
             )}
 
-            {/* ── Missing Sections Panel ── */}
-            {(missingRequired.length > 0 || missingRecommended.length > 0) && (
-              <div className="border rounded-lg overflow-hidden">
-                {missingRequired.length > 0 && (
-                  <div className="bg-red-50 border-b border-red-200 px-4 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <span className="text-sm font-semibold text-red-700">Required sections missing ({missingRequired.length})</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {missingRequired.map(s => (
-                        <button
-                          key={s.key}
-                          onClick={() => goToSection(s.key)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-red-200 rounded-md text-xs font-medium text-red-700 hover:bg-red-100 transition-colors"
-                        >
-                          <XCircle className="h-3 w-3" />
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {missingRecommended.length > 0 && (
-                  <div className="bg-amber-50 px-4 py-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-700">Recommended sections ({missingRecommended.length})</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {missingRecommended.map(s => (
-                        <button
-                          key={s.key}
-                          onClick={() => goToSection(s.key)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-amber-200 rounded-md text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
-                        >
-                          <Plus className="h-3 w-3" />
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+            {/* ── CV Issues Notification Banner ── */}
+            {(missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0) && (
+              <button
+                type="button"
+                onClick={() => setShowAiDialog(true)}
+                className="w-full text-left group rounded-xl border border-orange-200 bg-orange-50/60 hover:bg-orange-50 hover:border-orange-300 transition-colors px-4 py-3 flex items-center gap-3"
+              >
+                {/* Icon */}
+                <div className="shrink-0 w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Lightbulb className="h-4 w-4 text-orange-600" />
+                </div>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-orange-800 leading-tight">
+                    {missingRequired.length > 0
+                      ? `${missingRequired.length} required section${missingRequired.length !== 1 ? "s" : ""} missing`
+                      : missingRecommended.length > 0
+                      ? `${missingRecommended.length} recommended section${missingRecommended.length !== 1 ? "s" : ""} to add`
+                      : `${incompleteSections.length} section${incompleteSections.length !== 1 ? "s" : ""} have incomplete fields`}
+                  </p>
+                  <p className="text-xs text-orange-600 mt-0.5 truncate">
+                    {[
+                      ...missingRequired.map(s => s.label),
+                      ...missingRecommended.map(s => s.label),
+                      ...incompleteSections.map(s => s.label),
+                    ].join(", ")}
+                  </p>
+                </div>
+
+                {/* CTA */}
+                <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-100 group-hover:bg-orange-200 rounded-lg px-3 py-1.5 transition-colors">
+                  <Lightbulb className="h-3.5 w-3.5" />
+                  Fix with AI
+                </span>
+              </button>
             )}
 
             
