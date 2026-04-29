@@ -297,6 +297,8 @@ function CVBuilderPage() {
   const [pendingAiDialog, setPendingAiDialog] = useState(false);
   // Only show once per browser session — ref persists across re-renders
   const aiDialogShownRef = useRef(false);
+  // Trigger a save after AI section data is applied to state
+  const [pendingApplySave, setPendingApplySave] = useState(false);
 
   // Section tab navigation
   const [activeTab, setActiveTab] = useState("personal");
@@ -613,6 +615,14 @@ function CVBuilderPage() {
     aiDialogShownRef.current = true;
     setShowAiDialog(true);
   }, [pendingAiDialog]);
+
+  // ─── Auto-save when AI section data is applied from the dialog ───
+  useEffect(() => {
+    if (!pendingApplySave) return;
+    setPendingApplySave(false);
+    saveToDatabase();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingApplySave]);
 
   // ─── Scroll to new experience card after adding ───
   useEffect(() => {
@@ -2983,7 +2993,10 @@ function CVBuilderPage() {
           volunteer,
         }}
         careerLevel={categoryResult.category}
-        onApply={applyAiSectionData}
+        onApply={(sectionKey, apiSectionKey, sectionData) => {
+          applyAiSectionData(sectionKey, apiSectionKey, sectionData);
+          setPendingApplySave(true); // save after React commits the new state
+        }}
         onNavigate={(key) => {
           setShowAiDialog(false);
           goToSection(key);
