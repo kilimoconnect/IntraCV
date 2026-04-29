@@ -3049,15 +3049,18 @@ function CVBuilderPage() {
                     </Button>
                   )}
                 </div>
-                {/* Generate My CV — always visible on mobile */}
-                <Button
-                  className="w-full bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
-                  onClick={handleSaveAndContinue}
-                  disabled={saving}
-                >
-                  {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                  {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
-                </Button>
+                {/* Generate My CV — visible on mobile when not on last section
+                    (last section already shows it inside the row above) */}
+                {safeIdx < SECTIONS.length - 1 && (
+                  <Button
+                    className="w-full bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
+                    onClick={handleSaveAndContinue}
+                    disabled={saving}
+                  >
+                    {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
+                  </Button>
+                )}
               </div>
 
               {/* ── Footer Navigation (desktop only) ── */}
