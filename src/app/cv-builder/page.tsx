@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import AppShell from "@/components/app-shell";
+import { AiMissingDialog } from "./components/AiMissingDialog";
 import {
   Upload,
   FileText,
@@ -291,6 +292,12 @@ function CVBuilderPage() {
   const [deleting, setDeleting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ sections: { key: string; label: string }[]; firstKey: string } | null>(null);
 
+  // ─── AI Missing Sections Dialog ───
+  const [showAiDialog, setShowAiDialog] = useState(false);
+  const [pendingAiDialog, setPendingAiDialog] = useState(false);
+  // Only show once per browser session — ref persists across re-renders
+  const aiDialogShownRef = useRef(false);
+
   // Section tab navigation
   const [activeTab, setActiveTab] = useState("personal");
   const [manuallyShown, setManuallyShown] = useState<Set<string>>(new Set());
@@ -532,6 +539,7 @@ function CVBuilderPage() {
       if (found) {
         setHasExistingData(true);
         setStep("edit");
+        setPendingAiDialog(true); // Trigger missing-sections dialog after state commits
       }
     } catch (err) {
       console.error("Failed to load profile:", err);
@@ -590,6 +598,16 @@ function CVBuilderPage() {
     saveToDatabase();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAutoSave]);
+
+  // ─── Open AI missing-sections dialog once React state is committed ───
+  // Fires after upload extraction or initial load — never more than once per session.
+  useEffect(() => {
+    if (!pendingAiDialog) return;
+    setPendingAiDialog(false);
+    if (aiDialogShownRef.current) return;
+    aiDialogShownRef.current = true;
+    setShowAiDialog(true);
+  }, [pendingAiDialog]);
 
   // ─── Scroll to new experience card after adding ───
   useEffect(() => {
@@ -856,6 +874,7 @@ function CVBuilderPage() {
       toast.success("CV extracted successfully! Review and edit below.");
       setStep("edit");
       setPendingAutoSave(true);
+      setPendingAiDialog(true); // Trigger missing-sections dialog after state commits
 
       // Upload completed successfully — cancel the abandon flow
       fetch("/api/email-automation/cancel", {
@@ -1180,6 +1199,130 @@ function CVBuilderPage() {
     }
   };
 
+
+  // ─── Apply AI-generated section data to the correct state setter ───
+  // apiSectionKey is the key used by /api/ai/generate-missing-section
+  const applyAiSectionData = (
+    _sectionKey: string,
+    apiSectionKey: string,
+    sectionData: any,
+  ) => {
+    switch (apiSectionKey) {
+      case "summary":
+        if (sectionData.summary) setSummary(sectionData.summary);
+        break;
+      case "keyAchievements":
+        if (Array.isArray(sectionData.keyAchievements)) {
+          setKeyAchievements(
+            sectionData.keyAchievements.map((a: string) => ({
+              id: uid(),
+              achievement: typeof a === "string" ? a : (a as any).achievement || "",
+            }))
+          );
+        }
+        break;
+      case "memberships":
+        if (Array.isArray(sectionData.memberships)) {
+          setMemberships(
+            sectionData.memberships.map((m: string) => ({ id: uid(), name: m }))
+          );
+        }
+        break;
+      case "projects":
+        if (Array.isArray(sectionData.projects)) {
+          setProjects(
+            sectionData.projects.map((p: any) => ({
+              id: uid(),
+              name: p.name || "",
+              description: p.description || "",
+              tech: p.tech || "",
+            }))
+          );
+        }
+        break;
+      case "boardRoles":
+        if (Array.isArray(sectionData.boardRoles)) {
+          setBoardRoles(
+            sectionData.boardRoles.map((b: any) => ({
+              id: uid(),
+              title: b.title || "",
+              organization: b.organization || "",
+              startDate: b.startDate || "",
+              endDate: b.endDate || "",
+              description: b.description || "",
+            }))
+          );
+        }
+        break;
+      case "executiveTraining":
+        if (Array.isArray(sectionData.executiveTraining)) {
+          setExecTraining(
+            sectionData.executiveTraining.map((t: any) => ({
+              id: uid(),
+              name: t.name || "",
+              institution: t.institution || "",
+              year: t.year || "",
+            }))
+          );
+        }
+        break;
+      case "publications":
+        if (Array.isArray(sectionData.publications)) {
+          setPublications(
+            sectionData.publications.map((p: any) => ({
+              id: uid(),
+              title: p.title || "",
+              publisher: p.publisher || "",
+              year: p.year || "",
+              type: p.type || "publication",
+            }))
+          );
+        }
+        break;
+      case "tools":
+        if (Array.isArray(sectionData.tools)) {
+          setTools(
+            sectionData.tools.map((t: any) => ({
+              name: typeof t === "string" ? t : t.name || "",
+              company: typeof t === "object" ? t.company || "" : "",
+            }))
+          );
+        }
+        break;
+      case "volunteer":
+        if (Array.isArray(sectionData.volunteer)) {
+          setVolunteer(
+            sectionData.volunteer.map((v: any) =>
+              typeof v === "string" ? v : v.description || ""
+            )
+          );
+        }
+        break;
+      case "languages":
+        if (Array.isArray(sectionData.languages)) {
+          setLanguages(
+            sectionData.languages.map((l: any) => ({
+              id: uid(),
+              name: l.name || "",
+              proficiency: l.proficiency || "",
+            }))
+          );
+        }
+        break;
+      case "declaration":
+        if (sectionData.declaration) {
+          const d = sectionData.declaration;
+          setDeclaration({
+            declaration: typeof d === "string" ? d : d.declaration || "",
+            place: typeof d === "object" ? d.place || "" : "",
+            date: typeof d === "object" ? d.date || "" : "",
+          });
+        }
+        break;
+    }
+    // Ensure the section becomes visible in the sidebar
+    setManuallyShown((prev) => new Set([...prev, _sectionKey]));
+  };
 
   // ─── Loading state ───
   if (authLoading || loadingProfile) {
@@ -2764,6 +2907,39 @@ function CVBuilderPage() {
         </div>
         )}
       </div>
+
+      {/* ── AI Missing Sections Dialog ── */}
+      <AiMissingDialog
+        open={showAiDialog}
+        onClose={() => setShowAiDialog(false)}
+        missingRequired={missingRequired}
+        missingRecommended={missingRecommended}
+        cvData={{
+          personalInfo,
+          summary,
+          experiences,
+          education,
+          skills,
+          certifications,
+          languages,
+          referees,
+          keyAchievements,
+          awards,
+          memberships,
+          projects,
+          boardRoles,
+          executiveTraining: execTraining,
+          publications,
+          tools,
+          volunteer,
+        }}
+        careerLevel={categoryResult.category}
+        onApply={applyAiSectionData}
+        onNavigate={(key) => {
+          setShowAiDialog(false);
+          goToSection(key);
+        }}
+      />
 
       {/* ── Validation Errors Dialog ── */}
       <AlertDialog open={!!validationErrors} onOpenChange={(open) => { if (!open) setValidationErrors(null); }}>
