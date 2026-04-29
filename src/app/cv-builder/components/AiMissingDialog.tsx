@@ -1119,8 +1119,6 @@ export function AiMissingDialog({
       : `Fill: ${editing.label}`
     : allMissingDone && incompleteSections.length > 0
     ? "Fix incomplete fields"
-    : allMissingDone
-    ? "Your CV is complete!"
     : "Strengthen Your CV";
 
   const headerSub = editing
@@ -1131,8 +1129,6 @@ export function AiMissingDialog({
       : "Fill in the fields below, then click Apply"
     : allMissingDone && incompleteSections.length > 0
     ? `${incompleteSections.length} section${incompleteSections.length !== 1 ? "s" : ""} have fields that need completing`
-    : allMissingDone
-    ? "All sections are filled — save your CV to continue"
     : `${totalToAddress} issue${totalToAddress !== 1 ? "s" : ""} found — use AI to fill or enter manually`;
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -1214,21 +1210,8 @@ export function AiMissingDialog({
             </div>
           )}
 
-          {/* All done */}
-          {!editing && allMissingDone && incompleteSections.length === 0 && (
-            <div className="p-10 flex flex-col items-center gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                <Check className="h-7 w-7 text-emerald-600" />
-              </div>
-              <div>
-                <p className="font-semibold text-slate-800">All sections complete!</p>
-                <p className="text-sm text-slate-500 mt-1">Your CV looks great. Click Continue to proceed.</p>
-              </div>
-            </div>
-          )}
-
           {/* Section list */}
-          {!editing && !(allMissingDone && incompleteSections.length === 0) && (() => {
+          {!editing && (() => {
             const recWithAi    = pendingRecommended.filter((s) =>  !!SECTION_API_KEY[s.key]);
             const recWithoutAi = pendingRecommended.filter((s) => !SECTION_API_KEY[s.key]);
             return (
@@ -1343,10 +1326,6 @@ export function AiMissingDialog({
                 Apply
               </Button>
             </div>
-          ) : allMissingDone && incompleteSections.length === 0 ? (
-            <Button onClick={handleClose} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-              Close
-            </Button>
           ) : (
             <div className="flex items-center justify-between gap-3">
               <p className={`text-xs ${incompleteSections.length > 0 ? "text-orange-600 font-medium" : "text-slate-400"}`}>

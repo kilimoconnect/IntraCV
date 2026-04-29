@@ -397,7 +397,7 @@ async function blockAwards(cvData: any): Promise<any[]> {
   
   const r = await ai(`Rewrite these FORMAL awards into polished CV format: ${JSON.stringify(existingAwards)}.
     Return EXACTLY ${existingAwards.length} award(s) — do NOT add or invent extra awards.
-    Each award title: max ${maxTitleChars} chars. Each description: 40-${maxDescChars} chars.
+    Each award title: max ${maxTitleChars} chars. Each description: 60-${maxDescChars} chars (complete sentences only, never cut mid-sentence).
     Focus on external recognitions, certificates, and honors received.
     Return JSON: {"awards":[{"title":"","description":""}]}`);
 
@@ -708,8 +708,8 @@ async function validateAndFix(data: any): Promise<any> {
 
   // ── Awards ──
   for (const a of d.awards || []) {
-    a.title = (a.title || "").slice(0, S.awards.maxTitleChars);
-    if (a.description) a.description = a.description.slice(0, S.awards.maxDescChars);
+    a.title = trimToWord(a.title || "", S.awards.maxTitleChars);
+    if (a.description) a.description = trimToWord(a.description, S.awards.maxDescChars);
   }
 
   // ── Languages ──

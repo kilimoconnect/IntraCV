@@ -337,7 +337,7 @@ export const SLOT_RULES = {
     descMaxChars: 240,
     maxTechChars: 65,
   },
-  awards: { max: 5, maxTitleChars: 40, maxDescChars: 60 },
+  awards: { max: 5, maxTitleChars: 40, maxDescChars: 120 },
   languages: { max: 5, maxNameChars: 16, maxLabelChars: 14 },
   references: { count: 2, maxNameChars: 30, maxTitleChars: 32, maxCompanyChars: 32 },
   tools: { count: 12, maxLabelChars: 18 },
