@@ -284,6 +284,7 @@ function CVBuilderPage() {
   const [extracting, setExtracting] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [navigatingToDashboard, setNavigatingToDashboard] = useState(false);
   const [pendingAutoSave, setPendingAutoSave] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [hasExistingData, setHasExistingData] = useState(false);
@@ -295,6 +296,8 @@ function CVBuilderPage() {
   // ─── AI Missing Sections Dialog ───
   const [showAiDialog, setShowAiDialog] = useState(false);
   const [pendingAiDialog, setPendingAiDialog] = useState(false);
+  // True while saving after upload — shows loading screen before dialog opens
+  const [preparingDialog, setPreparingDialog] = useState(false);
   // Only show once per browser session — ref persists across re-renders
   const aiDialogShownRef = useRef(false);
   // Trigger a save after AI section data is applied to state
@@ -611,6 +614,7 @@ function CVBuilderPage() {
   useEffect(() => {
     if (!pendingAiDialog) return;
     setPendingAiDialog(false);
+    setPreparingDialog(false); // clear loading screen
     if (aiDialogShownRef.current) return;
     aiDialogShownRef.current = true;
     setShowAiDialog(true);
@@ -886,8 +890,8 @@ function CVBuilderPage() {
       }
 
       setExtractionProgress(100);
-      toast.success("CV extracted successfully! Review and edit below.");
       setStep("edit");
+      setPreparingDialog(true); // show loading screen while auto-saving before dialog opens
       setPendingAutoSave(true); // save → then opens AI dialog (see pendingAutoSave effect)
 
       // Upload completed successfully — cancel the abandon flow
@@ -906,7 +910,7 @@ function CVBuilderPage() {
 
 
   // ─── Save all sections to DB — returns true on success, false on failure ───
-  const saveToDatabase = async (): Promise<boolean> => {
+  const saveToDatabase = async (options?: { silent?: boolean }): Promise<boolean> => {
     if (!user) {
       toast.error("You must be logged in to save");
       return false;
@@ -1125,7 +1129,7 @@ function CVBuilderPage() {
         const names = failedResults.map(f => f.name).join(", ");
         failedResults.forEach(f => console.error(`[save] ${f.name} failed:`, f.reason?.message ?? f.reason));
         toast.warning(`Saved with errors in: ${names}. Check your data and try again.`);
-      } else {
+      } else if (!options?.silent) {
         const prev = lastSavedCategoryRef.current ?? detectedCareerCategory;
         const categoryLabels: Record<string, string> = { junior: "Junior", "mid-senior": "Mid-Senior", executive: "Executive" };
         const catRank: Record<string, number> = { junior: 0, "mid-senior": 1, executive: 2 };
@@ -1801,7 +1805,7 @@ function CVBuilderPage() {
   // ─── Save & Continue (shared by top button and hook CTA) ───
   // Defined here — after missingRequired — to avoid TDZ in the dependency array.
   const handleSaveAndContinue = async () => {
-    if (saving) return;
+    if (saving || navigatingToDashboard) return;
 
     // Recalculate category fresh from current state before validating
     const fresh = recalculateCategoryAndUpdate();
@@ -1849,8 +1853,13 @@ function CVBuilderPage() {
       return;
     }
 
-    const ok = await saveToDatabase();
-    if (ok) router.push("/dashboard");
+    setNavigatingToDashboard(true);
+    const ok = await saveToDatabase({ silent: true });
+    if (ok) {
+      router.push("/dashboard");
+    } else {
+      setNavigatingToDashboard(false);
+    }
   };
 
   // Ensure activeTab points to a visible section
@@ -1957,7 +1966,20 @@ function CVBuilderPage() {
         )}
 
         {/* ─── STEP: EDIT (Tabbed Sections) ─── */}
-        {step === "edit" && (
+        {step === "edit" && preparingDialog && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5 text-center">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-[#004aad]/10 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 text-[#004aad] animate-spin" />
+              </div>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-800 text-base">Saving your CV…</p>
+              <p className="text-sm text-slate-500 mt-1">Almost ready — your profile will open in a moment</p>
+            </div>
+          </div>
+        )}
+        {step === "edit" && !preparingDialog && (
           <div className="space-y-4">
             {/* ── Top Save Bar ── */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-muted/50 rounded-lg p-3 sm:p-4">
@@ -1986,8 +2008,8 @@ function CVBuilderPage() {
                   onClick={handleSaveAndContinue}
                   className="flex items-center gap-2 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  {saving ? "Saving…" : "Generate My CV →"}
+                  {(saving || navigatingToDashboard) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
                 </Button>
               </div>
             </div>
@@ -2143,8 +2165,8 @@ function CVBuilderPage() {
                   onClick={handleSaveAndContinue}
                   disabled={saving}
                 >
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                  {saving ? "Saving…" : "Generate My CV →"}
+                  {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                  {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
                 </Button>
               </div>
             </aside>
@@ -2195,7 +2217,7 @@ function CVBuilderPage() {
                 </button>
               ) : (
                 <button
-                  onClick={async () => { const ok = await saveToDatabase(); if (ok) router.push("/dashboard"); }}
+                  onClick={async () => { setNavigatingToDashboard(true); const ok = await saveToDatabase({ silent: true }); if (ok) { router.push("/dashboard"); } else { setNavigatingToDashboard(false); } }}
                   disabled={saving}
                   className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#004aad] text-white disabled:opacity-50 shrink-0"
                 >
@@ -3012,8 +3034,8 @@ function CVBuilderPage() {
                     onClick={handleSaveAndContinue}
                     disabled={saving}
                   >
-                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                    {saving ? "Saving…" : "Generate My CV →"}
+                    {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
                   </Button>
                 )}
               </div>
@@ -3043,8 +3065,8 @@ function CVBuilderPage() {
                     </Button>
                   ) : (
                     <Button onClick={handleSaveAndContinue} disabled={saving} className="bg-[#ff751f] hover:bg-[#e8661a] text-white border-0">
-                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                      {saving ? "Saving…" : "Generate My CV →"}
+                      {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
                     </Button>
                   )}
                 </div>

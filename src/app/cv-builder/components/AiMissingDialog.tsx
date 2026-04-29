@@ -917,7 +917,7 @@ export function AiMissingDialog({
   const [appliedKeys, setAppliedKeys] = useState<Set<string>>(new Set());
   const [errorKey, setErrorKey]       = useState<string | null>(null);
 
-  // Auto-close when nothing left to show
+  // Auto-close when nothing left to show (runs on open change AND whenever section lists change)
   useEffect(() => {
     if (
       open &&
@@ -928,7 +928,7 @@ export function AiMissingDialog({
       onClose();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, missingRequired.length, missingRecommended.length, incompleteSections.length]);
 
   const pendingRequired    = missingRequired.filter((s) => !appliedKeys.has(s.key));
   const pendingRecommended = missingRecommended.filter((s) => !appliedKeys.has(s.key));
@@ -1275,11 +1275,12 @@ export function AiMissingDialog({
               Close
             </Button>
           ) : (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-slate-400">You can always fix these later</p>
-              <Button variant="ghost" size="sm" onClick={handleClose}
-                className="text-slate-400 hover:text-slate-600 text-xs">
-                Skip for now
+              <Button variant="outline" size="sm" onClick={handleClose}
+                className="gap-1.5 shrink-0 text-slate-600 hover:text-slate-800">
+                <X className="h-3.5 w-3.5" />
+                Close
               </Button>
             </div>
           )}
