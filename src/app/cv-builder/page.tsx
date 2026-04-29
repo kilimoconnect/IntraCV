@@ -544,6 +544,22 @@ function CVBuilderPage() {
         setVolunteer(volRes.data.map((v: any) => v.description || "").filter(Boolean));
       }
 
+      // ── Auto-generate & save declaration if missing — works for all career levels ──
+      // Uses raw DB values (no React closure) so it is always reliable.
+      if (piRes.data?.full_name?.trim() && !declRes.data?.declaration?.trim()) {
+        const autoDecl = {
+          declaration: `I, ${piRes.data.full_name.trim()}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`,
+          place: piRes.data?.location?.trim() || "",
+          date: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        };
+        setDeclaration(autoDecl);
+        // Save directly — don't rely on any effect or pending flag
+        supabase.from("cv_declarations").upsert(
+          { user_id: user.id, declaration: autoDecl.declaration, place: autoDecl.place || null, date: autoDecl.date, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        ).catch((e: any) => console.error("[auto-decl] save failed:", e));
+      }
+
       if (found) {
         setHasExistingData(true);
         setStep("edit");
@@ -614,7 +630,6 @@ function CVBuilderPage() {
 
   // ─── Open AI missing-sections dialog once React state is committed ───
   // Fires after upload extraction or initial load — never more than once per session.
-  // Silently auto-generates declaration if it is missing so users never have to fill it manually.
   useEffect(() => {
     if (!pendingAiDialog) return;
     setPendingAiDialog(false);
@@ -622,22 +637,8 @@ function CVBuilderPage() {
     aiDialogShownRef.current = true;
 
     const run = () => {
-      // Auto-generate declaration synchronously — standard boilerplate, no AI needed.
-      // Runs for ALL career levels. Fallback for the loadFromDB path (returning users
-      // whose declaration row was never saved, or whose upload path didn't fire).
-      if (!declaration.declaration?.trim()) {
-        const fullName = personalInfo.fullName?.trim();
-        const generatedDate = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
-        setDeclaration({
-          declaration: fullName
-            ? `I, ${fullName}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`
-            : `I hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`,
-          place: personalInfo.location?.trim() || "",
-          date: generatedDate,
-        });
-        setPendingApplySave(true); // persist to DB immediately
-      }
-
+      // Declaration is now always generated in the upload handler (upload path) and
+      // directly in loadFromDB (returning-user path). Nothing to do here.
       setPreparingDialog(false); // clear loading screen
       // Only open dialog if there is actually something to fix
       if (missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0) {
