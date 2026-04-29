@@ -89,6 +89,30 @@ function getSectionPrompt(sectionKey: string, cvData: any, careerLevel: string):
   const context = buildFullContext(cvData, careerLevel);
 
   switch (sectionKey) {
+    case "skills":
+      return `You are an expert CV writer. Study the full candidate profile below, then generate a relevant skills list.
+
+${context}
+
+Generate 6-10 specific professional skills this candidate realistically has, based on their actual experience and industry:
+- name: Specific skill name (not generic — e.g. "Financial Modelling" not "Finance"; "Stakeholder Management" not "Communication")
+- category: Exactly one of: Technical, Soft Skills, Leadership, Domain, Tools
+- Draw ONLY from evidence in the profile — do not invent skills not implied by the experience above
+- Cover a range of categories; avoid repeating the same category more than 3 times
+
+Return ONLY JSON: { "skills": [{ "name": "", "category": "" }] }`;
+
+    case "awards":
+      return `You are an expert CV writer. Study the full candidate profile below, then suggest plausible awards or recognitions.
+
+${context}
+
+Suggest 2-3 realistic awards or recognitions this professional may have received, grounded in their actual career sector and level:
+- title: Specific, credible award title (e.g. "Best Innovative Project Award", "Top Performer Q3 2022")
+- description: One short sentence covering the issuer, approximate year, and reason for the award
+
+Return ONLY JSON: { "awards": [{ "title": "", "description": "" }] }`;
+
     case "keyAchievements":
       return `You are an expert CV writer. Study the full candidate profile below, then generate key career achievements.
 
