@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { useState, useEffect, useRef } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
@@ -912,10 +912,12 @@ export function AiMissingDialog({
   onApply,
   onNavigate,
 }: AiMissingDialogProps) {
-  const [loadingKey, setLoadingKey] = useState<string | null>(null);
-  const [editing, setEditing]         = useState<EditState | null>(null);
-  const [appliedKeys, setAppliedKeys] = useState<Set<string>>(new Set());
-  const [errorKey, setErrorKey]       = useState<string | null>(null);
+  const [loadingKey, setLoadingKey]       = useState<string | null>(null);
+  const [editing, setEditing]             = useState<EditState | null>(null);
+  const [appliedKeys, setAppliedKeys]     = useState<Set<string>>(new Set());
+  const [errorKey, setErrorKey]           = useState<string | null>(null);
+  const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const incompleteGroupRef                = useRef<HTMLDivElement>(null);
 
   // Auto-close when nothing left to show (runs on open change AND whenever section lists change)
   useEffect(() => {
@@ -979,6 +981,7 @@ export function AiMissingDialog({
 
   /** Open inline editor for an incomplete section, pre-filled with existing data */
   const handleInlineFix = (s: { key: string; label: string }) => {
+    setShowCloseWarning(false);
     const editKey = SECTION_EDIT_KEY[s.key];
     let data: any;
 
@@ -1060,6 +1063,16 @@ export function AiMissingDialog({
   };
 
   const handleClose = () => {
+    // Block exit if there are still incomplete fields — scroll to them and warn
+    if (incompleteSections.length > 0) {
+      setShowCloseWarning(true);
+      setEditing(null); // exit any open editor back to list
+      setTimeout(() => {
+        incompleteGroupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+      return;
+    }
+    setShowCloseWarning(false);
     setEditing(null);
     onClose();
   };
@@ -1105,14 +1118,41 @@ export function AiMissingDialog({
             <h2 className="font-semibold text-slate-800 text-base leading-tight">{headerTitle}</h2>
             <p className="text-xs text-slate-500 mt-0.5 leading-snug">{headerSub}</p>
           </div>
-          <DialogClose onClick={handleClose} aria-label="Close"
-            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300">
+          {/* Plain button — not DialogClose so Radix can't bypass handleClose's incomplete-guard */}
+          <button
+            type="button"
+            onClick={handleClose}
+            aria-label="Close"
+            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+          >
             <X className="h-4 w-4" />
-          </DialogClose>
+          </button>
         </div>
 
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+
+          {/* Close-blocked warning */}
+          {showCloseWarning && (
+            <div className="mx-4 mt-4 flex items-start gap-3 rounded-xl border-2 border-orange-400 bg-orange-50 px-4 py-3 animate-pulse">
+              <AlertCircle className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-orange-800">
+                  Complete incomplete fields before closing
+                </p>
+                <p className="text-xs text-orange-600 mt-0.5">
+                  Fix the {incompleteSections.length} section{incompleteSections.length !== 1 ? "s" : ""} highlighted below, then close.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCloseWarning(false)}
+                className="shrink-0 text-orange-400 hover:text-orange-600 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
 
           {/* Inline editor */}
           {editing && (
@@ -1232,11 +1272,11 @@ export function AiMissingDialog({
 
                 {/* 4 ── Incomplete fields */}
                 {incompleteSections.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 px-1">
-                      <Wrench className="h-3.5 w-3.5 text-orange-500" />
-                      <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
-                        Incomplete fields ({incompleteSections.length})
+                  <div ref={incompleteGroupRef} className="space-y-2">
+                    <div className={`flex items-center gap-1.5 px-1 py-1 rounded-lg transition-colors ${showCloseWarning ? "bg-orange-100 -mx-1" : ""}`}>
+                      <Wrench className={`h-3.5 w-3.5 shrink-0 ${showCloseWarning ? "text-orange-600" : "text-orange-500"}`} />
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${showCloseWarning ? "text-orange-700" : "text-orange-600"}`}>
+                        Incomplete fields ({incompleteSections.length}) — fix before closing
                       </span>
                     </div>
                     {incompleteSections.map((s) => (
@@ -1276,9 +1316,17 @@ export function AiMissingDialog({
             </Button>
           ) : (
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-slate-400">You can always fix these later</p>
-              <Button variant="outline" size="sm" onClick={handleClose}
-                className="gap-1.5 shrink-0 text-slate-600 hover:text-slate-800">
+              <p className={`text-xs ${incompleteSections.length > 0 ? "text-orange-600 font-medium" : "text-slate-400"}`}>
+                {incompleteSections.length > 0
+                  ? `Fix ${incompleteSections.length} incomplete section${incompleteSections.length !== 1 ? "s" : ""} to close`
+                  : "You can always fill these later"}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClose}
+                className={`gap-1.5 shrink-0 ${incompleteSections.length > 0 ? "border-orange-300 text-orange-700 hover:bg-orange-50" : "text-slate-600 hover:text-slate-800"}`}
+              >
                 <X className="h-3.5 w-3.5" />
                 Close
               </Button>
