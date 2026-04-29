@@ -227,7 +227,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
   // checkout_abandon and payment_failed are kept longer — they are revenue-critical and
   // users expect a follow-up even if delivery was briefly delayed.
   // After this block, the next fetch only sees rows that are still timely.
-  const staleThreshold = new Date(Date.now() - 48 * 3_600_000).toISOString();
+  const staleThreshold = new Date(Date.now() - 192 * 3_600_000).toISOString(); // 8 days — long enough for rate-limited rows to survive the 7-day window
   await admin
     .from("email_automation_queue")
     .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
@@ -362,7 +362,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
     const sentLast24h   = sentLast24hMap.get(userId)  ?? 0;
     const sentLast7d    = sentLast7dMap.get(userId)   ?? 0;
     const checkoutActive = checkoutActiveSet.has(userId);
-    const isRateLimited = sentLast24h >= 1 || sentLast7d >= 2;
+    const isRateLimited = sentLast24h >= 1 || sentLast7d >= 5;
 
     let sentThisUser = false;
 
@@ -375,7 +375,7 @@ export async function processQueue(): Promise<{ sent: number; skipped: number; f
         skipped++; continue;
       }
 
-      // ── Frequency cap: max 1/day, 2/week (checkout_abandon always bypasses) ──
+      // ── Frequency cap: max 1/day, 5/week (checkout_abandon always bypasses) ──
       if (isRateLimited && !bypassRateLimit) { skipped++; continue; }
 
       // ── Only send one per user per cron run ──
