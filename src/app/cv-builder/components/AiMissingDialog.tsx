@@ -1129,7 +1129,9 @@ export function AiMissingDialog({
       : "Fill in the fields below, then click Apply"
     : allMissingDone && incompleteSections.length > 0
     ? `${incompleteSections.length} section${incompleteSections.length !== 1 ? "s" : ""} have fields that need completing`
-    : `${totalToAddress} issue${totalToAddress !== 1 ? "s" : ""} found — use AI to fill or enter manually`;
+    : totalToAddress > 0
+    ? `${totalToAddress} issue${totalToAddress !== 1 ? "s" : ""} found — use AI to fill or enter manually`
+    : "";
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -1210,8 +1212,8 @@ export function AiMissingDialog({
             </div>
           )}
 
-          {/* Section list */}
-          {!editing && (() => {
+          {/* Section list — only render when there is actually something to show */}
+          {!editing && totalToAddress > 0 && (() => {
             const recWithAi    = pendingRecommended.filter((s) =>  !!SECTION_API_KEY[s.key]);
             const recWithoutAi = pendingRecommended.filter((s) => !SECTION_API_KEY[s.key]);
             return (
@@ -1326,7 +1328,7 @@ export function AiMissingDialog({
                 Apply
               </Button>
             </div>
-          ) : (
+          ) : totalToAddress > 0 ? (
             <div className="flex items-center justify-between gap-3">
               <p className={`text-xs ${incompleteSections.length > 0 ? "text-orange-600 font-medium" : "text-slate-400"}`}>
                 {incompleteSections.length > 0
@@ -1343,7 +1345,7 @@ export function AiMissingDialog({
                 Close
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
 
       </DialogContent>

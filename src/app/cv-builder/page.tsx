@@ -618,8 +618,11 @@ function CVBuilderPage() {
     setPreparingDialog(false); // clear loading screen
     if (aiDialogShownRef.current) return;
     aiDialogShownRef.current = true;
-    setShowAiDialog(true);
-  }, [pendingAiDialog]);
+    // Only open if there is actually something to fix
+    if (missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0) {
+      setShowAiDialog(true);
+    }
+  }, [pendingAiDialog]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Auto-save when AI section data is applied from the dialog ───
   useEffect(() => {
@@ -678,7 +681,12 @@ function CVBuilderPage() {
 
   // ─── Handle ?strengthen=1 — open AI dialog immediately ───
   useEffect(() => {
-    if (searchParams.get("strengthen") === "1" && !loadingProfile && step === "edit") {
+    if (
+      searchParams.get("strengthen") === "1" &&
+      !loadingProfile &&
+      step === "edit" &&
+      (missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0)
+    ) {
       setShowAiDialog(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
