@@ -1987,7 +1987,7 @@ function CVBuilderPage() {
                   className="flex items-center gap-2 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  {saving ? "Saving..." : "Continue"}
+                  {saving ? "Saving…" : "Generate My CV →"}
                 </Button>
               </div>
             </div>
@@ -2144,7 +2144,7 @@ function CVBuilderPage() {
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                  {saving ? "Saving..." : "Continue"}
+                  {saving ? "Saving…" : "Generate My CV →"}
                 </Button>
               </div>
             </aside>
@@ -3013,7 +3013,7 @@ function CVBuilderPage() {
                     disabled={saving}
                   >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                    {saving ? "Saving..." : "Continue"}
+                    {saving ? "Saving…" : "Generate My CV →"}
                   </Button>
                 )}
               </div>
@@ -3044,7 +3044,7 @@ function CVBuilderPage() {
                   ) : (
                     <Button onClick={handleSaveAndContinue} disabled={saving} className="bg-[#ff751f] hover:bg-[#e8661a] text-white border-0">
                       {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                      {saving ? "Saving..." : "Continue"}
+                      {saving ? "Saving…" : "Generate My CV →"}
                     </Button>
                   )}
                 </div>
