@@ -592,10 +592,15 @@ function CVBuilderPage() {
   }, [step]);
 
   // ─── Auto-save extracted data once React has committed the new state ───
+  // After the save resolves, open the AI dialog so it always reflects the
+  // freshly-persisted profile rather than in-flight state.
   useEffect(() => {
     if (!pendingAutoSave) return;
     setPendingAutoSave(false);
-    saveToDatabase();
+    saveToDatabase().then(() => {
+      aiDialogShownRef.current = false; // fresh upload → always show dialog
+      setPendingAiDialog(true);
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAutoSave]);
 
@@ -873,8 +878,7 @@ function CVBuilderPage() {
       setExtractionProgress(100);
       toast.success("CV extracted successfully! Review and edit below.");
       setStep("edit");
-      setPendingAutoSave(true);
-      setPendingAiDialog(true); // Trigger missing-sections dialog after state commits
+      setPendingAutoSave(true); // save → then opens AI dialog (see pendingAutoSave effect)
 
       // Upload completed successfully — cancel the abandon flow
       fetch("/api/email-automation/cancel", {
@@ -1823,14 +1827,26 @@ function CVBuilderPage() {
               <Button
                 variant="outline"
                 className="w-full h-11 rounded-xl font-medium"
-                onClick={() => setStep("edit")}
+                onClick={() => {
+                  setStep("edit");
+                  aiDialogShownRef.current = false;
+                  setPendingAiDialog(true);
+                }}
               >
                 Fill in manually
               </Button>
 
               {hasExistingData && (
                 <div className="text-center">
-                  <Button variant="link" className="text-sm" onClick={() => setStep("edit")}>
+                  <Button
+                    variant="link"
+                    className="text-sm"
+                    onClick={() => {
+                      setStep("edit");
+                      aiDialogShownRef.current = false;
+                      setPendingAiDialog(true);
+                    }}
+                  >
                     Continue editing existing CV →
                   </Button>
                 </div>

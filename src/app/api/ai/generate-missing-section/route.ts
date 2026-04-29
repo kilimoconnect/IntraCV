@@ -1,159 +1,234 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openaiClient } from "@/lib/openai";
 
-// ─── Helper: summarize experience for context ───
-function expSummary(cvData: any): string {
-  return (cvData.experiences || [])
-    .map((e: any) => `${e.title || ""} at ${e.company || ""} (${e.startDate}–${e.endDate})`)
+// ─── Build a comprehensive profile context from all available CV data ───
+function buildFullContext(cvData: any, careerLevel: string): string {
+  const pi = cvData.personalInfo || {};
+  const name = pi.fullName || pi.name || "the candidate";
+  const headline = pi.headline || "";
+
+  const experiences = (cvData.experiences || [])
+    .map((e: any) =>
+      `  • ${e.title || ""}${e.company ? ` at ${e.company}` : ""}${e.location ? `, ${e.location}` : ""} (${e.startDate || "?"}–${e.endDate || "present"})\n    ${(e.description || "").substring(0, 200)}`
+    )
+    .join("\n");
+
+  const education = (cvData.education || [])
+    .map((e: any) => `  • ${e.degree || ""} — ${e.institution || ""} (${e.year || ""})${e.description ? `: ${e.description}` : ""}`)
+    .join("\n");
+
+  const skills = (cvData.skills || []).map((s: any) => s.name || s).join(", ");
+
+  const certifications = (cvData.certifications || []).map((c: any) => c.name || "").filter(Boolean).join(", ");
+
+  const languages = (cvData.languages || [])
+    .map((l: any) => `${l.name || ""} (${l.proficiency || ""})`)
+    .join(", ");
+
+  const achievements = (cvData.keyAchievements || [])
+    .map((a: any) => (typeof a === "string" ? a : a.achievement || ""))
+    .filter(Boolean)
     .join("; ");
+
+  const memberships = (cvData.memberships || [])
+    .map((m: any) => m.name || m)
+    .filter(Boolean)
+    .join(", ");
+
+  const projects = (cvData.projects || [])
+    .map((p: any) => `${p.name || ""}${p.description ? `: ${p.description.substring(0, 100)}` : ""}`)
+    .filter(Boolean)
+    .join("; ");
+
+  const publications = (cvData.publications || [])
+    .map((p: any) => p.title || "")
+    .filter(Boolean)
+    .join("; ");
+
+  return `=== CANDIDATE PROFILE ===
+Name: ${name}
+Headline / Role: ${headline}
+Location: ${pi.location || "Not specified"}
+Career Level: ${careerLevel}
+
+--- EXPERIENCE ---
+${experiences || "  None on record"}
+
+--- EDUCATION ---
+${education || "  None on record"}
+
+--- SKILLS ---
+${skills || "None on record"}
+
+--- CERTIFICATIONS ---
+${certifications || "None on record"}
+
+--- LANGUAGES ---
+${languages || "None on record"}
+
+--- EXISTING ACHIEVEMENTS ---
+${achievements || "None on record"}
+
+--- MEMBERSHIPS ---
+${memberships || "None on record"}
+
+--- PROJECTS ---
+${projects || "None on record"}
+
+--- PUBLICATIONS ---
+${publications || "None on record"}
+=========================`;
 }
 
 // ─── Section-specific prompts ───
 function getSectionPrompt(sectionKey: string, cvData: any, careerLevel: string): string {
   const pi = cvData.personalInfo || {};
   const name = pi.fullName || pi.name || "the candidate";
-  const headline = pi.headline || "";
-  const career = expSummary(cvData);
-  const skills = (cvData.skills || []).map((s: any) => s.name || s).join(", ");
 
-  const context = `
-CANDIDATE: ${name}, ${headline}
-CAREER: ${career}
-SKILLS: ${skills}
-CAREER LEVEL: ${careerLevel}
-`;
+  // Rich context passed to every section prompt
+  const context = buildFullContext(cvData, careerLevel);
 
   switch (sectionKey) {
     case "keyAchievements":
-      return `You are an expert CV writer. Generate key career achievements for this professional.
-${context}
-EXISTING EXPERIENCE:
-${JSON.stringify(cvData.experiences || [], null, 2)}
+      return `You are an expert CV writer. Study the full candidate profile below, then generate key career achievements.
 
-Write ${careerLevel === "executive" ? "5-7" : "3-5"} KEY achievements. Each:
-- A complete sentence of 15-25 words
-- Include a specific quantified result (%, $, time, team size)
-- Use past tense action verbs (Increased, Streamlined, Achieved, Delivered)
-- Draw from the actual career data — do not fabricate
-- Each highlights a DIFFERENT aspect of the career
+${context}
+
+Write ${careerLevel === "executive" ? "5-7" : "3-5"} KEY achievements. Rules:
+- Each is a complete sentence of 15-25 words
+- Every achievement must include a specific quantified result (%, $, headcount, time saved)
+- Use strong past-tense action verbs (Increased, Delivered, Streamlined, Negotiated, Launched)
+- Draw ONLY from the actual experience and context above — do not fabricate companies or roles
+- Each achievement highlights a DIFFERENT aspect of the career
 
 Return ONLY JSON: { "keyAchievements": ["achievement1", "achievement2", ...] }`;
 
     case "memberships":
-      return `You are an expert CV writer. Suggest professional memberships relevant to this candidate.
-${context}
-Based on the candidate's profession, industry, and career level, suggest 2-4 professional organizations or associations they should belong to.
-- Only suggest real, well-known professional bodies
-- Relevant to their field (e.g., accounting → NBAA, ACCA; engineering → IET; management → CIM)
-- Include the full name of the organization
+      return `You are an expert CV writer. Study the full candidate profile below, then suggest relevant professional memberships.
 
-Return ONLY JSON: { "memberships": ["membership1", "membership2", ...] }`;
+${context}
+
+Suggest 2-4 professional bodies or associations this candidate should realistically belong to:
+- Must be real, well-known organisations relevant to their industry and country
+- Match the career level (e.g. accounting → ICPAK, ACCA; engineering → IET; management → CIM, PMI)
+- Do not suggest organisations already listed in the profile
+
+Return ONLY JSON: { "memberships": ["Full Organisation Name 1", "Full Organisation Name 2", ...] }`;
 
     case "projects":
-      return `You are an expert CV writer. Generate notable projects for this professional.
-${context}
-EXISTING EXPERIENCE:
-${JSON.stringify(cvData.experiences || [], null, 2)}
+      return `You are an expert CV writer. Study the full candidate profile below, then generate notable project entries.
 
-Generate ${careerLevel === "junior" ? "3-4" : "2-3"} significant projects derived from the candidate's actual work experience. Each:
-- name: Clear, descriptive project title
-- description: 2-3 sentences describing scope, actions, and measurable outcomes
-- tech: Key tools/technologies used (if applicable)
+${context}
+
+Generate ${careerLevel === "junior" ? "3-4" : "2-3"} significant projects derived ONLY from the actual work experience shown above. Each:
+- name: Specific, descriptive project title (not generic)
+- description: 2-3 sentences covering scope, specific actions taken, and measurable outcome
+- tech: Comma-separated tools/technologies actually relevant to their field (leave blank if not applicable)
 
 Return ONLY JSON: { "projects": [{ "name": "", "description": "", "tech": "" }] }`;
 
     case "volunteer":
-      return `You are an expert CV writer. Suggest volunteer experience entries for this candidate.
+      return `You are an expert CV writer. Study the full candidate profile below, then suggest volunteer experience.
+
 ${context}
-Suggest 2-3 plausible volunteer activities that would complement this professional's career:
-- Related to their industry or transferable skills
-- Include specific roles (e.g., "Financial literacy mentor" not just "Volunteer")
-- Each entry should be a descriptive string
+
+Suggest 2-3 plausible volunteer activities that complement this professional's career background:
+- Must relate to their industry, skills, or community context
+- Use specific role descriptions (e.g. "Financial literacy mentor at a community NGO", not just "Volunteer")
+- Each entry is a single descriptive string
 
 Return ONLY JSON: { "volunteer": ["entry1", "entry2", ...] }`;
 
     case "boardRoles":
-      return `You are an expert CV writer. Generate board and advisory role entries for this executive.
-${context}
-EXISTING EXPERIENCE:
-${JSON.stringify(cvData.experiences || [], null, 2)}
+      return `You are an expert CV writer. Study the full candidate profile below, then generate board and advisory role entries.
 
-Generate 2-3 board or advisory roles that would be appropriate for this executive based on their career:
-- title: Board/advisory role title
-- organization: Organization name (plausible, industry-relevant)
-- startDate: Estimated start date
-- endDate: "Ongoing" or estimated end
-- description: 1-2 sentences about contributions and governance activities
+${context}
+
+Generate 2-3 board or advisory roles appropriate for this executive, grounded in their actual career sector:
+- title: Specific governance title (e.g. "Non-Executive Director", "Advisory Board Member")
+- organization: Plausible, industry-relevant organisation name
+- startDate: Estimated year (based on career timeline)
+- endDate: "Ongoing" or estimated end year
+- description: 1-2 sentences on their specific governance contribution
 
 Return ONLY JSON: { "boardRoles": [{ "title": "", "organization": "", "startDate": "", "endDate": "", "description": "" }] }`;
 
     case "publications":
-      return `You are an expert CV writer. Suggest publications for this professional.
+      return `You are an expert CV writer. Study the full candidate profile below, then suggest relevant publications.
+
 ${context}
-Suggest 2-3 plausible publications (articles, papers, or presentations) that align with this professional's expertise:
-- title: Publication/presentation title
-- publisher: Journal, conference, or platform name
-- year: Plausible year
+
+Suggest 2-3 plausible publications (articles, papers, or presentations) aligned with this professional's documented expertise:
+- title: Specific, credible publication or presentation title
+- publisher: Real journal, conference, or professional platform name
+- year: Plausible year matching career timeline
 - type: "article" | "paper" | "presentation" | "book-chapter"
 
 Return ONLY JSON: { "publications": [{ "title": "", "publisher": "", "year": "", "type": "" }] }`;
 
     case "executiveTraining":
-      return `You are an expert CV writer. Suggest executive training programs for this professional.
-${context}
-EXISTING EDUCATION:
-${JSON.stringify(cvData.education || [], null, 2)}
-EXISTING CERTIFICATIONS:
-${JSON.stringify(cvData.certifications || [], null, 2)}
+      return `You are an expert CV writer. Study the full candidate profile below, then suggest executive training programmes.
 
-Suggest 2-3 executive training programs that would complement this professional's career:
-- name: Program name (use real, well-known programs)
-- institution: Institution name (e.g., Harvard Business School, INSEAD, Wharton)
+${context}
+
+Suggest 2-3 executive education programmes that would complement this professional's career and NOT duplicate their existing education or certifications listed above:
+- name: Real, well-known programme name
+- institution: Reputable institution (e.g. Harvard Business School, INSEAD, IMD, Wharton, Strathmore)
 - year: Plausible year based on career timeline
 
 Return ONLY JSON: { "executiveTraining": [{ "name": "", "institution": "", "year": "" }] }`;
 
     case "languages":
-      return `You are an expert CV writer. List languages for this candidate.
-${context}
-LOCATION: ${pi.location || "Not specified"}
+      return `You are an expert CV writer. Study the full candidate profile below, then list this candidate's languages.
 
-Based on the candidate's location, name, and career context, list their likely languages with proficiency levels.
-- Include the primary language of their country/region
-- Include English if they work in an international context
-- Proficiency: "Native", "Fluent", "Proficient", "Intermediate", "Basic"
+${context}
+
+Based on the candidate's location, name, education, and career context, list their realistic languages with proficiency:
+- Always include the primary language(s) of their country or region
+- Include English if they work in a professional or international context
+- Do NOT duplicate languages already listed in the profile above
+- Proficiency levels: "Native", "Fluent", "Proficient", "Intermediate", "Basic"
 
 Return ONLY JSON: { "languages": [{ "name": "", "proficiency": "" }] }`;
 
     case "tools":
-      return `You are an expert CV writer. List tools and software for this professional.
+      return `You are an expert CV writer. Study the full candidate profile below, then list relevant tools and software.
+
 ${context}
-Based on the candidate's profession, experience, and skills, list 5-8 key software tools and platforms they likely use:
-- Include industry-standard tools for their field
-- Include general productivity tools (e.g., MS Office Suite, Google Workspace)
-- Be specific (e.g., "SAP ERP" not just "ERP")
+
+List 5-8 specific software tools and platforms this professional realistically uses, based on their actual role and industry:
+- Prioritise tools explicitly or implicitly mentioned in their experience and skills above
+- Add industry-standard tools for their sector
+- Be specific (e.g. "SAP S/4HANA" not "ERP"; "Microsoft Excel" not "Office")
+- Do not duplicate tools already in the skills section above
 
 Return ONLY JSON: { "tools": ["tool1", "tool2", ...] }`;
 
     case "summary":
-      return `You are an expert CV summary writer.
+      return `You are an expert CV writer. Study the full candidate profile below, then write a powerful professional summary.
+
 ${context}
-Write a POWERFUL professional summary of 50-80 words (3-4 sentences):
-1. Years of experience + core expertise area + professional designation
-2. 2-3 specific quantified achievements from real career data
-3. Key competencies and what differentiates this candidate
-4. Career objective
-- Third person only (no "I"/"my")
-- MUST include at least 2 specific numbers/metrics
+
+Write a professional summary of 60-90 words (3-4 sentences):
+1. Open with: years of experience + core expertise + professional designation (if applicable)
+2. Include 2-3 specific quantified achievements drawn directly from the profile above
+3. Highlight key differentiating competencies relevant to their career level
+4. Close with a forward-looking career objective
+- Third person only — no "I" or "my"
+- Every number or metric must be grounded in the profile data above
 
 Return ONLY JSON: { "summary": "" }`;
 
     case "declaration":
-      return `Generate a professional declaration for ${name}.
+      return `Generate a professional declaration statement for ${name}.
 Return ONLY JSON: { "declaration": { "declaration": "I, ${name}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.", "place": "${pi.location || ""}", "date": "${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}" } }`;
 
     default:
-      return `Generate content for the "${sectionKey}" section of a CV for ${name} (${headline}). Career: ${career}. Return JSON with the section key and appropriate data.`;
+      return `You are an expert CV writer. Study the full candidate profile below, then generate content for the "${sectionKey}" section.
+
+${context}
+
+Return ONLY valid JSON with the section key and appropriate data structure.`;
   }
 }
 
@@ -171,7 +246,7 @@ export async function POST(req: NextRequest) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are an expert CV writer. Return ONLY valid JSON, no markdown, no explanation." },
+        { role: "system", content: "You are a senior CV writer. You MUST study the full candidate profile provided and base ALL generated content strictly on the actual data given — do not invent companies, roles, or credentials not present in the profile. Return ONLY valid JSON, no markdown, no explanation." },
         { role: "user", content: prompt },
       ],
       temperature: 0.7,

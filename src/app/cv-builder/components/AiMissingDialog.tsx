@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
@@ -449,7 +449,8 @@ export function AiMissingDialog({
   // ── Render ──
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-lg p-0 gap-0 flex flex-col max-h-[88vh] overflow-hidden">
+      {/* showCloseButton=false — we render our own close button in the header */}
+      <DialogContent showCloseButton={false} className="max-w-lg p-0 gap-0 flex flex-col max-h-[88vh] overflow-hidden">
 
         {/* ── Header ── */}
         <div className="flex items-start gap-3 p-5 border-b shrink-0">
@@ -462,13 +463,14 @@ export function AiMissingDialog({
             </h2>
             <p className="text-xs text-slate-500 mt-0.5 leading-snug">{headerSub}</p>
           </div>
-          <button
+          {/* Close button — top-right of header */}
+          <DialogClose
             onClick={handleClose}
             aria-label="Close"
-            className="text-slate-400 hover:text-slate-600 transition-colors shrink-0 p-1 -mr-1"
+            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
             <X className="h-4 w-4" />
-          </button>
+          </DialogClose>
         </div>
 
         {/* ── Body ── */}
