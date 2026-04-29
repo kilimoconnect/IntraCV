@@ -622,19 +622,20 @@ function CVBuilderPage() {
     aiDialogShownRef.current = true;
 
     const run = () => {
-      // Auto-generate declaration synchronously — it's a boilerplate template,
-      // no AI needed. Runs for ALL career levels (junior / mid-senior / executive).
+      // Auto-generate declaration synchronously — standard boilerplate, no AI needed.
+      // Runs for ALL career levels. Fallback for the loadFromDB path (returning users
+      // whose declaration row was never saved, or whose upload path didn't fire).
       if (!declaration.declaration?.trim()) {
         const fullName = personalInfo.fullName?.trim();
-        if (fullName) {
-          const generatedDate = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
-          setDeclaration({
-            declaration: `I, ${fullName}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`,
-            place: personalInfo.location?.trim() || "",
-            date: generatedDate,
-          });
-          setPendingApplySave(true); // persist to DB immediately
-        }
+        const generatedDate = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        setDeclaration({
+          declaration: fullName
+            ? `I, ${fullName}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`
+            : `I hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`,
+          place: personalInfo.location?.trim() || "",
+          date: generatedDate,
+        });
+        setPendingApplySave(true); // persist to DB immediately
       }
 
       setPreparingDialog(false); // clear loading screen
@@ -898,11 +899,22 @@ function CVBuilderPage() {
           id: uid(), title: p.title || "", publisher: p.publisher || "", year: p.year || "", type: p.type || "publication",
         })));
       }
-      if (d.declaration) {
+      // Always set declaration — use extracted text if present, otherwise generate the
+      // standard boilerplate immediately so saveToDatabase (called next) persists it.
+      {
+        const extractedDecl = d.declaration;
+        const declText = extractedDecl
+          ? (typeof extractedDecl === "string" ? extractedDecl : extractedDecl.declaration || "")
+          : "";
+        const fullName  = d.personalInfo?.fullName?.trim() || "";
+        const location  = d.personalInfo?.location?.trim() || extractedDecl?.place || "";
+        const declDate  = extractedDecl?.date || new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
         setDeclaration({
-          declaration: typeof d.declaration === "string" ? d.declaration : d.declaration.declaration || "",
-          place: d.declaration.place || "",
-          date: d.declaration.date || "",
+          declaration: declText || (fullName
+            ? `I, ${fullName}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`
+            : `I hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`),
+          place: location,
+          date: declDate,
         });
       }
       if (d.awards?.length) {
