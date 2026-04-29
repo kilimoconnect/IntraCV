@@ -1240,7 +1240,27 @@ export function AiMissingDialog({
                   </div>
                 )}
 
-                {/* 2 ── Recommended — with AI Fill */}
+                {/* 2 ── Incomplete fields — fix before closing */}
+                {incompleteSections.length > 0 && (
+                  <div ref={incompleteGroupRef} className="space-y-2">
+                    <div className={`flex items-center gap-1.5 px-1 py-1 rounded-lg transition-colors ${showCloseWarning ? "bg-orange-100 -mx-1" : ""}`}>
+                      <Wrench className={`h-3.5 w-3.5 shrink-0 ${showCloseWarning ? "text-orange-600" : "text-orange-500"}`} />
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${showCloseWarning ? "text-orange-700" : "text-orange-600"}`}>
+                        Incomplete fields ({incompleteSections.length}) — fix before closing
+                      </span>
+                    </div>
+                    {incompleteSections.map((s) => (
+                      <IncompleteSectionRow
+                        key={s.key}
+                        label={s.label}
+                        missing={s.missing}
+                        onFix={() => handleInlineFix(s)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* 3 ── Recommended — with AI Fill */}
                 {recWithAi.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 px-1">
@@ -1263,7 +1283,7 @@ export function AiMissingDialog({
                   </div>
                 )}
 
-                {/* 3 ── Recommended — fill manually */}
+                {/* 4 ── Recommended — fill manually */}
                 {recWithoutAi.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 px-1">
@@ -1281,26 +1301,6 @@ export function AiMissingDialog({
                         aiCapable={false}
                         onAiFill={() => {}}
                         onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* 4 ── Incomplete fields */}
-                {incompleteSections.length > 0 && (
-                  <div ref={incompleteGroupRef} className="space-y-2">
-                    <div className={`flex items-center gap-1.5 px-1 py-1 rounded-lg transition-colors ${showCloseWarning ? "bg-orange-100 -mx-1" : ""}`}>
-                      <Wrench className={`h-3.5 w-3.5 shrink-0 ${showCloseWarning ? "text-orange-600" : "text-orange-500"}`} />
-                      <span className={`text-xs font-semibold uppercase tracking-wide ${showCloseWarning ? "text-orange-700" : "text-orange-600"}`}>
-                        Incomplete fields ({incompleteSections.length}) — fix before closing
-                      </span>
-                    </div>
-                    {incompleteSections.map((s) => (
-                      <IncompleteSectionRow
-                        key={s.key}
-                        label={s.label}
-                        missing={s.missing}
-                        onFix={() => handleInlineFix(s)}
                       />
                     ))}
                   </div>
