@@ -2077,7 +2077,7 @@ function CVBuilderPage() {
                 {/* CTA */}
                 <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-100 group-hover:bg-orange-200 rounded-lg px-3 py-1.5 transition-colors">
                   <Lightbulb className="h-3.5 w-3.5" />
-                  Strengthen CV
+                  Fix
                 </span>
               </button>
             )}

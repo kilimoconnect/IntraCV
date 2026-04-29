@@ -164,6 +164,39 @@ const INCOMPLETE_REQUIRED: Record<string, string[]> = {
   declaration:       ["declaration", "place"],
 };
 
+// ─── Auto-resizing textarea — grows to show all content, no hidden overflow ───
+function AutoTextarea({
+  value,
+  onChange,
+  placeholder,
+  className,
+  minRows = 3,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  className?: string;
+  minRows?: number;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.max(el.scrollHeight, minRows * 24)}px`;
+  }, [value, minRows]);
+  return (
+    <textarea
+      ref={ref}
+      rows={minRows}
+      className={`${className} resize-none overflow-hidden`}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+    />
+  );
+}
+
 // ─── Inline Section Editor ────────────────────────────────────────────────────
 function InlineSectionEditor({
   apiKey,
@@ -254,9 +287,9 @@ function InlineSectionEditor({
       return (
         <div>
           <label className={labelCls}>Professional Summary</label>
-          <textarea
-            rows={6}
-            className={`${inputCls} resize-none leading-relaxed`}
+          <AutoTextarea
+            minRows={6}
+            className={`${inputCls} leading-relaxed`}
             placeholder="Write a compelling professional summary (60–90 words)…"
             value={data.summary || ""}
             onChange={(e) => onChange({ ...data, summary: e.target.value })}
@@ -296,7 +329,7 @@ function InlineSectionEditor({
                 <input className={`${cls("endDate", e.endDate)} col-span-2 sm:col-span-1`} placeholder="End date (or Present) *"
                   value={e.endDate} onChange={(ev) => setItemField("experience", i, "endDate", ev.target.value)} />
               </div>
-              <textarea rows={3} className={`${cls("description", e.description)} resize-none`}
+              <AutoTextarea minRows={3} className={cls("description", e.description)}
                 placeholder="Key responsibilities and achievements… *"
                 value={e.description} onChange={(ev) => setItemField("experience", i, "description", ev.target.value)} />
             </div>
@@ -522,7 +555,7 @@ function InlineSectionEditor({
               </div>
               <input className={cls("name", p.name)} placeholder="Project name *"
                 value={p.name} onChange={(e) => setItemField("projects", i, "name", e.target.value)} />
-              <textarea rows={3} className={`${cls("description", p.description)} resize-none`}
+              <AutoTextarea minRows={3} className={cls("description", p.description)}
                 placeholder="Describe scope, actions taken, and measurable outcomes… *"
                 value={p.description} onChange={(e) => setItemField("projects", i, "description", e.target.value)} />
               <input className={inputCls} placeholder="Technologies (e.g. React, Salesforce, Python) — optional"
@@ -564,7 +597,7 @@ function InlineSectionEditor({
                 <input className={inputCls} placeholder="End / Ongoing"
                   value={b.endDate} onChange={(e) => setItemField("boardRoles", i, "endDate", e.target.value)} />
               </div>
-              <textarea rows={2} className={`${inputCls} resize-none`}
+              <AutoTextarea minRows={2} className={inputCls}
                 placeholder="Governance contribution…"
                 value={b.description} onChange={(e) => setItemField("boardRoles", i, "description", e.target.value)} />
             </div>
@@ -797,7 +830,7 @@ function InlineSectionEditor({
       return (
         <div className="space-y-3">
           <label className={labelCls}>Declaration Statement</label>
-          <textarea rows={3} className={`${inputCls} resize-none`}
+          <AutoTextarea minRows={3} className={inputCls}
             placeholder="I hereby declare that the information provided in this Curriculum Vitae is true and correct…"
             value={d.declaration} onChange={(e) => setField("declaration", e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
