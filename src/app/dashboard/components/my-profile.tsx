@@ -11,7 +11,7 @@ import {
   Globe, Users, ScrollText, Mail, Phone, MapPin, Linkedin,
   Link as LinkIcon, Pencil, Trophy, Building2, FolderKanban, Shield,
   BookMarked, PenLine, Wrench, Heart, Plus, Clock,
-  AlertCircle, AlertTriangle, XCircle, Loader2, CheckCircle2,
+  AlertCircle, AlertTriangle, XCircle, Loader2, CheckCircle2, Lightbulb,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -661,49 +661,38 @@ export default function MyProfile({
         </div>
       </div>
 
-      {/* Missing Sections Warning */}
+      {/* Missing / Recommended Sections Banner */}
       {(missingRequired.length > 0 || missingRecommended.length > 0) && (
-        <div className="border border-slate-200/60 rounded-2xl overflow-hidden shadow-elevated">
-          {missingRequired.length > 0 && (
-            <div className="bg-red-50 border-b border-red-200 px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <span className="text-sm font-semibold text-red-700">Required sections missing for {categoryResult.label} profile ({missingRequired.length})</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {missingRequired.map(s => (
-                  <button key={s.key} onClick={() => router.push(`/cv-builder?tab=${s.key}`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 rounded-xl text-xs font-medium text-red-700 hover:bg-red-50 hover:border-red-300 cursor-pointer transition-all shadow-sm">
-                    <XCircle className="h-3 w-3" />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {missingRecommended.length > 0 && (
-            <div className="bg-amber-50 px-4 py-3">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-700">Recommended sections ({missingRecommended.length})</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {missingRecommended.map(s => (
-                  <button
-                    key={s.key}
-                    disabled={loadingSection === s.key}
-                    onClick={() => { setLoadingSection(s.key); router.push(`/cv-builder?tab=${s.key}`); }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 rounded-xl text-xs font-medium text-amber-700 hover:bg-amber-50 hover:border-amber-300 cursor-pointer transition-all shadow-sm disabled:opacity-70 disabled:cursor-default"
-                  >
-                    {loadingSection === s.key
-                      ? <Loader2 className="h-3 w-3 animate-spin" />
-                      : <Plus className="h-3 w-3" />}
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => router.push("/cv-builder?strengthen=1")}
+          className="w-full text-left group rounded-2xl border border-orange-200 bg-orange-50/60 hover:bg-orange-50 hover:border-orange-300 transition-colors px-4 py-3 flex items-center gap-3 shadow-sm"
+        >
+          {/* Icon */}
+          <div className="shrink-0 w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+            <Lightbulb className="h-4 w-4 text-orange-600" />
+          </div>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-orange-800 leading-tight">
+              {missingRequired.length > 0
+                ? `${missingRequired.length} required section${missingRequired.length !== 1 ? "s" : ""} missing`
+                : `${missingRecommended.length} recommended section${missingRecommended.length !== 1 ? "s" : ""} to add`}
+            </p>
+            <p className="text-xs text-orange-600 mt-0.5 truncate">
+              {[
+                ...missingRequired.map(s => s.label),
+                ...missingRecommended.map(s => s.label),
+              ].join(", ")}
+            </p>
+          </div>
+
+          {/* CTA */}
+          <span className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-100 group-hover:bg-orange-200 rounded-lg px-3 py-1.5 transition-colors">
+            Fix
+          </span>
+        </button>
       )}
 
       {/* Personal Info — always first */}

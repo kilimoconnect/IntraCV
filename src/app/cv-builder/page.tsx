@@ -676,6 +676,14 @@ function CVBuilderPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, loadingProfile]);
 
+  // ─── Handle ?strengthen=1 — open AI dialog immediately ───
+  useEffect(() => {
+    if (searchParams.get("strengthen") === "1" && !loadingProfile && step === "edit") {
+      setShowAiDialog(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, loadingProfile, step]);
+
   // ─── File Upload + AI Extract ───
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
