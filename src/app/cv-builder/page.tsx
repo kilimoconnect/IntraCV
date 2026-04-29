@@ -612,16 +612,47 @@ function CVBuilderPage() {
 
   // ─── Open AI missing-sections dialog once React state is committed ───
   // Fires after upload extraction or initial load — never more than once per session.
+  // Silently auto-generates declaration if it is missing so users never have to fill it manually.
   useEffect(() => {
     if (!pendingAiDialog) return;
     setPendingAiDialog(false);
-    setPreparingDialog(false); // clear loading screen
     if (aiDialogShownRef.current) return;
     aiDialogShownRef.current = true;
-    // Only open if there is actually something to fix
-    if (missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0) {
-      setShowAiDialog(true);
-    }
+
+    const run = async () => {
+      // Auto-generate declaration while the loading screen is still visible
+      if (!declaration.declaration?.trim()) {
+        try {
+          const cvData = {
+            personalInfo, summary, experiences, education, skills,
+            certifications, languages, referees, keyAchievements, awards,
+            memberships, projects, boardRoles,
+            executiveTraining: execTraining, publications, tools, volunteer,
+          };
+          const res = await fetch("/api/ai/generate-missing-section", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cvData, sectionKey: "declaration", careerLevel: categoryResult.category }),
+          });
+          if (res.ok) {
+            const { sectionData } = await res.json();
+            if (sectionData?.declaration) {
+              applyAiSectionData("declaration", "declaration", sectionData);
+            }
+          }
+        } catch (e) {
+          console.error("[Auto-declaration] generation failed:", e);
+        }
+      }
+
+      setPreparingDialog(false); // clear loading screen after declaration is ready
+      // Only open dialog if there is actually something else to fix
+      if (missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0) {
+        setShowAiDialog(true);
+      }
+    };
+
+    run();
   }, [pendingAiDialog]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Auto-save when AI section data is applied from the dialog ───
