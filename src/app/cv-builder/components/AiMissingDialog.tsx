@@ -1113,77 +1113,104 @@ export function AiMissingDialog({
           )}
 
           {/* Section list */}
-          {!editing && !(allMissingDone && incompleteSections.length === 0) && (
-            <div className="p-4 space-y-4">
+          {!editing && !(allMissingDone && incompleteSections.length === 0) && (() => {
+            const recWithAi    = pendingRecommended.filter((s) =>  !!SECTION_API_KEY[s.key]);
+            const recWithoutAi = pendingRecommended.filter((s) => !SECTION_API_KEY[s.key]);
+            return (
+              <div className="p-4 space-y-4">
 
-              {/* Required missing */}
-              {pendingRequired.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 px-1">
-                    <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-                    <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">
-                      Required — missing ({pendingRequired.length})
-                    </span>
+                {/* 1 ── Required — missing (all, AI or not) */}
+                {pendingRequired.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 px-1">
+                      <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                      <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">
+                        Required — missing ({pendingRequired.length})
+                      </span>
+                    </div>
+                    {pendingRequired.map((s) => (
+                      <MissingSectionRow
+                        key={s.key}
+                        section={{ ...s, priority: "required" }}
+                        loading={loadingKey === s.key}
+                        hasError={errorKey === s.key}
+                        aiCapable={!!SECTION_API_KEY[s.key]}
+                        onAiFill={() => handleAiFill({ ...s, priority: "required" })}
+                        onManualInline={() => handleManualInline({ ...s, priority: "required" })}
+                      />
+                    ))}
                   </div>
-                  {pendingRequired.map((s) => (
-                    <MissingSectionRow
-                      key={s.key}
-                      section={{ ...s, priority: "required" }}
-                      loading={loadingKey === s.key}
-                      hasError={errorKey === s.key}
-                      aiCapable={!!SECTION_API_KEY[s.key]}
-                      onAiFill={() => handleAiFill({ ...s, priority: "required" })}
-                      onManualInline={() => handleManualInline({ ...s, priority: "required" })}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              {/* Recommended missing */}
-              {pendingRecommended.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 px-1">
-                    <span className="h-3 w-3 rounded-full border-2 border-amber-400 shrink-0" />
-                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">
-                      Recommended — missing ({pendingRecommended.length})
-                    </span>
+                {/* 2 ── Recommended — with AI Fill */}
+                {recWithAi.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 px-1">
+                      <Lightbulb className="h-3.5 w-3.5 text-[#004aad]" />
+                      <span className="text-xs font-semibold text-[#004aad] uppercase tracking-wide">
+                        Recommended — AI Fill available ({recWithAi.length})
+                      </span>
+                    </div>
+                    {recWithAi.map((s) => (
+                      <MissingSectionRow
+                        key={s.key}
+                        section={{ ...s, priority: "recommended" }}
+                        loading={loadingKey === s.key}
+                        hasError={errorKey === s.key}
+                        aiCapable={true}
+                        onAiFill={() => handleAiFill({ ...s, priority: "recommended" })}
+                        onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
+                      />
+                    ))}
                   </div>
-                  {pendingRecommended.map((s) => (
-                    <MissingSectionRow
-                      key={s.key}
-                      section={{ ...s, priority: "recommended" }}
-                      loading={loadingKey === s.key}
-                      hasError={errorKey === s.key}
-                      aiCapable={!!SECTION_API_KEY[s.key]}
-                      onAiFill={() => handleAiFill({ ...s, priority: "recommended" })}
-                      onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              {/* Incomplete fields */}
-              {incompleteSections.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 px-1">
-                    <Wrench className="h-3.5 w-3.5 text-orange-500" />
-                    <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
-                      Incomplete fields ({incompleteSections.length})
-                    </span>
+                {/* 3 ── Recommended — fill manually */}
+                {recWithoutAi.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 px-1">
+                      <PenLine className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        Recommended — fill manually ({recWithoutAi.length})
+                      </span>
+                    </div>
+                    {recWithoutAi.map((s) => (
+                      <MissingSectionRow
+                        key={s.key}
+                        section={{ ...s, priority: "recommended" }}
+                        loading={loadingKey === s.key}
+                        hasError={errorKey === s.key}
+                        aiCapable={false}
+                        onAiFill={() => {}}
+                        onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
+                      />
+                    ))}
                   </div>
-                  {incompleteSections.map((s) => (
-                    <IncompleteSectionRow
-                      key={s.key}
-                      label={s.label}
-                      missing={s.missing}
-                      onFix={() => handleInlineFix(s)}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-            </div>
-          )}
+                {/* 4 ── Incomplete fields */}
+                {incompleteSections.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 px-1">
+                      <Wrench className="h-3.5 w-3.5 text-orange-500" />
+                      <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
+                        Incomplete fields ({incompleteSections.length})
+                      </span>
+                    </div>
+                    {incompleteSections.map((s) => (
+                      <IncompleteSectionRow
+                        key={s.key}
+                        label={s.label}
+                        missing={s.missing}
+                        onFix={() => handleInlineFix(s)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            );
+          })()}
         </div>
 
         {/* ── Footer ── */}
