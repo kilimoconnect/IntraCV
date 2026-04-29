@@ -1969,7 +1969,7 @@ export default function CvStudio({ userId, cvData }: Props) {
         <div className="space-y-4">
           {/* Path 1 — Improve my CV */}
           <button
-            onClick={() => { if (missingRequired.length > 0) return; setCvPath("improve"); setStep("analyze-profile"); }}
+            onClick={() => { if (missingRequired.length > 0) return; setCvPath("improve"); setStep("select"); }}
             disabled={missingRequired.length > 0}
             className="w-full text-left group flex items-start gap-4 p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#004aad] hover:shadow-lg hover:shadow-[#004aad]/10 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-200 disabled:hover:shadow-none"
           >
@@ -2003,17 +2003,8 @@ export default function CvStudio({ userId, cvData }: Props) {
     );
   }
 
-  // ── Profile Analysis (initial step, auto-runs) ──
+  // ── Profile Analysis — "Apply for a job" path only (job description entry) ──
   if (step === "analyze-profile") {
-    const _gaps = getCategoryGaps(detectedCategory, cvData);
-    const _recGaps = _gaps.filter(g => g.startsWith("[Recommended] "));
-    const rawScore = cvReadiness?.strength ?? 0;
-    const score    = Math.max(0, rawScore - _recGaps.length * 5);
-    const isReady  = score >= 75;
-    // Don't inject missing sections into Issues Found — the dedicated
-    // "📋 Missing for …" panel below already shows them.
-    const augmentedReadiness = cvReadiness;
-
     return (
       <div className="max-w-2xl mx-auto pt-4 pb-10 px-4 space-y-4">
 
@@ -2056,62 +2047,6 @@ export default function CvStudio({ userId, cvData }: Props) {
             </span>
           </div>
         )}
-
-        {/* ── CV Readiness Banner ── */}
-        <CVReadinessBanner
-          score={score}
-          isReady={isReady}
-          isAnalyzing={profileAnalyzing}
-          cvReadiness={augmentedReadiness}
-        >
-          {/* Missing sections — passed as children so they render inside the dark card */}
-          {(() => {
-            const detectedCat = detectedCategory;
-            const categoryGaps = getCategoryGaps(detectedCat, cvData);
-            if (categoryGaps.length === 0) return null;
-            const catLabel = detectedCat === "mid-senior" ? "Mid-Senior" : detectedCat.charAt(0).toUpperCase() + detectedCat.slice(1);
-            return (
-              <div className="px-5 py-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(251,191,36,0.9)" }}>
-                    📋 Missing for {catLabel} CV
-                  </p>
-                  <button
-                    onClick={() => { setNavigatingToBuilder(true); router.push("/cv-builder"); }}
-                    disabled={navigatingToBuilder}
-                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-60"
-                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.65)" }}
-                  >
-                    {navigatingToBuilder ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPen className="h-3 w-3" />}
-                    Edit CV
-                  </button>
-                </div>
-                <ul className="space-y-2">
-                  {categoryGaps.map((gap, i) => {
-                    const isRec = gap.startsWith("[Recommended] ");
-                    const text = isRec ? gap.replace("[Recommended] ", "") : gap;
-                    return (
-                      <li key={i} className="flex items-start gap-2 text-xs"
-                        style={{ color: isRec ? "rgba(255,255,255,0.3)" : "rgba(251,191,36,0.65)" }}>
-                        <span className="shrink-0 mt-0.5 font-bold"
-                          style={{ color: isRec ? "rgba(255,255,255,0.22)" : "rgba(251,191,36,0.55)" }}>
-                          {isRec ? "○" : "•"}
-                        </span>
-                        <span>
-                          {isRec && <span className="text-[10px] font-semibold uppercase tracking-wide mr-1" style={{ color: "rgba(255,255,255,0.28)" }}>Recommended</span>}
-                          {text}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="mt-3 text-[11px] italic" style={{ color: "rgba(255,255,255,0.28)" }}>
-                  You can still proceed to generate your CV — these items are optional but will improve your score.
-                </p>
-              </div>
-            );
-          })()}
-        </CVReadinessBanner>
 
         {/* ── JD Section — only for "Apply for a job" path ── */}
         {cvPath === "apply" && (
