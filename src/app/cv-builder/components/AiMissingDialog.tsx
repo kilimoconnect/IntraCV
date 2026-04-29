@@ -16,27 +16,48 @@ import {
   Trash2,
 } from "lucide-react";
 
-// ─── Section key → API endpoint sectionKey mapping ───────────────────────────
-// null  = no AI generation; user must fill manually (or navigate away)
+// ─── Section key → AI generation key (null = no AI for this section) ──────────
 const SECTION_API_KEY: Record<string, string | null> = {
-  personal:     null,
-  summary:      "summary",
-  experience:   null,
-  education:    null,
-  skills:       null,
+  personal:       null,
+  summary:        "summary",
+  experience:     null,
+  education:      null,
+  skills:         null,
   certifications: null,
-  achievements: "keyAchievements",
-  awards:       null,
-  memberships:  "memberships",
-  projects:     "projects",
-  boardRoles:   "boardRoles",
-  execTraining: "executiveTraining",
-  publications: "publications",
-  tools:        "tools",
-  volunteer:    "volunteer",
-  languages:    "languages",
-  referees:     null,
-  declaration:  "declaration",
+  achievements:   "keyAchievements",
+  awards:         null,
+  memberships:    "memberships",
+  projects:       "projects",
+  boardRoles:     "boardRoles",
+  execTraining:   "executiveTraining",
+  publications:   "publications",
+  tools:          "tools",
+  volunteer:      "volunteer",
+  languages:      "languages",
+  referees:       null,
+  declaration:    "declaration",
+};
+
+// ─── Section key → inline editor key (every section now has one) ──────────────
+const SECTION_EDIT_KEY: Record<string, string> = {
+  personal:       "personal",
+  summary:        "summary",
+  experience:     "experience",
+  education:      "education",
+  skills:         "skills",
+  certifications: "certifications",
+  achievements:   "keyAchievements",
+  awards:         "awards",
+  memberships:    "memberships",
+  projects:       "projects",
+  boardRoles:     "boardRoles",
+  execTraining:   "executiveTraining",
+  publications:   "publications",
+  tools:          "tools",
+  volunteer:      "volunteer",
+  languages:      "languages",
+  referees:       "referees",
+  declaration:    "declaration",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,8 +68,8 @@ interface AiSection {
 }
 
 interface EditState {
-  sectionKey:    string; // SECTIONS config key (e.g. "achievements")
-  apiSectionKey: string; // API / applyAiSectionData key (e.g. "keyAchievements")
+  sectionKey:    string;
+  apiSectionKey: string; // key used by onApply / applyAiSectionData
   label:         string;
   data:          any;
   source:        "ai" | "manual" | "incomplete";
@@ -57,37 +78,60 @@ interface EditState {
 export interface AiMissingDialogProps {
   open: boolean;
   onClose: () => void;
-  missingRequired:   { key: string; label: string }[];
+  missingRequired:    { key: string; label: string }[];
   missingRecommended: { key: string; label: string }[];
-  /** Sections that exist but have items with incomplete required fields */
   incompleteSections: { key: string; label: string; missing: string[] }[];
   cvData: any;
   careerLevel: string;
-  /** Called when data should be applied to parent state */
-  onApply: (sectionKey: string, apiSectionKey: string, sectionData: any) => void;
-  /** Called when the user wants to navigate to a section in the full editor */
+  onApply:   (sectionKey: string, apiSectionKey: string, sectionData: any) => void;
   onNavigate: (sectionKey: string) => void;
 }
 
-// ─── Empty-data templates for manual fill ────────────────────────────────────
-function getEmptyData(apiKey: string): any {
-  switch (apiKey) {
-    case "summary":           return { summary: "" };
-    case "keyAchievements":   return { keyAchievements: [""] };
-    case "memberships":       return { memberships: [""] };
-    case "tools":             return { tools: [""] };
-    case "volunteer":         return { volunteer: [""] };
-    case "languages":         return { languages: [{ name: "", proficiency: "" }] };
-    case "projects":          return { projects: [{ name: "", description: "", tech: "" }] };
-    case "boardRoles":        return { boardRoles: [{ title: "", organization: "", startDate: "", endDate: "", description: "" }] };
-    case "executiveTraining": return { executiveTraining: [{ name: "", institution: "", year: "" }] };
-    case "publications":      return { publications: [{ title: "", publisher: "", year: "", type: "article" }] };
-    case "declaration":       return { declaration: { declaration: "", place: "", date: "" } };
-    default:                  return {};
+// ─── Empty templates for manual fill ─────────────────────────────────────────
+function getEmptyData(editKey: string): any {
+  switch (editKey) {
+    case "personal":
+      return { personal: { fullName: "", email: "", phone: "", location: "", headline: "", linkedin: "", website: "" } };
+    case "summary":
+      return { summary: "" };
+    case "experience":
+      return { experience: [{ title: "", company: "", location: "", startDate: "", endDate: "", description: "" }] };
+    case "education":
+      return { education: [{ degree: "", institution: "", year: "", description: "" }] };
+    case "skills":
+      return { skills: [{ name: "", category: "" }] };
+    case "certifications":
+      return { certifications: [{ name: "", issuer: "", year: "" }] };
+    case "keyAchievements":
+      return { keyAchievements: [""] };
+    case "awards":
+      return { awards: [{ title: "", description: "" }] };
+    case "memberships":
+      return { memberships: [""] };
+    case "projects":
+      return { projects: [{ name: "", description: "", tech: "" }] };
+    case "boardRoles":
+      return { boardRoles: [{ title: "", organization: "", startDate: "", endDate: "", description: "" }] };
+    case "executiveTraining":
+      return { executiveTraining: [{ name: "", institution: "", year: "" }] };
+    case "publications":
+      return { publications: [{ title: "", publisher: "", year: "", type: "article" }] };
+    case "tools":
+      return { tools: [""] };
+    case "volunteer":
+      return { volunteer: [""] };
+    case "languages":
+      return { languages: [{ name: "", proficiency: "" }] };
+    case "referees":
+      return { referees: [{ name: "", title: "", company: "", phone: "", email: "" }] };
+    case "declaration":
+      return { declaration: { declaration: "", place: "", date: "" } };
+    default:
+      return {};
   }
 }
 
-// ─── Shared input styles ──────────────────────────────────────────────────────
+// ─── Shared styles ────────────────────────────────────────────────────────────
 const inputCls =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 " +
   "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#004aad]/30 " +
@@ -104,7 +148,7 @@ function InlineSectionEditor({
   data: any;
   onChange: (d: any) => void;
 }) {
-  // ── Helpers for list editing
+  // List helpers
   const setItemField = (listKey: string, idx: number, field: string, val: string) => {
     const arr = [...(data[listKey] || [])];
     arr[idx] = { ...arr[idx], [field]: val };
@@ -125,7 +169,49 @@ function InlineSectionEditor({
 
   switch (apiKey) {
 
-    // ── Summary ──────────────────────────────────────────────────────────────
+    // ── Personal Info ──────────────────────────────────────────────────────────
+    case "personal": {
+      const p = data.personal || {};
+      const set = (field: string, val: string) =>
+        onChange({ ...data, personal: { ...p, [field]: val } });
+      return (
+        <div className="space-y-3">
+          <label className={labelCls}>Personal Information</label>
+          <div>
+            <label className={labelCls}>Full Name *</label>
+            <input className={inputCls} placeholder="Full name" value={p.fullName || ""} onChange={(e) => set("fullName", e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={labelCls}>Email *</label>
+              <input className={inputCls} type="email" placeholder="email@example.com" value={p.email || ""} onChange={(e) => set("email", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Phone</label>
+              <input className={inputCls} placeholder="+1 234 567 8900" value={p.phone || ""} onChange={(e) => set("phone", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Location</label>
+              <input className={inputCls} placeholder="City, Country" value={p.location || ""} onChange={(e) => set("location", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Headline / Role</label>
+              <input className={inputCls} placeholder="Senior Software Engineer" value={p.headline || ""} onChange={(e) => set("headline", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>LinkedIn</label>
+              <input className={inputCls} placeholder="linkedin.com/in/…" value={p.linkedin || ""} onChange={(e) => set("linkedin", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>Website</label>
+              <input className={inputCls} placeholder="yourwebsite.com" value={p.website || ""} onChange={(e) => set("website", e.target.value)} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Summary ────────────────────────────────────────────────────────────────
     case "summary":
       return (
         <div>
@@ -143,7 +229,156 @@ function InlineSectionEditor({
         </div>
       );
 
-    // ── Key Achievements ──────────────────────────────────────────────────────
+    // ── Experience ─────────────────────────────────────────────────────────────
+    case "experience": {
+      const items = data.experience || [{ title: "", company: "", location: "", startDate: "", endDate: "", description: "" }];
+      return (
+        <div className="space-y-3">
+          <label className={labelCls}>Work Experience</label>
+          {items.map((e: any, i: number) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Position {i + 1}</span>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem("experience", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input className={inputCls} placeholder="Job title *"
+                  value={e.title} onChange={(ev) => setItemField("experience", i, "title", ev.target.value)} />
+                <input className={inputCls} placeholder="Company *"
+                  value={e.company} onChange={(ev) => setItemField("experience", i, "company", ev.target.value)} />
+                <input className={inputCls} placeholder="Location (city, country)"
+                  value={e.location} onChange={(ev) => setItemField("experience", i, "location", ev.target.value)} />
+                <input className={inputCls} placeholder="Start date (e.g. Jan 2020)"
+                  value={e.startDate} onChange={(ev) => setItemField("experience", i, "startDate", ev.target.value)} />
+                <input className={`${inputCls} col-span-2 sm:col-span-1`} placeholder="End date (or Present)"
+                  value={e.endDate} onChange={(ev) => setItemField("experience", i, "endDate", ev.target.value)} />
+              </div>
+              <textarea rows={3} className={`${inputCls} resize-none`}
+                placeholder="Key responsibilities and achievements…"
+                value={e.description} onChange={(ev) => setItemField("experience", i, "description", ev.target.value)} />
+            </div>
+          ))}
+          <button type="button"
+            onClick={() => addItem("experience", { title: "", company: "", location: "", startDate: "", endDate: "", description: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add position
+          </button>
+        </div>
+      );
+    }
+
+    // ── Education ──────────────────────────────────────────────────────────────
+    case "education": {
+      const items = data.education || [{ degree: "", institution: "", year: "", description: "" }];
+      return (
+        <div className="space-y-3">
+          <label className={labelCls}>Education</label>
+          {items.map((e: any, i: number) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Entry {i + 1}</span>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem("education", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <input className={`${inputCls} col-span-2`} placeholder="Degree / Qualification *"
+                  value={e.degree} onChange={(ev) => setItemField("education", i, "degree", ev.target.value)} />
+                <input className={inputCls} placeholder="Year"
+                  value={e.year} onChange={(ev) => setItemField("education", i, "year", ev.target.value)} />
+              </div>
+              <input className={inputCls} placeholder="Institution / University *"
+                value={e.institution} onChange={(ev) => setItemField("education", i, "institution", ev.target.value)} />
+              <input className={inputCls} placeholder="Field of study or additional notes (optional)"
+                value={e.description} onChange={(ev) => setItemField("education", i, "description", ev.target.value)} />
+            </div>
+          ))}
+          <button type="button"
+            onClick={() => addItem("education", { degree: "", institution: "", year: "", description: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add education
+          </button>
+        </div>
+      );
+    }
+
+    // ── Skills ─────────────────────────────────────────────────────────────────
+    case "skills": {
+      const CATEGORIES = ["Technical", "Soft Skills", "Leadership", "Domain", "Tools", "Other"];
+      const items: { name: string; category: string }[] = data.skills || [{ name: "", category: "" }];
+      return (
+        <div className="space-y-2.5">
+          <label className={labelCls}>Skills</label>
+          {items.map((s: any, i: number) => (
+            <div key={i} className="flex items-center gap-2">
+              <input className={`${inputCls} flex-1`} placeholder="Skill name"
+                value={s.name} onChange={(e) => setItemField("skills", i, "name", e.target.value)} />
+              <select className={`${inputCls} w-32 shrink-0`}
+                value={s.category} onChange={(e) => setItemField("skills", i, "category", e.target.value)}>
+                <option value="">Category</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem("skills", i)}
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => addItem("skills", { name: "", category: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add skill
+          </button>
+        </div>
+      );
+    }
+
+    // ── Certifications ─────────────────────────────────────────────────────────
+    case "certifications": {
+      const items = data.certifications || [{ name: "", issuer: "", year: "" }];
+      return (
+        <div className="space-y-3">
+          <label className={labelCls}>Certifications</label>
+          {items.map((c: any, i: number) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Certification {i + 1}</span>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem("certifications", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <input className={inputCls} placeholder="Certification name *"
+                value={c.name} onChange={(e) => setItemField("certifications", i, "name", e.target.value)} />
+              <div className="grid grid-cols-3 gap-2">
+                <input className={`${inputCls} col-span-2`} placeholder="Issuing organisation"
+                  value={c.issuer} onChange={(e) => setItemField("certifications", i, "issuer", e.target.value)} />
+                <input className={inputCls} placeholder="Year"
+                  value={c.year} onChange={(e) => setItemField("certifications", i, "year", e.target.value)} />
+              </div>
+            </div>
+          ))}
+          <button type="button"
+            onClick={() => addItem("certifications", { name: "", issuer: "", year: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add certification
+          </button>
+        </div>
+      );
+    }
+
+    // ── Key Achievements ───────────────────────────────────────────────────────
     case "keyAchievements": {
       const items: string[] = data.keyAchievements || [""];
       return (
@@ -152,35 +387,57 @@ function InlineSectionEditor({
           {items.map((a, i) => (
             <div key={i} className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[#004aad] shrink-0" />
-              <input
-                className={`${inputCls} flex-1`}
+              <input className={`${inputCls} flex-1`}
                 placeholder={`Achievement ${i + 1} — include a metric (e.g. 30%, $1M)`}
-                value={a}
-                onChange={(e) => setItemText("keyAchievements", i, e.target.value)}
-              />
+                value={a} onChange={(e) => setItemText("keyAchievements", i, e.target.value)} />
               {items.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeItem("keyAchievements", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors"
-                >
+                <button type="button" onClick={() => removeItem("keyAchievements", i)}
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => addItem("keyAchievements", "")}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline mt-1"
-          >
+          <button type="button" onClick={() => addItem("keyAchievements", "")}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline mt-1">
             <Plus className="h-3 w-3" /> Add achievement
           </button>
         </div>
       );
     }
 
-    // ── Memberships ───────────────────────────────────────────────────────────
+    // ── Awards ─────────────────────────────────────────────────────────────────
+    case "awards": {
+      const items = data.awards || [{ title: "", description: "" }];
+      return (
+        <div className="space-y-3">
+          <label className={labelCls}>Awards &amp; Recognitions</label>
+          {items.map((a: any, i: number) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Award {i + 1}</span>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem("awards", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <input className={inputCls} placeholder="Award title *"
+                value={a.title} onChange={(e) => setItemField("awards", i, "title", e.target.value)} />
+              <input className={inputCls} placeholder="Description (issuer, year, context…)"
+                value={a.description} onChange={(e) => setItemField("awards", i, "description", e.target.value)} />
+            </div>
+          ))}
+          <button type="button" onClick={() => addItem("awards", { title: "", description: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add award
+          </button>
+        </div>
+      );
+    }
+
+    // ── Memberships ────────────────────────────────────────────────────────────
     case "memberships": {
       const items: string[] = data.memberships || [""];
       return (
@@ -188,158 +445,25 @@ function InlineSectionEditor({
           <label className={labelCls}>Professional Memberships</label>
           {items.map((m, i) => (
             <div key={i} className="flex items-center gap-2">
-              <input
-                className={`${inputCls} flex-1`}
-                placeholder={`Organisation ${i + 1}`}
-                value={m}
-                onChange={(e) => setItemText("memberships", i, e.target.value)}
-              />
+              <input className={`${inputCls} flex-1`} placeholder={`Organisation ${i + 1}`}
+                value={m} onChange={(e) => setItemText("memberships", i, e.target.value)} />
               {items.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeItem("memberships", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors"
-                >
+                <button type="button" onClick={() => removeItem("memberships", i)}
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => addItem("memberships", "")}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
+          <button type="button" onClick={() => addItem("memberships", "")}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add membership
           </button>
         </div>
       );
     }
 
-    // ── Tools ─────────────────────────────────────────────────────────────────
-    case "tools": {
-      const items: string[] = data.tools || [""];
-      return (
-        <div className="space-y-2.5">
-          <label className={labelCls}>Tools &amp; Software</label>
-          <div className="grid grid-cols-2 gap-2">
-            {items.map((t, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <input
-                  className={`${inputCls} flex-1`}
-                  placeholder={`Tool ${i + 1}`}
-                  value={t}
-                  onChange={(e) => setItemText("tools", i, e.target.value)}
-                />
-                {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem("tools", i)}
-                    className="text-slate-300 hover:text-red-400 shrink-0 transition-colors"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => addItem("tools", "")}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
-            <Plus className="h-3 w-3" /> Add tool
-          </button>
-        </div>
-      );
-    }
-
-    // ── Volunteer ─────────────────────────────────────────────────────────────
-    case "volunteer": {
-      const items: string[] = data.volunteer || [""];
-      return (
-        <div className="space-y-2.5">
-          <label className={labelCls}>Volunteer Experience</label>
-          {items.map((v, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
-              <input
-                className={`${inputCls} flex-1`}
-                placeholder={`Volunteer role ${i + 1}`}
-                value={v}
-                onChange={(e) => setItemText("volunteer", i, e.target.value)}
-              />
-              {items.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeItem("volunteer", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addItem("volunteer", "")}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
-            <Plus className="h-3 w-3" /> Add entry
-          </button>
-        </div>
-      );
-    }
-
-    // ── Languages ─────────────────────────────────────────────────────────────
-    case "languages": {
-      const LEVELS = ["Native", "Fluent", "Proficient", "Intermediate", "Basic"];
-      const items: { name: string; proficiency: string }[] =
-        data.languages || [{ name: "", proficiency: "" }];
-      return (
-        <div className="space-y-2.5">
-          <label className={labelCls}>Languages</label>
-          {items.map((l, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                className={`${inputCls} flex-1`}
-                placeholder="Language"
-                value={l.name}
-                onChange={(e) => setItemField("languages", i, "name", e.target.value)}
-              />
-              <select
-                className={`${inputCls} w-36 shrink-0`}
-                value={l.proficiency}
-                onChange={(e) => setItemField("languages", i, "proficiency", e.target.value)}
-              >
-                <option value="">Level…</option>
-                {LEVELS.map((lv) => (
-                  <option key={lv} value={lv}>{lv}</option>
-                ))}
-              </select>
-              {items.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeItem("languages", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => addItem("languages", { name: "", proficiency: "" })}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
-            <Plus className="h-3 w-3" /> Add language
-          </button>
-        </div>
-      );
-    }
-
-    // ── Projects ──────────────────────────────────────────────────────────────
+    // ── Projects ───────────────────────────────────────────────────────────────
     case "projects": {
       const items: { name: string; description: string; tech: string }[] =
         data.projects || [{ name: "", description: "", tech: "" }];
@@ -349,74 +473,44 @@ function InlineSectionEditor({
           {items.map((p, i) => (
             <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Project {i + 1}
-                </span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Project {i + 1}</span>
                 {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem("projects", i)}
-                    className="text-slate-300 hover:text-red-400 transition-colors"
-                  >
+                  <button type="button" onClick={() => removeItem("projects", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
-              <input
-                className={inputCls}
-                placeholder="Project name"
-                value={p.name}
-                onChange={(e) => setItemField("projects", i, "name", e.target.value)}
-              />
-              <textarea
-                rows={3}
-                className={`${inputCls} resize-none`}
+              <input className={inputCls} placeholder="Project name"
+                value={p.name} onChange={(e) => setItemField("projects", i, "name", e.target.value)} />
+              <textarea rows={3} className={`${inputCls} resize-none`}
                 placeholder="Describe scope, actions taken, and measurable outcomes…"
-                value={p.description}
-                onChange={(e) => setItemField("projects", i, "description", e.target.value)}
-              />
-              <input
-                className={inputCls}
-                placeholder="Technologies (e.g. React, Salesforce, Python) — optional"
-                value={p.tech}
-                onChange={(e) => setItemField("projects", i, "tech", e.target.value)}
-              />
+                value={p.description} onChange={(e) => setItemField("projects", i, "description", e.target.value)} />
+              <input className={inputCls} placeholder="Technologies (e.g. React, Salesforce, Python) — optional"
+                value={p.tech} onChange={(e) => setItemField("projects", i, "tech", e.target.value)} />
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => addItem("projects", { name: "", description: "", tech: "" })}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
+          <button type="button" onClick={() => addItem("projects", { name: "", description: "", tech: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add project
           </button>
         </div>
       );
     }
 
-    // ── Board Roles ───────────────────────────────────────────────────────────
+    // ── Board Roles ────────────────────────────────────────────────────────────
     case "boardRoles": {
-      const items: {
-        title: string; organization: string;
-        startDate: string; endDate: string; description: string;
-      }[] = data.boardRoles || [{
-        title: "", organization: "", startDate: "", endDate: "", description: "",
-      }];
+      const items = data.boardRoles || [{ title: "", organization: "", startDate: "", endDate: "", description: "" }];
       return (
         <div className="space-y-3">
           <label className={labelCls}>Board &amp; Advisory Roles</label>
-          {items.map((b, i) => (
+          {items.map((b: any, i: number) => (
             <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Role {i + 1}
-                </span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Role {i + 1}</span>
                 {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem("boardRoles", i)}
-                    className="text-slate-300 hover:text-red-400 transition-colors"
-                  >
+                  <button type="button" onClick={() => removeItem("boardRoles", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
@@ -431,29 +525,21 @@ function InlineSectionEditor({
                 <input className={inputCls} placeholder="End / Ongoing"
                   value={b.endDate} onChange={(e) => setItemField("boardRoles", i, "endDate", e.target.value)} />
               </div>
-              <textarea
-                rows={2}
-                className={`${inputCls} resize-none`}
+              <textarea rows={2} className={`${inputCls} resize-none`}
                 placeholder="Governance contribution…"
-                value={b.description}
-                onChange={(e) => setItemField("boardRoles", i, "description", e.target.value)}
-              />
+                value={b.description} onChange={(e) => setItemField("boardRoles", i, "description", e.target.value)} />
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => addItem("boardRoles", {
-              title: "", organization: "", startDate: "", endDate: "", description: "",
-            })}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
+          <button type="button"
+            onClick={() => addItem("boardRoles", { title: "", organization: "", startDate: "", endDate: "", description: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add role
           </button>
         </div>
       );
     }
 
-    // ── Executive Training ────────────────────────────────────────────────────
+    // ── Executive Training ─────────────────────────────────────────────────────
     case "executiveTraining": {
       const items: { name: string; institution: string; year: string }[] =
         data.executiveTraining || [{ name: "", institution: "", year: "" }];
@@ -463,15 +549,10 @@ function InlineSectionEditor({
           {items.map((t, i) => (
             <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Programme {i + 1}
-                </span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Programme {i + 1}</span>
                 {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem("executiveTraining", i)}
-                    className="text-slate-300 hover:text-red-400 transition-colors"
-                  >
+                  <button type="button" onClick={() => removeItem("executiveTraining", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
@@ -486,18 +567,15 @@ function InlineSectionEditor({
               </div>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={() => addItem("executiveTraining", { name: "", institution: "", year: "" })}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
+          <button type="button" onClick={() => addItem("executiveTraining", { name: "", institution: "", year: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add programme
           </button>
         </div>
       );
     }
 
-    // ── Publications ──────────────────────────────────────────────────────────
+    // ── Publications ───────────────────────────────────────────────────────────
     case "publications": {
       const PUB_TYPES = ["article", "paper", "presentation", "book-chapter"];
       const items: { title: string; publisher: string; year: string; type: string }[] =
@@ -508,15 +586,10 @@ function InlineSectionEditor({
           {items.map((p, i) => (
             <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-                  Publication {i + 1}
-                </span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Publication {i + 1}</span>
                 {items.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem("publications", i)}
-                    className="text-slate-300 hover:text-red-400 transition-colors"
-                  >
+                  <button type="button" onClick={() => removeItem("publications", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
@@ -529,11 +602,8 @@ function InlineSectionEditor({
                 <input className={inputCls} placeholder="Year"
                   value={p.year} onChange={(e) => setItemField("publications", i, "year", e.target.value)} />
               </div>
-              <select
-                className={inputCls}
-                value={p.type}
-                onChange={(e) => setItemField("publications", i, "type", e.target.value)}
-              >
+              <select className={inputCls} value={p.type}
+                onChange={(e) => setItemField("publications", i, "type", e.target.value)}>
                 {PUB_TYPES.map((ty) => (
                   <option key={ty} value={ty}>
                     {ty.charAt(0).toUpperCase() + ty.slice(1).replace(/-/g, " ")}
@@ -542,18 +612,144 @@ function InlineSectionEditor({
               </select>
             </div>
           ))}
-          <button
-            type="button"
+          <button type="button"
             onClick={() => addItem("publications", { title: "", publisher: "", year: "", type: "article" })}
-            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline"
-          >
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add publication
           </button>
         </div>
       );
     }
 
-    // ── Declaration ───────────────────────────────────────────────────────────
+    // ── Tools ──────────────────────────────────────────────────────────────────
+    case "tools": {
+      const items: string[] = data.tools || [""];
+      return (
+        <div className="space-y-2.5">
+          <label className={labelCls}>Tools &amp; Software</label>
+          <div className="grid grid-cols-2 gap-2">
+            {items.map((t, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <input className={`${inputCls} flex-1`} placeholder={`Tool ${i + 1}`}
+                  value={t} onChange={(e) => setItemText("tools", i, e.target.value)} />
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem("tools", i)}
+                    className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={() => addItem("tools", "")}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add tool
+          </button>
+        </div>
+      );
+    }
+
+    // ── Volunteer ──────────────────────────────────────────────────────────────
+    case "volunteer": {
+      const items: string[] = data.volunteer || [""];
+      return (
+        <div className="space-y-2.5">
+          <label className={labelCls}>Volunteer Experience</label>
+          {items.map((v, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
+              <input className={`${inputCls} flex-1`} placeholder={`Volunteer role ${i + 1}`}
+                value={v} onChange={(e) => setItemText("volunteer", i, e.target.value)} />
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem("volunteer", i)}
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => addItem("volunteer", "")}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add entry
+          </button>
+        </div>
+      );
+    }
+
+    // ── Languages ──────────────────────────────────────────────────────────────
+    case "languages": {
+      const LEVELS = ["Native", "Fluent", "Proficient", "Intermediate", "Basic"];
+      const items: { name: string; proficiency: string }[] =
+        data.languages || [{ name: "", proficiency: "" }];
+      return (
+        <div className="space-y-2.5">
+          <label className={labelCls}>Languages</label>
+          {items.map((l, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <input className={`${inputCls} flex-1`} placeholder="Language"
+                value={l.name} onChange={(e) => setItemField("languages", i, "name", e.target.value)} />
+              <select className={`${inputCls} w-36 shrink-0`}
+                value={l.proficiency} onChange={(e) => setItemField("languages", i, "proficiency", e.target.value)}>
+                <option value="">Level…</option>
+                {LEVELS.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
+              </select>
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItem("languages", i)}
+                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => addItem("languages", { name: "", proficiency: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add language
+          </button>
+        </div>
+      );
+    }
+
+    // ── Referees ───────────────────────────────────────────────────────────────
+    case "referees": {
+      const items = data.referees || [{ name: "", title: "", company: "", phone: "", email: "" }];
+      return (
+        <div className="space-y-3">
+          <label className={labelCls}>Referees</label>
+          {items.map((r: any, i: number) => (
+            <div key={i} className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Referee {i + 1}</span>
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem("referees", i)}
+                    className="text-slate-300 hover:text-red-400 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input className={inputCls} placeholder="Full name *"
+                  value={r.name} onChange={(e) => setItemField("referees", i, "name", e.target.value)} />
+                <input className={inputCls} placeholder="Job title"
+                  value={r.title} onChange={(e) => setItemField("referees", i, "title", e.target.value)} />
+                <input className={inputCls} placeholder="Company / Organisation"
+                  value={r.company} onChange={(e) => setItemField("referees", i, "company", e.target.value)} />
+                <input className={inputCls} placeholder="Phone"
+                  value={r.phone} onChange={(e) => setItemField("referees", i, "phone", e.target.value)} />
+                <input className={`${inputCls} col-span-2`} type="email" placeholder="Email"
+                  value={r.email} onChange={(e) => setItemField("referees", i, "email", e.target.value)} />
+              </div>
+            </div>
+          ))}
+          <button type="button"
+            onClick={() => addItem("referees", { name: "", title: "", company: "", phone: "", email: "" })}
+            className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
+            <Plus className="h-3 w-3" /> Add referee
+          </button>
+        </div>
+      );
+    }
+
+    // ── Declaration ────────────────────────────────────────────────────────────
     case "declaration": {
       const d = data.declaration || { declaration: "", place: "", date: "" };
       const setField = (field: string, val: string) =>
@@ -561,13 +757,9 @@ function InlineSectionEditor({
       return (
         <div className="space-y-3">
           <label className={labelCls}>Declaration Statement</label>
-          <textarea
-            rows={3}
-            className={`${inputCls} resize-none`}
+          <textarea rows={3} className={`${inputCls} resize-none`}
             placeholder="I hereby declare that the information provided in this Curriculum Vitae is true and correct…"
-            value={d.declaration}
-            onChange={(e) => setField("declaration", e.target.value)}
-          />
+            value={d.declaration} onChange={(e) => setField("declaration", e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className={labelCls}>Place</label>
@@ -585,11 +777,7 @@ function InlineSectionEditor({
     }
 
     default:
-      return (
-        <p className="text-sm text-slate-400">
-          Editor not available — please navigate to the section to fill it in.
-        </p>
-      );
+      return <p className="text-sm text-slate-400">Editor not available for this section.</p>;
   }
 }
 
@@ -599,84 +787,44 @@ function MissingSectionRow({
   loading,
   hasError,
   aiCapable,
-  inlineCapable,
   onAiFill,
   onManualInline,
-  onNavigate,
 }: {
   section: AiSection;
   loading: boolean;
   hasError: boolean;
   aiCapable: boolean;
-  inlineCapable: boolean;
   onAiFill: () => void;
   onManualInline: () => void;
-  onNavigate: () => void;
 }) {
   const isRequired = section.priority === "required";
   return (
-    <div
-      className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${
-        isRequired
-          ? "border-red-100 bg-red-50/50"
-          : "border-amber-100 bg-amber-50/30"
-      }`}
-    >
+    <div className={`flex items-center gap-2 p-3 rounded-xl border transition-colors ${
+      isRequired ? "border-red-100 bg-red-50/50" : "border-amber-100 bg-amber-50/30"
+    }`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span
-            className={`inline-block h-2 w-2 rounded-full shrink-0 ${
-              isRequired ? "bg-red-500" : "bg-amber-400"
-            }`}
-          />
-          <span className="text-sm font-medium text-slate-800 truncate">
-            {section.label}
-          </span>
+          <span className={`inline-block h-2 w-2 rounded-full shrink-0 ${isRequired ? "bg-red-500" : "bg-amber-400"}`} />
+          <span className="text-sm font-medium text-slate-800 truncate">{section.label}</span>
         </div>
         {hasError && (
-          <p className="text-[11px] text-red-500 mt-0.5 pl-4">
-            Generation failed — try again
-          </p>
+          <p className="text-[11px] text-red-500 mt-0.5 pl-4">Generation failed — try again</p>
         )}
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
         {aiCapable && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={loading}
-            onClick={onAiFill}
-            className="h-7 text-xs px-2.5 gap-1 border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 disabled:opacity-50"
-          >
-            {loading
-              ? <Loader2 className="h-3 w-3 animate-spin" />
-              : <Lightbulb className="h-3 w-3" />}
+          <Button size="sm" variant="outline" disabled={loading} onClick={onAiFill}
+            className="h-7 text-xs px-2.5 gap-1 border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 disabled:opacity-50">
+            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lightbulb className="h-3 w-3" />}
             {loading ? "Generating…" : "AI Fill"}
           </Button>
         )}
-
-        {inlineCapable ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onManualInline}
-            className="h-7 text-xs px-2.5 gap-1 text-slate-500 hover:text-slate-700"
-          >
-            <PenLine className="h-3 w-3" />
-            Manual
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onNavigate}
-            className="h-7 text-xs px-2.5 gap-1 text-slate-500 hover:text-slate-700"
-          >
-            <PenLine className="h-3 w-3" />
-            Fill myself
-          </Button>
-        )}
+        <Button size="sm" variant="ghost" onClick={onManualInline}
+          className="h-7 text-xs px-2.5 gap-1 text-slate-500 hover:text-slate-700">
+          <PenLine className="h-3 w-3" />
+          {aiCapable ? "Manual" : "Fill in"}
+        </Button>
       </div>
     </div>
   );
@@ -703,12 +851,8 @@ function IncompleteSectionRow({
           Missing: {missing.join(", ")}
         </p>
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={onFix}
-        className="h-7 text-xs px-2.5 gap-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50 shrink-0"
-      >
+      <Button size="sm" variant="ghost" onClick={onFix}
+        className="h-7 text-xs px-2.5 gap-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50 shrink-0">
         <PenLine className="h-3 w-3" />
         Fix it
       </Button>
@@ -729,11 +873,11 @@ export function AiMissingDialog({
   onNavigate,
 }: AiMissingDialogProps) {
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
-  const [editing, setEditing]       = useState<EditState | null>(null);
+  const [editing, setEditing]         = useState<EditState | null>(null);
   const [appliedKeys, setAppliedKeys] = useState<Set<string>>(new Set());
-  const [errorKey, setErrorKey]     = useState<string | null>(null);
+  const [errorKey, setErrorKey]       = useState<string | null>(null);
 
-  // Auto-close if there is genuinely nothing to show
+  // Auto-close when nothing left to show
   useEffect(() => {
     if (
       open &&
@@ -746,7 +890,6 @@ export function AiMissingDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Filter out already-applied sections
   const pendingRequired    = missingRequired.filter((s) => !appliedKeys.has(s.key));
   const pendingRecommended = missingRecommended.filter((s) => !appliedKeys.has(s.key));
   const allMissingDone     = pendingRequired.length === 0 && pendingRecommended.length === 0;
@@ -768,7 +911,6 @@ export function AiMissingDialog({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
 
-      // Open the inline editor pre-populated with the AI draft
       setEditing({
         sectionKey:    section.key,
         apiSectionKey: apiKey,
@@ -785,37 +927,89 @@ export function AiMissingDialog({
   };
 
   const handleManualInline = (section: AiSection) => {
-    const apiKey = SECTION_API_KEY[section.key];
-    if (!apiKey) return;
+    const editKey = SECTION_EDIT_KEY[section.key];
     setEditing({
       sectionKey:    section.key,
-      apiSectionKey: apiKey,
+      apiSectionKey: editKey,
       label:         section.label,
-      data:          getEmptyData(apiKey),
+      data:          getEmptyData(editKey),
       source:        "manual",
     });
   };
 
-  /** Fix incomplete section inline (supported: languages) — others navigate away */
+  /** Open inline editor for an incomplete section, pre-filled with existing data */
   const handleInlineFix = (s: { key: string; label: string }) => {
-    if (s.key === "languages") {
-      const existing = (cvData as any).languages || [];
-      setEditing({
-        sectionKey:    "languages",
-        apiSectionKey: "languages",
-        label:         s.label,
-        data: {
-          languages: existing.map((l: any) => ({
-            name:        l.name        || "",
-            proficiency: l.proficiency || "",
+    const editKey = SECTION_EDIT_KEY[s.key];
+    let data: any;
+
+    switch (s.key) {
+      case "personal":
+        data = { personal: { ...(cvData.personalInfo || {}) } };
+        break;
+      case "experience":
+        data = {
+          experience: (cvData.experiences || []).map((e: any) => ({
+            id: e.id, title: e.title || "", company: e.company || "",
+            location: e.location || "", startDate: e.startDate || "",
+            endDate: e.endDate || "", description: e.description || "",
           })),
-        },
-        source: "incomplete",
-      });
-    } else {
-      onNavigate(s.key);
-      onClose();
+        };
+        break;
+      case "education":
+        data = {
+          education: (cvData.education || []).map((e: any) => ({
+            id: e.id, degree: e.degree || "", institution: e.institution || "",
+            year: e.year || "", description: e.description || "",
+          })),
+        };
+        break;
+      case "skills":
+        data = {
+          skills: (cvData.skills || []).map((sk: any) => ({
+            id: sk.id, name: sk.name || "", category: sk.category || "",
+          })),
+        };
+        break;
+      case "certifications":
+        data = {
+          certifications: (cvData.certifications || []).map((c: any) => ({
+            id: c.id, name: c.name || "", issuer: c.issuer || "", year: c.year || "",
+          })),
+        };
+        break;
+      case "languages":
+        data = {
+          languages: (cvData.languages || []).map((l: any) => ({
+            id: l.id, name: l.name || "", proficiency: l.proficiency || "",
+          })),
+        };
+        break;
+      case "awards":
+        data = {
+          awards: (cvData.awards || []).map((a: any) => ({
+            id: a.id, title: a.title || "", description: a.description || "",
+          })),
+        };
+        break;
+      case "referees":
+        data = {
+          referees: (cvData.referees || []).map((r: any) => ({
+            id: r.id, name: r.name || "", title: r.title || "",
+            company: r.company || "", phone: r.phone || "", email: r.email || "",
+          })),
+        };
+        break;
+      default:
+        data = getEmptyData(editKey);
     }
+
+    setEditing({
+      sectionKey:    s.key,
+      apiSectionKey: editKey,
+      label:         s.label,
+      data,
+      source: "incomplete",
+    });
   };
 
   const handleApply = () => {
@@ -830,7 +1024,7 @@ export function AiMissingDialog({
     onClose();
   };
 
-  // ── Header copy ───────────────────────────────────────────────────────────
+  // ── Header copy ──────────────────────────────────────────────────────────
   const headerTitle = editing
     ? editing.source === "ai"
       ? `${editing.label} — AI Draft`
@@ -858,28 +1052,21 @@ export function AiMissingDialog({
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      {/* showCloseButton=false — we render our own close button in the header */}
       <DialogContent
         showCloseButton={false}
         className="max-w-lg p-0 gap-0 flex flex-col max-h-[88vh] overflow-hidden"
       >
-
         {/* ── Header ── */}
         <div className="flex items-start gap-3 p-5 border-b shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#004aad] flex items-center justify-center shrink-0 mt-0.5">
             <Lightbulb className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-slate-800 text-base leading-tight">
-              {headerTitle}
-            </h2>
+            <h2 className="font-semibold text-slate-800 text-base leading-tight">{headerTitle}</h2>
             <p className="text-xs text-slate-500 mt-0.5 leading-snug">{headerSub}</p>
           </div>
-          <DialogClose
-            onClick={handleClose}
-            aria-label="Close"
-            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
-          >
+          <DialogClose onClick={handleClose} aria-label="Close"
+            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300">
             <X className="h-4 w-4" />
           </DialogClose>
         </div>
@@ -887,11 +1074,9 @@ export function AiMissingDialog({
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto min-h-0">
 
-          {/* ── Inline editor (AI draft or manual fill) ── */}
+          {/* Inline editor */}
           {editing && (
             <div className="p-5 space-y-4">
-
-              {/* Source badge */}
               {editing.source === "ai" && (
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#004aad] bg-[#004aad]/10 px-2.5 py-1 rounded-full">
                   <Lightbulb className="h-2.5 w-2.5" />
@@ -904,7 +1089,6 @@ export function AiMissingDialog({
                   Existing data — complete the missing fields
                 </span>
               )}
-
               <InlineSectionEditor
                 apiKey={editing.apiSectionKey}
                 data={editing.data}
@@ -913,7 +1097,7 @@ export function AiMissingDialog({
             </div>
           )}
 
-          {/* ── All done ── */}
+          {/* All done */}
           {!editing && allMissingDone && incompleteSections.length === 0 && (
             <div className="p-10 flex flex-col items-center gap-3 text-center">
               <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -921,14 +1105,12 @@ export function AiMissingDialog({
               </div>
               <div>
                 <p className="font-semibold text-slate-800">All sections complete!</p>
-                <p className="text-sm text-slate-500 mt-1">
-                  Your CV looks great. Click Continue to proceed.
-                </p>
+                <p className="text-sm text-slate-500 mt-1">Your CV looks great. Click Continue to proceed.</p>
               </div>
             </div>
           )}
 
-          {/* ── Section list ── */}
+          {/* Section list */}
           {!editing && !(allMissingDone && incompleteSections.length === 0) && (
             <div className="p-4 space-y-4">
 
@@ -941,22 +1123,17 @@ export function AiMissingDialog({
                       Required — missing ({pendingRequired.length})
                     </span>
                   </div>
-                  {pendingRequired.map((s) => {
-                    const apiKey = SECTION_API_KEY[s.key];
-                    return (
-                      <MissingSectionRow
-                        key={s.key}
-                        section={{ ...s, priority: "required" }}
-                        loading={loadingKey === s.key}
-                        hasError={errorKey === s.key}
-                        aiCapable={!!apiKey}
-                        inlineCapable={!!apiKey}
-                        onAiFill={() => handleAiFill({ ...s, priority: "required" })}
-                        onManualInline={() => handleManualInline({ ...s, priority: "required" })}
-                        onNavigate={() => { onNavigate(s.key); onClose(); }}
-                      />
-                    );
-                  })}
+                  {pendingRequired.map((s) => (
+                    <MissingSectionRow
+                      key={s.key}
+                      section={{ ...s, priority: "required" }}
+                      loading={loadingKey === s.key}
+                      hasError={errorKey === s.key}
+                      aiCapable={!!SECTION_API_KEY[s.key]}
+                      onAiFill={() => handleAiFill({ ...s, priority: "required" })}
+                      onManualInline={() => handleManualInline({ ...s, priority: "required" })}
+                    />
+                  ))}
                 </div>
               )}
 
@@ -969,22 +1146,17 @@ export function AiMissingDialog({
                       Recommended — missing ({pendingRecommended.length})
                     </span>
                   </div>
-                  {pendingRecommended.map((s) => {
-                    const apiKey = SECTION_API_KEY[s.key];
-                    return (
-                      <MissingSectionRow
-                        key={s.key}
-                        section={{ ...s, priority: "recommended" }}
-                        loading={loadingKey === s.key}
-                        hasError={errorKey === s.key}
-                        aiCapable={!!apiKey}
-                        inlineCapable={!!apiKey}
-                        onAiFill={() => handleAiFill({ ...s, priority: "recommended" })}
-                        onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
-                        onNavigate={() => { onNavigate(s.key); onClose(); }}
-                      />
-                    );
-                  })}
+                  {pendingRecommended.map((s) => (
+                    <MissingSectionRow
+                      key={s.key}
+                      section={{ ...s, priority: "recommended" }}
+                      loading={loadingKey === s.key}
+                      hasError={errorKey === s.key}
+                      aiCapable={!!SECTION_API_KEY[s.key]}
+                      onAiFill={() => handleAiFill({ ...s, priority: "recommended" })}
+                      onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
+                    />
+                  ))}
                 </div>
               )}
 
@@ -1016,41 +1188,26 @@ export function AiMissingDialog({
         <div className="p-4 border-t shrink-0">
           {editing ? (
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditing(null)}
-                className="gap-1.5 text-slate-600"
-              >
+              <Button variant="outline" size="sm" onClick={() => setEditing(null)} className="gap-1.5 text-slate-600">
                 <ChevronLeft className="h-3.5 w-3.5" />
                 Back
               </Button>
               <div className="flex-1" />
-              <Button
-                size="sm"
-                onClick={handleApply}
-                className="bg-[#004aad] hover:bg-[#003d8f] text-white gap-1.5"
-              >
+              <Button size="sm" onClick={handleApply}
+                className="bg-[#004aad] hover:bg-[#003d8f] text-white gap-1.5">
                 <Check className="h-3.5 w-3.5" />
                 Apply
               </Button>
             </div>
           ) : allMissingDone && incompleteSections.length === 0 ? (
-            <Button
-              onClick={handleClose}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
+            <Button onClick={handleClose} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
               Close
             </Button>
           ) : (
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-400">You can always fix these later</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClose}
-                className="text-slate-400 hover:text-slate-600 text-xs"
-              >
+              <Button variant="ghost" size="sm" onClick={handleClose}
+                className="text-slate-400 hover:text-slate-600 text-xs">
                 Skip for now
               </Button>
             </div>

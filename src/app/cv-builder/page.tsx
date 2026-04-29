@@ -1333,6 +1333,97 @@ function CVBuilderPage() {
           });
         }
         break;
+      // ── Inline-editor cases for non-AI sections ──────────────────────────
+      case "personal":
+        if (sectionData.personal) {
+          const p = sectionData.personal;
+          setPersonalInfo({
+            fullName: p.fullName || "",
+            email:    p.email    || "",
+            phone:    p.phone    || "",
+            location: p.location || "",
+            headline: p.headline || "",
+            linkedin: p.linkedin || "",
+            website:  p.website  || "",
+          });
+        }
+        break;
+      case "experience":
+        if (Array.isArray(sectionData.experience)) {
+          setExperiences(
+            sectionData.experience.map((e: any) => ({
+              id:          e.id || uid(),
+              title:       e.title       || "",
+              company:     e.company     || "",
+              location:    e.location    || "",
+              startDate:   e.startDate   || "",
+              endDate:     e.endDate     || "",
+              description: e.description || "",
+            }))
+          );
+        }
+        break;
+      case "education":
+        if (Array.isArray(sectionData.education)) {
+          setEducation(
+            sectionData.education.map((e: any) => ({
+              id:          e.id || uid(),
+              degree:      e.degree      || "",
+              institution: e.institution || "",
+              year:        e.year        || "",
+              description: e.description || "",
+            }))
+          );
+        }
+        break;
+      case "skills":
+        if (Array.isArray(sectionData.skills)) {
+          setSkills(
+            sectionData.skills.map((s: any) => ({
+              id:       s.id || uid(),
+              name:     s.name     || "",
+              category: s.category || "",
+            }))
+          );
+        }
+        break;
+      case "certifications":
+        if (Array.isArray(sectionData.certifications)) {
+          setCertifications(
+            sectionData.certifications.map((c: any) => ({
+              id:     c.id || uid(),
+              name:   c.name   || "",
+              issuer: c.issuer || "",
+              year:   c.year   || "",
+            }))
+          );
+        }
+        break;
+      case "awards":
+        if (Array.isArray(sectionData.awards)) {
+          setAwards(
+            sectionData.awards.map((a: any) => ({
+              id:          a.id || uid(),
+              title:       a.title       || "",
+              description: a.description || "",
+            }))
+          );
+        }
+        break;
+      case "referees":
+        if (Array.isArray(sectionData.referees)) {
+          setReferees(
+            sectionData.referees.map((r: any) => ({
+              id:      r.id || uid(),
+              name:    r.name    || "",
+              title:   r.title   || "",
+              company: r.company || "",
+              phone:   r.phone   || "",
+              email:   r.email   || "",
+            }))
+          );
+        }
+        break;
     }
     // Ensure the section becomes visible in the sidebar
     setManuallyShown((prev) => new Set([...prev, _sectionKey]));
