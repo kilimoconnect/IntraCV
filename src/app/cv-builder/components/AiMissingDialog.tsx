@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
-  Sparkles,
+  Lightbulb,
   PenLine,
   Check,
   AlertCircle,
   ChevronLeft,
   X,
+  Wrench,
 } from "lucide-react";
 
 // ─── Section key → API endpoint sectionKey mapping ───────────────────────────
@@ -55,6 +56,8 @@ export interface AiMissingDialogProps {
   onClose: () => void;
   missingRequired: { key: string; label: string }[];
   missingRecommended: { key: string; label: string }[];
+  /** Sections that have data but items with incomplete required fields */
+  incompleteSections: { key: string; label: string; missing: string[] }[];
   cvData: object;
   careerLevel: string;
   /** Called when AI data should be applied to parent state */
@@ -222,8 +225,8 @@ function PreviewContent({ apiKey, data }: { apiKey: string; data: any }) {
   }
 }
 
-// ─── Section Row ──────────────────────────────────────────────────────────────
-function SectionRow({
+// ─── Missing-section Row ──────────────────────────────────────────────────────
+function MissingSectionRow({
   section,
   loading,
   hasError,
@@ -277,7 +280,7 @@ function SectionRow({
             {loading ? (
               <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <Sparkles className="h-3 w-3" />
+              <Lightbulb className="h-3 w-3" />
             )}
             {loading ? "Generating…" : "AI Fill"}
           </Button>
@@ -296,12 +299,47 @@ function SectionRow({
   );
 }
 
+// ─── Incomplete-section Row (has data but missing some fields) ────────────────
+function IncompleteSectionRow({
+  label,
+  missing,
+  onFix,
+}: {
+  label: string;
+  missing: string[];
+  onFix: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 p-3 rounded-xl border border-orange-100 bg-orange-50/40">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <Wrench className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+          <span className="text-sm font-medium text-slate-800 truncate">{label}</span>
+        </div>
+        <p className="text-[11px] text-orange-600 mt-0.5 pl-5 truncate">
+          Missing: {missing.join(", ")}
+        </p>
+      </div>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onFix}
+        className="h-7 text-xs px-2.5 gap-1 text-orange-600 hover:text-orange-700 hover:bg-orange-50 shrink-0"
+      >
+        <PenLine className="h-3 w-3" />
+        Fix it
+      </Button>
+    </div>
+  );
+}
+
 // ─── Main Dialog ──────────────────────────────────────────────────────────────
 export function AiMissingDialog({
   open,
   onClose,
   missingRequired,
   missingRecommended,
+  incompleteSections,
   cvData,
   careerLevel,
   onApply,
@@ -312,15 +350,27 @@ export function AiMissingDialog({
   const [appliedKeys, setAppliedKeys] = useState<Set<string>>(new Set());
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
-  // Filter out sections the user has already applied in this session
-  const pendingRequired = missingRequired.filter(
-    (s) => !appliedKeys.has(s.key)
-  );
-  const pendingRecommended = missingRecommended.filter(
-    (s) => !appliedKeys.has(s.key)
-  );
-  const totalRemaining = pendingRequired.length + pendingRecommended.length;
-  const allDone = totalRemaining === 0;
+  // Auto-close if there is genuinely nothing to show
+  useEffect(() => {
+    if (
+      open &&
+      missingRequired.length === 0 &&
+      missingRecommended.length === 0 &&
+      incompleteSections.length === 0
+    ) {
+      onClose();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // Filter out sections already applied in this session
+  const pendingRequired = missingRequired.filter((s) => !appliedKeys.has(s.key));
+  const pendingRecommended = missingRecommended.filter((s) => !appliedKeys.has(s.key));
+  const totalMissing = pendingRequired.length + pendingRecommended.length;
+  const allMissingDone = totalMissing === 0;
+
+  // Total things to address for the header description
+  const totalToAddress = totalMissing + incompleteSections.length;
 
   // ── Handlers ──
   const handleAiFill = async (section: AiSection) => {
@@ -333,15 +383,10 @@ export function AiMissingDialog({
       const res = await fetch("/api/ai/generate-missing-section", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cvData,
-          sectionKey: apiKey,
-          careerLevel,
-        }),
+        body: JSON.stringify({ cvData, sectionKey: apiKey, careerLevel }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-
       setPreview({
         sectionKey: section.key,
         apiSectionKey: apiKey,
@@ -350,7 +395,7 @@ export function AiMissingDialog({
       });
     } catch (err: any) {
       setErrorKey(section.key);
-      console.error("[AI Missing Dialog] generation error:", err.message);
+      console.error("[AiMissingDialog] generation error:", err.message);
     } finally {
       setLoadingKey(null);
     }
@@ -365,7 +410,7 @@ export function AiMissingDialog({
 
   const handleEditMyself = () => {
     if (!preview) return;
-    // Apply the data first so it's pre-populated when user opens the section
+    // Pre-populate the section with the AI draft, then let user edit
     onApply(preview.sectionKey, preview.apiSectionKey, preview.sectionData);
     setAppliedKeys((prev) => new Set([...prev, preview.sectionKey]));
     const key = preview.sectionKey;
@@ -384,30 +429,38 @@ export function AiMissingDialog({
     onClose();
   };
 
+  // ── Derived header text ──
+  const headerTitle = preview
+    ? `${preview.label} — AI Draft`
+    : allMissingDone && incompleteSections.length > 0
+    ? "Fix incomplete fields"
+    : allMissingDone
+    ? "Your CV is complete!"
+    : "Strengthen Your CV";
+
+  const headerSub = preview
+    ? "Review the AI draft, then apply it or edit it yourself"
+    : allMissingDone && incompleteSections.length > 0
+    ? `${incompleteSections.length} section${incompleteSections.length !== 1 ? "s" : ""} have fields that need filling in`
+    : allMissingDone
+    ? "All sections are filled. Save your CV to continue."
+    : `${totalToAddress} issue${totalToAddress !== 1 ? "s" : ""} found — let AI fill missing sections or edit them yourself`;
+
   // ── Render ──
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="max-w-lg p-0 gap-0 flex flex-col max-h-[88vh] overflow-hidden">
+
         {/* ── Header ── */}
         <div className="flex items-start gap-3 p-5 border-b shrink-0">
           <div className="w-9 h-9 rounded-xl bg-[#004aad] flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="h-5 w-5 text-white" />
+            <Lightbulb className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-slate-800 text-base leading-tight">
-              {preview
-                ? `${preview.label} — AI Draft`
-                : allDone
-                ? "Your CV is complete!"
-                : "Strengthen Your CV"}
+              {headerTitle}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5 leading-snug">
-              {preview
-                ? "Review the AI draft, then apply it or edit it yourself"
-                : allDone
-                ? "All sections have been filled. Save your CV to continue."
-                : `${totalRemaining} section${totalRemaining !== 1 ? "s" : ""} missing — let AI draft them or fill them yourself`}
-            </p>
+            <p className="text-xs text-slate-500 mt-0.5 leading-snug">{headerSub}</p>
           </div>
           <button
             onClick={handleClose}
@@ -420,6 +473,7 @@ export function AiMissingDialog({
 
         {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto min-h-0">
+
           {/* Preview mode */}
           {preview && (
             <div className="p-5 space-y-4">
@@ -427,10 +481,7 @@ export function AiMissingDialog({
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-[#004aad] mb-3">
                   AI Generated Draft
                 </p>
-                <PreviewContent
-                  apiKey={preview.apiSectionKey}
-                  data={preview.sectionData}
-                />
+                <PreviewContent apiKey={preview.apiSectionKey} data={preview.sectionData} />
               </div>
               <p className="text-xs text-slate-400 text-center">
                 AI drafts are examples — always review and verify before saving.
@@ -438,8 +489,8 @@ export function AiMissingDialog({
             </div>
           )}
 
-          {/* All done */}
-          {!preview && allDone && (
+          {/* All done (no missing AND no incomplete) */}
+          {!preview && allMissingDone && incompleteSections.length === 0 && (
             <div className="p-10 flex flex-col items-center gap-3 text-center">
               <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
                 <Check className="h-7 w-7 text-emerald-600" />
@@ -447,64 +498,82 @@ export function AiMissingDialog({
               <div>
                 <p className="font-semibold text-slate-800">All sections complete!</p>
                 <p className="text-sm text-slate-500 mt-1">
-                  Your CV looks great. Click Save &amp; Continue to proceed.
+                  Your CV looks great. Click Continue to proceed.
                 </p>
               </div>
             </div>
           )}
 
           {/* Section list */}
-          {!preview && !allDone && (
+          {!preview && !(allMissingDone && incompleteSections.length === 0) && (
             <div className="p-4 space-y-4">
-              {/* Required */}
+
+              {/* ── Required missing ── */}
               {pendingRequired.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-1.5 px-1">
                     <AlertCircle className="h-3.5 w-3.5 text-red-500" />
                     <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">
-                      Required ({pendingRequired.length})
+                      Required — missing ({pendingRequired.length})
                     </span>
                   </div>
                   {pendingRequired.map((s) => (
-                    <SectionRow
+                    <MissingSectionRow
                       key={s.key}
                       section={{ ...s, priority: "required" }}
                       loading={loadingKey === s.key}
                       hasError={errorKey === s.key}
                       aiCapable={!!SECTION_API_KEY[s.key]}
-                      onAiFill={() =>
-                        handleAiFill({ ...s, priority: "required" })
-                      }
+                      onAiFill={() => handleAiFill({ ...s, priority: "required" })}
                       onFillMyself={() => handleFillMyself(s.key)}
                     />
                   ))}
                 </div>
               )}
 
-              {/* Recommended */}
+              {/* ── Recommended missing ── */}
               {pendingRecommended.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-1.5 px-1 mt-1">
+                  <div className="flex items-center gap-1.5 px-1">
                     <span className="h-3 w-3 rounded-full border-2 border-amber-400 shrink-0" />
                     <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">
-                      Recommended ({pendingRecommended.length})
+                      Recommended — missing ({pendingRecommended.length})
                     </span>
                   </div>
                   {pendingRecommended.map((s) => (
-                    <SectionRow
+                    <MissingSectionRow
                       key={s.key}
                       section={{ ...s, priority: "recommended" }}
                       loading={loadingKey === s.key}
                       hasError={errorKey === s.key}
                       aiCapable={!!SECTION_API_KEY[s.key]}
-                      onAiFill={() =>
-                        handleAiFill({ ...s, priority: "recommended" })
-                      }
+                      onAiFill={() => handleAiFill({ ...s, priority: "recommended" })}
                       onFillMyself={() => handleFillMyself(s.key)}
                     />
                   ))}
                 </div>
               )}
+
+              {/* ── Incomplete fields ── */}
+              {incompleteSections.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <Wrench className="h-3.5 w-3.5 text-orange-500" />
+                    <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
+                      Incomplete fields ({incompleteSections.length})
+                    </span>
+                  </div>
+                  {incompleteSections.map((s) => (
+                    <IncompleteSectionRow
+                      key={s.key}
+                      label={s.label}
+                      missing={s.missing}
+                      onFix={() => handleFillMyself(s.key)}
+                    />
+                  ))}
+                </div>
+              )}
+
             </div>
           )}
         </div>
@@ -541,7 +610,7 @@ export function AiMissingDialog({
                 Apply this
               </Button>
             </div>
-          ) : allDone ? (
+          ) : allMissingDone && incompleteSections.length === 0 ? (
             <Button
               onClick={handleClose}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -551,7 +620,7 @@ export function AiMissingDialog({
           ) : (
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-400">
-                You can always complete these sections later
+                You can always fix these later
               </p>
               <Button
                 variant="ghost"
@@ -564,6 +633,7 @@ export function AiMissingDialog({
             </div>
           )}
         </div>
+
       </DialogContent>
     </Dialog>
   );

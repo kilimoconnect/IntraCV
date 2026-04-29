@@ -1549,6 +1549,38 @@ function CVBuilderPage() {
   const missingRequired = categoryResult.requiredSections.filter(s => !sectionHasContent(s.key));
   const missingRecommended = categoryResult.recommendedSections.filter(s => !sectionHasContent(s.key));
 
+  // ─── Sections with data but incomplete required fields (for AI dialog) ───
+  // E.g. experience entries missing location, languages missing proficiency.
+  // Excluded: sections already in missingRequired/missingRecommended (no data at all).
+  const _missingKeys = new Set([
+    ...missingRequired.map((s) => s.key),
+    ...missingRecommended.map((s) => s.key),
+  ]);
+  const _collectMissing = (items: any[], key: string): string[] =>
+    [...new Set(items.flatMap((item) => getItemMissing(key, item)))];
+  const incompleteSections: { key: string; label: string; missing: string[] }[] = [];
+  const _tryAddIncomplete = (key: string, label: string, getMissing: () => string[]) => {
+    if (_missingKeys.has(key)) return;
+    const m = getMissing();
+    if (m.length > 0) incompleteSections.push({ key, label, missing: m });
+  };
+  _tryAddIncomplete("personal", "Personal Info", () => getItemMissing("personal", personalInfo));
+  _tryAddIncomplete("experience", "Experience", () => _collectMissing(experiences, "experience"));
+  _tryAddIncomplete("education", "Education", () => _collectMissing(education, "education"));
+  _tryAddIncomplete("skills", "Skills", () => _collectMissing(skills, "skills"));
+  _tryAddIncomplete("certifications", "Certifications", () => _collectMissing(certifications, "certifications"));
+  _tryAddIncomplete("languages", "Languages", () => _collectMissing(languages, "languages"));
+  _tryAddIncomplete("referees", "References", () =>
+    _collectMissing(referees.filter((r) => r.name?.trim()), "referees")
+  );
+  _tryAddIncomplete("achievements", "Key Achievements", () => _collectMissing(keyAchievements, "achievements"));
+  _tryAddIncomplete("awards", "Awards", () => _collectMissing(awards, "awards"));
+  _tryAddIncomplete("memberships", "Memberships", () => _collectMissing(memberships, "memberships"));
+  _tryAddIncomplete("projects", "Projects", () => _collectMissing(projects, "projects"));
+  _tryAddIncomplete("boardRoles", "Board Roles", () => _collectMissing(boardRoles, "boardRoles"));
+  _tryAddIncomplete("execTraining", "Exec. Training", () => _collectMissing(execTraining, "execTraining"));
+  _tryAddIncomplete("publications", "Publications", () => _collectMissing(publications, "publications"));
+
   // Navigate to a section and add one blank item if the section is currently empty.
   const goToSection = (key: string) => {
     if (!manuallyShown.has(key)) setManuallyShown(prev => new Set([...prev, key]));
@@ -2914,6 +2946,7 @@ function CVBuilderPage() {
         onClose={() => setShowAiDialog(false)}
         missingRequired={missingRequired}
         missingRecommended={missingRecommended}
+        incompleteSections={incompleteSections}
         cvData={{
           personalInfo,
           summary,
