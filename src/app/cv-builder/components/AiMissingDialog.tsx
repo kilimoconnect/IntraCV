@@ -1140,7 +1140,7 @@ export function AiMissingDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-2xl w-full p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
+        className="max-w-2xl sm:max-w-3xl lg:max-w-4xl w-full p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
       >
         {/* ── Header ── */}
         <div className="flex items-start gap-3 p-5 border-b shrink-0">
