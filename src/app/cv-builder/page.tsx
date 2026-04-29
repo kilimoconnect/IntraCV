@@ -3053,7 +3053,7 @@ function CVBuilderPage() {
                 <Button
                   className="w-full bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                   onClick={handleSaveAndContinue}
-                  disabled={saving || navigatingToDashboard}
+                  disabled={saving}
                 >
                   {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                   {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
