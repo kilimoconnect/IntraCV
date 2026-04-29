@@ -2008,21 +2008,13 @@ export default function CvStudio({ userId, cvData }: Props) {
     return (
       <div className="max-w-2xl mx-auto pt-4 pb-10 px-4 space-y-4">
 
-        {/* Back + Next */}
+        {/* Back */}
         <div className="flex items-center gap-2 mb-2">
           <button
             onClick={() => setStep("choose-path")}
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white"
           >
             <ArrowLeft className="h-4 w-4" /> Back
-          </button>
-          <button
-            onClick={() => setStep("select")}
-            disabled={profileAnalyzing && !cvReadiness}
-            className="flex items-center gap-2 text-sm font-semibold text-white px-4 py-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            style={{ background: "linear-gradient(135deg, #ff751f 0%, #ff9340 100%)", boxShadow: "0 2px 8px rgba(255,117,31,0.35)" }}
-          >
-            Next <ArrowLeft className="h-4 w-4 rotate-180" />
           </button>
         </div>
         <div className="flex items-center gap-3">
