@@ -1545,6 +1545,10 @@ function CVBuilderPage() {
     achievements: [{ field: "achievement", label: "Achievement" }],
     awards: [{ field: "title", label: "Award Title" }, { field: "description", label: "Description" }],
     memberships: [{ field: "name", label: "Name" }],
+    declaration: [
+      { field: "declaration", label: "Declaration text" },
+      { field: "place", label: "Place" },
+    ],
   };
 
   const getItemMissing = (sectionKey: string, item: any): string[] => {
@@ -1706,6 +1710,7 @@ function CVBuilderPage() {
   _tryAddIncomplete("boardRoles", "Board Roles", () => _collectMissing(boardRoles, "boardRoles"));
   _tryAddIncomplete("execTraining", "Exec. Training", () => _collectMissing(execTraining, "execTraining"));
   _tryAddIncomplete("publications", "Publications", () => _collectMissing(publications, "publications"));
+  _tryAddIncomplete("declaration", "Declaration", () => getItemMissing("declaration", declaration));
 
   // Navigate to a section and add one blank item if the section is currently empty.
   const goToSection = (key: string) => {

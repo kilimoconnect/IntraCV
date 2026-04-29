@@ -157,7 +157,7 @@ const INCOMPLETE_REQUIRED: Record<string, string[]> = {
   executiveTraining: ["name"],
   publications:      ["title"],
   keyAchievements:   [],   // plain strings — whole value is checked
-  awards:            ["title"],
+  awards:            ["title", "description"],
   memberships:       [],   // plain strings
   tools:             [],
   volunteer:         [],
@@ -497,7 +497,7 @@ function InlineSectionEditor({
               </div>
               <input className={cls("title", a.title)} placeholder="Award title *"
                 value={a.title} onChange={(e) => setItemField("awards", i, "title", e.target.value)} />
-              <AutoTextarea minRows={1} className={inputCls} placeholder="Description (issuer, year, context…)"
+              <AutoTextarea minRows={1} className={cls("description", a.description)} placeholder="Description (issuer, year, context…)"
                 value={a.description || ""} onChange={(e) => setItemField("awards", i, "description", e.target.value)} />
             </div>
           ))}
@@ -829,14 +829,14 @@ function InlineSectionEditor({
         onChange({ ...data, declaration: { ...d, [field]: val } });
       return (
         <div className="space-y-3">
-          <label className={labelCls}>Declaration Statement</label>
-          <AutoTextarea minRows={3} className={inputCls}
+          {lbl("declaration", d.declaration, "Declaration Statement *")}
+          <AutoTextarea minRows={3} className={cls("declaration", d.declaration)}
             placeholder="I hereby declare that the information provided in this Curriculum Vitae is true and correct…"
             value={d.declaration} onChange={(e) => setField("declaration", e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className={labelCls}>Place</label>
-              <input className={inputCls} placeholder="City"
+              {lbl("place", d.place, "Place *")}
+              <input className={cls("place", d.place)} placeholder="City"
                 value={d.place} onChange={(e) => setField("place", e.target.value)} />
             </div>
             <div>
