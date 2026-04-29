@@ -164,38 +164,43 @@ Suggest 2-3 plausible volunteer activities that complement this professional's c
 Return ONLY JSON: { "volunteer": ["entry1", "entry2", ...] }`;
 
     case "boardRoles": {
-      // Build a concise list: company name + title + years + short description
-      const topExp = (cvData.experiences || []).slice(0, 4);
-      const companyLines = topExp
+      // Extract ALL unique companies from the full experience list
+      const allExp = (cvData.experiences || []);
+      const uniqueCompanies: string[] = [...new Set(
+        allExp.map((e: any) => (e.company || "").trim()).filter(Boolean)
+      )] as string[];
+
+      const expLines = allExp
         .map((e: any, i: number) =>
-          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "Company"} (${e.startDate || "?"}–${e.endDate || "present"})${e.description ? ` — ${e.description.substring(0, 120)}` : ""}`
+          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "?"} (${e.startDate || "?"}–${e.endDate || "present"})`
         )
         .join("\n");
-      const companyNames = topExp.map((e: any) => e.company).filter(Boolean).join(", ");
 
-      return `You are an expert CV writer. Generate realistic board and advisory roles for this candidate, using their actual companies and career as the direct source.
+      const allowedList = uniqueCompanies.length
+        ? uniqueCompanies.map((c, i) => `  ${i + 1}. "${c}"`).join("\n")
+        : "  (no companies found)";
 
-${context}
+      return `You are an expert CV writer. Generate realistic board and advisory roles for this candidate.
 
-=== TOP ${topExp.length} EXPERIENCE ENTRIES — use these companies and sector as your anchor ===
-${companyLines || "  No experience listed"}
+CANDIDATE EXPERIENCE:
+${expLines || "  No experience listed"}
 
-Companies mentioned: ${companyNames || "none"}
-==========================================================================
+ALLOWED COMPANY NAMES — the "organization" field MUST use one of these exact names only:
+${allowedList}
 
-RULES — MUST follow every rule:
-1. Use the ACTUAL COMPANIES from the experience list as the basis for the sector and industry context
-2. For each board role, the organisation must be clearly related to one of the listed companies: it can be the same company (e.g. subsidiary board, holding company), a direct competitor, an industry body/association for that sector, or a regulatory/oversight body in the same field
-3. The governance title must match the candidate's seniority (C-level → "Non-Executive Director" or "Board Chair"; VP/Director → "Advisory Board Member" or "Audit Committee Member")
-4. startDate must fall AFTER the candidate's first senior role in the experience above
-5. Do NOT invent sectors or industries not shown in the companies above
+HARD RULES — violating any rule makes the output invalid:
+1. The "organization" value MUST be copied EXACTLY from the ALLOWED list above — no abbreviations, no variations, no invented names
+2. If the candidate has fewer than 2 companies on record, you may repeat a company name for different roles
+3. The governance title must match seniority: C-suite → "Non-Executive Director" or "Board Chair"; VP/Director → "Advisory Board Member" or "Audit Committee Member"
+4. "startDate" must be a year that falls AFTER the candidate's first senior role in the experience above
+5. "description" must reference the candidate's specific expertise from their role at that company
 
-Generate 2-3 board / advisory roles:
-- title: Governance title appropriate to their seniority
-- organization: Organisation directly linked to the companies/sector listed above
-- startDate: Year (from career timeline)
+Generate 2-3 board / advisory roles using ONLY the company names from the allowed list:
+- title: Governance title (see rule 3)
+- organization: EXACT company name from the allowed list (copy it character-for-character)
+- startDate: Year
 - endDate: "Ongoing" or estimated year
-- description: 1-2 sentences stating the specific governance contribution in their documented area of expertise
+- description: 1-2 sentences on governance contribution
 
 Return ONLY JSON: { "boardRoles": [{ "title": "", "organization": "", "startDate": "", "endDate": "", "description": "" }] }`;
     }
