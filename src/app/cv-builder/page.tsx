@@ -3012,41 +3012,52 @@ function CVBuilderPage() {
               </Card></div>
 
               {/* ── Footer Navigation (mobile only) ── */}
-              <div className="flex md:hidden items-center justify-between mt-4 gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => safeIdx > 0 && setActiveTab(SECTIONS[safeIdx - 1].key)}
-                  disabled={safeIdx === 0}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
-                  onClick={handleSectionSave}
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {saving ? "Saving…" : "Save"}
-                </Button>
-                {safeIdx < SECTIONS.length - 1 ? (
+              <div className="flex md:hidden flex-col mt-4 gap-2">
+                <div className="flex items-center gap-2">
                   <Button
+                    variant="outline"
                     className="flex-1"
-                    onClick={() => setActiveTab(SECTIONS[safeIdx + 1].key)}
+                    onClick={() => safeIdx > 0 && setActiveTab(SECTIONS[safeIdx - 1].key)}
+                    disabled={safeIdx === 0}
                   >
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                   </Button>
-                ) : (
                   <Button
-                    className="flex-1 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
-                    onClick={handleSaveAndContinue}
+                    variant="outline"
+                    className="flex-1 border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
+                    onClick={handleSectionSave}
                     disabled={saving}
                   >
-                    {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                    {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {saving ? "Saving…" : "Save"}
                   </Button>
-                )}
+                  {safeIdx < SECTIONS.length - 1 ? (
+                    <Button
+                      className="flex-1"
+                      onClick={() => setActiveTab(SECTIONS[safeIdx + 1].key)}
+                    >
+                      Next <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      className="flex-1 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
+                      onClick={handleSaveAndContinue}
+                      disabled={saving}
+                    >
+                      {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
+                    </Button>
+                  )}
+                </div>
+                {/* Generate My CV — always visible on mobile */}
+                <Button
+                  className="w-full bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
+                  onClick={handleSaveAndContinue}
+                  disabled={saving || navigatingToDashboard}
+                >
+                  {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                  {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
+                </Button>
               </div>
 
               {/* ── Footer Navigation (desktop only) ── */}
