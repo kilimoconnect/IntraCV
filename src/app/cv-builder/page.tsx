@@ -621,35 +621,24 @@ function CVBuilderPage() {
     if (aiDialogShownRef.current) return;
     aiDialogShownRef.current = true;
 
-    const run = async () => {
-      // Auto-generate declaration while the loading screen is still visible
+    const run = () => {
+      // Auto-generate declaration synchronously — it's a boilerplate template,
+      // no AI needed. Runs for ALL career levels (junior / mid-senior / executive).
       if (!declaration.declaration?.trim()) {
-        try {
-          const cvData = {
-            personalInfo, summary, experiences, education, skills,
-            certifications, languages, referees, keyAchievements, awards,
-            memberships, projects, boardRoles,
-            executiveTraining: execTraining, publications, tools, volunteer,
-          };
-          const res = await fetch("/api/ai/generate-missing-section", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cvData, sectionKey: "declaration", careerLevel: categoryResult.category }),
+        const fullName = personalInfo.fullName?.trim();
+        if (fullName) {
+          const generatedDate = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+          setDeclaration({
+            declaration: `I, ${fullName}, hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.`,
+            place: personalInfo.location?.trim() || "",
+            date: generatedDate,
           });
-          if (res.ok) {
-            const { sectionData } = await res.json();
-            if (sectionData?.declaration) {
-              applyAiSectionData("declaration", "declaration", sectionData);
-              setPendingApplySave(true); // persist auto-generated declaration to DB — don't rely on dialog opening
-            }
-          }
-        } catch (e) {
-          console.error("[Auto-declaration] generation failed:", e);
+          setPendingApplySave(true); // persist to DB immediately
         }
       }
 
-      setPreparingDialog(false); // clear loading screen after declaration is ready
-      // Only open dialog if there is actually something else to fix
+      setPreparingDialog(false); // clear loading screen
+      // Only open dialog if there is actually something to fix
       if (missingRequired.length > 0 || missingRecommended.length > 0 || incompleteSections.length > 0) {
         setShowAiDialog(true);
       }

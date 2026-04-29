@@ -164,34 +164,38 @@ Suggest 2-3 plausible volunteer activities that complement this professional's c
 Return ONLY JSON: { "volunteer": ["entry1", "entry2", ...] }`;
 
     case "boardRoles": {
-      const expSummary = (cvData.experiences || [])
-        .slice(0, 4)
+      // Build a concise list: company name + title + years + short description
+      const topExp = (cvData.experiences || []).slice(0, 4);
+      const companyLines = topExp
         .map((e: any, i: number) =>
-          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "Company"} (${e.startDate || "?"}–${e.endDate || "present"}): ${(e.description || "").substring(0, 150)}`
+          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "Company"} (${e.startDate || "?"}–${e.endDate || "present"})${e.description ? ` — ${e.description.substring(0, 120)}` : ""}`
         )
         .join("\n");
+      const companyNames = topExp.map((e: any) => e.company).filter(Boolean).join(", ");
 
-      return `You are an expert CV writer. Study the full candidate profile below, then generate realistic board and advisory roles STRICTLY derived from the candidate's actual work history.
+      return `You are an expert CV writer. Generate realistic board and advisory roles for this candidate, using their actual companies and career as the direct source.
 
 ${context}
 
-=== CANDIDATE'S ACTUAL WORK EXPERIENCE (derive board roles from these) ===
-${expSummary || "  No experience listed"}
-============================================================
+=== TOP ${topExp.length} EXPERIENCE ENTRIES — use these companies and sector as your anchor ===
+${companyLines || "  No experience listed"}
 
-STRICT RULES:
-1. Every board role MUST come from their real experience above — identify the sector/industry, expertise area, and seniority from the roles listed
-2. Match the organisation's industry to their actual employers (e.g. finance career → "Audit Committee, financial services firm"; tech career → "Advisory Board, SaaS company")
-3. The governance title should be a natural extension of their actual seniority (e.g. a CFO → "Audit Committee Chair"; a VP/Director → "Non-Executive Director"; a COO → "Advisory Board, Operations")
-4. startDate must be AFTER they first reached a senior title in the experience above
-5. Do NOT invent sectors, industries, or expertise not present in the candidate's actual history
+Companies mentioned: ${companyNames || "none"}
+==========================================================================
 
-Generate 2-3 board or advisory roles:
-- title: Governance title that fits their seniority (e.g. "Non-Executive Director", "Advisory Board Member", "Audit Committee Chair")
-- organization: Real-sounding organisation in the SAME sector as their experience
-- startDate: Year (derived from career timeline)
-- endDate: "Ongoing" or estimated end year
-- description: 1-2 sentences naming their specific governance contribution based on their documented expertise
+RULES — MUST follow every rule:
+1. Use the ACTUAL COMPANIES from the experience list as the basis for the sector and industry context
+2. For each board role, the organisation must be clearly related to one of the listed companies: it can be the same company (e.g. subsidiary board, holding company), a direct competitor, an industry body/association for that sector, or a regulatory/oversight body in the same field
+3. The governance title must match the candidate's seniority (C-level → "Non-Executive Director" or "Board Chair"; VP/Director → "Advisory Board Member" or "Audit Committee Member")
+4. startDate must fall AFTER the candidate's first senior role in the experience above
+5. Do NOT invent sectors or industries not shown in the companies above
+
+Generate 2-3 board / advisory roles:
+- title: Governance title appropriate to their seniority
+- organization: Organisation directly linked to the companies/sector listed above
+- startDate: Year (from career timeline)
+- endDate: "Ongoing" or estimated year
+- description: 1-2 sentences stating the specific governance contribution in their documented area of expertise
 
 Return ONLY JSON: { "boardRoles": [{ "title": "", "organization": "", "startDate": "", "endDate": "", "description": "" }] }`;
     }
