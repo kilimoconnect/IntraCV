@@ -318,20 +318,21 @@ function InlineSectionEditor({
         <div className="space-y-2.5">
           <label className={labelCls}>Skills</label>
           {items.map((s: any, i: number) => (
-            <div key={i} className="flex items-center gap-2">
-              <input className={`${inputCls} flex-1`} placeholder="Skill name"
+            <div key={i} className="grid grid-cols-[1fr_140px_auto] items-center gap-2">
+              <input className={inputCls} placeholder="Skill name"
                 value={s.name} onChange={(e) => setItemField("skills", i, "name", e.target.value)} />
-              <select className={`${inputCls} w-32 shrink-0`}
+              <select className={inputCls}
                 value={s.category} onChange={(e) => setItemField("skills", i, "category", e.target.value)}>
                 <option value="">Category</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-              {items.length > 1 && (
-                <button type="button" onClick={() => removeItem("skills", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => removeItem("skills", i)}
+                className={`text-slate-300 hover:text-red-400 transition-colors ${items.length === 1 ? "invisible" : ""}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
           ))}
           <button type="button" onClick={() => addItem("skills", { name: "", category: "" })}
@@ -685,20 +686,21 @@ function InlineSectionEditor({
         <div className="space-y-2.5">
           <label className={labelCls}>Languages</label>
           {items.map((l, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input className={`${inputCls} flex-1`} placeholder="Language"
+            <div key={i} className="grid grid-cols-[1fr_160px_auto] items-center gap-2">
+              <input className={inputCls} placeholder="Language (e.g. English)"
                 value={l.name} onChange={(e) => setItemField("languages", i, "name", e.target.value)} />
-              <select className={`${inputCls} w-36 shrink-0`}
+              <select className={inputCls}
                 value={l.proficiency} onChange={(e) => setItemField("languages", i, "proficiency", e.target.value)}>
-                <option value="">Level…</option>
+                <option value="">Proficiency…</option>
                 {LEVELS.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
               </select>
-              {items.length > 1 && (
-                <button type="button" onClick={() => removeItem("languages", i)}
-                  className="text-slate-300 hover:text-red-400 shrink-0 transition-colors">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => removeItem("languages", i)}
+                className={`text-slate-300 hover:text-red-400 transition-colors ${items.length === 1 ? "invisible" : ""}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
           ))}
           <button type="button" onClick={() => addItem("languages", { name: "", proficiency: "" })}
@@ -1054,7 +1056,7 @@ export function AiMissingDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-lg p-0 gap-0 flex flex-col max-h-[88vh] overflow-hidden"
+        className="max-w-2xl w-full p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
       >
         {/* ── Header ── */}
         <div className="flex items-start gap-3 p-5 border-b shrink-0">
@@ -1072,7 +1074,7 @@ export function AiMissingDialog({
         </div>
 
         {/* ── Body ── */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
 
           {/* Inline editor */}
           {editing && (
