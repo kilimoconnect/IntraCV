@@ -3222,6 +3222,7 @@ function CVBuilderPage() {
           certifications,
           languages,
           referees,
+          declaration,
           keyAchievements,
           awards,
           memberships,

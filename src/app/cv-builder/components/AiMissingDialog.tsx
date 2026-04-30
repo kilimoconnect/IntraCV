@@ -1039,12 +1039,13 @@ export function AiMissingDialog({
   const handleManualInline = (section: AiSection) => {
     const editKey = SECTION_EDIT_KEY[section.key];
     // Declaration gets defaults pre-filled (including location from personal info)
+    const ex = section.key === "declaration" ? (cvData.declaration || {}) : null;
     const data = section.key === "declaration"
       ? {
           declaration: {
-            declaration: DEFAULT_DECLARATION,
-            place:       cvData.personalInfo?.location?.trim() || "",
-            date:        defaultDate(),
+            declaration: (ex as any)?.declaration?.trim() || DEFAULT_DECLARATION,
+            place:       (ex as any)?.place?.trim()       || cvData.personalInfo?.location?.trim() || "",
+            date:        (ex as any)?.date?.trim()        || defaultDate(),
           },
         }
       : getEmptyData(editKey);
@@ -1122,10 +1123,11 @@ export function AiMissingDialog({
         break;
       case "declaration": {
         const ex = cvData.declaration || {};
+        const location = cvData.personalInfo?.location?.trim() || "";
         data = {
           declaration: {
             declaration: ex.declaration?.trim() || DEFAULT_DECLARATION,
-            place:       ex.place?.trim()       || cvData.personalInfo?.location || "",
+            place:       ex.place?.trim()       || location,
             date:        ex.date?.trim()        || defaultDate(),
           },
         };
