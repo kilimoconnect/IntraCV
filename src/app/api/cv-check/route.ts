@@ -432,6 +432,15 @@ export async function POST(req: Request) {
       }
     }
 
+    // ── Sanitise skills counts ────────────────────────────────────────────────
+    // GPT sometimes returns total_skills=0 while correctly counting generic_skills
+    // (comma-separated skills section text it fails to enumerate individually).
+    // Fall back to the extraction-step skills array and enforce total ≥ generic.
+    const rawTotal   = analysis.total_skills         || (structured.skills?.length ?? 0);
+    const rawGeneric = analysis.generic_skills_count || 0;
+    const total_skills_final   = Math.max(rawTotal, rawGeneric);
+    const generic_skills_final = Math.min(rawGeneric, total_skills_final);
+
     // ── Build final result ────────────────────────────────────────────────────
     const result = {
       // Identity
@@ -450,8 +459,8 @@ export async function POST(req: Request) {
       // Counts (from analysis step)
       total_bullets:        analysis.total_bullets        || 0,
       bullets_with_metrics: analysis.bullets_with_metrics || 0,
-      total_skills:         analysis.total_skills         || 0,
-      generic_skills_count: analysis.generic_skills_count || 0,
+      total_skills:         total_skills_final,
+      generic_skills_count: generic_skills_final,
       keywords_found:       analysis.keywords_found       || 0,
       keywords_total:       11,
 
