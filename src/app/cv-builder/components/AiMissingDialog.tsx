@@ -410,6 +410,20 @@ function InlineSectionEditor({
             className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add skill
           </button>
+          {(() => {
+            const filled = items.filter((s: any) => s.name?.trim()).length;
+            return filled < 3 ? (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>Minimum <strong>3 skills</strong> required — {filled} of 3 added so far</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                <span>{filled} skills added — minimum met</span>
+              </div>
+            );
+          })()}
         </div>
       );
     }
@@ -715,6 +729,20 @@ function InlineSectionEditor({
             className="flex items-center gap-1 text-xs text-[#004aad] hover:underline">
             <Plus className="h-3 w-3" /> Add tool
           </button>
+          {(() => {
+            const filled = items.filter((t: any) => (typeof t === "string" ? t : t?.name || t)?.trim()).length;
+            return filled < 3 ? (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>Minimum <strong>3 tools</strong> required — {filled} of 3 added so far</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                <span>{filled} tools added — minimum met</span>
+              </div>
+            );
+          })()}
         </div>
       );
     }

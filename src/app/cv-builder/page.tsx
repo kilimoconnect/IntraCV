@@ -2554,6 +2554,21 @@ function CVBuilderPage() {
                   {/* ── Skills ── */}
                   {currentKey === "skills" && (
                     <div className="space-y-3">
+                      {/* Minimum-3 requirement note */}
+                      {(() => {
+                        const filled = skills.filter(s => s.name?.trim()).length;
+                        return filled < 3 ? (
+                          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            <span>Minimum <strong>3 skills</strong> required — {filled} of 3 added so far</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                            <Check className="h-3.5 w-3.5 shrink-0" />
+                            <span>{filled} skills added — minimum met</span>
+                          </div>
+                        );
+                      })()}
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setSkills([{ id: uid(), name: "", category: "" }, ...skills])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Skill
@@ -2999,6 +3014,20 @@ function CVBuilderPage() {
                           </Button>
                         </div>
                       ))}
+                      {(() => {
+                        const filled = tools.filter(t => t.name?.trim()).length;
+                        return filled < 3 ? (
+                          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            <span>Minimum <strong>3 tools</strong> required — {filled} of 3 added so far</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                            <Check className="h-3.5 w-3.5 shrink-0" />
+                            <span>{filled} tools added — minimum met</span>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 
