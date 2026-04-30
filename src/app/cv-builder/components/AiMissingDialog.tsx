@@ -1384,7 +1384,7 @@ export function AiMissingDialog({
               <p className={`text-xs ${incompleteSections.length > 0 ? "text-orange-600 font-medium" : "text-slate-400"}`}>
                 {incompleteSections.length > 0
                   ? `Fix ${incompleteSections.length} incomplete section${incompleteSections.length !== 1 ? "s" : ""} to close`
-                  : "You can always fill these later"}
+                  : "Not every section needs to be filled — come back any time"}
               </p>
               <Button
                 variant="outline"
