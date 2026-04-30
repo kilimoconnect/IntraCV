@@ -1038,11 +1038,21 @@ export function AiMissingDialog({
 
   const handleManualInline = (section: AiSection) => {
     const editKey = SECTION_EDIT_KEY[section.key];
+    // Declaration gets defaults pre-filled (including location from personal info)
+    const data = section.key === "declaration"
+      ? {
+          declaration: {
+            declaration: DEFAULT_DECLARATION,
+            place:       cvData.personalInfo?.location?.trim() || "",
+            date:        defaultDate(),
+          },
+        }
+      : getEmptyData(editKey);
     setEditing({
       sectionKey:    section.key,
       apiSectionKey: editKey,
       label:         section.label,
-      data:          getEmptyData(editKey),
+      data,
       source:        "manual",
     });
   };
