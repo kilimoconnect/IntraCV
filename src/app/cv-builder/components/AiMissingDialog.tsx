@@ -1159,6 +1159,15 @@ export function AiMissingDialog({
     ? `${totalToAddress} issue${totalToAddress !== 1 ? "s" : ""} found — use AI to fill or enter manually`
     : "";
 
+  // ── Apply gate: disabled when editing skills/tools below 3-item minimum ──
+  const applyDisabled = editing?.apiSectionKey === "skills"
+    ? (editing.data.skills || []).filter((s: any) => s.name?.trim()).length < 3
+    : editing?.apiSectionKey === "tools"
+    ? (editing.data.tools || []).filter((t: any) =>
+        (typeof t === "string" ? t : t?.name || t)?.trim()
+      ).length < 3
+    : false;
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
@@ -1341,20 +1350,7 @@ export function AiMissingDialog({
 
         {/* ── Footer ── */}
         <div className="p-4 border-t shrink-0">
-          {editing ? (() => {
-            // Block Apply when the edited section is below the 3-item minimum
-            const applyDisabled = (() => {
-              if (editing.apiSectionKey === "skills") {
-                return (editing.data.skills || []).filter((s: any) => s.name?.trim()).length < 3;
-              }
-              if (editing.apiSectionKey === "tools") {
-                return (editing.data.tools || []).filter((t: any) =>
-                  (typeof t === "string" ? t : t?.name || t)?.trim()
-                ).length < 3;
-              }
-              return false;
-            })();
-            return (
+          {editing ? (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditing(null)} className="gap-1.5 text-slate-600">
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -1372,8 +1368,6 @@ export function AiMissingDialog({
                 Apply
               </Button>
             </div>
-            );
-          })()
           ) : totalToAddress > 0 ? (
             <div className="flex items-center justify-between gap-3">
               <p className={`text-xs ${incompleteSections.length > 0 ? "text-orange-600 font-medium" : "text-slate-400"}`}>
