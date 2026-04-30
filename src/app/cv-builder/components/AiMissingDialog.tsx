@@ -169,7 +169,7 @@ const INCOMPLETE_REQUIRED: Record<string, string[]> = {
   memberships:       [],   // plain strings
   tools:             [],
   volunteer:         [],
-  declaration:       ["declaration", "place"],
+  declaration:       ["declaration"],
 };
 
 // ─── Auto-resizing textarea — grows to show all content, no hidden overflow ───

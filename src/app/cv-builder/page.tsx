@@ -1603,7 +1603,6 @@ function CVBuilderPage() {
     memberships: [{ field: "name", label: "Name" }],
     declaration: [
       { field: "declaration", label: "Declaration text" },
-      { field: "place", label: "Place" },
     ],
   };
 
