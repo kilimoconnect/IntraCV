@@ -1715,6 +1715,11 @@ function CVBuilderPage() {
   const missingRequired = categoryResult.requiredSections.filter(s => !sectionHasContent(s.key));
   const missingRecommended = categoryResult.recommendedSections.filter(s => !sectionHasContent(s.key));
 
+  // ─── Minimum-count gates (skills ≥ 3, tools ≥ 3) — block save when not met ───
+  const skillsFilled = skills.filter((s) => s.name?.trim()).length;
+  const toolsFilled  = tools.filter((t) => t?.name?.trim()).length;
+  const minimumNotMet = skillsFilled < 3 || toolsFilled < 3;
+
   // ─── Sections with data but incomplete required fields (for AI dialog) ───
   // E.g. experience entries missing location, languages missing proficiency.
   // Excluded: sections already in missingRequired/missingRecommended (no data at all).
@@ -2061,8 +2066,17 @@ function CVBuilderPage() {
                 {missingRequired.length > 0 && (
                   <p className="text-xs text-red-600 font-medium">Complete {missingRequired.length} required section{missingRequired.length > 1 ? "s" : ""} below to save</p>
                 )}
+                {minimumNotMet && (
+                  <p className="text-xs text-amber-600 font-medium">
+                    {skillsFilled < 3 && toolsFilled < 3
+                      ? "Add at least 3 skills and 3 tools to save"
+                      : skillsFilled < 3
+                      ? `Add at least 3 skills to save (${skillsFilled}/3)`
+                      : `Add at least 3 tools to save (${toolsFilled}/3)`}
+                  </p>
+                )}
                 <Button
-                  disabled={saving}
+                  disabled={saving || minimumNotMet}
                   onClick={handleSaveAndContinue}
                   className="flex items-center gap-2 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                 >
@@ -2268,7 +2282,7 @@ function CVBuilderPage() {
               ) : (
                 <button
                   onClick={async () => { setNavigatingToDashboard(true); const ok = await saveToDatabase({ silent: true }); if (ok) { router.push("/dashboard"); } else { setNavigatingToDashboard(false); } }}
-                  disabled={saving}
+                  disabled={saving || minimumNotMet}
                   className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#004aad] text-white disabled:opacity-50 shrink-0"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -3096,7 +3110,7 @@ function CVBuilderPage() {
                     variant="outline"
                     className="flex-1 border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
                     onClick={handleSectionSave}
-                    disabled={saving}
+                    disabled={saving || minimumNotMet}
                   >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {saving ? "Saving…" : "Save"}
@@ -3112,7 +3126,7 @@ function CVBuilderPage() {
                     <Button
                       className="flex-1 bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                       onClick={handleSaveAndContinue}
-                      disabled={saving}
+                      disabled={saving || minimumNotMet}
                     >
                       {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                       {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
@@ -3125,7 +3139,7 @@ function CVBuilderPage() {
                   <Button
                     className="w-full bg-[#ff751f] hover:bg-[#e8661a] text-white border-0"
                     onClick={handleSaveAndContinue}
-                    disabled={saving}
+                    disabled={saving || minimumNotMet}
                   >
                     {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                     {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
@@ -3147,7 +3161,7 @@ function CVBuilderPage() {
                     variant="outline"
                     className="border-[#004aad]/40 text-[#004aad] hover:bg-[#004aad]/5"
                     onClick={handleSectionSave}
-                    disabled={saving}
+                    disabled={saving || minimumNotMet}
                   >
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {saving ? "Saving…" : "Save"}
@@ -3157,7 +3171,7 @@ function CVBuilderPage() {
                       Next <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button onClick={handleSaveAndContinue} disabled={saving} className="bg-[#ff751f] hover:bg-[#e8661a] text-white border-0">
+                    <Button onClick={handleSaveAndContinue} disabled={saving || minimumNotMet} className="bg-[#ff751f] hover:bg-[#e8661a] text-white border-0">
                       {(saving || navigatingToDashboard) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                       {navigatingToDashboard ? "Opening dashboard…" : saving ? "Saving…" : "Generate My CV →"}
                     </Button>

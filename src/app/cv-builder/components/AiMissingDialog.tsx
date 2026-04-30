@@ -1341,19 +1341,39 @@ export function AiMissingDialog({
 
         {/* ── Footer ── */}
         <div className="p-4 border-t shrink-0">
-          {editing ? (
+          {editing ? (() => {
+            // Block Apply when the edited section is below the 3-item minimum
+            const applyDisabled = (() => {
+              if (editing.apiSectionKey === "skills") {
+                return (editing.data.skills || []).filter((s: any) => s.name?.trim()).length < 3;
+              }
+              if (editing.apiSectionKey === "tools") {
+                return (editing.data.tools || []).filter((t: any) =>
+                  (typeof t === "string" ? t : t?.name || t)?.trim()
+                ).length < 3;
+              }
+              return false;
+            })();
+            return (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditing(null)} className="gap-1.5 text-slate-600">
                 <ChevronLeft className="h-3.5 w-3.5" />
                 Back
               </Button>
               <div className="flex-1" />
-              <Button size="sm" onClick={handleApply}
-                className="bg-[#004aad] hover:bg-[#003d8f] text-white gap-1.5">
+              {applyDisabled && (
+                <span className="text-xs text-amber-600 font-medium">
+                  {editing.apiSectionKey === "skills" ? "Add at least 3 skills" : "Add at least 3 tools"}
+                </span>
+              )}
+              <Button size="sm" onClick={handleApply} disabled={applyDisabled}
+                className="bg-[#004aad] hover:bg-[#003d8f] text-white gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
                 <Check className="h-3.5 w-3.5" />
                 Apply
               </Button>
             </div>
+            );
+          })()
           ) : totalToAddress > 0 ? (
             <div className="flex items-center justify-between gap-3">
               <p className={`text-xs ${incompleteSections.length > 0 ? "text-orange-600 font-medium" : "text-slate-400"}`}>
