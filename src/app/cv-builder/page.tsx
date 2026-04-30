@@ -305,6 +305,8 @@ function CVBuilderPage() {
   const aiDialogShownRef = useRef(false);
   // Trigger a save after AI section data is applied to state
   const [pendingApplySave, setPendingApplySave] = useState(false);
+  // AI Fill loading state — tracks which section is currently generating
+  const [aiFillLoading, setAiFillLoading] = useState<string | null>(null);
 
   // Section tab navigation
   const [activeTab, setActiveTab] = useState("personal");
@@ -1290,6 +1292,49 @@ function CVBuilderPage() {
     }
   };
 
+
+  // ─── AI Fill: generate section content from the current CV profile ─────────
+  const handleAiFill = async (sectionKey: string, apiSectionKey: string) => {
+    setAiFillLoading(sectionKey);
+    try {
+      const res = await fetch("/api/ai/generate-missing-section", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cvData: {
+            personalInfo,
+            summary,
+            experiences,
+            education,
+            skills,
+            certifications,
+            languages,
+            referees,
+            keyAchievements,
+            awards,
+            memberships,
+            projects,
+            boardRoles,
+            executiveTraining: execTraining,
+            publications,
+            tools,
+            volunteer,
+          },
+          sectionKey: apiSectionKey,
+          careerLevel: categoryResult?.category || "mid-senior",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Generation failed");
+      applyAiSectionData(sectionKey, apiSectionKey, data.sectionData);
+      setPendingApplySave(true);
+      toast.success("AI content applied!");
+    } catch {
+      toast.error("AI generation failed — please try again");
+    } finally {
+      setAiFillLoading(null);
+    }
+  };
 
   // ─── Apply AI-generated section data to the correct state setter ───
   // apiSectionKey is the key used by /api/ai/generate-missing-section
@@ -2456,6 +2501,10 @@ function CVBuilderPage() {
                   {/* ── Summary ── */}
                   {currentKey === "summary" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("summary", "summary")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "summary" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(!summary || summary.trim().length < 10) && (
                         <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -2587,6 +2636,10 @@ function CVBuilderPage() {
                   {/* ── Skills ── */}
                   {currentKey === "skills" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("skills", "skills")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "skills" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {/* Minimum-3 requirement note */}
                       {(() => {
                         const filled = skills.filter(s => s.name?.trim()).length;
@@ -2665,6 +2718,10 @@ function CVBuilderPage() {
                   {/* ── Languages ── */}
                   {currentKey === "languages" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("languages", "languages")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "languages" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setLanguages([{ id: uid(), name: "", proficiency: "" }, ...languages])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Language
@@ -2748,6 +2805,10 @@ function CVBuilderPage() {
                   {/* ── Key Achievements ── */}
                   {currentKey === "achievements" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("achievements", "keyAchievements")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "achievements" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setKeyAchievements([{ id: uid(), achievement: "" }, ...keyAchievements])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Achievement
@@ -2776,6 +2837,10 @@ function CVBuilderPage() {
                   {/* ── Awards ── */}
                   {currentKey === "awards" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("awards", "awards")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "awards" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setAwards([{ id: uid(), title: "", description: "" }, ...awards])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Award
@@ -2844,6 +2909,10 @@ function CVBuilderPage() {
                   {/* ── Projects ── */}
                   {currentKey === "projects" && (
                     <div className="space-y-4">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("projects", "projects")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "projects" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setProjects([{ id: uid(), name: "", description: "", tech: "" }, ...projects])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Project
@@ -2890,6 +2959,10 @@ function CVBuilderPage() {
                   {/* ── Board / Leadership Roles ── */}
                   {currentKey === "boardRoles" && (
                     <div className="space-y-4">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("boardRoles", "boardRoles")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "boardRoles" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setBoardRoles([{ id: uid(), title: "", organization: "", startDate: "", endDate: "", description: "" }, ...boardRoles])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Board Role
@@ -2944,6 +3017,10 @@ function CVBuilderPage() {
                   {/* ── Executive Training ── */}
                   {currentKey === "execTraining" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("execTraining", "executiveTraining")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "execTraining" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setExecTraining([{ id: uid(), name: "", institution: "", year: "" }, ...execTraining])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Training
@@ -3026,6 +3103,10 @@ function CVBuilderPage() {
                   {/* ── Tools & Software ── */}
                   {currentKey === "tools" && (
                     <div className="space-y-3">
+                      <Button variant="outline" size="sm" disabled={!!aiFillLoading} onClick={() => handleAiFill("tools", "tools")}
+                        className="w-full border-[#004aad]/30 text-[#004aad] hover:bg-[#004aad]/5 gap-1.5">
+                        {aiFillLoading === "tools" ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />Generating…</> : <><Lightbulb className="h-3.5 w-3.5" />AI Fill</>}
+                      </Button>
                       {(
                         <Button variant="outline" className="w-full" onClick={() => setTools([{ name: "", company: "" }, ...tools])}>
                           <Plus className="mr-2 h-4 w-4" /> Add Tool
