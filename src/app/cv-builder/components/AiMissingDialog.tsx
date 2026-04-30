@@ -888,6 +888,7 @@ function MissingSectionRow({
   aiCapable,
   onAiFill,
   onManualInline,
+  onSkip,
 }: {
   section: AiSection;
   loading: boolean;
@@ -895,6 +896,7 @@ function MissingSectionRow({
   aiCapable: boolean;
   onAiFill: () => void;
   onManualInline: () => void;
+  onSkip?: () => void;
 }) {
   const isRequired = section.priority === "required";
   return (
@@ -924,6 +926,13 @@ function MissingSectionRow({
           <PenLine className="h-3 w-3" />
           {aiCapable ? "Manual" : "Fill in"}
         </Button>
+        {!isRequired && onSkip && (
+          <Button size="sm" variant="ghost" onClick={onSkip}
+            className="h-7 text-xs px-2 text-slate-300 hover:text-slate-500"
+            title="I don't have this">
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -1315,6 +1324,7 @@ export function AiMissingDialog({
                         aiCapable={true}
                         onAiFill={() => handleAiFill({ ...s, priority: "recommended" })}
                         onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
+                        onSkip={() => setAppliedKeys((prev) => new Set([...prev, s.key]))}
                       />
                     ))}
                   </div>
@@ -1338,6 +1348,7 @@ export function AiMissingDialog({
                         aiCapable={false}
                         onAiFill={() => {}}
                         onManualInline={() => handleManualInline({ ...s, priority: "recommended" })}
+                        onSkip={() => setAppliedKeys((prev) => new Set([...prev, s.key]))}
                       />
                     ))}
                   </div>
