@@ -87,6 +87,14 @@ export interface AiMissingDialogProps {
   onNavigate: (sectionKey: string) => void;
 }
 
+// ─── Default declaration text ─────────────────────────────────────────────────
+const DEFAULT_DECLARATION =
+  "I hereby declare that the information provided in this Curriculum Vitae is true and correct to the best of my knowledge and belief.";
+
+function defaultDate() {
+  return new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}
+
 // ─── Empty templates for manual fill ─────────────────────────────────────────
 function getEmptyData(editKey: string): any {
   switch (editKey) {
@@ -125,7 +133,7 @@ function getEmptyData(editKey: string): any {
     case "referees":
       return { referees: [{ name: "", title: "", company: "", phone: "", email: "" }] };
     case "declaration":
-      return { declaration: { declaration: "", place: "", date: "" } };
+      return { declaration: { declaration: DEFAULT_DECLARATION, place: "", date: defaultDate() } };
     default:
       return {};
   }
@@ -1102,6 +1110,17 @@ export function AiMissingDialog({
           })),
         };
         break;
+      case "declaration": {
+        const ex = cvData.declaration || {};
+        data = {
+          declaration: {
+            declaration: ex.declaration?.trim() || DEFAULT_DECLARATION,
+            place:       ex.place?.trim()       || cvData.personalInfo?.location || "",
+            date:        ex.date?.trim()        || defaultDate(),
+          },
+        };
+        break;
+      }
       default:
         data = getEmptyData(editKey);
     }
