@@ -10,11 +10,21 @@ export async function POST(req: Request) {
 
     const admin = createAdminSupabase();
 
-    // Find the user by email
-    const { data: { users }, error: listError } = await admin.auth.admin.listUsers();
-    if (listError) return NextResponse.json({ error: listError.message }, { status: 500 });
+    // Find the user by email — paginate through all users so we never miss anyone
+    // (Supabase's listUsers is capped at perPage per call; a single call would silently
+    // miss users beyond the first page at larger user counts)
+    let foundUser: Awaited<ReturnType<typeof admin.auth.admin.listUsers>>["data"]["users"][0] | undefined;
+    let page = 1;
+    const PER_PAGE = 1000;
+    while (!foundUser) {
+      const { data, error: listError } = await admin.auth.admin.listUsers({ page, perPage: PER_PAGE });
+      if (listError) return NextResponse.json({ error: listError.message }, { status: 500 });
+      foundUser = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      if (!foundUser && data.users.length < PER_PAGE) break; // exhausted all pages
+      page++;
+    }
 
-    const user = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    const user = foundUser;
     if (!user) {
       // Silent success — don't reveal whether an account exists
       return NextResponse.json({ success: true });
@@ -44,10 +54,17 @@ export async function DELETE(req: Request) {
 
     const admin = createAdminSupabase();
 
-    const { data: { users }, error: listError } = await admin.auth.admin.listUsers();
-    if (listError) return NextResponse.json({ error: listError.message }, { status: 500 });
+    let foundUser2: Awaited<ReturnType<typeof admin.auth.admin.listUsers>>["data"]["users"][0] | undefined;
+    let page2 = 1;
+    while (!foundUser2) {
+      const { data, error: listError } = await admin.auth.admin.listUsers({ page: page2, perPage: 1000 });
+      if (listError) return NextResponse.json({ error: listError.message }, { status: 500 });
+      foundUser2 = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      if (!foundUser2 && data.users.length < 1000) break;
+      page2++;
+    }
 
-    const user = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    const user = foundUser2;
     if (!user) return NextResponse.json({ success: true });
 
     await admin.auth.admin.updateUserById(user.id, {

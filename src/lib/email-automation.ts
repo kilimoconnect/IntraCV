@@ -15,7 +15,7 @@
  *
  * Frequency rules:
  *   - Max 1 marketing email per user per 24 hours
- *   - Max 2 marketing emails per user per 7 days
+ *   - Max 5 marketing emails per user per 7 days
  *   - checkout_abandon bypasses both limits (revenue recovery)
  *   - Global suppression: if checkout_abandon is active (pending or sent within 72h),
  *     flows with priority >= 7 are suppressed

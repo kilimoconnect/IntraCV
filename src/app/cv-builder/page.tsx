@@ -1199,6 +1199,26 @@ function CVBuilderPage() {
       }
       lastSavedCategoryRef.current = detectedCareerCategory;
       setHasExistingData(true);
+
+      // ── Proactively cancel missing_info flow when profile is now complete ──
+      // processQueue already checks hasCompleteProfile at send time, but this
+      // cancels the remaining queued rows immediately so the user never receives
+      // a "please complete your profile" email after they already have.
+      if (failedResults.length === 0) {
+        const profileComplete =
+          experiences.filter((e) => e.title?.trim()).length > 0 &&
+          !!summary?.trim() &&
+          education.filter((e) => e.degree?.trim()).length > 0 &&
+          skills.filter((s) => s.name?.trim()).length > 0;
+        if (profileComplete) {
+          fetch("/api/email-automation/cancel", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ flow: "missing_info" }),
+          }).catch(() => {});
+        }
+      }
+
       return failedResults.length === 0;
     } catch (err: any) {
       console.error("Save error:", err);

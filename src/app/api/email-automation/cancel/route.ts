@@ -14,6 +14,7 @@ const CLIENT_ALLOWED_FLOWS: FlowId[] = [
   "checkout_abandon",
   "upload_started_no_finish",
   "executive_prestige",
+  "missing_info", // cancelled client-side when the user completes their profile
 ];
 
 export async function POST(req: Request) {
