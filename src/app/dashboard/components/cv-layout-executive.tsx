@@ -794,16 +794,16 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Career History</ExecBodyH>
               {historyExps.map((exp, i) => (
-                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0 }}>
+                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 16 : 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
                     <span data-cv-field={`hist.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
                   </div>
-                  <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
-                        <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
+                        <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
