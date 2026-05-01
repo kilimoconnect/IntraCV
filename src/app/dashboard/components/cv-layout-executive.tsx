@@ -165,9 +165,9 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
       {/* ── Hidden measurement container ── */}
       <div ref={aMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: BODY_W, overflow: "visible", fontFamily: FONT }}>
         {d.profile && (
-          <div data-mid="profile" style={{ marginBottom: 22 }}>
+          <div data-mid="profile" style={{ marginBottom: 16 }}>
             <BodySection C={C}>Executive Profile</BodySection>
-            <p style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
+            <p style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
           </div>
         )}
         {d.experience?.map((exp, i) => (
@@ -315,7 +315,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Executive Profile</BodySection>
-              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
 
