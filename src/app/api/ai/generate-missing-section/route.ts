@@ -89,18 +89,29 @@ function getSectionPrompt(sectionKey: string, cvData: any, careerLevel: string):
   const context = buildFullContext(cvData, careerLevel);
 
   switch (sectionKey) {
-    case "skills":
-      return `You are an expert CV writer. Study the full candidate profile below, then generate a relevant skills list.
+    case "skills": {
+      const skillExp = (cvData.experiences || []);
+      const skillExpLines = skillExp
+        .map((e: any, i: number) =>
+          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "?"} (${e.startDate || "?"}–${e.endDate || "present"})\n     ${(e.description || "").substring(0, 300)}`
+        )
+        .join("\n");
+      return `You are an expert CV writer. Derive skills ONLY from the experience descriptions below.
 
-${context}
+CANDIDATE EXPERIENCE (read every description carefully — skills must come from here):
+${skillExpLines || "  No experience listed"}
 
-Generate 6-10 specific professional skills this candidate realistically has, based on their actual experience and industry:
-- name: Specific skill name (not generic — e.g. "Financial Modelling" not "Finance"; "Stakeholder Management" not "Communication")
-- category: Exactly one of: Technical, Soft Skills, Leadership, Domain, Tools
-- Draw ONLY from evidence in the profile — do not invent skills not implied by the experience above
-- Cover a range of categories; avoid repeating the same category more than 3 times
+HARD RULES:
+1. Every skill must be directly evidenced or strongly implied by the job descriptions above — do NOT invent skills not supported by the text
+2. Be specific: "Procurement Management" not "Management"; "Financial Reporting" not "Finance"
+3. Category must be exactly one of: Technical, Soft Skills, Leadership, Domain, Tools
+4. Do not repeat the same category more than 3 times
+5. Do not include tools or software here (those belong in the Tools section)
+
+Generate 6-10 skills grounded in the experience above.
 
 Return ONLY JSON: { "skills": [{ "name": "", "category": "" }] }`;
+    }
 
     case "awards": {
       const awardExp = (cvData.experiences || []);
@@ -261,18 +272,27 @@ Based on the candidate's location, name, education, and career context, list the
 
 Return ONLY JSON: { "languages": [{ "name": "", "proficiency": "" }] }`;
 
-    case "tools":
-      return `You are an expert CV writer. Study the full candidate profile below, then list relevant tools and software.
+    case "tools": {
+      const toolExp = (cvData.experiences || []);
+      const toolExpLines = toolExp
+        .map((e: any, i: number) =>
+          `  ${i + 1}. ${e.title || "Role"} at ${e.company || "?"} (${e.startDate || "?"}–${e.endDate || "present"})\n     ${(e.description || "").substring(0, 300)}`
+        )
+        .join("\n");
+      return `You are an expert CV writer. Derive tools and software ONLY from the experience descriptions below.
 
-${context}
+CANDIDATE EXPERIENCE (read every description carefully — tools must come from here):
+${toolExpLines || "  No experience listed"}
 
-List 5-8 specific software tools and platforms this professional realistically uses, based on their actual role and industry:
-- Prioritise tools explicitly or implicitly mentioned in their experience and skills above
-- Add industry-standard tools for their sector
-- Be specific (e.g. "SAP S/4HANA" not "ERP"; "Microsoft Excel" not "Office")
-- Do not duplicate tools already in the skills section above
+HARD RULES:
+1. Only include tools explicitly mentioned or strongly implied by the job descriptions above
+2. Be specific: "SAP S/4HANA" not "ERP"; "Microsoft Excel" not "Office"; "QuickBooks" not "Accounting Software"
+3. Do not invent tools not supported by the experience text
+4. Industry-standard tools are allowed ONLY if the role clearly implies their use (e.g. a Procurement Manager implicitly uses procurement/ERP systems mentioned in their sector)
+5. 5-8 tools total
 
 Return ONLY JSON: { "tools": ["tool1", "tool2", ...] }`;
+    }
 
     case "summary":
       return `You are an expert CV writer. Study the full candidate profile below, then write a powerful professional summary.
