@@ -102,16 +102,34 @@ Generate 6-10 specific professional skills this candidate realistically has, bas
 
 Return ONLY JSON: { "skills": [{ "name": "", "category": "" }] }`;
 
-    case "awards":
-      return `You are an expert CV writer. Study the full candidate profile below, then suggest plausible awards or recognitions.
+    case "awards": {
+      const awardExp = (cvData.experiences || []);
+      const awardCompanies: string[] = [...new Set(
+        awardExp.map((e: any) => (e.company || "").trim()).filter(Boolean)
+      )] as string[];
+      const awardAllowed = awardCompanies.length
+        ? awardCompanies.map((c: string, i: number) => `  ${i + 1}. "${c}"`).join("\n")
+        : "  (no companies found — infer a plausible internal team name)";
+      return `You are an expert CV writer. Generate realistic internal awards for this candidate.
 
-${context}
+CANDIDATE EXPERIENCE:
+${awardExp.map((e: any, i: number) => `  ${i + 1}. ${e.title || "Role"} at ${e.company || "?"} (${e.startDate || "?"}–${e.endDate || "present"})\n     ${(e.description || "").substring(0, 150)}`).join("\n")}
 
-Suggest 2-3 realistic awards or recognitions this professional may have received, grounded in their actual career sector and level:
-- title: Specific, credible award title (e.g. "Best Innovative Project Award", "Top Performer Q3 2022")
-- description: One short sentence covering the issuer, approximate year, and reason for the award
+ALLOWED ISSUERS — the award description MUST say the award was given BY one of these exact companies only:
+${awardAllowed}
+
+HARD RULES:
+1. The issuer in the description MUST be one of the companies listed above — copied character-for-character
+2. Do NOT invent external bodies, industry councils, or associations not present in the experience
+3. Each award must relate to work actually done at that specific company (use the description text for context)
+4. Year must fall within the candidate's tenure at that company
+
+Suggest 2-3 internal employee awards:
+- title: Specific internal award title (e.g. "Employee of the Year", "Best Operational Efficiency Award", "Top Performer Q3")
+- description: One sentence — issuer (exact company name), year, and what they achieved to earn it
 
 Return ONLY JSON: { "awards": [{ "title": "", "description": "" }] }`;
+    }
 
     case "keyAchievements":
       return `You are an expert CV writer. Study the full candidate profile below, then generate key career achievements.
