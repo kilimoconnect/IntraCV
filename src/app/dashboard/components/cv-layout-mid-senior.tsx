@@ -1515,6 +1515,11 @@ function MidSeniorVariantD({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div style={{ marginTop: 16 }}>
               <DHeading C={C}>Declaration</DHeading>
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+              {d.declaration.date && (
+                <div style={{ marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
+                  <span data-cv-field="decl.date">Date: {d.declaration.date}</span>
+                </div>
+              )}
             </div>
           )}
           </div>
@@ -1859,6 +1864,11 @@ function MidSeniorVariantE({ data: d, theme }: { data: CategoryCVData; theme: Th
               <div style={{ marginTop: 14 }}>
                 <EHeading C={C}>Declaration</EHeading>
                 <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+                {d.declaration.date && (
+                  <div style={{ marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
+                    <span data-cv-field="decl.date">Date: {d.declaration.date}</span>
+                  </div>
+                )}
               </div>
             )}
             </div>
@@ -2107,12 +2117,7 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
               </div>
             </div>
           )}
-          {show.has("declaration") && d.declaration?.declaration && (
-            <div style={{ marginTop: 14 }}>
-              <FMainHeading C={C}>Declaration</FMainHeading>
-              <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
-            </div>
-          )}
+          {/* declaration is in showP2 — rendered on page 2 below */}
           </div>
         </div>
       </div>
@@ -2186,6 +2191,17 @@ function MidSeniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Th
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {showP2.has("declaration") && d.declaration?.declaration && (
+              <div style={{ marginTop: 14 }}>
+                <FMainHeading C={C}>Declaration</FMainHeading>
+                <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "15px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+                {d.declaration.date && (
+                  <div style={{ marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
+                    <span data-cv-field="decl.date">Date: {d.declaration.date}</span>
+                  </div>
+                )}
               </div>
             )}
             </div>
