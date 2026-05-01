@@ -279,17 +279,24 @@ Return ONLY JSON: { "languages": [{ "name": "", "proficiency": "" }] }`;
           `  ${i + 1}. ${e.title || "Role"} at ${e.company || "?"} (${e.startDate || "?"}–${e.endDate || "present"})\n     ${(e.description || "").substring(0, 300)}`
         )
         .join("\n");
-      return `You are an expert CV writer. Derive tools and software ONLY from the experience descriptions below.
+      return `You are an expert CV writer. Generate a list of tools and software this candidate realistically uses in their roles.
 
-CANDIDATE EXPERIENCE (read every description carefully — tools must come from here):
+CANDIDATE EXPERIENCE (use this as your primary source):
 ${toolExpLines || "  No experience listed"}
 
-HARD RULES:
-1. Only include tools explicitly mentioned or strongly implied by the job descriptions above
-2. Be specific: "SAP S/4HANA" not "ERP"; "Microsoft Excel" not "Office"; "QuickBooks" not "Accounting Software"
-3. Do not invent tools not supported by the experience text
-4. Industry-standard tools are allowed ONLY if the role clearly implies their use (e.g. a Procurement Manager implicitly uses procurement/ERP systems mentioned in their sector)
-5. 5-8 tools total
+GENERATION RULES — apply in order:
+1. First priority: include any tools explicitly named in the job descriptions above (e.g. "SAP", "Excel", "Salesforce")
+2. Second priority: include well-known industry-standard tools for each job title and sector — every professional role has standard software; always generate these even when descriptions are vague
+3. Be specific with names: "SAP S/4HANA" not "ERP"; "Microsoft Excel" not "Office Suite"; "QuickBooks" not "Accounting Software"; "Salesforce CRM" not "CRM"
+4. Do NOT invent tools from unrelated industries or fabricate software that does not exist
+5. Generate 5–8 tools total — you MUST return at least 5 even if descriptions are short
+
+Examples by role:
+- Procurement / Supply Chain → SAP MM, Ariba, Microsoft Excel, Oracle ERP, Coupa
+- Finance / Accounting → QuickBooks, SAP FICO, Microsoft Excel, Xero, Power BI
+- HR → SAP SuccessFactors, Workday, BambooHR, Microsoft Teams
+- Software Engineer → Git, VS Code, Jira, Docker, AWS
+- Marketing → Google Analytics, HubSpot, Meta Ads Manager, Canva, Mailchimp
 
 Return ONLY JSON: { "tools": ["tool1", "tool2", ...] }`;
     }
