@@ -629,9 +629,9 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
       {/* ── Hidden measurement container ── */}
       <div ref={bMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: INNER_W, overflow: "visible", fontFamily: FONT }}>
         {d.profile && (
-          <div data-mid="profile" style={{ marginBottom: 22 }}>
+          <div data-mid="profile" style={{ marginBottom: 16 }}>
             <ExecBodyH C={C}>Executive Profile</ExecBodyH>
-            <p style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
+            <p style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
           </div>
         )}
         {d.experience?.map((exp, i) => (
@@ -742,9 +742,9 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
         {/* Right main body */}
         <div ref={p1BodyRef} style={{ position: "absolute", top: P1_BODY_TOP, left: LS + 20, width: RS - 40, maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
           {d.profile && (
-            <div style={{ marginBottom: 22 }}>
+            <div style={{ marginBottom: 16 }}>
               <ExecBodyH C={C}>Executive Profile</ExecBodyH>
-              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
           {topExps.length > 0 && (
@@ -1006,9 +1006,9 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
       {/* ── Hidden measurement container ── */}
       <div ref={cMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: W, overflow: "visible", fontFamily: FONT }}>
         {d.profile && (
-          <div data-mid="profile" style={{ marginBottom: 22 }}>
+          <div data-mid="profile" style={{ marginBottom: 16 }}>
             <MinimalH C={C}>Executive Profile</MinimalH>
-            <p style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
+            <p style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
           </div>
         )}
         {d.experience?.map((exp, i) => (
@@ -1079,9 +1079,9 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           {/* Left — main content */}
           <div ref={p1BodyRef} style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
             {d.profile && (
-              <div style={{ marginBottom: 22 }}>
+              <div style={{ marginBottom: 16 }}>
                 <MinimalH C={C}>Executive Profile</MinimalH>
-                <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
+                <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
               </div>
             )}
             {topExps.length > 0 && (
