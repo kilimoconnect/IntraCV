@@ -135,7 +135,9 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           used += h;
           count++;
         }
-        const optimal = Math.max(1, count);
+        // Always show at least 2 experiences on P1 when available — useBulletTrim will reduce bullets to fit
+        const minOnP1 = Math.min(2, d.experience?.length || 1);
+        const optimal = Math.max(minOnP1, count);
         setAExpSplit(prev => prev === optimal ? prev : optimal);
         if (process.env.NODE_ENV === "development") {
           console.log(`[Executive A DOM] budget=${P1_BODY_BUDGET_CONST}, expFit=${optimal}/${d.experience?.length || 0}`, heights);
@@ -144,7 +146,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
     });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [P1_BODY_BUDGET_CONST, aExpFP]);
+  }, [P1_BODY_BUDGET_CONST, aExpFP, d.profile]);
 
   if (variant === "B") return <ExecutiveVariantB data={d} theme={theme} />;
   if (variant === "C") return <ExecutiveVariantC data={d} theme={theme} />;
