@@ -825,7 +825,7 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               </div>
             )}
             {d.references?.length > 0 && (
-              <div>
+              <div style={{ marginBottom: 16 }}>
                 <BoldHeading C={C}>References</BoldHeading>
                 <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 3 ? "1fr 1fr 1fr" : d.references.length === 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
                   {d.references.map((ref, i) => (
@@ -837,6 +837,18 @@ function MidSeniorVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
                       {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Declaration */}
+            {d.declaration?.declaration && (
+              <div>
+                <BoldHeading C={C}>Declaration</BoldHeading>
+                <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+                <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
+                  {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
+                  {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
                 </div>
               </div>
             )}
@@ -1207,7 +1219,7 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
               </div>
             )}
             {d.references?.length > 0 && (
-              <div>
+              <div style={{ marginBottom: 16 }}>
                 <CardHeading C={C}>References</CardHeading>
                 <div style={{ display: "grid", gridTemplateColumns: d.references.length >= 3 ? "1fr 1fr 1fr" : d.references.length === 2 ? "1fr 1fr" : "1fr", gap: 10 }}>
                   {d.references.map((ref, i) => (
@@ -1219,6 +1231,18 @@ function MidSeniorVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
                       {ref.email && <div data-cv-field={`ref.${i}.email`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>✉ {ref.email}</div>}
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Declaration */}
+            {d.declaration?.declaration && (
+              <div>
+                <CardHeading C={C}>Declaration</CardHeading>
+                <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
+                <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
+                  {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
+                  {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
                 </div>
               </div>
             )}
