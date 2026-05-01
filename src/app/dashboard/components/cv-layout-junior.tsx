@@ -1181,7 +1181,6 @@ function JuniorVariantF({ data: d, theme }: { data: CategoryCVData; theme: Theme
               <Heading C={C}>Declaration</Heading>
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10px", lineHeight: "14px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
               <div style={{ display: "flex", gap: 24, marginTop: 3, fontFamily: FONT, fontSize: "9.5px", color: C.muted }}>
-                {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
                 {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
               </div>
             </div>

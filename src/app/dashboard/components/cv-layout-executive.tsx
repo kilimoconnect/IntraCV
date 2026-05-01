@@ -535,7 +535,6 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
               <BodySection C={C}>Declaration</BodySection>
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
               <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
-                {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
                 {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
               </div>
             </div>
@@ -920,7 +919,6 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               <ExecBodyH C={C}>Declaration</ExecBodyH>
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "12px", lineHeight: "17px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
               <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
-                {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
                 {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
               </div>
             </div>
@@ -1321,7 +1319,6 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
               <MinimalH C={C}>Declaration</MinimalH>
               <p data-cv-field="decl.declaration" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, margin: 0, fontStyle: "italic" }}>{d.declaration.declaration}</p>
               <div style={{ display: "flex", gap: 24, marginTop: 4, fontFamily: FONT, fontSize: "10px", color: C.muted }}>
-                {d.declaration.place && <span data-cv-field="decl.place">Place: {d.declaration.place}</span>}
                 {d.declaration.date && <span data-cv-field="decl.date">Date: {d.declaration.date}</span>}
               </div>
             </div>
