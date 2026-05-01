@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function OnePageTemplate({ data }: Props) {
-  const { personalInfo, summary, experiences, education, skills, certifications, languages } = data;
+  const { personalInfo, summary, experiences, education, skills, certifications, languages, declaration } = data;
 
   const groupedSkills = skills.reduce((acc: Record<string, string[]>, s) => {
     const cat = s.category || "Other";
@@ -105,6 +105,23 @@ export default function OnePageTemplate({ data }: Props) {
                   {edu.institution && <p style={{ margin: "1px 0 0", color: "#2563eb", fontSize: "10px" }}>{edu.institution}</p>}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Declaration */}
+          {declaration?.declaration && (
+            <div style={{ marginBottom: "14px" }}>
+              <h2 style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "#2563eb", margin: "0 0 6px", borderBottom: "1px solid #e5e7eb", paddingBottom: "3px" }}>
+                Declaration
+              </h2>
+              <p style={{ margin: 0, color: "#444", fontSize: "10px", fontStyle: "italic", lineHeight: "1.5" }}>
+                {declaration.declaration}
+              </p>
+              {(declaration.place || declaration.date) && (
+                <p style={{ margin: "4px 0 0", fontSize: "9.5px", color: "#666" }}>
+                  {declaration.place}{declaration.place && declaration.date ? ", " : ""}{declaration.date}
+                </p>
+              )}
             </div>
           )}
         </div>

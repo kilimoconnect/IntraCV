@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function TwoPageTemplate({ data }: Props) {
-  const { personalInfo, summary, experiences, education, skills, certifications, languages, areasOfExpertise, referees } = data;
+  const { personalInfo, summary, experiences, education, skills, certifications, languages, areasOfExpertise, referees, declaration } = data;
 
   const groupedSkills = skills.reduce((acc: Record<string, string[]>, s) => {
     const cat = s.category || "Other";
@@ -215,6 +215,21 @@ export default function TwoPageTemplate({ data }: Props) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Declaration */}
+        {declaration?.declaration && (
+          <div style={{ marginBottom: "18px" }}>
+            <h2 style={sectionHeadingStyle}>Declaration</h2>
+            <p style={{ margin: 0, color: "#475569", fontSize: "10.5px", fontStyle: "italic", lineHeight: "1.6" }}>
+              {declaration.declaration}
+            </p>
+            {(declaration.place || declaration.date) && (
+              <p style={{ margin: "6px 0 0", fontSize: "10px", color: "#64748b" }}>
+                {declaration.place}{declaration.place && declaration.date ? ", " : ""}{declaration.date}
+              </p>
+            )}
           </div>
         )}
       </div>
