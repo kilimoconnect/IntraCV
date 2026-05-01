@@ -165,24 +165,24 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
       {/* ── Hidden measurement container ── */}
       <div ref={aMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: BODY_W, overflow: "visible", fontFamily: FONT }}>
         {d.profile && (
-          <div data-mid="profile" style={{ marginBottom: 16 }}>
+          <div data-mid="profile" style={{ marginBottom: 22 }}>
             <BodySection C={C}>Executive Profile</BodySection>
-            <p style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
+            <p style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
           </div>
         )}
         {d.experience?.map((exp, i) => (
-          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 12, paddingLeft: 14, borderLeft: `3px solid ${C.primary}` }}>
+          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 16, paddingLeft: 14, borderLeft: `3px solid ${C.primary}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+              <span style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
               <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8, fontStyle: "italic" }}>{exp.dates}</span>
             </div>
-            <div style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>
+            <div style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6, wordWrap: "break-word" }}>
               {exp.company}{exp.location ? ` — ${exp.location}` : ""}
             </div>
             {exp.bullets?.length > 0 && (
               <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                 {exp.bullets.map((b, bi) => (
-                  <li key={bi} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                  <li key={bi} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                 ))}
               </ul>
             )}
@@ -196,7 +196,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
                 <div style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.pillBg, border: `1.5px solid ${C.primary}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontFamily: FONT, fontSize: "10px", color: C.primary, fontWeight: 700 }}>★</span>
                 </div>
-                <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, paddingTop: 2, wordWrap: "break-word" }}>{ach}</span>
+                <span style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, paddingTop: 2, wordWrap: "break-word" }}>{ach}</span>
               </div>
             ))}
           </div>
@@ -315,7 +315,7 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
           {d.profile && (
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Executive Profile</BodySection>
-              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
+              <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
             </div>
           )}
 
@@ -324,18 +324,18 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
             <div style={{ marginBottom: 16 }}>
               <BodySection C={C}>Professional Experience</BodySection>
               {topExps.map((exp, i) => (
-                <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0, paddingLeft: 14, borderLeft: `3px solid ${C.primary}` }}>
+                <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 16 : 0, paddingLeft: 14, borderLeft: `3px solid ${C.primary}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
                     <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8, fontStyle: "italic" }}>{exp.dates}</span>
                   </div>
-                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>
+                  <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6, wordWrap: "break-word" }}>
                     {exp.company}{exp.location ? ` — ${exp.location}` : ""}
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
-                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                        <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -387,16 +387,16 @@ export default function CVLayoutExecutive({ data: d, theme, variant = "A" }: Pro
               {historyExps.map((exp, i) => (
                 <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0, paddingLeft: 14, borderLeft: `2px solid ${C.divider}` }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
                     <span data-cv-field={`hist.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, whiteSpace: "nowrap", marginLeft: 8, fontStyle: "italic" }}>{exp.dates}</span>
                   </div>
-                  <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3 }}>
+                  <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6 }}>
                     {exp.company}{exp.location ? ` — ${exp.location}` : ""}
                   </div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
-                        <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
+                        <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
@@ -785,7 +785,7 @@ function ExecutiveVariantB({ data: d, theme }: { data: CategoryCVData; theme: Th
               {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 5 }}>
                   <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
-                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, wordWrap: "break-word" }}>{ach}</span>
                 </div>
               ))}
             </div>
@@ -1006,24 +1006,24 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
       {/* ── Hidden measurement container ── */}
       <div ref={cMeasRef} style={{ position: "absolute", visibility: "hidden", pointerEvents: "none", left: -9999, top: 0, width: W, overflow: "visible", fontFamily: FONT }}>
         {d.profile && (
-          <div data-mid="profile" style={{ marginBottom: 16 }}>
+          <div data-mid="profile" style={{ marginBottom: 22 }}>
             <MinimalH C={C}>Executive Profile</MinimalH>
-            <p style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
+            <p style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
           </div>
         )}
         {d.experience?.map((exp, i) => (
-          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 10 }}>
+          <div key={i} data-mid={`exp-${i}`} style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+              <span style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
               <span style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
             </div>
-            <div style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6 }}>
               {exp.company}{exp.location ? ` — ${exp.location}` : ""}
             </div>
             {exp.bullets?.length > 0 && (
               <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                 {exp.bullets.map((b, bi) => (
-                  <li key={bi} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                  <li key={bi} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                 ))}
               </ul>
             )}
@@ -1034,8 +1034,8 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             <MinimalH C={C}>Career Highlights</MinimalH>
             {d.achievements.filter(a => a?.trim()).map((ach, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
-                <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "17px" }}>★</span>
-                <span style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
+                <span style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, lineHeight: "19px" }}>★</span>
+                <span style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text }}>{ach}</span>
               </div>
             ))}
           </div>
@@ -1079,25 +1079,25 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
           {/* Left — main content */}
           <div ref={p1BodyRef} style={{ maxHeight: P1_BODY_BUDGET, overflow: "hidden" }}>
             {d.profile && (
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 22 }}>
                 <MinimalH C={C}>Executive Profile</MinimalH>
-                <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, margin: 0 }}>{d.profile}</p>
+                <p data-cv-field="profile" data-cv-multiline="true" style={{ fontFamily: FONT, fontSize: "13px", lineHeight: "22px", color: C.text, margin: 0 }}>{d.profile}</p>
               </div>
             )}
             {topExps.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <MinimalH C={C}>Experience</MinimalH>
                 {topExps.map((exp, i) => (
-                  <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 12 : 0 }}>
+                  <div key={i} style={{ marginBottom: i < topExps.length - 1 ? 16 : 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "12px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                      <span data-cv-field={`exp.${i}.role`} style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
                       <span data-cv-field={`exp.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
                     </div>
-                    <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "11px", color: C.primary, fontWeight: 600, marginBottom: 4, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                    <div data-cv-field={`exp.${i}.company`} style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                     {exp.bullets?.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                         {exp.bullets.slice(0, p1MaxBullets).map((b, bi) => (
-                          <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1.5 }}>{b}</li>
+                          <li key={bi} data-cv-field={`exp.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                         ))}
                       </ul>
                     )}
@@ -1186,7 +1186,7 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
               {d.achievements.filter(a => a?.trim()).map((ach, i) => (
                 <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
                   <span style={{ fontFamily: FONT, fontSize: "11px", color: C.primary }}>—</span>
-                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text }}>{ach}</span>
+                  <span data-cv-field={`ach.${i}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text }}>{ach}</span>
                 </div>
               ))}
             </div>
@@ -1195,16 +1195,16 @@ function ExecutiveVariantC({ data: d, theme }: { data: CategoryCVData; theme: Th
             <div style={{ marginBottom: 16 }}>
               <MinimalH C={C}>Career History</MinimalH>
               {historyExps.map((exp, i) => (
-                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 10 : 0 }}>
+                <div key={i} style={{ marginBottom: i < historyExps.length - 1 ? 16 : 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "11.5px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
+                    <span data-cv-field={`hist.${i}.role`} style={{ fontFamily: FONT, fontSize: "13px", fontWeight: 700, color: C.text, wordWrap: "break-word", flex: 1, minWidth: 0 }}>{exp.role}</span>
                     <span data-cv-field={`hist.${i}.dates`} style={{ fontFamily: FONT, fontSize: "9.5px", color: C.muted, fontStyle: "italic" }}>{exp.dates}</span>
                   </div>
-                  <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "10.5px", color: C.primary, fontWeight: 600, marginBottom: 3, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
+                  <div data-cv-field={`hist.${i}.company`} style={{ fontFamily: FONT, fontSize: "12px", color: C.primary, fontWeight: 600, marginBottom: 6, wordWrap: "break-word" }}>{exp.company}{exp.location ? ` — ${exp.location}` : ""}</div>
                   {exp.bullets?.length > 0 && (
                     <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}>
                       {exp.bullets.slice(0, p2MaxBullets).map((b, bi) => (
-                        <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "10.5px", lineHeight: "17px", color: C.text, marginBottom: 1 }}>{b}</li>
+                        <li key={bi} data-cv-field={`hist.${i}.bullet.${bi}`} style={{ fontFamily: FONT, fontSize: "11.5px", lineHeight: "19px", color: C.text, marginBottom: 2.5 }}>{b}</li>
                       ))}
                     </ul>
                   )}
