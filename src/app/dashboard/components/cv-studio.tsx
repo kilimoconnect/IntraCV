@@ -1664,44 +1664,37 @@ export default function CvStudio({ userId, cvData }: Props) {
     }
   }, [aiData, jobDescription, jobAnalysis, selectedCategory, optimizing]);
 
-  const handlePayAndDownload = useCallback(async (plan: PlanId) => {
-    if (!aiData || paymentProcessing) return;
-
+  // ── Shared payment setup (stores state, triggers abandon flow) ──
+  const preparePayment = useCallback((plan: PlanId): { email: string; name: string; planDef: typeof CV_PLANS[number] } | null => {
+    if (!aiData || paymentProcessing) return null;
     const personalInfo = cvData?.personalInfo as Record<string, string> | undefined;
     const customerEmail = aiData.email || personalInfo?.email || "";
     if (!customerEmail) {
       toast.error("Please add your email address to your profile before downloading.");
-      return;
+      return null;
     }
-
     const planDef = CV_PLANS.find((p) => p.id === plan)!;
-
-    // Spin the button immediately
     setPaymentProcessing(true);
-
-    // Schedule checkout_abandon flow — cancelled in the payment callback if purchase completes
     fetch("/api/email-automation/trigger", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ flow: "checkout_abandon" }),
     }).catch(() => {});
-
-    // Store CV state (+ job fields + plan) so we can restore everything on return
     sessionStorage.setItem("fusecv-pending-cv", JSON.stringify({
       aiData, selectedCategory, selectedVariant, selectedTheme, customColor, coverLetter,
       jobDescription, company, jobTitle, companyAddress, cvPath, plan,
     }));
+    return { email: customerEmail, name: aiData.fullName || personalInfo?.fullName || "FuseCV User", planDef };
+  }, [aiData, cvData, selectedCategory, selectedVariant, selectedTheme, customColor, coverLetter, jobDescription, company, jobTitle, companyAddress, cvPath, paymentProcessing]);
 
+  const handlePayAndDownload = useCallback(async (plan: PlanId) => {
+    const prep = preparePayment(plan);
+    if (!prep) return;
     try {
       const callbackUrl = `${window.location.origin}/cv-payment/callback?plan=${plan}`;
       const res = await fetch("/api/payments/cv-download-initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: customerEmail,
-          name: aiData.fullName || personalInfo?.fullName || "FuseCV User",
-          redirectUrl: callbackUrl,
-          amount: planDef.amount,
-        }),
+        body: JSON.stringify({ email: prep.email, name: prep.name, redirectUrl: callbackUrl, amount: prep.planDef.amount }),
       });
       const data = await res.json();
       if (!data.link) throw new Error(data.error || "Failed to create payment link");
@@ -1711,7 +1704,27 @@ export default function CvStudio({ userId, cvData }: Props) {
       toast.error(msg);
       setPaymentProcessing(false);
     }
-  }, [aiData, cvData, selectedCategory, selectedVariant, selectedTheme, customColor, coverLetter, jobDescription, company, jobTitle, companyAddress, cvPath, paymentProcessing]);
+  }, [preparePayment]);
+
+  const handleFlutterwavePayAndDownload = useCallback(async (plan: PlanId) => {
+    const prep = preparePayment(plan);
+    if (!prep) return;
+    try {
+      const callbackUrl = `${window.location.origin}/cv-payment/flutterwave-callback?plan=${plan}`;
+      const res = await fetch("/api/payments/flutterwave/cv-initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: prep.email, name: prep.name, redirectUrl: callbackUrl, amount: prep.planDef.amount }),
+      });
+      const data = await res.json();
+      if (!data.link) throw new Error(data.error || "Failed to create payment link");
+      window.location.href = data.link;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Payment setup failed";
+      toast.error(msg);
+      setPaymentProcessing(false);
+    }
+  }, [preparePayment]);
 
   const handlePlanSelect = useCallback((planId: PlanId) => {
     setSelectedPlan(planId);
@@ -1721,12 +1734,9 @@ export default function CvStudio({ userId, cvData }: Props) {
       setCvPath("apply");
       setStep("analyze-profile");
       toast.info("Add job details to generate your cover letter");
-      return;
     }
-    // All other cases — spin immediately then proceed to payment
-    setPaymentProcessing(true);
-    void handlePayAndDownload(planId);
-  }, [cvPath, handlePayAndDownload]);
+    // Plan is now selected — user picks payment method via the buttons below
+  }, [cvPath]);
 
   // ── Category Selection ──
   if (step === "select") {
@@ -2609,6 +2619,9 @@ export default function CvStudio({ userId, cvData }: Props) {
                     <p className={`text-xs ${selectedPlan === plan.id && paymentProcessing ? "text-[#004aad]" : "text-slate-500"}`}>
                       {selectedPlan === plan.id && paymentProcessing ? "Redirecting to payment…" : plan.desc}
                     </p>
+                    {selectedPlan === plan.id && !paymentProcessing && !((plan.id === "professional" || plan.id === "full") && cvPath !== "apply") && (
+                      <p className="text-[10px] text-[#004aad] mt-1 font-medium">✓ Selected — choose payment method below</p>
+                    )}
                     {(plan.id === "professional" || plan.id === "full") && cvPath !== "apply" && !paymentProcessing && (
                       <p className="text-[10px] text-[#00c4cc] mt-1.5 font-medium">
                         ↩ Requires job details — you&apos;ll be asked to add them
@@ -2622,8 +2635,34 @@ export default function CvStudio({ userId, cvData }: Props) {
               <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
               <p className="text-xs text-emerald-700 font-medium">One-time payment · No subscription, no recurring charges</p>
             </div>
+
+            {/* Payment method buttons — only shown once a plan is selected and job details are ready */}
+            {selectedPlan && !(
+              (selectedPlan === "professional" || selectedPlan === "full") && cvPath !== "apply"
+            ) && (
+              <div className="mt-4 space-y-2">
+                <p className="text-[11px] font-semibold text-slate-500 text-center uppercase tracking-wide mb-2">Choose payment method</p>
+                <button
+                  onClick={() => { void handlePayAndDownload(selectedPlan); }}
+                  disabled={paymentProcessing}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-[#004aad] bg-[#004aad] text-white text-sm font-semibold hover:bg-[#003a8c] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {paymentProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  Pay with Pesapal
+                </button>
+                <button
+                  onClick={() => { void handleFlutterwavePayAndDownload(selectedPlan); }}
+                  disabled={paymentProcessing}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-[#f5a623] bg-[#f5a623] text-white text-sm font-semibold hover:bg-[#e09510] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {paymentProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  Pay with Flutterwave
+                </button>
+              </div>
+            )}
+
             <p className="text-center text-[11px] text-slate-400 mt-2">
-              Powered by Pesapal · Secure &amp; Encrypted
+              Secure &amp; Encrypted · Pesapal or Flutterwave
             </p>
           </div>
         </div>

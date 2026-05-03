@@ -24,18 +24,24 @@ function UpgradeContent() {
   const email = params.get("email") || "";
   const name = params.get("name") || "FuseCV User";
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"pesapal" | "flutterwave" | null>(null);
 
-  const handlePay = async () => {
+  const handlePay = async (gateway: "pesapal" | "flutterwave") => {
     if (!email) {
       toast.error("Please add your email to your profile before paying.");
       router.back();
       return;
     }
-    setLoading(true);
+    setLoading(gateway);
     try {
-      const redirectUrl = `${window.location.origin}/interview-payment/callback?action=${pendingAction}`;
-      const res = await fetch("/api/payments/interview-initiate", {
+      const isPesapal = gateway === "pesapal";
+      const redirectUrl = isPesapal
+        ? `${window.location.origin}/interview-payment/callback?action=${pendingAction}`
+        : `${window.location.origin}/interview-payment/flutterwave-callback?action=${pendingAction}`;
+      const endpoint = isPesapal
+        ? "/api/payments/interview-initiate"
+        : "/api/payments/flutterwave/interview-initiate";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, name, redirectUrl }),
@@ -45,7 +51,7 @@ function UpgradeContent() {
       window.location.href = data.link;
     } catch (err: any) {
       toast.error(err.message || "Could not open payment page. Please try again.");
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -81,16 +87,27 @@ function UpgradeContent() {
   );
 
   const PayButton = ({ className = "" }: { className?: string }) => (
-    <Button
-      onClick={handlePay}
-      disabled={loading}
-      className={`bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700
-                  text-white border-0 font-bold shadow-lg shadow-indigo-200 disabled:opacity-60 ${className}`}
-    >
-      {loading
-        ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Opening payment…</>
-        : <><Sparkles className="mr-2 h-5 w-5" />Pay {INTERVIEW_UNLOCK_CURRENCY} {INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}</>}
-    </Button>
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <Button
+        onClick={() => handlePay("pesapal")}
+        disabled={!!loading}
+        className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700
+                    text-white border-0 font-bold shadow-lg shadow-indigo-200 disabled:opacity-60"
+      >
+        {loading === "pesapal"
+          ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Opening payment…</>
+          : <><Sparkles className="mr-2 h-5 w-5" />Pay with Pesapal · {INTERVIEW_UNLOCK_CURRENCY} {INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}</>}
+      </Button>
+      <Button
+        onClick={() => handlePay("flutterwave")}
+        disabled={!!loading}
+        className="w-full bg-[#f5a623] hover:bg-[#e09510] text-white border-0 font-bold shadow-lg disabled:opacity-60"
+      >
+        {loading === "flutterwave"
+          ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Opening payment…</>
+          : <><Sparkles className="mr-2 h-5 w-5" />Pay with Flutterwave · {INTERVIEW_UNLOCK_CURRENCY} {INTERVIEW_UNLOCK_AMOUNT.toLocaleString()}</>}
+      </Button>
+    </div>
   );
 
   // ─────────────────────────────────────────────────────────────────
