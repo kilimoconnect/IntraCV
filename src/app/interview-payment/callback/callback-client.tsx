@@ -10,17 +10,20 @@ interface Props {
   errorMsg: string;
   remaining: number | null;
   paidBatch: number;
+  action?: "generate" | "add";
 }
 
-export default function InterviewCallbackClient({ verified, errorMsg, remaining, paidBatch }: Props) {
+export default function InterviewCallbackClient({ verified, errorMsg, remaining, paidBatch, action }: Props) {
   const router = useRouter();
 
   useEffect(() => {
     if (!verified) return;
-    // Store unlock info so interview-prep can show success toast + refresh quota
+    // Store unlock info so interview-prep can show success toast, refresh quota,
+    // and auto-trigger the action the user was trying to perform before the paywall
     sessionStorage.setItem("fusecv-interview-unlocked", String(remaining ?? 0));
+    if (action) sessionStorage.setItem("fusecv-interview-action", action);
     router.push("/dashboard?tab=interview");
-  }, [verified, remaining, router]);
+  }, [verified, remaining, action, router]);
 
   if (verified) {
     return (

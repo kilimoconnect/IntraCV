@@ -16,6 +16,7 @@ export default async function InterviewFlutterwaveCallbackPage({
   const params = await searchParams;
   const transactionId = params.transaction_id;
   const status = params.status;
+  const action = (params.action ?? "generate") as "generate" | "add";
 
   let verified = false;
   let errorMsg = "";
@@ -39,37 +40,41 @@ export default async function InterviewFlutterwaveCallbackPage({
           errorMsg = "Session expired. Please log in and try again.";
         } else {
           const admin = createAdminSupabase();
-          await admin.rpc("add_interview_paid_quota", { uid: user.id, n: PAID_BATCH });
+          const { error: rpcError } = await admin.rpc("add_interview_paid_quota", { uid: user.id, n: PAID_BATCH });
+          if (rpcError) {
+            console.error("[flw-interview-callback] quota RPC error:", rpcError);
+            errorMsg = "Failed to unlock questions. Please contact support.";
+          } else {
+            const { data: profile } = await admin
+              .from("profiles")
+              .select("interview_questions_generated, interview_questions_paid_quota")
+              .eq("id", user.id)
+              .single();
 
-          const { data: profile } = await admin
-            .from("profiles")
-            .select("interview_questions_generated, interview_questions_paid_quota")
-            .eq("id", user.id)
-            .single();
+            const generated = profile?.interview_questions_generated ?? 0;
+            const paidQuota = profile?.interview_questions_paid_quota ?? 0;
+            remaining = Math.max(0, FREE_QUOTA + paidQuota - generated);
+            verified = true;
 
-          const generated = profile?.interview_questions_generated ?? 0;
-          const paidQuota = profile?.interview_questions_paid_quota ?? 0;
-          remaining = Math.max(0, FREE_QUOTA + paidQuota - generated);
-          verified = true;
+            const fullName = user.user_metadata?.full_name || "";
+            try {
+              await sendPurchaseEmail({ type: "interview", toEmail: user.email!, toName: fullName });
+            } catch (e) {
+              console.error("[flw-interview-callback] email error:", e);
+            }
 
-          const fullName = user.user_metadata?.full_name || "";
-          try {
-            await sendPurchaseEmail({ type: "interview", toEmail: user.email!, toName: fullName });
-          } catch (e) {
-            console.error("[flw-interview-callback] email error:", e);
-          }
-
-          try {
-            await cancelFlow(user.id, "checkout_abandon");
-            await cancelFlow(user.id, "signup_no_purchase");
-            await cancelFlow(user.id, "preview_no_purchase");
-            await cancelFlow(user.id, "missing_info");
-            await cancelFlow(user.id, "executive_prestige");
-            await cancelFlow(user.id, "upload_started_no_finish");
-            await cancelFlow(user.id, "interview_upsell");
-            await cancelFlow(user.id, "cv_purchased");
-          } catch (e) {
-            console.error("[flw-interview-callback] automation flow error:", e);
+            try {
+              await cancelFlow(user.id, "checkout_abandon");
+              await cancelFlow(user.id, "signup_no_purchase");
+              await cancelFlow(user.id, "preview_no_purchase");
+              await cancelFlow(user.id, "missing_info");
+              await cancelFlow(user.id, "executive_prestige");
+              await cancelFlow(user.id, "upload_started_no_finish");
+              await cancelFlow(user.id, "interview_upsell");
+              await cancelFlow(user.id, "cv_purchased");
+            } catch (e) {
+              console.error("[flw-interview-callback] automation flow error:", e);
+            }
           }
         }
       }
@@ -99,6 +104,7 @@ export default async function InterviewFlutterwaveCallbackPage({
               errorMsg={errorMsg}
               remaining={remaining}
               paidBatch={PAID_BATCH}
+              action={action}
             />
           </Suspense>
         </div>

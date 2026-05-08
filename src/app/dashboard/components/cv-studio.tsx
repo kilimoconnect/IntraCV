@@ -892,6 +892,7 @@ export default function CvStudio({ userId, cvData }: Props) {
   const [coverLetterUnlocked, setCoverLetterUnlocked] = useState(false);
   const [cvPaidReady, setCvPaidReady] = useState(false); // returned from payment redirect
   const [autoDownload, setAutoDownload] = useState(false); // auto-trigger download on return
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null); // held for manual fallback
   const [copiedCL, setCopiedCL] = useState(false);
   const [shouldAutoOptimize, setShouldAutoOptimize] = useState(false);
   const [profileAnalysis, setProfileAnalysis] = useState<{
@@ -990,6 +991,16 @@ export default function CvStudio({ userId, cvData }: Props) {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoDownload, cvPaidReady, aiData, selectedCategory]);
+
+  // ── Revoke the PDF blob URL after 15 minutes to free memory ──
+  useEffect(() => {
+    if (!pdfBlobUrl) return;
+    const t = setTimeout(() => {
+      URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }, 15 * 60 * 1000);
+    return () => clearTimeout(t);
+  }, [pdfBlobUrl]);
 
   // ── Automation triggers (fire-and-forget, never affect UI) ──
 
@@ -1566,7 +1577,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       if (downloadToken) sessionStorage.removeItem("fusecv-cv-plan");
 
       try {
-        await printCvAsPdf(element, {
+        const blobUrl = await printCvAsPdf(element, {
           filename,
           userId,
           docTitle,
@@ -1574,6 +1585,14 @@ export default function CvStudio({ userId, cvData }: Props) {
           coverLetter: coverLetter ?? undefined,
           downloadToken,
         });
+        if (blobUrl) {
+          setPdfBlobUrl(blobUrl);
+          // Show a toast so users whose browser blocked the auto-download know they have a fallback
+          toast.success(
+            "Your CV is ready! If the download didn't start, click the Download CV button in the toolbar.",
+            { duration: 8000 }
+          );
+        }
       } catch (apiErr: any) {
         console.error("[pdf] api2pdf failed:", apiErr);
         toast.error(
@@ -2299,14 +2318,27 @@ export default function CvStudio({ userId, cvData }: Props) {
               )}
             </button>
             {pdfDownloaded ? (
-              <a
-                href="/dashboard?tab=documents"
-                className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-emerald-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg transition-all duration-200 hover:bg-emerald-700"
-              >
-                <FolderOpen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="hidden sm:inline">View Documents</span>
-                <span className="sm:hidden">Docs</span>
-              </a>
+              <div className="flex items-center gap-1.5">
+                {pdfBlobUrl && (
+                  <a
+                    href={pdfBlobUrl}
+                    download={`${(aiData?.fullName ?? "CV").replace(/\s+/g, "_")}_CV.pdf`}
+                    className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-[#004aad] px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg transition-all duration-200 hover:bg-[#003590]"
+                  >
+                    <Download className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="hidden sm:inline">Download CV</span>
+                    <span className="sm:hidden">Save</span>
+                  </a>
+                )}
+                <a
+                  href="/dashboard?tab=documents"
+                  className="flex items-center gap-1 sm:gap-1.5 rounded-xl bg-emerald-600 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs text-white shadow-lg transition-all duration-200 hover:bg-emerald-700"
+                >
+                  <FolderOpen className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  <span className="hidden sm:inline">View Documents</span>
+                  <span className="sm:hidden">Docs</span>
+                </a>
+              </div>
             ) : (
               <button
                 onClick={() => setShowPricingModal(true)}

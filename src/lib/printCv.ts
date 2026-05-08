@@ -171,7 +171,7 @@ async function generateViaApi2Pdf(
     coverLetter?: string;
     downloadToken?: string;
   } = {}
-): Promise<void> {
+): Promise<string> {
   const res = await fetch("/api/pdf/api2pdf", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -195,7 +195,12 @@ async function generateViaApi2Pdf(
   const pdfStored = res.headers.get("X-Pdf-Stored");
   console.log("[printCv] pdf storage status:", pdfStored);
 
-  // Trigger a direct browser download from the binary response
+  // Build a blob URL and attempt an immediate programmatic download.
+  // The URL is NOT revoked here — the caller keeps it so the user can
+  // click a fallback "Download CV" button if the browser blocked the
+  // automatic save (common after multi-page redirect flows such as
+  // Flutterwave). The caller is responsible for revoking via
+  // URL.revokeObjectURL() when the URL is no longer needed.
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -203,19 +208,22 @@ async function generateViaApi2Pdf(
   a.download = `${filename}.pdf`;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 100);
+  setTimeout(() => document.body.removeChild(a), 100);
+  // Return the URL so the caller can offer a manual download fallback
+  return url;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public entry point — always uses api2pdf
+// Returns the blob URL of the generated PDF so callers can offer a
+// manual "Download CV" fallback button (important after redirect-based
+// payment flows where the programmatic a.click() may be browser-blocked).
+// Caller must call URL.revokeObjectURL() when done.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function printCvAsPdf(
   element: HTMLElement,
   options: PrintCvOptions
-): Promise<void> {
+): Promise<string | null> {
   const { filename, onStart, onComplete, userId, docTitle, docContent, coverLetter, downloadToken } = options;
   onStart?.();
 
@@ -225,7 +233,8 @@ export async function printCvAsPdf(
     await new Promise<void>((r) => setTimeout(r, 300));
 
     const html = buildPrintHtml(element, filename);
-    await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter, downloadToken });
+    const blobUrl = await generateViaApi2Pdf(html, filename, { userId, docTitle, docContent, coverLetter, downloadToken });
+    return blobUrl;
   } catch (err) {
     console.error("[printCv] failed:", err);
     // Re-throw so callers can show an error toast

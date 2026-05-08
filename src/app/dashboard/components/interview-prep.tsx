@@ -276,6 +276,8 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
   // Usage / payment state
   const [usage, setUsage] = useState<UsageState>({ generated: 0, paidQuota: 0, totalAllowed: FREE_QUOTA, remaining: FREE_QUOTA });
+  // Pending action to auto-trigger once quota has been refreshed after payment
+  const [pendingPaymentAction, setPendingPaymentAction] = useState<"generate" | "add" | null>(null);
 
   // Delete confirm state
   const [confirmDeleteSession, setConfirmDeleteSession] = useState<SessionRow | null>(null);
@@ -331,12 +333,17 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
 
   // ── Detect return from interview payment redirect ──
   useEffect(() => {
+    if (!userId) return; // wait until userId prop is available
     if (typeof window === "undefined") return;
     const unlocked = sessionStorage.getItem("fusecv-interview-unlocked");
     if (!unlocked) return;
     sessionStorage.removeItem("fusecv-interview-unlocked");
-    const remaining = parseInt(unlocked, 10);
-    // Refresh usage from server
+
+    // Read and store the pending action (generate / add) before removing it
+    const action = sessionStorage.getItem("fusecv-interview-action") as "generate" | "add" | null;
+    if (action) sessionStorage.removeItem("fusecv-interview-action");
+
+    // Refresh usage from server so the UI reflects the new quota
     const supabase = createClient();
     supabase
       .from("profiles")
@@ -348,12 +355,35 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
           const generated = data.interview_questions_generated ?? 0;
           const paidQuota = data.interview_questions_paid_quota ?? 0;
           const totalAllowed = FREE_QUOTA + paidQuota;
-          setUsage({ generated, paidQuota, totalAllowed, remaining: Math.max(0, totalAllowed - generated) });
+          const newRemaining = Math.max(0, totalAllowed - generated);
+          setUsage({ generated, paidQuota, totalAllowed, remaining: newRemaining });
+          toast.success(
+            `🎉 +${PAID_BATCH} questions unlocked! ${newRemaining} question${newRemaining !== 1 ? "s" : ""} remaining.`,
+            { duration: 5000 }
+          );
+          // Queue the pending action — it will fire once session state is also ready
+          if (action) setPendingPaymentAction(action);
         }
       });
-    toast.success(`🎉 +${PAID_BATCH} questions unlocked! ${remaining} questions remaining.`, { duration: 5000 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId]);
+
+  // ── Auto-trigger the pending action once both quota and session state are ready ──
+  useEffect(() => {
+    if (!pendingPaymentAction) return;
+    if (usage.remaining <= 0) return; // quota not refreshed yet — wait
+
+    if (pendingPaymentAction === "add" && currentSessionId) {
+      setPendingPaymentAction(null);
+      addMoreQuestionsCore();
+    } else if (pendingPaymentAction === "generate" && simRole.trim() && simJobDescription.trim()) {
+      setPendingPaymentAction(null);
+      generateQuestionsCore();
+    }
+    // If conditions aren't met (e.g. no session loaded yet or form empty), the effect
+    // re-runs automatically whenever these values change until conditions are satisfied.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPaymentAction, usage.remaining, currentSessionId, simRole, simJobDescription]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -552,11 +582,11 @@ export default function InterviewPrep({ userId, cvData }: InterviewPrepProps) {
     if (!email) { toast.error("Please add your email to your profile before paying."); return; }
     setIsPayingInterview(true);
     try {
-      const callbackUrl = `${window.location.origin}/interview-payment/callback`;
-      const res = await fetch("/api/payments/interview-initiate", {
+      const redirectUrl = `${window.location.origin}/interview-payment/flutterwave-callback?action=${_action}`;
+      const res = await fetch("/api/payments/flutterwave/interview-initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, redirectUrl: callbackUrl }),
+        body: JSON.stringify({ email, name, redirectUrl }),
       });
       const data = await res.json();
       if (!data.link) throw new Error(data.error || "Failed to create payment link");
