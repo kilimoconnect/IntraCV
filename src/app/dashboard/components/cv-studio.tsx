@@ -2640,29 +2640,20 @@ export default function CvStudio({ userId, cvData }: Props) {
             {selectedPlan && !(
               (selectedPlan === "professional" || selectedPlan === "full") && cvPath !== "apply"
             ) && (
-              <div className="mt-4 space-y-2">
-                <p className="text-[11px] font-semibold text-slate-500 text-center uppercase tracking-wide mb-2">Choose payment method</p>
-                <button
-                  onClick={() => { void handlePayAndDownload(selectedPlan); }}
-                  disabled={paymentProcessing}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-[#004aad] bg-[#004aad] text-white text-sm font-semibold hover:bg-[#003a8c] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                >
-                  {paymentProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                  Pay with Pesapal
-                </button>
+              <div className="mt-4">
                 <button
                   onClick={() => { void handleFlutterwavePayAndDownload(selectedPlan); }}
                   disabled={paymentProcessing}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-[#f5a623] bg-[#f5a623] text-white text-sm font-semibold hover:bg-[#e09510] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                 >
                   {paymentProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                  Pay with Flutterwave
+                  {paymentProcessing ? "Redirecting to payment…" : "Pay with Flutterwave"}
                 </button>
               </div>
             )}
 
             <p className="text-center text-[11px] text-slate-400 mt-2">
-              Secure &amp; Encrypted · Pesapal or Flutterwave
+              Powered by Flutterwave · Secure &amp; Encrypted
             </p>
           </div>
         </div>
