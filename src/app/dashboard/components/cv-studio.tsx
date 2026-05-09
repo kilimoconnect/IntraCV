@@ -1598,7 +1598,7 @@ export default function CvStudio({ userId, cvData }: Props) {
       const res = await fetch("/api/ai/analyze-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvData, jobDescription, company, jobTitle }),
+        body: JSON.stringify({ cvData, jobDescription, company, jobTitle, category: detectedCategory }),
       });
       if (!res.ok) throw new Error("Analysis failed");
       const data = await res.json();
@@ -1612,7 +1612,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     } finally {
       setProfileAnalyzing(false);
     }
-  }, [cvData, jobDescription, company, jobTitle, profileAnalyzing]);
+  }, [cvData, jobDescription, company, jobTitle, detectedCategory, profileAnalyzing]);
 
   const handleAnalyzeJD = useCallback(async () => {
     if (!aiData || !jobDescription.trim() || analyzing) return;
