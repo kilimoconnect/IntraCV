@@ -1593,11 +1593,12 @@ export default function CvStudio({ userId, cvData }: Props) {
   const handleAnalyzeProfile = useCallback(async () => {
     if (!jobDescription.trim() || profileAnalyzing) return;
     setProfileAnalyzing(true);
+    setProfileAnalysis(null);
     try {
       const res = await fetch("/api/ai/analyze-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvData, jobDescription }),
+        body: JSON.stringify({ cvData, jobDescription, company, jobTitle }),
       });
       if (!res.ok) throw new Error("Analysis failed");
       const data = await res.json();
@@ -1611,7 +1612,7 @@ export default function CvStudio({ userId, cvData }: Props) {
     } finally {
       setProfileAnalyzing(false);
     }
-  }, [cvData, jobDescription, profileAnalyzing]);
+  }, [cvData, jobDescription, company, jobTitle, profileAnalyzing]);
 
   const handleAnalyzeJD = useCallback(async () => {
     if (!aiData || !jobDescription.trim() || analyzing) return;
@@ -2080,19 +2081,103 @@ export default function CvStudio({ userId, cvData }: Props) {
 
             <div>
               <label className="text-[11px] font-medium text-slate-500 mb-1 block">Job Description <span className="text-red-500">*</span></label>
-              <textarea value={jobDescription} onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); }} rows={5}
+              <textarea value={jobDescription} onChange={(e) => { setJobDescription(e.target.value); setJobAnalysis(null); setProfileAnalysis(null); }} rows={5}
                 placeholder="Paste the full job description here — requirements, responsibilities, qualifications…"
                 className={`w-full text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-[#00c4cc] focus:border-[#00c4cc] placeholder:text-slate-400 transition ${(company.trim() || jobTitle.trim()) && !jobDescription.trim() ? "border-red-200" : "border-slate-200"}`} />
             </div>
           </div>
 
-          <div className="px-6 py-5 bg-slate-50 border-t border-slate-100">
+          <div className="px-6 py-5 bg-slate-50 border-t border-slate-100 space-y-3">
             {(() => {
-              const hasAll = company.trim() && jobTitle.trim() && jobDescription.trim();
-              const hasAny = company.trim() || jobTitle.trim() || jobDescription.trim();
-              const incomplete = !!(hasAny && !hasAll);
+              const hasAll = !!(company.trim() && jobTitle.trim() && jobDescription.trim());
+              const hasAny = !!(company.trim() || jobTitle.trim() || jobDescription.trim());
+              const incomplete = hasAny && !hasAll;
+
+              // ATS score colour helper
+              const scoreColor = (s: number) =>
+                s >= 70 ? "text-emerald-600" : s >= 50 ? "text-amber-500" : "text-red-500";
+              const scoreBg = (s: number) =>
+                s >= 70 ? "bg-emerald-50 border-emerald-200" : s >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
+
               return (
                 <>
+                  {/* ── Step 1: Analyse Profile ── */}
+                  <button
+                    onClick={() => { if (hasAll) void handleAnalyzeProfile(); }}
+                    disabled={!hasAll || profileAnalyzing}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#00c4cc] hover:bg-[#00adb5] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-3 transition-all duration-200"
+                  >
+                    {profileAnalyzing
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />Analysing your profile…</>
+                      : <><BarChart3 className="h-4 w-4" />Analyse Profile</>}
+                  </button>
+
+                  {/* ── Analysis results ── */}
+                  {profileAnalysis && (
+                    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                      {/* ATS score header */}
+                      {profileAnalysis.atsScore !== undefined && (
+                        <div className={`flex items-center justify-between px-4 py-3 border-b ${scoreBg(profileAnalysis.atsScore)}`}>
+                          <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <Target className="h-3.5 w-3.5" /> ATS Match Score
+                          </span>
+                          <span className={`text-lg font-extrabold ${scoreColor(profileAnalysis.atsScore)}`}>
+                            {profileAnalysis.atsScore}%
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="px-4 py-3 space-y-3">
+                        {/* Strengths */}
+                        {profileAnalysis.strengths && profileAnalysis.strengths.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">✓ Strengths</p>
+                            <ul className="space-y-1">
+                              {profileAnalysis.strengths.map((s, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
+                                  {s}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Gaps */}
+                        {profileAnalysis.gaps && profileAnalysis.gaps.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">⚠ Gaps to Address</p>
+                            <ul className="space-y-1">
+                              {profileAnalysis.gaps.map((g, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                  <AlertCircle className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                                  {g}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Missing skills */}
+                        {profileAnalysis.missingSkills && profileAnalysis.missingSkills.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider mb-1.5">✗ Missing Skills</p>
+                            <div className="flex flex-wrap gap-1">
+                              {profileAnalysis.missingSkills.map((s, i) => (
+                                <span key={i} className="text-[10px] px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-full font-medium">{s}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100">
+                        <p className="text-[10px] text-slate-400">Generating your tailored CV will address these gaps automatically.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Step 2: Generate Tailored CV ── */}
                   <button
                     onClick={() => { if (!hasAll) return; setShouldAutoOptimize(true); setStep("select"); }}
                     disabled={!hasAll}
@@ -2101,7 +2186,8 @@ export default function CvStudio({ userId, cvData }: Props) {
                     <Sparkles className="h-4 w-4" />
                     Generate Tailored CV →
                   </button>
-                  {incomplete && <p className="text-center text-xs text-red-400 mt-2">Please fill in company name, job title, and job description.</p>}
+
+                  {incomplete && <p className="text-center text-xs text-red-400">Please fill in company name, job title, and job description.</p>}
                 </>
               );
             })()}
